@@ -1,0 +1,43 @@
+"use client";
+
+import { Search, X } from "lucide-react";
+
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+
+interface SearchInputProps {
+  value: string;
+  placeholder?: string;
+  onChange: (value: string) => void;
+}
+
+export default function SearchInput({
+  value,
+  placeholder = "Search...",
+  onChange,
+}: SearchInputProps) {
+  return (
+    <div className="relative w-full max-w-sm">
+      <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+
+      <Input
+        value={value}
+        placeholder={placeholder}
+        onChange={(e) => onChange(e.target.value)}
+        className="pl-10 pr-10"
+      />
+
+      {value && (
+        <Button
+          type="button"
+          size="icon"
+          variant="ghost"
+          className="absolute right-1 top-1/2 h-8 w-8 -translate-y-1/2"
+          onClick={() => onChange("")}
+        >
+          <X className="h-4 w-4" />
+        </Button>
+      )}
+    </div>
+  );
+}
