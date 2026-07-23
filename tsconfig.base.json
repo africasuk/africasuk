@@ -1,0 +1,68 @@
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "lib": ["ES2022", "DOM", "DOM.Iterable"],
+
+    "module": "ESNext",
+    "moduleResolution": "Bundler",
+
+    "strict": true,
+
+    "skipLibCheck": true,
+
+    "esModuleInterop": true,
+    "allowSyntheticDefaultImports": true,
+
+    "resolveJsonModule": true,
+
+    "isolatedModules": true,
+
+    "declaration": true,
+
+    "types": ["node"],
+
+    "baseUrl": ".",
+
+    "paths": {
+      "@africasuk/types": [
+        "packages/types"
+      ],
+      "@africasuk/validation": [
+        "packages/validation"
+      ],
+      "@africasuk/database": [
+        "packages/database"
+      ],
+      "@africasuk/auth": [
+        "packages/auth"
+      ],
+      "@africasuk/api": [
+        "packages/api"
+      ],
+      "@africasuk/utils": [
+        "packages/utils"
+      ],
+      "@africasuk/hooks": [
+        "packages/hooks"
+      ],
+      "@africasuk/config": [
+        "packages/config"
+      ],
+      "@africasuk/constants": [
+        "packages/constants"
+      ],
+      "@africasuk/i18n": [
+        "packages/i18n/src/index.ts"
+      ],
+      "@africasuk/theme": [
+        "packages/theme"
+      ],
+      "@africasuk/ui-web": [
+        "packages/ui-web"
+      ],
+      "@africasuk/ui-mobile": [
+        "packages/ui-mobile"
+      ]
+    }
+  }
+}

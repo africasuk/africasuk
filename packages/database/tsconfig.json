@@ -1,0 +1,15 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "composite": true,
+    "declaration": true,
+    "declarationMap": true,
+    "ignoreDeprecations": "5.0"
+  },
+  "include": ["**/*.ts"],
+  "references": [
+    {
+      "path": "../types"
+    }
+  ]
+}
