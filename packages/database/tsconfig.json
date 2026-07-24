@@ -3,8 +3,7 @@
   "compilerOptions": {
     "composite": true,
     "declaration": true,
-    "declarationMap": true,
-    "ignoreDeprecations": "5.0"
+    "declarationMap": true
   },
   "include": ["**/*.ts"],
   "references": [
