@@ -18,12 +18,10 @@ export default function robots(): MetadataRoute.Robots {
           "/_next/",
         ],
       },
-
       {
         userAgent: "Googlebot",
         allow: "/",
       },
-
       {
         userAgent: "Bingbot",
         allow: "/",
@@ -32,6 +30,7 @@ export default function robots(): MetadataRoute.Robots {
 
     sitemap: "https://africasuk.com/sitemap.xml",
 
-    host: "https://africasuk.com",
+    // Remove the protocol from host
+    host: "africasuk.com",
   };
 }
