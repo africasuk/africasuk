@@ -4,10 +4,7 @@ import {
   ProductRepository,
 } from "@africasuk/database";
 
-import {
-  ProductQueryService,
-} from "@africasuk/api";
-
+import { ProductQueryService } from "@africasuk/api/services/products";
 import {
   createServerSupabaseClient,
 } from "@/lib/supabase/server";
