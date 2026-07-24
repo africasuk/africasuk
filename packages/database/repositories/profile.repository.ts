@@ -136,9 +136,7 @@ export class ProfileRepository {
 
 const { data, error } = await query;
 
-console.log("Updated rows:", data);
-console.log("User ID:", userId);
-console.log("Payload:", payload);
+
 
 if (error) throw error;
 

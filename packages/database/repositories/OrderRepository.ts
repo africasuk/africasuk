@@ -126,7 +126,7 @@ export class OrderRepository {
   async findById(
     id: string,
   ): Promise<Order | null> {
-    console.log("Finding order by id:", id);
+
 
     const { data, error } =
       await this.supabase
@@ -135,10 +135,6 @@ export class OrderRepository {
         .eq("id", id)
         .maybeSingle();
 
-    console.log({
-      data,
-      error,
-    });
 
     if (error) {
       throw error;
@@ -154,10 +150,7 @@ export class OrderRepository {
   async findByOrderNumber(
     orderNumber: string,
   ): Promise<Order | null> {
-    console.log(
-      "Finding order by number:",
-      orderNumber,
-    );
+
 
     const { data, error } =
       await this.supabase
@@ -169,10 +162,7 @@ export class OrderRepository {
         )
         .maybeSingle();
 
-    console.log({
-      data,
-      error,
-    });
+
 
     if (error) {
       throw error;

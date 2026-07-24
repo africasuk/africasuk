@@ -28,6 +28,10 @@ import {
 } from "@/components/ui/select";
 
 import { Textarea } from "@/components/ui/textarea";
+import {
+  ORDER_STATUS_LABELS,
+  ORDER_STATUS_COLORS,
+} from "@/constants/orderStatus";
 
 interface Props {
   order: Order;
@@ -123,10 +127,19 @@ export function OrderManagement({
         {!editing ? (
           <>
             <div className="grid gap-4 sm:gap-6 grid-cols-1 sm:grid-cols-2">
-              <Info
-                label="Order Status"
-                value={status}
-              />
+              <div className="space-y-2">
+                <Label>Order Status</Label>
+
+                <div className="flex items-center gap-3 rounded-lg border p-3">
+                  <span
+                    className={`h-3 w-3 rounded-full ${ORDER_STATUS_COLORS[status]}`}
+                  />
+
+                  <span className="font-medium">
+                    {ORDER_STATUS_LABELS[status]}
+                  </span>
+                </div>
+              </div>
 
               <Info
                 label="Payment Status"
@@ -186,11 +199,45 @@ export function OrderManagement({
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="PENDING">Pending</SelectItem>
-                    <SelectItem value="PROCESSING">Processing</SelectItem>
-                    <SelectItem value="SHIPPED">Shipped</SelectItem>
-                    <SelectItem value="DELIVERED">Delivered</SelectItem>
-                    <SelectItem value="CANCELLED">Cancelled</SelectItem>
+                    <SelectItem value="PENDING">
+                      Pending
+                    </SelectItem>
+
+                    <SelectItem value="CONFIRMED">
+                      Confirmed
+                    </SelectItem>
+
+                    <SelectItem value="PROCESSING">
+                      Processing
+                    </SelectItem>
+
+                    <SelectItem value="READY_FOR_PICKUP">
+                      Ready for Pickup
+                    </SelectItem>
+
+                    <SelectItem value="IN_TRANSIT">
+                      In Transit
+                    </SelectItem>
+
+                    <SelectItem value="AT_BORDER">
+                      At Border
+                    </SelectItem>
+
+                    <SelectItem value="AT_JUBA_WAREHOUSE">
+                      At Juba Warehouse
+                    </SelectItem>
+
+                    <SelectItem value="OUT_FOR_DELIVERY">
+                      Out for Delivery
+                    </SelectItem>
+
+                    <SelectItem value="DELIVERED">
+                      Delivered
+                    </SelectItem>
+
+                    <SelectItem value="CANCELLED">
+                      Cancelled
+                    </SelectItem>
                   </SelectContent>
                 </Select>
               </div>

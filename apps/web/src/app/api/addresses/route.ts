@@ -153,16 +153,7 @@ export async function POST(
         "Customer";
     }
 
-    console.log(
-      "Creating address..."
-    );
 
-    console.log({
-      userId: user.id,
-      recipientName,
-      phone,
-      body,
-    });
 
     const service =
       await createAddressService();
@@ -178,11 +169,7 @@ export async function POST(
           false,
       });
 
-    console.log(
-      "Address created:",
-      address
-    );
-
+ 
     return NextResponse.json(
       address,
       {

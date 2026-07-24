@@ -2,7 +2,11 @@ export type OrderStatus =
   | "PENDING"
   | "CONFIRMED"
   | "PROCESSING"
-  | "SHIPPED"
+  | "READY_FOR_PICKUP"
+  | "IN_TRANSIT"
+  | "AT_BORDER"
+  | "AT_JUBA_WAREHOUSE"
+  | "OUT_FOR_DELIVERY"
   | "DELIVERED"
   | "CANCELLED";
 

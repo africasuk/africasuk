@@ -194,10 +194,6 @@ export class OrderRepository {
 async findByOrderNumber(
   orderNumber: string,
 ): Promise<Order | null> {
-  console.log(
-    "Searching order:",
-    orderNumber,
-  );
 
   const { data, error } =
     await this.supabase
@@ -209,10 +205,7 @@ async findByOrderNumber(
       )
       .maybeSingle();
 
-  console.log({
-    data,
-    error,
-  });
+
 
   if (error) throw error;
 
