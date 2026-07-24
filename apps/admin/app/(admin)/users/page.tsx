@@ -1,8 +1,6 @@
 import { UserRepository } from "@africasuk/database";
 import { UserService } from "@africasuk/api";
 
-import { requirePermission } from "@/lib/auth/guards";
-import { Permissions } from "@/lib/auth/permissions";
 import { createAdminSupabaseClient } from "@/lib/supabase/admin";
 
 import PageHeader from "@/components/shared/PageHeader";
@@ -18,10 +16,6 @@ async function getUsers() {
 }
 
 export default async function UsersPage() {
-  const { profile } = await requirePermission(
-    Permissions.USERS_VIEW
-  );
-
   const users = await getUsers();
 
   return (
@@ -29,14 +23,12 @@ export default async function UsersPage() {
       <PageHeader
         title="Users"
         description="Manage administrators and staff."
-        action={
-          profile.role === "SUPER_ADMIN"
-            ? {
-                label: "New User",
-                href: "/users/new",
-              }
-            : undefined
-        }
+        actions={[
+          {
+            label: "New User",
+            href: "/users/new",
+          },
+        ]}
       />
 
       <UserTable users={users} />
