@@ -15,6 +15,10 @@ export interface WishlistItem {
 
   quantity: number;
 
+  allowCod: boolean;
+
+  allowOnlinePayment: boolean;
+
   options: {
     optionName: string;
     value: string;
