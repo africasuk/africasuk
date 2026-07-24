@@ -2,6 +2,12 @@ import { createServerClient } from "@supabase/ssr";
 import { cookies } from "next/headers";
 
 export async function createClient() {
+  console.log("SUPABASE_URL:", process.env.NEXT_PUBLIC_SUPABASE_URL);
+  console.log(
+    "SUPABASE_ANON_KEY exists:",
+    !!process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+  );
+
   const cookieStore = await cookies();
 
   return createServerClient(
@@ -12,10 +18,7 @@ export async function createClient() {
         getAll() {
           return cookieStore.getAll();
         },
-        setAll() {
-          // Cookies are handled by middleware/route handlers.
-          // Do nothing here.
-        },
+        setAll() {},
       },
     }
   );
