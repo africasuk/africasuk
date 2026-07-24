@@ -140,12 +140,15 @@ export default function SearchProductList({
             />
             <AddSearchCartButton
               item={{
-                variantId: item.variant?.id ?? "",
                 productId: item.id,
+                variantId: item.variant?.id ?? "",
                 name: item.name,
                 slug: item.slug,
                 price: item.variant?.price ?? 0,
                 stock: item.variant?.stock ?? 0,
+                quantity: 1,
+                allowCod: item.allowCod,
+                allowOnlinePayment: item.allowOnlinePayment,
                 image:
                   item.color.images?.[0]?.imageUrl ??
                   "/placeholder.png",
@@ -159,7 +162,6 @@ export default function SearchProductList({
                     value: item.variant?.optionValue ?? "",
                   },
                 ],
-                quantity: 1,
               }}
             />
           </div>
