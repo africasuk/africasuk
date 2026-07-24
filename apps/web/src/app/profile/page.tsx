@@ -10,12 +10,7 @@ import { AddressService } from "@africasuk/api";
 import { createClient } from "@/lib/auth/server";
 
 import ProfileSection from "@/components/profile/ProfileSection";
-import AccountShortcuts from "@/components/profile/AccountShortcuts";
-import RecentOrders from "@/components/profile/RecentOrders";
 import SavedAddresses from "@/components/profile/SavedAddresses";
-import PaymentMethods from "@/components/profile/PaymentMethods";
-import Wishlist from "@/components/profile/Wishlist";
-import NotificationPreferences from "@/components/profile/NotificationPreferences";
 import SecurityCenter from "@/components/profile/SecurityCenter";
 
 export default async function ProfilePage() {
@@ -71,34 +66,13 @@ export default async function ProfilePage() {
         profile={profile}
       />
 
-      <AccountShortcuts />
 
-      <RecentOrders
-        orders={[]}
-      />
 
       <SavedAddresses
         addresses={addresses}
       />
 
-      <PaymentMethods
-        methods={[]}
-      />
 
-      <Wishlist
-        items={[]}
-      />
-
-      <NotificationPreferences
-        initialPreferences={{
-          emailNotifications: true,
-          smsNotifications: false,
-          pushNotifications: true,
-          orderUpdates: true,
-          promotions: true,
-          securityAlerts: true,
-        }}
-      />
 
       <SecurityCenter
         devices={[]}
