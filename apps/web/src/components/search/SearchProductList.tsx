@@ -114,30 +114,32 @@ export default function SearchProductList({
               e.stopPropagation();
             }}
           >
-            <WishlistButton
-              item={{
-                productId: item.id,
-                variantId: item.variant?.id ?? "",
-                name: item.name,
-                slug: item.slug,
-                price: item.variant?.price ?? 0,
-                stock: item.variant?.stock ?? 0,
-                quantity: 1,
-                image:
-                  item.color.images?.[0]?.imageUrl ??
-                  "/placeholder.png",
-                options: [
-                  {
-                    optionName: "Color",
-                    value: item.color.name,
-                  },
-                  {
-                    optionName: item.variant?.optionName ?? "",
-                    value: item.variant?.optionValue ?? "",
-                  },
-                ],
-              }}
-            />
+           <WishlistButton
+            item={{
+              productId: item.id,
+              variantId: item.variant?.id ?? "",
+              name: item.name,
+              slug: item.slug,
+              price: item.variant?.price ?? 0,
+              stock: item.variant?.stock ?? 0,
+              quantity: 1,
+              allowCod: item.allowCod,
+              allowOnlinePayment: item.allowOnlinePayment,
+              image:
+                item.color.images?.[0]?.imageUrl ??
+                "/placeholder.png",
+              options: [
+                {
+                  optionName: "Color",
+                  value: item.color.name,
+                },
+                {
+                  optionName: item.variant?.optionName ?? "",
+                  value: item.variant?.optionValue ?? "",
+                },
+              ],
+            }}
+          />
             <AddSearchCartButton
               item={{
                 productId: item.id,
