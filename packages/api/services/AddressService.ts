@@ -1,9 +1,12 @@
-import {
+import type {
   Address,
-  AddressRepository,
   CreateAddressDto,
   UpdateAddressDto,
-} from "packages/database/repositories/AddressRepository";
+} from "@africasuk/types";
+
+import {
+  AddressRepository,
+} from "@africasuk/database";
 
 export class AddressService {
   constructor(

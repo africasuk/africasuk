@@ -11,3 +11,4 @@ export * from "./order-command";
 export * from "./exchange-rate";
 export * from "./wishlist";
 export * from "./payment";
+export * from "./address";
