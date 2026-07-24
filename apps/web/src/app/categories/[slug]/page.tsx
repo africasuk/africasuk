@@ -14,12 +14,80 @@ import Container from "@/components/layout/Container";
 import CategoryProducts from "@/components/products/CategoryProducts";
 
 
+import type { Metadata } from "next";
+import { CategoryJsonLd } from "@/components/seo/CategoryJsonLd";
+
+
 interface Props {
   params: Promise<{
     slug: string;
   }>;
 }
 
+export async function generateMetadata({
+  params,
+}: Props): Promise<Metadata> {
+  const { slug } = await params;
+
+  const supabase = await createClient();
+
+  const categoryRepository = new CategoryRepository(supabase);
+
+  const category = await categoryRepository.getBySlug(slug);
+
+  if (!category) {
+    return {
+      title: "Category Not Found | AfricaSuk",
+    };
+  }
+
+  const url = `https://africasuk.com/categories/${category.slug}`;
+
+  const description =
+    category.description ??
+    `Browse ${category.name} products on AfricaSuk.`;
+
+  return {
+    title: `${category.name} | AfricaSuk`,
+
+    description,
+
+    keywords: [
+      category.name,
+      "AfricaSuk",
+      "South Sudan",
+      "Online Shopping",
+      "Marketplace",
+    ],
+
+    alternates: {
+      canonical: url,
+    },
+
+    openGraph: {
+      title: `${category.name} | AfricaSuk`,
+      description,
+      url,
+      type: "website",
+      images: category.imageUrl
+        ? [
+            {
+              url: category.imageUrl,
+            },
+          ]
+        : [],
+    },
+
+    twitter: {
+      card: "summary_large_image",
+      title: `${category.name} | AfricaSuk`,
+      description,
+      images: category.imageUrl
+        ? [category.imageUrl]
+        : [],
+    },
+  };
+}
 export default async function CategoryPage({ params }: Props) {
   const { slug } = await params;
   const supabase = await createClient();
@@ -56,6 +124,12 @@ const totalItemsCount = products.reduce(
 
   return (
     <Layout>
+
+          <CategoryJsonLd
+              name={category.name}
+              description={category.description}
+              slug={category.slug}
+            />
       <section className="py-8 lg:py-12 bg-[#f4f4f4] min-h-screen antialiased selection:bg-[#004d26]/10">
         <Container>
           {/* Centered Max-Width Wrapper */}

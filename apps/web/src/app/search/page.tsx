@@ -6,11 +6,57 @@ import Container from "@/components/layout/Container";
 import type { ProductWithDetails } from "@africasuk/types";
 import SearchProductList from "@/components/search/SearchProductList";
 import { SearchEmptyState } from "@/components/search/SearchEmptyState";
+import type { Metadata } from "next";
 
 interface Props {
   searchParams: Promise<{
     q?: string;
   }>;
+}
+export async function generateMetadata({
+  searchParams,
+}: Props): Promise<Metadata> {
+  const { q } = await searchParams;
+
+  const title = q
+    ? `Search "${q}" | AfricaSuk`
+    : "Search Products | AfricaSuk";
+  const description = q
+    ? `Browse search results for "${q}" on AfricaSuk.`
+    : "Search products across AfricaSuk.";
+  return {
+    title,
+    description,
+
+    alternates: {
+      canonical: "https://africasuk.com/search",
+    },
+
+    openGraph: {
+      title,
+      description,
+      url: q
+        ? `https://africasuk.com/search?q=${encodeURIComponent(q)}`
+        : "https://africasuk.com/search",
+      type: "website",
+    },
+
+    twitter: {
+      card: "summary_large_image",
+      title,
+      description,
+    },
+
+    robots: q
+      ? {
+          index: false,
+          follow: true,
+        }
+      : {
+          index: true,
+          follow: true,
+        },
+  };
 }
 
 export default async function SearchPage({

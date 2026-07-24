@@ -2,6 +2,10 @@ import { notFound } from "next/navigation";
 import Image from "next/image";
 import Link from "next/link";
 
+import type { Metadata } from "next";
+
+import { BrandJsonLd } from "@/components/seo/BrandJsonLd";
+
 import {
   BrandRepository,
   ProductRepository,
@@ -23,6 +27,75 @@ interface Props {
   }>;
 }
 
+
+export async function generateMetadata({
+  params,
+}: Props): Promise<Metadata> {
+  const { slug } = await params;
+
+  const supabase = await createClient();
+
+  const brandRepository = new BrandRepository(supabase);
+
+  const brand =
+    await brandRepository.getBySlug(slug);
+
+  if (!brand) {
+    return {
+      title: "Brand Not Found | AfricaSuk",
+    };
+  }
+
+  const url = `https://africasuk.com/brands/${brand.slug}`;
+
+  const description =
+    brand.description ??
+    `Browse ${brand.name} products on AfricaSuk.`;
+
+  return {
+    title: `${brand.name} | AfricaSuk`,
+
+    description,
+
+    keywords: [
+      brand.name,
+      "AfricaSuk",
+      "South Sudan",
+      "Online Shopping",
+      "Marketplace",
+    ],
+
+    alternates: {
+      canonical: url,
+    },
+
+    openGraph: {
+      title: `${brand.name} | AfricaSuk`,
+      description,
+      url,
+      type: "website",
+      images: brand.logoUrl
+        ? [
+            {
+              url: brand.logoUrl,
+            },
+          ]
+        : [],
+    },
+
+    twitter: {
+      card: "summary_large_image",
+
+      title: `${brand.name} | AfricaSuk`,
+
+      description,
+
+      images: brand.logoUrl
+        ? [brand.logoUrl]
+        : [],
+    },
+  };
+}
 export default async function BrandPage({ params }: Props) {
   const { slug } = await params;
   const supabase = await createClient();
@@ -45,6 +118,13 @@ export default async function BrandPage({ params }: Props) {
 
   return (
     <Layout>
+      <BrandJsonLd
+        name={brand.name}
+        slug={brand.slug}
+        description={brand.description}
+        logo={brand.logoUrl}
+        website={brand.website}
+      />
       <section className="min-h-screen bg-[#f4f4f4] py-8 antialiased selection:bg-[#004d26]/10 lg:py-12">
         <Container>
           <div className="mx-auto max-w-7xl space-y-8">

@@ -67,10 +67,6 @@ export function ProductForm({
       },
     ];
 
-  console.log("product", product);
-  console.log("product.colors", product?.colors);
-  console.log("initialColors", initialColors);
-
   const [colors, setColors] = useState<Color[]>(initialColors);
 
   // Form Field Handlers

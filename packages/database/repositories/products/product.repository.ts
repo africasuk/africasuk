@@ -235,10 +235,8 @@ export class ProductRepository {
   throw error;
 }
     if (!data) return null;
-        console.log("SLUG DATA", data);
         return {
           ...data,
-
           allowCod: data.allow_cod,
           allowOnlinePayment:
             data.allow_online_payment,
