@@ -319,4 +319,20 @@ async search(
 
   return data ?? [];
 }
+
+  async updateStatus(
+  id: string,
+  isActive: boolean
+): Promise<void> {
+  const { error } = await this.db
+    .from("products")
+    .update({
+      is_active: isActive,
+    })
+    .eq("id", id);
+
+  if (error) {
+    throw error;
+  }
+}
 }
