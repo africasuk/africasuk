@@ -9,12 +9,13 @@ import {
 
 import { ProductQueryService } from "@africasuk/api";
 
+import type { ProductWithDetails } from "@africasuk/types";
+
 import { createClient } from "@/lib/auth/server";
 
 import Layout from "@/components/layout/Layout";
 import Container from "@/components/layout/Container";
 import { ProductCard } from "@/components/products/ProductCard";
-import { ProductColor } from "../../../../../../packages/types/product";
 
 interface Props {
   params: Promise<{
@@ -28,63 +29,63 @@ export default async function BrandPage({ params }: Props) {
 
   const brandRepository = new BrandRepository(supabase);
 
-const productService = new ProductQueryService(
-  new ProductRepository(supabase)
-);
+  const productService = new ProductQueryService(
+    new ProductRepository(supabase)
+  );
 
   const brand = await brandRepository.getBySlug(slug);
 
   if (!brand) {
     notFound();
   }
-const products = (await productService.getAll()).filter(
-  (product) => product.brandId === brand.id
-);
+
+  const products: ProductWithDetails[] = (await productService.getAll()).filter(
+    (product) => product.brandId === brand.id
+  );
 
   return (
     <Layout>
-      <section className="py-8 lg:py-12 bg-[#f4f4f4] min-h-screen antialiased selection:bg-[#004d26]/10">
+      <section className="min-h-screen bg-[#f4f4f4] py-8 antialiased selection:bg-[#004d26]/10 lg:py-12">
         <Container>
-          <div className="max-w-7xl mx-auto space-y-8">
-            
+          <div className="mx-auto max-w-7xl space-y-8">
             {/* Brand Header Card */}
-            <div className="flex flex-row items-center gap-4 sm:gap-6 bg-white border border-neutral-200/60 rounded-2xl p-4 sm:p-5 select-none shadow-xs">
-              
+            <div className="flex flex-row items-center gap-4 rounded-2xl border border-neutral-200/60 bg-white p-4 shadow-xs select-none sm:gap-6 sm:p-5">
               {/* Logo Container */}
-              <div className="relative flex h-20 w-20 sm:h-24 sm:w-24 shrink-0 items-center justify-center rounded-xl border border-neutral-200/50 bg-white p-2">
+              <div className="relative flex h-20 w-20 shrink-0 items-center justify-center rounded-xl border border-neutral-200/50 bg-white p-2 sm:h-24 sm:w-24">
                 {brand.logoUrl ? (
-                  <div className="relative w-full h-full">
+                  <div className="relative h-full w-full">
                     <Image
                       src={brand.logoUrl}
                       alt={brand.name}
                       fill
+                      priority
                       sizes="(max-width: 640px) 64px, 80px"
                       className="object-contain"
-                      priority
                     />
                   </div>
                 ) : (
-                  <span className="text-2xl sm:text-3xl font-black text-[#004d26]">
+                  <span className="text-2xl font-black text-[#004d26] sm:text-3xl">
                     {brand.name.charAt(0).toUpperCase()}
                   </span>
                 )}
               </div>
 
               {/* Typography & Details */}
-              <div className="flex-1 min-w-0">
-                <h1 className="text-xl sm:text-2xl md:text-3xl font-black tracking-tight text-neutral-900 truncate">
+              <div className="min-w-0 flex-1">
+                <h1 className="truncate text-xl font-black tracking-tight text-neutral-900 sm:text-2xl md:text-3xl">
                   {brand.name}
                 </h1>
 
                 {brand.description && (
-                  <p className="mt-1 text-xs sm:text-sm text-neutral-500 leading-normal sm:leading-relaxed font-medium line-clamp-2 sm:line-clamp-3">
+                  <p className="mt-1 line-clamp-2 text-xs font-medium leading-normal text-neutral-500 sm:line-clamp-3 sm:text-sm sm:leading-relaxed">
                     {brand.description}
                   </p>
                 )}
 
                 <div className="mt-2.5 flex flex-wrap items-center gap-x-3 gap-y-1.5">
-                  <span className="inline-flex items-center rounded-full bg-neutral-100 px-2 py-0.5 text-[10px] sm:text-xs font-bold text-neutral-600">
-                    {products.length} {products.length === 1 ? "product" : "products"}
+                  <span className="inline-flex items-center rounded-full bg-neutral-100 px-2 py-0.5 text-[10px] font-bold text-neutral-600 sm:text-xs">
+                    {products.length}{" "}
+                    {products.length === 1 ? "product" : "products"}
                   </span>
 
                   {brand.website && (
@@ -92,7 +93,7 @@ const products = (await productService.getAll()).filter(
                       href={brand.website}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="group relative text-[10px] sm:text-xs font-bold tracking-wide text-[#004d26] transition-colors hover:text-[#003b1d] pb-0.5"
+                      className="group relative pb-0.5 text-[10px] font-bold tracking-wide text-[#004d26] transition-colors hover:text-[#003b1d] sm:text-xs"
                     >
                       Visit Website
                       <span className="absolute bottom-0 left-0 h-0.5 w-0 bg-[#004d26] transition-all duration-300 group-hover:w-full" />
@@ -104,37 +105,38 @@ const products = (await productService.getAll()).filter(
 
             {/* Products Grid */}
             {products.length === 0 ? (
-              <div className="rounded-2xl border border-neutral-200/60 bg-white py-16 text-center select-none shadow-xs">
+              <div className="rounded-2xl border border-neutral-200/60 bg-white py-16 text-center shadow-xs select-none">
                 <h2 className="text-lg font-extrabold text-neutral-900">
                   No products found
                 </h2>
-                <p className="mt-1 text-xs sm:text-sm text-neutral-500 max-w-xs mx-auto px-4">
-                  There are no products available for this brand yet. Please check back later.
+
+                <p className="mx-auto mt-1 max-w-xs px-4 text-xs text-neutral-500 sm:text-sm">
+                  There are no products available for this brand yet. Please
+                  check back later.
                 </p>
               </div>
             ) : (
-              <div className="grid grid-cols-2 md:grid-cols-[repeat(auto-fill,minmax(240px,1fr))] gap-4 sm:gap-6 w-full justify-center">
+              <div className="grid w-full grid-cols-2 justify-center gap-4 sm:gap-6 md:grid-cols-[repeat(auto-fill,minmax(240px,1fr))]">
                 {products.flatMap((product) =>
-                  product.colors.map((color: ProductColor) => {
+                  product.colors.map((color) => {
                     const variant = color.variants[0];
 
-                    if (!variant) return null;
+                    if (!variant) return [];
 
                     return (
                       <ProductCard
-                          key={`${product.id}-${color.id}`}
-                          product={{
-                            ...product,
-                            name: `${product.name} - ${color.name}`,
-                            colors: [color],
-                          }}
-                        />
+                        key={`${product.id}-${color.id}`}
+                        product={{
+                          ...product,
+                          name: `${product.name} - ${color.name}`,
+                          colors: [color],
+                        }}
+                      />
                     );
                   })
                 )}
               </div>
             )}
-
           </div>
         </Container>
       </section>
