@@ -124,12 +124,9 @@ const totalItemsCount = products.reduce(
 
   return (
     <Layout>
+<CategoryJsonLd category={category} />
 
-          <CategoryJsonLd
-              name={category.name}
-              description={category.description}
-              slug={category.slug}
-            />
+
       <section className="py-8 lg:py-12 bg-[#f4f4f4] min-h-screen antialiased selection:bg-[#004d26]/10">
         <Container>
           {/* Centered Max-Width Wrapper */}
