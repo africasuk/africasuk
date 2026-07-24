@@ -5,7 +5,6 @@ import { createServerSupabaseClient } from "@/lib/supabase/server";
 
 import type { Brand } from "@africasuk/types";
 
-import PageHeader from "@/components/shared/PageHeader";
 import BrandTable from "@/components/brands/BrandTable";
 
 async function getBrands(): Promise<Brand[]> {
@@ -27,14 +26,6 @@ export default async function BrandsPage() {
 
   return (
     <div className="space-y-8">
-      <PageHeader
-        title="Brands"
-        description="Manage all product brands."
-        action={{
-          label: "New Brand",
-          href: "/manager/brands/new",
-        }}
-      />
 
       <BrandTable
         brands={brands}
