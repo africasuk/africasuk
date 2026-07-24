@@ -1,5 +1,5 @@
 import { PaymentRepository } from "@africasuk/database";
-import { OrderCommandService } from "packages/api/orders";
+import { OrderCommandService } from "../../orders/OrderCommandService";
 
 
 
