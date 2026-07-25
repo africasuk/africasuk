@@ -1,15 +1,30 @@
-import { DarkTheme, DefaultTheme, ThemeProvider } from 'expo-router';
-import { useColorScheme } from 'react-native';
+import { Stack } from "expo-router";
+import { GestureHandlerRootView } from "react-native-gesture-handler";
+import { SafeAreaProvider } from "react-native-safe-area-context";
 
-import { AnimatedSplashOverlay } from '@/components/animated-icon';
-import AppTabs from '@/components/app-tabs';
+import { getDictionary } from "@africasuk/i18n";
 
-export default function TabLayout() {
-  const colorScheme = useColorScheme();
+import { LanguageProvider } from "@/components/providers/LanguageProvider";
+import { CurrencyProvider } from "@/providers/CurrencyProvider";
+import { ExchangeRateProvider } from "@/providers/ExchangeRateProvider";
+
+const dictionary = getDictionary("en");
+
+export default function RootLayout() {
   return (
-    <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
-      <AnimatedSplashOverlay />
-      <AppTabs />
-    </ThemeProvider>
+    <GestureHandlerRootView style={{ flex: 1 }}>
+      <SafeAreaProvider>
+        <LanguageProvider
+          locale="en"
+          dictionary={dictionary}
+        >
+          <CurrencyProvider initialCurrency="USD">
+            <ExchangeRateProvider initialRate={1}>
+              <Stack screenOptions={{ headerShown: false }} />
+            </ExchangeRateProvider>
+          </CurrencyProvider>
+        </LanguageProvider>
+      </SafeAreaProvider>
+    </GestureHandlerRootView>
   );
 }
