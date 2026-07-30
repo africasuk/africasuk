@@ -1,19 +1,22 @@
 "use client"
 
 import * as React from "react"
-import { Avatar as AvatarPrimitive } from "radix-ui"
+import * as AvatarPrimitive from "@radix-ui/react-avatar"
 
 import { cn } from "@/lib/utils"
 
-function Avatar({
-  className,
-  size = "default",
-  ...props
-}: React.ComponentProps<typeof AvatarPrimitive.Root> & {
-  size?: "default" | "sm" | "lg"
-}) {
+const Avatar = React.forwardRef<
+  React.ElementRef<typeof AvatarPrimitive.Root>,
+  React.ComponentPropsWithoutRef<typeof AvatarPrimitive.Root> & {
+    size?: "default" | "sm" | "lg"
+    className?: string
+    children?: React.ReactNode
+  }
+>(({ className, size = "default", ...props }, ref) => {
+  const Comp = AvatarPrimitive.Root as React.ElementType
   return (
-    <AvatarPrimitive.Root
+    <Comp
+      ref={ref}
       data-slot="avatar"
       data-size={size}
       className={cn(
@@ -23,14 +26,19 @@ function Avatar({
       {...props}
     />
   )
-}
+})
+Avatar.displayName = AvatarPrimitive.Root.displayName
 
-function AvatarImage({
-  className,
-  ...props
-}: React.ComponentProps<typeof AvatarPrimitive.Image>) {
+const AvatarImage = React.forwardRef<
+  React.ElementRef<typeof AvatarPrimitive.Image>,
+  React.ComponentPropsWithoutRef<typeof AvatarPrimitive.Image> & {
+    className?: string
+  }
+>(({ className, ...props }, ref) => {
+  const Comp = AvatarPrimitive.Image as React.ElementType
   return (
-    <AvatarPrimitive.Image
+    <Comp
+      ref={ref}
       data-slot="avatar-image"
       className={cn(
         "aspect-square size-full rounded-full object-cover",
@@ -39,14 +47,20 @@ function AvatarImage({
       {...props}
     />
   )
-}
+})
+AvatarImage.displayName = AvatarPrimitive.Image.displayName
 
-function AvatarFallback({
-  className,
-  ...props
-}: React.ComponentProps<typeof AvatarPrimitive.Fallback>) {
+const AvatarFallback = React.forwardRef<
+  React.ElementRef<typeof AvatarPrimitive.Fallback>,
+  React.ComponentPropsWithoutRef<typeof AvatarPrimitive.Fallback> & {
+    className?: string
+    children?: React.ReactNode
+  }
+>(({ className, ...props }, ref) => {
+  const Comp = AvatarPrimitive.Fallback as React.ElementType
   return (
-    <AvatarPrimitive.Fallback
+    <Comp
+      ref={ref}
       data-slot="avatar-fallback"
       className={cn(
         "flex size-full items-center justify-center rounded-full bg-muted text-sm text-muted-foreground group-data-[size=sm]/avatar:text-xs",
@@ -55,7 +69,8 @@ function AvatarFallback({
       {...props}
     />
   )
-}
+})
+AvatarFallback.displayName = AvatarPrimitive.Fallback.displayName
 
 function AvatarBadge({ className, ...props }: React.ComponentProps<"span">) {
   return (
@@ -72,6 +87,7 @@ function AvatarBadge({ className, ...props }: React.ComponentProps<"span">) {
     />
   )
 }
+AvatarBadge.displayName = "AvatarBadge"
 
 function AvatarGroup({ className, ...props }: React.ComponentProps<"div">) {
   return (
@@ -85,6 +101,7 @@ function AvatarGroup({ className, ...props }: React.ComponentProps<"div">) {
     />
   )
 }
+AvatarGroup.displayName = "AvatarGroup"
 
 function AvatarGroupCount({
   className,
@@ -101,6 +118,7 @@ function AvatarGroupCount({
     />
   )
 }
+AvatarGroupCount.displayName = "AvatarGroupCount"
 
 export {
   Avatar,

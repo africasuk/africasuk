@@ -1,7 +1,7 @@
 "use client"
 
 import * as React from "react"
-import { Tooltip as TooltipPrimitive } from "radix-ui"
+import * as TooltipPrimitive from "@radix-ui/react-tooltip"
 
 import { cn } from "@/lib/utils"
 
@@ -24,21 +24,39 @@ function Tooltip({
   return <TooltipPrimitive.Root data-slot="tooltip" {...props} />
 }
 
-function TooltipTrigger({
-  ...props
-}: React.ComponentProps<typeof TooltipPrimitive.Trigger>) {
-  return <TooltipPrimitive.Trigger data-slot="tooltip-trigger" {...props} />
-}
+const TooltipTrigger = React.forwardRef<
+  React.ElementRef<typeof TooltipPrimitive.Trigger>,
+  React.ComponentPropsWithoutRef<typeof TooltipPrimitive.Trigger> & {
+    className?: string
+    children?: React.ReactNode
+  }
+>(({ className, ...props }, ref) => {
+  const Comp = TooltipPrimitive.Trigger as React.ElementType
+  return (
+    <Comp
+      ref={ref}
+      data-slot="tooltip-trigger"
+      className={className}
+      {...props}
+    />
+  )
+})
+TooltipTrigger.displayName = TooltipPrimitive.Trigger.displayName
 
-function TooltipContent({
-  className,
-  sideOffset = 0,
-  children,
-  ...props
-}: React.ComponentProps<typeof TooltipPrimitive.Content>) {
+const TooltipContent = React.forwardRef<
+  React.ElementRef<typeof TooltipPrimitive.Content>,
+  React.ComponentPropsWithoutRef<typeof TooltipPrimitive.Content> & {
+    className?: string
+    children?: React.ReactNode
+  }
+>(({ className, sideOffset = 0, children, ...props }, ref) => {
+  const Comp = TooltipPrimitive.Content as React.ElementType
+  const ArrowComp = TooltipPrimitive.Arrow as React.ElementType
+
   return (
     <TooltipPrimitive.Portal>
-      <TooltipPrimitive.Content
+      <Comp
+        ref={ref}
         data-slot="tooltip-content"
         sideOffset={sideOffset}
         className={cn(
@@ -48,10 +66,11 @@ function TooltipContent({
         {...props}
       >
         {children}
-        <TooltipPrimitive.Arrow className="z-50 size-2.5 translate-y-[calc(-50%_-_2px)] rotate-45 rounded-[2px] bg-foreground fill-foreground" />
-      </TooltipPrimitive.Content>
+        <ArrowComp className="z-50 size-2.5 translate-y-[calc(-50%-2px)] rotate-45 rounded-xs bg-foreground fill-foreground" />
+      </Comp>
     </TooltipPrimitive.Portal>
   )
-}
+})
+TooltipContent.displayName = TooltipPrimitive.Content.displayName
 
 export { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger }

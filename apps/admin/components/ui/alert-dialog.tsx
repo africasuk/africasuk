@@ -1,20 +1,20 @@
 "use client"
 
 import * as React from "react"
-import * as AlertDialogPrimitive from "@radix-ui/react-alert-dialog";
+import * as AlertDialogPrimitive from "@radix-ui/react-alert-dialog"
 
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 
 function AlertDialog({
   ...props
-}: React.ComponentProps<typeof AlertDialogPrimitive.Root>) {
+}: React.ComponentPropsWithoutRef<typeof AlertDialogPrimitive.Root>) {
   return <AlertDialogPrimitive.Root data-slot="alert-dialog" {...props} />
 }
 
 function AlertDialogTrigger({
   ...props
-}: React.ComponentProps<typeof AlertDialogPrimitive.Trigger>) {
+}: React.ComponentPropsWithoutRef<typeof AlertDialogPrimitive.Trigger>) {
   return (
     <AlertDialogPrimitive.Trigger data-slot="alert-dialog-trigger" {...props} />
   )
@@ -22,7 +22,7 @@ function AlertDialogTrigger({
 
 function AlertDialogPortal({
   ...props
-}: React.ComponentProps<typeof AlertDialogPrimitive.Portal>) {
+}: React.ComponentPropsWithoutRef<typeof AlertDialogPrimitive.Portal>) {
   return (
     <AlertDialogPrimitive.Portal data-slot="alert-dialog-portal" {...props} />
   )
@@ -31,7 +31,9 @@ function AlertDialogPortal({
 function AlertDialogOverlay({
   className,
   ...props
-}: React.ComponentProps<typeof AlertDialogPrimitive.Overlay>) {
+}: React.ComponentPropsWithoutRef<typeof AlertDialogPrimitive.Overlay> & {
+  className?: string
+}) {
   return (
     <AlertDialogPrimitive.Overlay
       data-slot="alert-dialog-overlay"
@@ -39,7 +41,7 @@ function AlertDialogOverlay({
         "fixed inset-0 z-50 bg-black/10 duration-100 supports-backdrop-filter:backdrop-blur-xs data-open:animate-in data-open:fade-in-0 data-closed:animate-out data-closed:fade-out-0",
         className
       )}
-      {...props}
+      {...(props as React.ComponentPropsWithoutRef<"div">)}
     />
   )
 }
@@ -48,8 +50,9 @@ function AlertDialogContent({
   className,
   size = "default",
   ...props
-}: React.ComponentProps<typeof AlertDialogPrimitive.Content> & {
+}: React.ComponentPropsWithoutRef<typeof AlertDialogPrimitive.Content> & {
   size?: "default" | "sm"
+  className?: string
 }) {
   return (
     <AlertDialogPortal>
@@ -61,7 +64,7 @@ function AlertDialogContent({
           "group/alert-dialog-content fixed top-1/2 left-1/2 z-50 grid w-full -translate-x-1/2 -translate-y-1/2 gap-4 rounded-xl bg-popover p-4 text-popover-foreground ring-1 ring-foreground/10 duration-100 outline-none data-[size=default]:max-w-xs data-[size=sm]:max-w-xs data-[size=default]:sm:max-w-sm data-open:animate-in data-open:fade-in-0 data-open:zoom-in-95 data-closed:animate-out data-closed:fade-out-0 data-closed:zoom-out-95",
           className
         )}
-        {...props}
+        {...(props as React.ComponentPropsWithoutRef<"div">)}
       />
     </AlertDialogPortal>
   )
@@ -70,7 +73,7 @@ function AlertDialogContent({
 function AlertDialogHeader({
   className,
   ...props
-}: React.ComponentProps<"div">) {
+}: React.ComponentPropsWithoutRef<"div">) {
   return (
     <div
       data-slot="alert-dialog-header"
@@ -86,7 +89,7 @@ function AlertDialogHeader({
 function AlertDialogFooter({
   className,
   ...props
-}: React.ComponentProps<"div">) {
+}: React.ComponentPropsWithoutRef<"div">) {
   return (
     <div
       data-slot="alert-dialog-footer"
@@ -102,7 +105,7 @@ function AlertDialogFooter({
 function AlertDialogMedia({
   className,
   ...props
-}: React.ComponentProps<"div">) {
+}: React.ComponentPropsWithoutRef<"div">) {
   return (
     <div
       data-slot="alert-dialog-media"
@@ -118,7 +121,9 @@ function AlertDialogMedia({
 function AlertDialogTitle({
   className,
   ...props
-}: React.ComponentProps<typeof AlertDialogPrimitive.Title>) {
+}: React.ComponentPropsWithoutRef<typeof AlertDialogPrimitive.Title> & {
+  className?: string
+}) {
   return (
     <AlertDialogPrimitive.Title
       data-slot="alert-dialog-title"
@@ -126,7 +131,7 @@ function AlertDialogTitle({
         "font-heading text-base font-medium sm:group-data-[size=default]/alert-dialog-content:group-has-data-[slot=alert-dialog-media]/alert-dialog-content:col-start-2",
         className
       )}
-      {...props}
+      {...(props as React.ComponentPropsWithoutRef<"h2">)}
     />
   )
 }
@@ -134,7 +139,9 @@ function AlertDialogTitle({
 function AlertDialogDescription({
   className,
   ...props
-}: React.ComponentProps<typeof AlertDialogPrimitive.Description>) {
+}: React.ComponentPropsWithoutRef<typeof AlertDialogPrimitive.Description> & {
+  className?: string
+}) {
   return (
     <AlertDialogPrimitive.Description
       data-slot="alert-dialog-description"
@@ -142,7 +149,7 @@ function AlertDialogDescription({
         "text-sm text-balance text-muted-foreground md:text-pretty *:[a]:underline *:[a]:underline-offset-3 *:[a]:hover:text-foreground",
         className
       )}
-      {...props}
+      {...(props as React.ComponentPropsWithoutRef<"p">)}
     />
   )
 }
@@ -152,14 +159,16 @@ function AlertDialogAction({
   variant = "default",
   size = "default",
   ...props
-}: React.ComponentProps<typeof AlertDialogPrimitive.Action> &
-  Pick<React.ComponentProps<typeof Button>, "variant" | "size">) {
+}: React.ComponentPropsWithoutRef<typeof AlertDialogPrimitive.Action> &
+  Pick<React.ComponentPropsWithoutRef<typeof Button>, "variant" | "size"> & {
+    className?: string
+  }) {
   return (
     <Button variant={variant} size={size} asChild>
       <AlertDialogPrimitive.Action
         data-slot="alert-dialog-action"
         className={cn(className)}
-        {...props}
+        {...(props as React.ComponentPropsWithoutRef<"button">)}
       />
     </Button>
   )
@@ -170,14 +179,16 @@ function AlertDialogCancel({
   variant = "outline",
   size = "default",
   ...props
-}: React.ComponentProps<typeof AlertDialogPrimitive.Cancel> &
-  Pick<React.ComponentProps<typeof Button>, "variant" | "size">) {
+}: React.ComponentPropsWithoutRef<typeof AlertDialogPrimitive.Cancel> &
+  Pick<React.ComponentPropsWithoutRef<typeof Button>, "variant" | "size"> & {
+    className?: string
+  }) {
   return (
     <Button variant={variant} size={size} asChild>
       <AlertDialogPrimitive.Cancel
         data-slot="alert-dialog-cancel"
         className={cn(className)}
-        {...props}
+        {...(props as React.ComponentPropsWithoutRef<"button">)}
       />
     </Button>
   )
