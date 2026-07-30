@@ -35,14 +35,31 @@ constructor(
   private readonly categoryRepository: CategoryRepository,
 ) {}
 
-  async getOrders(
-    userId: string,
-  ): Promise<Order[]> {
-    return this.orderRepository.findByUser(
+async getOrders(
+  userId: string,
+): Promise<Order[]> {
+  const orders =
+    await this.orderRepository.findByUser(
       userId,
     );
-  }
 
+  return Promise.all(
+    orders.map(async (order) => {
+      const items =
+        await this.orderItemRepository.findByOrder(
+          order.id,
+        );
+
+      return {
+        ...order,
+        image:
+          items.length > 0
+            ? items[0].image
+            : null,
+      };
+    }),
+  );
+}
   async getAllOrders(): Promise<Order[]> {
     return this.orderRepository.findAll();
   }

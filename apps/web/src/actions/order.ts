@@ -1,8 +1,6 @@
 "use server";
 
-import type {
-  PlaceOrderRequest,
-} from "@africasuk/types";
+import type { PlaceOrderRequest } from "@africasuk/types";
 
 import {
   OrderItemRepository,
@@ -13,7 +11,6 @@ import {
 } from "@africasuk/database";
 
 import {
-  MTNMomoService,
   OrderCommandService,
   PaymentService,
 } from "@africasuk/api";
@@ -28,13 +25,10 @@ export async function placeOrder(
 
   const {
     data: { user },
-  } =
-    await supabase.auth.getUser();
+  } = await supabase.auth.getUser();
 
   if (!user) {
-    throw new Error(
-      "You must be signed in.",
-    );
+    throw new Error("You must be signed in.");
   }
 
   const orderService =
@@ -49,7 +43,6 @@ export async function placeOrder(
     new PaymentService(
       new PaymentRepository(supabase),
       orderService,
-      new MTNMomoService(),
     );
 
   return paymentService.checkout({

@@ -53,20 +53,22 @@ export class ProfileRepository {
     supabase: SupabaseClient,
     userId: string
   ): Promise<Profile> {
-    const { data, error } =
-      await supabase
-        .from("profiles")
-        .select("*")
-        .eq("user_id", userId)
-        .single();
+const { data, error } =
+  await supabase
+    .from("profiles")
+    .select("*")
+    .eq("user_id", userId)
+    .maybeSingle();
 
-    if (error) {
-      throw error;
-    }
+if (error) {
+  throw error;
+}
 
-    return this.map(
-      data as ProfileRow
-    );
+if (!data) {
+  throw new Error("Profile not found.");
+}
+
+return this.map(data as ProfileRow);
   }
 
   static async update(

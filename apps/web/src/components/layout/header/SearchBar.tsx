@@ -1,6 +1,6 @@
 "use client";
 
-import { FormEvent, useState, useRef, useEffect } from "react";
+import { FormEvent, useState, useRef, useEffect, useCallback } from "react";
 import { Search, X, Loader2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import type { Category, ProductWithDetails } from "@africasuk/types";
@@ -18,13 +18,9 @@ export default function SearchBar({}: SearchBarProps) {
   const inputRef = useRef<HTMLInputElement>(null);
 
   const [query, setQuery] = useState("");
-const [suggestions, setSuggestions] =
-  useState<ProductWithDetails[]>([]);
+  const [suggestions, setSuggestions] = useState<ProductWithDetails[]>([]);
+  const [loading, setLoading] = useState(false);
 
-const [loading, setLoading] =
-  useState(false);
-
-  // Close suggestions overlay when clicking outside
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
       if (formRef.current && !formRef.current.contains(event.target as Node)) {
@@ -35,46 +31,48 @@ const [loading, setLoading] =
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-async function handleSearch(value: string) {
-  setQuery(value);
+  const fetchSuggestions = useCallback(async (searchTerm: string) => {
+    try {
+      setLoading(true);
 
-  if (value.trim().length < 2) {
-    setSuggestions([]);
-    return;
-  }
+      const res = await fetch(
+        `/api/search?q=${encodeURIComponent(searchTerm)}`
+      );
 
-  try {
-    setLoading(true);
+      if (!res.ok) {
+        setSuggestions([]);
+        return;
+      }
 
-    const res = await fetch(
-      `/api/search?q=${encodeURIComponent(value)}`
-    );
+      const text = await res.text();
+      if (!text) {
+        setSuggestions([]);
+        return;
+      }
 
-    if (!res.ok) {
+      const data = JSON.parse(text);
+      setSuggestions(Array.isArray(data) ? data : []);
+    } catch (error) {
+      console.error("Search error:", error);
       setSuggestions([]);
-      return;
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    const trimmed = query.trim();
+    if (trimmed.length < 2) {
+      const timeout = setTimeout(() => setSuggestions([]), 0);
+      return () => clearTimeout(timeout);
     }
 
-    const text = await res.text();
+    const timer = setTimeout(() => {
+      fetchSuggestions(trimmed);
+    }, 300);
 
-    if (!text) {
-      setSuggestions([]);
-      return;
-    }
-
-    const data = JSON.parse(text);
-
-    setSuggestions(
-      Array.isArray(data) ? data : []
-    );
-
-  } catch (error) {
-    console.error("Search error:", error);
-    setSuggestions([]);
-  } finally {
-    setLoading(false);
-  }
-}
+    return () => clearTimeout(timer);
+  }, [query, fetchSuggestions]);
 
   function handleSubmit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -94,28 +92,23 @@ async function handleSearch(value: string) {
       onSubmit={handleSubmit}
       className="group relative flex h-11 w-full items-center rounded-full border border-gray-200 bg-gray-50/80 shadow-2xs transition-all duration-300 focus-within:border-[#002b15] focus-within:bg-white focus-within:ring-2 focus-within:ring-[#002b15]/20 hover:border-gray-300"
     >
-      {/* Search Icon */}
       <div className="absolute left-4 flex items-center pointer-events-none text-gray-400 group-focus-within:text-[#002b15] transition-colors duration-200">
         <Search className="h-4 w-4 stroke-[2.2]" />
       </div>
 
-      {/* Input Field */}
       <Input
         ref={inputRef}
         value={query}
-        onChange={(e) => handleSearch(e.target.value)}
+        onChange={(e) => setQuery(e.target.value)}
         placeholder="Search products, categories, premium brands..."
         className="h-full w-full border-0 shadow-none focus-visible:ring-0 bg-transparent pl-11 pr-24 text-xs sm:text-sm font-medium text-gray-900 placeholder:text-gray-400"
       />
 
-      {/* Right Action Controls */}
       <div className="absolute right-1 flex items-center gap-1">
-        {/* Loading Spinner */}
         {loading && (
           <Loader2 className="h-4 w-4 animate-spin text-[#002b15]" />
         )}
 
-        {/* Clear Text Trigger */}
         {query && (
           <button
             type="button"
@@ -131,7 +124,6 @@ async function handleSearch(value: string) {
           </button>
         )}
 
-        {/* Submit Action Button */}
         <Button
           type="submit"
           size="sm"
@@ -141,7 +133,6 @@ async function handleSearch(value: string) {
         </Button>
       </div>
 
-      {/* Live Search Suggestions Dropdown Overlay */}
       {suggestions.length > 0 && (
         <div className="absolute top-12 left-0 right-0 z-50 overflow-hidden rounded-2xl border border-gray-100 bg-white shadow-xl animate-in fade-in-50 zoom-in-95 duration-200">
           <div className="max-h-72 overflow-y-auto divide-y divide-gray-50">
@@ -159,11 +150,11 @@ async function handleSearch(value: string) {
                   <p className="text-xs sm:text-sm font-semibold text-gray-800 group-hover/item:text-[#002b15] truncate">
                     {product.name}
                   </p>
-                    {product.category && (
-                      <p className="text-[10px] text-gray-400 font-medium">
-                        {product.category.name}
-                      </p>
-                    )}
+                  {product.category && (
+                    <p className="text-[10px] text-gray-400 font-medium">
+                      {product.category.name}
+                    </p>
+                  )}
                 </div>
               </button>
             ))}

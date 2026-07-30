@@ -1,5 +1,4 @@
 import type {
-  CreatePaymentDto,
   Payment,
   PlaceOrderRequest,
 } from "@africasuk/types";
@@ -9,13 +8,11 @@ import {
 } from "@africasuk/database";
 
 import { OrderCommandService } from "../orders";
-import { MTNMomoService } from "./MTNMomoService";
 
 export class PaymentService {
   constructor(
     private readonly paymentRepository: PaymentRepository,
     private readonly orderCommandService: OrderCommandService,
-    private readonly mtnMomoService: MTNMomoService,
   ) {}
 
   async checkout(
@@ -33,10 +30,9 @@ export class PaymentService {
         orderId: order.id,
 
         provider:
-        request.paymentMethod ===
-        "ONLINE"
-          ? "MTN_MOMO"
-          : "CASH_ON_DELIVERY",
+          request.paymentMethod === "ONLINE"
+            ? "MTN_MOMO"
+            : "CASH_ON_DELIVERY",
 
         amount: order.total,
 
@@ -53,29 +49,12 @@ export class PaymentService {
         payeeNote:
           "AfricaSuk Order",
       });
-    // 3. MTN payment
-    if (
-      payment.provider === "MTN_MOMO"
-    ) {
-     const referenceId =
-  await this.mtnMomoService.requestToPay({
-    amount: payment.amount.toString(),
-    currency: payment.currency,
-    externalId: payment.externalId,
-    phoneNumber: payment.phoneNumber!,
-    payerMessage: payment.payerMessage ?? "",
-    payeeNote: payment.payeeNote ?? "",
-  });
 
-      await this.paymentRepository.update(
-        payment.id,
-        {
-          referenceId,
-        },
+    // MTN MoMo is currently disabled
+    if (payment.provider === "MTN_MOMO") {
+      throw new Error(
+        "MTN MoMo payments are not configured."
       );
-
-      payment.referenceId =
-        referenceId;
     }
 
     return {
@@ -85,58 +64,28 @@ export class PaymentService {
   }
 
   async getPaymentStatus(
-  referenceId: string,
-): Promise<Payment> {
-  const payment =
-    await this.paymentRepository.findByReferenceId(
-      referenceId,
-    );
+    referenceId: string,
+  ): Promise<Payment> {
+    const payment =
+      await this.paymentRepository.findByReferenceId(
+        referenceId,
+      );
 
-  if (!payment) {
+    if (!payment) {
+      throw new Error(
+        "Payment not found.",
+      );
+    }
+
+    if (
+      payment.provider !== "MTN_MOMO" ||
+      !payment.referenceId
+    ) {
+      return payment;
+    }
+
     throw new Error(
-      "Payment not found.",
+      "MTN MoMo payments are not configured."
     );
   }
-
-  if (
-    payment.provider !==
-      "MTN_MOMO" ||
-    !payment.referenceId
-  ) {
-    return payment;
-  }
-
-  const status =
-  await this.mtnMomoService.getRequestToPayStatus(
-    payment.referenceId,
-  );
-
-  if (
-    status.status ===
-      "SUCCESSFUL" &&
-    payment.status !== "PAID"
-  ) {
-    return await this.paymentRepository.update(
-      payment.id,
-      {
-        status: "PAID",
-      },
-    );
-  }
-
-  if (
-    status.status ===
-      "FAILED" &&
-    payment.status !== "FAILED"
-  ) {
-    return await this.paymentRepository.update(
-      payment.id,
-      {
-        status: "FAILED",
-      },
-    );
-  }
-
-  return payment;
-}
 }

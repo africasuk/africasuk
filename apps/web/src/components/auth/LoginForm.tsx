@@ -205,20 +205,14 @@ export default function LoginForm() {
         </button>
       </form>
 
-      <div className="mt-6 text-center text-sm text-muted-foreground">
-        {
-          dictionary.auth
-            .noAccount
-        }{" "}
-        <button
-          type="button"
-          className="cursor-pointer font-bold text-[#004d26] transition-colors hover:text-[#003b1d] hover:underline"
+     <div className="mt-6 text-center text-sm text-muted-foreground">
+        {dictionary.auth.noAccount}{" "}
+        <Link
+          href="/auth/signup"
+          className="font-bold text-[#004d26] transition-colors hover:text-[#003b1d] hover:underline"
         >
-          {
-            dictionary.auth
-              .createAccount
-          }
-        </button>
+          {dictionary.auth.createAccount}
+        </Link>
       </div>
     </div>
   );

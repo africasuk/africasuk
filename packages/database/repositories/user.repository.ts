@@ -8,10 +8,11 @@ type ProfileRow = {
   email: string;
   phone: string | null;
   role:
-    | "SUPER_ADMIN"
-    | "ADMIN"
-    | "MANAGER"
-    | "STAFF";
+  | "SUPER_ADMIN"
+  | "ADMIN"
+  | "MANAGER"
+  | "STAFF"
+  | "CUSTOMER";
   is_active: boolean;
   must_change_password: boolean;
   created_at: string;

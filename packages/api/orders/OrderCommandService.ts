@@ -160,75 +160,45 @@ estimatedDeliveryEnd.setDate(
 );
     const order =
       await this.orderRepository.create({
-        userId:
-          request.userId ?? null,
+  userId: request.userId ?? null,
 
-        orderNumber,
+  orderNumber,
 
-        status: "PENDING",
 
-        paymentStatus:
-          "PENDING",
+  status: "PENDING",
+  paymentStatus: "PENDING",
+  paymentMethod: request.paymentMethod,
 
-        paymentMethod:
-          request.paymentMethod,
+  subtotal,
+  shipping,
+  tax,
+  discount,
+  total,
 
-        subtotal,
-        shipping,
-        tax,
-        discount,
-        total,
+  currency: request.currency,
 
-        currency:
-          request.currency,
+  customerName: request.customer.name,
+  customerEmail: request.customer.email,
+  customerPhone: request.customer.phone ?? null,
 
-        customerName:
-          request.customer.name,
+  country: request.customer.country,
+  state: request.customer.state ?? null,
+  city: request.customer.city,
+  address: request.customer.address,
+  postalCode: request.customer.postalCode ?? null,
+  notes: request.customer.notes ?? null,
 
-        customerEmail:
-          request.customer.email,
+  estimatedDeliveryStart:
+    estimatedDeliveryStart.toISOString().split("T")[0],
 
-        customerPhone:
-          request.customer.phone ??
-          null,
+  estimatedDeliveryEnd:
+    estimatedDeliveryEnd.toISOString().split("T")[0],
 
-        country:
-          request.customer.country,
+  estimatedDeliveryUpdatedAt: new Date().toISOString(),
 
-        state:
-          request.customer.state ??
-          null,
-
-        city:
-          request.customer.city,
-
-        address:
-          request.customer.address,
-
-        postalCode:
-          request.customer
-            .postalCode ?? null,
-
-        notes:
-          request.customer.notes ??
-          null,
-
-        estimatedDeliveryStart:
-          estimatedDeliveryStart
-            .toISOString()
-            .split("T")[0],
-
-        estimatedDeliveryEnd:
-          estimatedDeliveryEnd
-            .toISOString()
-            .split("T")[0],
-
-        estimatedDeliveryUpdatedAt:
-          new Date().toISOString(),
-
-        trackingNumber: null,
-        adminNotes: null,
-      });
+  trackingNumber: null,
+  adminNotes: null,
+});
 
     await this.orderItemRepository.createMany(
       orderItems.map((item) => ({

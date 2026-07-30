@@ -1,3 +1,4 @@
+import Image from "next/image";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { 
@@ -14,6 +15,7 @@ import Layout from "@/components/layout/Layout";
 import Container from "@/components/layout/Container";
 import { createClient } from "@/lib/auth/server";
 import { Price } from "@/components/currency/Price";
+import { Order } from "@africasuk/types";
 
 // Helper to format raw enum status into user-friendly text
 function formatStatus(status: string) {
@@ -98,18 +100,33 @@ export default async function OrdersPage() {
             ) : (
               /* Orders Feed */
               <div className="space-y-4">
-                {orders.map((order) => {
-                  const statusText = formatStatus(order.status);
-                  const badgeStyle = getStatusBadgeStyle(order.status);
+                {orders.map((orderItem) => {
+                const order = orderItem as Order & { image?: string | null };
+                const statusText = formatStatus(order.status);
+                const badgeStyle = getStatusBadgeStyle(order.status);
 
-                  return (
-                    <div
-                      key={order.id}
-                      className="group relative overflow-hidden rounded-2xl border border-gray-200/80 bg-white p-5 sm:p-6 shadow-xs hover:border-[#005c2e]/40 hover:shadow-md transition-all duration-200"
-                    >
-                      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-                        
-                        {/* Order Metadata */}
+                return (
+                  <div
+                    key={order.id}
+                    className="group relative overflow-hidden rounded-2xl border border-gray-200/80 bg-white p-5 sm:p-6 shadow-xs hover:border-[#005c2e]/40 hover:shadow-md transition-all duration-200"
+                  >
+                    <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+                      
+                      {/* Order Image & Metadata */}
+                      <div className="flex items-center gap-4">
+                        {order.image ? (
+                          <Image
+                            src={order.image}
+                            alt={`Order #${order.orderNumber}`}
+                            width={72}
+                            height={72}
+                            className="h-18 w-18 rounded-lg object-cover"
+                          />
+                        ) : (
+                          <div className="flex h-18 w-18 items-center justify-center rounded-lg bg-gray-100 text-xs text-gray-500">
+                            No Image
+                          </div>
+                        )}
                         <div className="space-y-1.5">
                           <div className="flex flex-wrap items-center gap-2.5">
                             <span className="text-sm sm:text-base font-black tracking-tight text-[#002b15]">
@@ -139,43 +156,42 @@ export default async function OrdersPage() {
                             </span>
                           </div>
                         </div>
+                      </div>
 
-                        {/* Price & Primary Navigation Actions */}
-                        <div className="flex items-center justify-between gap-4 border-t border-gray-100 pt-3 sm:border-t-0 sm:pt-0 sm:justify-end">
-                          <div className="text-left sm:text-right">
-                            <span className="block text-[9px] font-black uppercase tracking-widest text-gray-400">
-                              Total Amount
-                            </span>
-                            <div className="text-base sm:text-lg font-black text-[#002b15]">
-                              <Price price={order.total} />
-                            </div>
-                          </div>
-
-                          <div className="flex items-center gap-2">
-                            {/* Live Route Tracker Quick-Button */}
-                            <Link
-                              href={`/track/${order.orderNumber}`}
-                              className="inline-flex items-center gap-1.5 rounded-xl border border-emerald-200/80 bg-emerald-50/60 px-3 py-2 text-[10px] font-black uppercase tracking-wider text-[#005c2e] hover:bg-emerald-100/80 transition-colors"
-                            >
-                              <span>Track Live</span>
-                              <ExternalLink className="h-3 w-3" />
-                            </Link>
-
-                            {/* Full Order Details Link */}
-                            <Link
-                              href={`/account/orders/${order.orderNumber}`}
-                              aria-label="View order details"
-                              className="flex h-9 w-9 items-center justify-center rounded-xl bg-gray-50 text-gray-600 hover:bg-[#002b15] hover:text-white transition-all duration-200 active:scale-95"
-                            >
-                              <ChevronRight className="h-4 w-4" />
-                            </Link>
+                      {/* Price & Navigation Actions */}
+                      <div className="flex items-center justify-between gap-4 border-t border-gray-100 pt-3 sm:border-t-0 sm:pt-0 sm:justify-end">
+                        <div className="text-left sm:text-right">
+                          <span className="block text-[9px] font-black uppercase tracking-widest text-gray-400">
+                            Total Amount
+                          </span>
+                          <div className="text-base sm:text-lg font-black text-[#002b15]">
+                            <Price price={order.total} />
                           </div>
                         </div>
 
+                        <div className="flex items-center gap-2">
+                          <Link
+                            href={`/track/${order.orderNumber}`}
+                            className="inline-flex items-center gap-1.5 rounded-xl border border-emerald-200/80 bg-emerald-50/60 px-3 py-2 text-[10px] font-black uppercase tracking-wider text-[#005c2e] hover:bg-emerald-100/80 transition-colors"
+                          >
+                            <span>Track Live</span>
+                            <ExternalLink className="h-3 w-3" />
+                          </Link>
+
+                          <Link
+                            href={`/account/orders/${order.orderNumber}`}
+                            aria-label="View order details"
+                            className="flex h-9 w-9 items-center justify-center rounded-xl bg-gray-50 text-gray-600 hover:bg-[#002b15] hover:text-white transition-all duration-200 active:scale-95"
+                          >
+                            <ChevronRight className="h-4 w-4" />
+                          </Link>
+                        </div>
                       </div>
+
                     </div>
-                  );
-                })}
+                  </div>
+                );
+              })}
               </div>
             )}
             

@@ -12,7 +12,8 @@ export interface User {
     | "SUPER_ADMIN"
     | "ADMIN"
     | "MANAGER"
-    | "STAFF";
+    | "STAFF"
+    | "CUSTOMER";
 
   isActive: boolean;
 

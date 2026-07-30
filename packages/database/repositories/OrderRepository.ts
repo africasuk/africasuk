@@ -5,6 +5,8 @@ import type { Order } from "@africasuk/types";
 type OrderRow = {
   id: string;
 
+  image: string | null;
+
   user_id: string | null;
 
   order_number: string;
@@ -60,6 +62,7 @@ export class OrderRepository {
 
       orderNumber: row.order_number,
 
+
       status: row.status,
       paymentStatus: row.payment_status,
 
@@ -85,20 +88,13 @@ export class OrderRepository {
 
       notes: row.notes,
 
-      estimatedDeliveryStart:
-        row.estimated_delivery_start,
-
-      estimatedDeliveryEnd:
-        row.estimated_delivery_end,
-
+      estimatedDeliveryStart: row.estimated_delivery_start,
+      estimatedDeliveryEnd: row.estimated_delivery_end,
       estimatedDeliveryUpdatedAt:
         row.estimated_delivery_updated_at,
 
-      trackingNumber:
-        row.tracking_number,
-
-      adminNotes:
-        row.admin_notes,
+      trackingNumber: row.tracking_number,
+      adminNotes: row.admin_notes,
 
       createdAt: row.created_at,
       updatedAt: row.updated_at,
@@ -126,15 +122,12 @@ export class OrderRepository {
   async findById(
     id: string,
   ): Promise<Order | null> {
-
-
     const { data, error } =
       await this.supabase
         .from("orders")
         .select("*")
         .eq("id", id)
         .maybeSingle();
-
 
     if (error) {
       throw error;
@@ -150,8 +143,6 @@ export class OrderRepository {
   async findByOrderNumber(
     orderNumber: string,
   ): Promise<Order | null> {
-
-
     const { data, error } =
       await this.supabase
         .from("orders")
@@ -161,8 +152,6 @@ export class OrderRepository {
           orderNumber,
         )
         .maybeSingle();
-
-
 
     if (error) {
       throw error;
@@ -175,25 +164,26 @@ export class OrderRepository {
       : null;
   }
 
-  async findByUser(
-    userId: string,
-  ): Promise<Order[]> {
-    const { data, error } =
-      await this.supabase
-        .from("orders")
-        .select("*")
-        .eq("user_id", userId)
-        .order("created_at", {
-          ascending: false,
-        });
+  async findByUser(userId: string): Promise<(Order & { image?: string | null })[]> {
+    const { data, error } = await this.supabase
+      .from("orders")
+      .select(`
+        *,
+        order_items (
+          image
+        )
+      `)
+      .eq("user_id", userId)
+      .order("created_at", { ascending: false });
 
     if (error) {
       throw error;
     }
 
-    return (data ?? []).map((row) =>
-      this.mapOrder(row as OrderRow),
-    );
+    return (data ?? []).map((row: any) => ({
+      ...this.mapOrder(row as OrderRow),
+      image: row.order_items?.[0]?.image ?? null,
+    }));
   }
 
   async create(
@@ -206,14 +196,13 @@ export class OrderRepository {
       await this.supabase
         .from("orders")
         .insert({
+
           user_id: order.userId,
           order_number: order.orderNumber,
 
           status: order.status,
-          payment_status:
-            order.paymentStatus,
-          payment_method:
-            order.paymentMethod,
+          payment_status: order.paymentStatus,
+          payment_method: order.paymentMethod,
 
           subtotal: order.subtotal,
           shipping: order.shipping,
@@ -223,36 +212,24 @@ export class OrderRepository {
 
           currency: order.currency,
 
-          customer_name:
-            order.customerName,
-          customer_email:
-            order.customerEmail,
-          customer_phone:
-            order.customerPhone,
+          customer_name: order.customerName,
+          customer_email: order.customerEmail,
+          customer_phone: order.customerPhone,
 
           country: order.country,
           state: order.state,
           city: order.city,
           address: order.address,
-          postal_code:
-            order.postalCode,
+          postal_code: order.postalCode,
 
           notes: order.notes,
 
-          estimated_delivery_start:
-            order.estimatedDeliveryStart,
+          estimated_delivery_start: order.estimatedDeliveryStart,
+          estimated_delivery_end: order.estimatedDeliveryEnd,
+          estimated_delivery_updated_at: order.estimatedDeliveryUpdatedAt,
 
-          estimated_delivery_end:
-            order.estimatedDeliveryEnd,
-
-          estimated_delivery_updated_at:
-            order.estimatedDeliveryUpdatedAt,
-
-          tracking_number:
-            order.trackingNumber,
-
-          admin_notes:
-            order.adminNotes,
+          tracking_number: order.trackingNumber,
+          admin_notes: order.adminNotes,
         })
         .select()
         .single();
@@ -338,7 +315,7 @@ export class OrderRepository {
     }
 
     updateData.updated_at =
-  new Date().toISOString();
+      new Date().toISOString();
 
     const { error } =
       await this.supabase
