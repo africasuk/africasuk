@@ -3,7 +3,6 @@ import { NextResponse } from "next/server";
 import {
   OrderCommandService,
   PaymentService,
-  MTNMomoService,
 } from "@africasuk/api";
 
 import {
@@ -35,7 +34,6 @@ export async function POST(request: Request) {
       new PaymentService(
         new PaymentRepository(supabase),
         orderService,
-        new MTNMomoService(),
       );
 
     const result =
