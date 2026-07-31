@@ -31,14 +31,11 @@ export default function EmptyState({
       </p>
 
       {actionHref && actionLabel && (
-        <Button
-          asChild
-          className="mt-6"
-        >
-          <Link href={actionHref}>
+        <Link href={actionHref}>
+          <Button className="mt-6">
             {actionLabel}
-          </Link>
-        </Button>
+          </Button>
+        </Link>
       )}
     </div>
   );

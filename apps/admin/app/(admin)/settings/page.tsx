@@ -39,11 +39,11 @@ export default function SettingsPage() {
                 </p>
               </div>
 
-              <Button asChild>
-                <Link href={setting.href}>
+             <Link href={setting.href}>
+                <Button>
                   Open
-                </Link>
-              </Button>
+                </Button>
+              </Link>
             </CardContent>
           </Card>
         ))}

@@ -28,19 +28,17 @@ export default function RowActions({
 }: RowActionsProps) {
   return (
     <div className="flex items-center justify-end gap-2">
-      {showEdit && (
-        <Button
-          asChild
-          variant="outline"
-          size="sm"
-        >
+     {showEdit && (
           <Link href={editHref}>
-            <Edit className="mr-2 h-4 w-4" />
-            Edit
+            <Button
+              variant="outline"
+              size="sm"
+            >
+              <Edit className="mr-2 h-4 w-4" />
+              Edit
+            </Button>
           </Link>
-        </Button>
-      )}
-
+        )}
       {showDelete &&
         deleteTitle &&
         deleteDescription &&

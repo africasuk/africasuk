@@ -48,18 +48,20 @@ export default function PageHeader({
       {actions && actions.length > 0 && (
         <div className="flex flex-col gap-2 w-full sm:w-auto sm:flex-row sm:flex-wrap sm:items-center">
           {actions.map((action) => (
+          <Link
+            key={action.href}
+            href={action.href}
+            className="w-full sm:w-auto"
+          >
             <Button
-              key={action.href}
               variant={action.variant ?? "default"}
-              asChild
-              className="w-full sm:w-auto"
+              className="w-full"
             >
-              <Link href={action.href} className="flex items-center justify-center gap-2">
-                {action.icon ?? <Plus className="h-4 w-4" />}
-                <span>{action.label}</span>
-              </Link>
+              {action.icon ?? <Plus className="h-4 w-4" />}
+              <span>{action.label}</span>
             </Button>
-          ))}
+          </Link>
+        ))}
         </div>
       )}
     </div>

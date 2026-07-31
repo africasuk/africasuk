@@ -59,7 +59,9 @@ export function ProductInfoCard({
             <Label>Category</Label>
             <Select
               value={info.categoryId}
-              onValueChange={(val) => updateInfoField("categoryId", val)}
+              onValueChange={(val) =>
+                updateInfoField("categoryId", val ?? "")
+              }
             >
               <SelectTrigger>
                 <SelectValue placeholder="Select category" />
@@ -78,7 +80,9 @@ export function ProductInfoCard({
             <Label>Brand</Label>
             <Select
               value={info.brandId}
-              onValueChange={(val) => updateInfoField("brandId", val)}
+              onValueChange={(val) =>
+                    updateInfoField("brandId", val ?? "")
+                  }
             >
               <SelectTrigger>
                 <SelectValue placeholder="Select brand" />

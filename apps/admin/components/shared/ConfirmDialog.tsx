@@ -49,7 +49,7 @@ export default function ConfirmDialog({
 
   return (
     <AlertDialog>
-      <AlertDialogTrigger asChild>
+      <AlertDialogTrigger >
         {children}
       </AlertDialogTrigger>
 
@@ -69,7 +69,7 @@ export default function ConfirmDialog({
             {cancelText}
           </AlertDialogCancel>
 
-          <AlertDialogAction asChild>
+          <AlertDialogAction >
             <Button
               onClick={handleConfirm}
               disabled={loading}

@@ -122,27 +122,24 @@ export default function AppSidebar({
                     );
 
                   return (
-                    <SidebarMenuItem
-                      key={item.href}
-                    >
-                      <SidebarMenuButton
-                        asChild
-                        isActive={active}
-                        tooltip={item.title}
-                        className="h-10 rounded-lg"
-                      >
-                        <Link
-                          href={item.href}
-                          className="flex items-center gap-3"
-                        >
-                          <Icon className="h-4 w-4 shrink-0" />
+<SidebarMenuItem key={item.href}>
+  <Link
+    href={item.href}
+    className="flex items-center gap-3"
+  >
+    <SidebarMenuButton
+      isActive={active}
+      tooltip={item.title}
+      className="h-10 rounded-lg"
+    >
+      <Icon className="h-4 w-4 shrink-0" />
 
-                          {!collapsed && (
-                            <span>{item.title}</span>
-                          )}
-                        </Link>
-                      </SidebarMenuButton>
-                    </SidebarMenuItem>
+      {!collapsed && (
+        <span>{item.title}</span>
+      )}
+    </SidebarMenuButton>
+  </Link>
+</SidebarMenuItem>
                   );
                 })}
               </SidebarMenu>

@@ -35,11 +35,11 @@ export function OrderItemDialog({ item }: Props) {
 
   return (
     <Dialog>
-      <DialogTrigger asChild>
-        <Button size="sm" variant="outline">
-          View Details
-        </Button>
-      </DialogTrigger>
+     <DialogTrigger>
+      <Button size="sm" variant="outline">
+        View Details
+      </Button>
+    </DialogTrigger>
 
       <DialogContent className="w-[calc(100%-2rem)] sm:max-w-4xl lg:max-w-6xl max-h-[90vh] overflow-y-auto p-4 sm:p-6 rounded-xl">
         <DialogHeader className="pr-6">

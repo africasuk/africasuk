@@ -118,31 +118,30 @@ export function ProductTable({ products }: Props) {
                     {product.isActive ? "Active" : "Inactive"}
                   </Badge>
                 </TableCell>
-
-                <TableCell className="text-right">
-                  <div className="flex justify-end gap-2">
-                    <Button asChild size="icon" variant="outline">
+                  <TableCell className="text-right">
+                    <div className="flex justify-end gap-2">
                       <Link href={`/products/${product.id}`}>
-                        <Eye className="h-4 w-4" />
+                        <Button size="icon" variant="outline">
+                          <Eye className="h-4 w-4" />
+                        </Button>
                       </Link>
-                    </Button>
 
-                    <Button asChild size="icon" variant="outline">
                       <Link href={`/products/${product.id}/edit`}>
-                        <Pencil className="h-4 w-4" />
+                        <Button size="icon" variant="outline">
+                          <Pencil className="h-4 w-4" />
+                        </Button>
                       </Link>
-                    </Button>
 
-                    <Button
-                      size="icon"
-                      variant="destructive"
-                      disabled={deletingId === product.id}
-                      onClick={() => handleDelete(product.id)}
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
-                  </div>
-                </TableCell>
+                      <Button
+                        size="icon"
+                        variant="destructive"
+                        disabled={deletingId === product.id}
+                        onClick={() => handleDelete(product.id)}
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  </TableCell>
               </TableRow>
             );
           })}

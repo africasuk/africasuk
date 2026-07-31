@@ -92,37 +92,24 @@ export function ProductRequestDialog({
 
             <div>
               <h3 className="mb-2 font-semibold">Status</h3>
+            <Select
+              value={status}
+              onValueChange={(value) => {
+              if (value) setStatus(value);
+            }}
+            >
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
 
-              <Select
-                value={status}
-                onValueChange={setStatus}
-              >
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-
-                <SelectContent>
-                  <SelectItem value="pending">
-                    Pending
-                  </SelectItem>
-
-                  <SelectItem value="reviewing">
-                    Reviewing
-                  </SelectItem>
-
-                  <SelectItem value="sourcing">
-                    Sourcing
-                  </SelectItem>
-
-                  <SelectItem value="available">
-                    Available
-                  </SelectItem>
-
-                  <SelectItem value="rejected">
-                    Rejected
-                  </SelectItem>
-                </SelectContent>
-              </Select>
+              <SelectContent>
+                <SelectItem value="pending">Pending</SelectItem>
+                <SelectItem value="reviewing">Reviewing</SelectItem>
+                <SelectItem value="sourcing">Sourcing</SelectItem>
+                <SelectItem value="available">Available</SelectItem>
+                <SelectItem value="rejected">Rejected</SelectItem>
+              </SelectContent>
+            </Select>
             </div>
 
             {status === "available" && (

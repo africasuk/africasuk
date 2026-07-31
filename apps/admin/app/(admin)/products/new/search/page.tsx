@@ -105,21 +105,19 @@ export default function SearchProductPage() {
           <div className="space-y-4">
             {results.map((product) => (
               <Card key={product.id}>
-                <CardContent className="flex items-center justify-between p-6">
-                  <div className="space-y-1">
-                    <h3 className="font-semibold">
-                      {product.name}
-                    </h3>
-                  </div>
+<CardContent className="flex items-center justify-between p-6">
+  <div className="space-y-1">
+    <h3 className="font-semibold">
+      {product.name}
+    </h3>
+  </div>
 
-                  <Button asChild>
-                    <Link
-                      href={`/products/${product.id}/edit`}
-                    >
-                      Open
-                    </Link>
-                  </Button>
-                </CardContent>
+  <Link href={`/products/${product.id}/edit`}>
+    <Button>
+      Open
+    </Button>
+  </Link>
+</CardContent>
               </Card>
             ))}
           </div>

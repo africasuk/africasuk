@@ -141,27 +141,25 @@ export default function UserActions({
 
   return (
     <DropdownMenu>
-      <DropdownMenuTrigger asChild>
-        <Button
-          size="icon"
-          variant="ghost"
-        >
-          <MoreHorizontal className="h-4 w-4" />
-        </Button>
-      </DropdownMenuTrigger>
+      <DropdownMenuTrigger>
+          <Button
+            size="icon"
+            variant="ghost"
+          >
+            <MoreHorizontal className="h-4 w-4" />
+          </Button>
+        </DropdownMenuTrigger>
 
       <DropdownMenuContent
         align="end"
         className="w-56"
       >
-        <DropdownMenuItem asChild>
-          <Link
-            href={`/users/${user.id}/edit`}
-          >
-            <Pencil className="mr-2 h-4 w-4" />
-            Edit User
+       <Link href={`/users/${user.id}/edit`}>
+            <DropdownMenuItem>
+              <Pencil className="mr-2 h-4 w-4" />
+              Edit User
+            </DropdownMenuItem>
           </Link>
-        </DropdownMenuItem>
 
         {!isSuperAdmin && (
           <>

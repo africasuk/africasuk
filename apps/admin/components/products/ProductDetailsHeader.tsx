@@ -15,26 +15,26 @@ export function ProductDetailsHeader({
   name,
 }: Props) {
   return (
-    <div className="flex items-center justify-between mb-6">
+   <div className="mb-6 flex items-center justify-between">
       <div>
-        <Button asChild variant="outline" size="sm">
-          <Link href="/products">
+        <Link href="/products">
+          <Button variant="outline" size="sm">
             <ArrowLeft className="mr-2 h-4 w-4" />
             Back
-          </Link>
-        </Button>
+          </Button>
+        </Link>
 
         <h1 className="mt-4 text-2xl font-bold">
           {name}
         </h1>
       </div>
 
-      <Button asChild>
-        <Link href={`/products/${productId}/edit`}>
+      <Link href={`/products/${productId}/edit`}>
+        <Button>
           <Pencil className="mr-2 h-4 w-4" />
           Edit Product
-        </Link>
-      </Button>
+        </Button>
+      </Link>
     </div>
   );
 }

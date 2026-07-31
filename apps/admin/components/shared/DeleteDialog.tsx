@@ -70,7 +70,7 @@ export default function DeleteDialog({
 
   return (
     <AlertDialog>
-      <AlertDialogTrigger asChild>
+      <AlertDialogTrigger >
         <Button
           variant="destructive"
           size="sm"

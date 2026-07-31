@@ -1,15 +1,8 @@
 import Link from "next/link";
-import {
-  AlertTriangle,
-  ArrowLeft,
-  Home,
-} from "lucide-react";
+import { AlertTriangle, ArrowLeft, Home } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-} from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 
 export default function NotFound() {
   return (
@@ -20,9 +13,7 @@ export default function NotFound() {
             <AlertTriangle className="h-10 w-10 text-destructive" />
           </div>
 
-          <h1 className="text-5xl font-bold tracking-tight">
-            404
-          </h1>
+          <h1 className="text-5xl font-bold tracking-tight">404</h1>
 
           <h2 className="mt-4 text-2xl font-semibold">
             Page Not Found
@@ -34,19 +25,19 @@ export default function NotFound() {
           </p>
 
           <div className="mt-8 flex flex-wrap justify-center gap-3">
-            <Button asChild>
-              <Link href="/">
+            <Link href="/">
+              <Button>
                 <Home className="mr-2 h-4 w-4" />
                 Dashboard
-              </Link>
-            </Button>
+              </Button>
+            </Link>
 
-            <Button asChild variant="outline">
-              <Link href="/">
+            <Link href="/">
+              <Button variant="outline">
                 <ArrowLeft className="mr-2 h-4 w-4" />
                 Go Back
-              </Link>
-            </Button>
+              </Button>
+            </Link>
           </div>
         </CardContent>
       </Card>

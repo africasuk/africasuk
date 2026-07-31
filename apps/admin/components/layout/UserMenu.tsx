@@ -91,38 +91,32 @@ export default function UserMenu() {
 
   return (
     <DropdownMenu>
-      <DropdownMenuTrigger asChild>
-        <Button
-          variant="ghost"
-          className="flex h-10 items-center gap-3 px-2"
-        >
-          <Avatar className="h-8 w-8">
-            <AvatarImage
-              src={
-                profile?.avatar_url ?? ""
-              }
-              alt={profile?.full_name}
-            />
+<DropdownMenuTrigger>
+  <Button
+    variant="ghost"
+    className="flex h-10 items-center gap-3 px-2"
+  >
+    <Avatar className="h-8 w-8">
+      <AvatarImage
+        src={profile?.avatar_url ?? ""}
+        alt={profile?.full_name}
+      />
+      <AvatarFallback>{initials}</AvatarFallback>
+    </Avatar>
 
-            <AvatarFallback>
-              {initials}
-            </AvatarFallback>
-          </Avatar>
+    <div className="hidden text-left md:block">
+      <p className="text-sm font-medium">
+        {profile?.full_name ?? "Loading..."}
+      </p>
 
-          <div className="hidden text-left md:block">
-            <p className="text-sm font-medium">
-              {profile?.full_name ??
-                "Loading..."}
-            </p>
+      <p className="text-xs text-muted-foreground">
+        {profile?.email ?? ""}
+      </p>
+    </div>
 
-            <p className="text-xs text-muted-foreground">
-              {profile?.email ?? ""}
-            </p>
-          </div>
-
-          <ChevronDown className="h-4 w-4" />
-        </Button>
-      </DropdownMenuTrigger>
+    <ChevronDown className="h-4 w-4" />
+  </Button>
+</DropdownMenuTrigger>
 
       <DropdownMenuContent
         align="end"
