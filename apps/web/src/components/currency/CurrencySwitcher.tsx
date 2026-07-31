@@ -50,12 +50,9 @@ export function CurrencySwitcher() {
 
   return (
     <DropdownMenu>
-      <DropdownMenuTrigger asChild>
-        <button 
-          type="button"
-          className="group flex items-center gap-2 rounded-full border border-gray-200 bg-white px-3 py-1.5 text-left text-gray-700 hover:text-[#002b15] hover:border-gray-300 transition-all duration-200 focus:outline-none select-none cursor-pointer text-xs font-semibold shadow-2xs min-w-22.5 xs:min-w-[105px]"
-        >
-          {/* Universal Region Icon */}
+          <DropdownMenuTrigger
+            className="group flex items-center gap-2 rounded-full border border-gray-200 bg-white px-3 py-1.5 text-left text-gray-700 hover:text-[#002b15] hover:border-gray-300 transition-all duration-200 focus:outline-none select-none cursor-pointer text-xs font-semibold shadow-2xs min-w-22.5 xs:min-w-[105px]"
+          >
           <Globe className="h-3.5 w-3.5 text-gray-400 group-hover:text-[#002b15] transition-colors shrink-0" />
           
           {/* Label Display */}
@@ -72,8 +69,7 @@ export function CurrencySwitcher() {
           </div>
 
           <ChevronDown className="h-3 w-3 text-gray-400 group-hover:text-gray-500 transition-transform duration-200 group-data-[state=open]:rotate-180 shrink-0" />
-        </button>
-      </DropdownMenuTrigger>
+       </DropdownMenuTrigger>
 
       <DropdownMenuContent
         align="end"

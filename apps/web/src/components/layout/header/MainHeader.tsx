@@ -17,7 +17,8 @@ import LanguageSwitcher from "./LanguageSwitcher";
 import { CurrencySwitcher } from "@/components/currency/CurrencySwitcher";
 import LogoutButton from "../topbar/LogoutButton";
 
-type Dictionary = ReturnType<typeof getDictionary>;
+// Awaited unwraps the Promise returned by getDictionary
+type Dictionary = Awaited<ReturnType<typeof getDictionary>>;
 
 interface MainHeaderProps {
   user: User | null;
@@ -81,12 +82,12 @@ export default function MainHeader({ user, dictionary }: MainHeaderProps) {
                     </>
                   ) : (
                     <LoginModal>
-                      <button className="group flex flex-col items-center justify-center gap-1 rounded-lg px-2.5 py-1.5 text-gray-600 transition-all duration-200 hover:bg-gray-50 hover:text-[#002b15] active:scale-97 cursor-pointer border-none bg-transparent p-0">
+                      <div className="group flex cursor-pointer flex-col items-center justify-center gap-1 rounded-lg px-2.5 py-1.5 text-gray-600 transition-all duration-200 hover:bg-gray-50 hover:text-[#002b15] active:scale-97">
                         <UserIcon className="h-4.5 w-4.5 transition-transform group-hover:scale-105 stroke-[2.2]" />
                         <span className="text-[9px] font-black uppercase tracking-wider">
                           {dictionary.common.login}
                         </span>
-                      </button>
+                      </div>
                     </LoginModal>
                   )}
                 </div>
@@ -193,10 +194,12 @@ export default function MainHeader({ user, dictionary }: MainHeaderProps) {
                   </div>
                 ) : (
                   <LoginModal>
-                    <button className="flex items-center gap-3.5 w-full px-3 py-2.5 rounded-xl text-gray-700 hover:bg-emerald-50/80 hover:text-[#002b15] text-left font-black text-xs uppercase tracking-wider cursor-pointer border-none bg-transparent group">
-                      <UserIcon className="h-4 w-4 text-gray-400 group-hover:text-[#005c2e] transition-colors shrink-0 stroke-[2.2]" />
-                      <span>{dictionary.common.login}</span>
-                    </button>
+                    <div className="group flex cursor-pointer flex-col items-center justify-center gap-1 rounded-lg px-2.5 py-1.5 text-neutral-600 transition-all duration-200 hover:bg-neutral-50 hover:text-[#004d26]">
+                      <UserIcon className="h-4.5 w-4.5 transition-transform group-hover:scale-105" />
+                      <span className="text-[9px] font-black uppercase tracking-wider">
+                        {dictionary.common.login}
+                      </span>
+                    </div>
                   </LoginModal>
                 )}
               </div>

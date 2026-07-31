@@ -1,9 +1,8 @@
 "use client";
 
-import { useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
-
+import { Sparkles, ArrowUpRight } from "lucide-react";
 import type { Brand } from "@africasuk/types";
 
 import Container from "@/components/layout/Container";
@@ -14,162 +13,113 @@ interface Props {
 }
 
 export default function FeaturedBrands({ brands = [] }: Props) {
-  const [isExpanded] = useState(false);
-
   if (brands.length === 0) return null;
 
-  // Show only 6 brands initially on bento style
-  const visibleBrands = isExpanded ? brands : brands.slice(0, 6);
-
-  // Helper function to dynamically style the Bento layout on desktop
-  const getBentoClasses = (index: number) => {
-    switch (index) {
-      case 0:
-        return "col-span-1 md:col-span-1 md:row-span-2 h-48 sm:h-64 md:h-auto";
-      case 1:
-        return "col-span-1 md:col-span-2 h-48 sm:h-64 md:h-auto";
-      case 2:
-        return "col-span-1 md:col-span-1 h-48 sm:h-64 md:h-auto";
-      case 3:
-        return "col-span-1 md:col-span-1 h-48 sm:h-64 md:h-auto";
-      case 4:
-        return "col-span-1 md:col-span-2 h-48 sm:h-64 md:h-auto";
-      case 5:
-        return "col-span-1 md:col-span-1 h-48 sm:h-64 md:h-auto";
-      default:
-        return "col-span-1 md:col-span-1 h-48 sm:h-64 md:h-auto";
-    }
-  };
+  // Tripled array for seamless infinite marquee loop
+  const marqueeBrands = [...brands, ...brands, ...brands];
 
   return (
-    <section className="py-12 lg:py-16 bg-gray-50/50 antialiased select-none border-y border-gray-100">
+    <section className="relative py-16 lg:py-24 antialiased select-none border-y border-emerald-500/20 overflow-hidden">
+      
+      {/* --- FULLY VISIBLE PAGE BACKGROUND IMAGE --- */}
+      <div className="absolute inset-0 -z-10">
+        <Image
+          src="/brandbg.jpg"
+          alt="Brand Page Background"
+          fill
+          priority
+          sizes="100vw"
+          className="object-cover object-center brightness-95 contrast-105"
+        />
+        {/* Slightly Increased Opacity White Light Gradient Overlay */}
+        <div className="absolute inset-0 bg-linear-to-b from-white/95 via-white/30 to-white/95" />
+      </div>
+
+      {/* --- FULL SECTION-HEIGHT SIDE FADE OVERLAYS (z-20) --- */}
+      <div className="pointer-events-none absolute inset-y-0 left-0 w-24 sm:w-48 z-20 bg-linear-to-r from-white/90 via-white/40 to-transparent" />
+      <div className="pointer-events-none absolute inset-y-0 right-0 w-24 sm:w-48 z-20 bg-linear-to-l from-white/90 via-white/40 to-transparent" />
+
       <Container>
-        {/* Section Header */}
-        <div className="mb-8 flex items-end justify-between gap-4 px-2 select-none">
-          <div>
-            <h2 className="text-2xl font-black tracking-tight text-gray-900 sm:text-3xl uppercase">
-              Popular Brands
-            </h2>
-            <p className="mt-1 text-xs sm:text-sm text-gray-600 font-medium max-w-md">
-              Shop official collections from certified international global partners.
-            </p>
-          </div>
+        {/* Section Header Elevated above Fades (z-30) */}
+        <div className="relative z-30 mb-12 flex items-end justify-between gap-4 px-6 py-5 select-none">
+<div className="space-y-2">
+  {/* Green to Deep Dark Green Gradient Heading */}
+  <h2 className="text-2xl sm:text-3xl lg:text-4xl font-black tracking-tight uppercase bg-linear-to-r from-emerald-400 via-emerald-700 to-[#002b15] bg-clip-text text-transparent drop-shadow-[0_1px_2px_rgba(255,255,255,0.6)]">
+    Popular Brands
+  </h2>
+
+  {/* Green to Dark Green Subtitle */}
+  <p className="text-xs sm:text-sm font-bold max-w-md leading-relaxed bg-linear-to-r from-emerald-500 to-[#002b15] bg-clip-text text-transparent">
+    Shop official collections directly from certified global partners.
+  </p>
+</div>
 
           <Link
             href="/brands"
-            className="group relative text-xs sm:text-sm font-bold tracking-wider uppercase text-[#005c2e] transition-colors hover:text-[#002b15] shrink-0 pb-1"
+            className="group relative inline-flex items-center gap-2 rounded-full bg-[#002b15]/80 backdrop-blur-xl border border-white/20 px-4 py-2 text-xs sm:text-sm font-bold tracking-widest uppercase text-white transition-all duration-300 hover:text-white hover:border-emerald-400/70 hover:bg-[#002b15] hover:shadow-[0_0_20px_rgba(16,185,129,0.3)] shrink-0 shadow-lg"
           >
-            View All
-            <span className="absolute bottom-0 left-0 h-0.5 w-0 bg-linear-to-r from-[#002b15] to-[#005c2e] transition-all duration-300 group-hover:w-full" />
+            <span>View All</span>
+            <ArrowUpRight className="h-4 w-4 text-emerald-400 transition-transform duration-300 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 group-hover:text-emerald-300" />
           </Link>
         </div>
+      </Container>
 
-        {/* Responsive Layout: 2 cols on mobile, 3-column dynamic Bento on desktop */}
-        <div className="grid grid-cols-2 md:grid-cols-3 md:grid-rows-[repeat(3,260px)] gap-3 sm:gap-6">
-          {visibleBrands.map((brand, index) => (
+      {/* Marquee Track */}
+      <div className="relative w-full overflow-hidden py-4">
+        <div className="animate-marquee-slow flex items-center gap-6 sm:gap-8">
+          {marqueeBrands.map((brand, index) => (
             <Link
-              key={brand.id}
+              key={`${brand.id}-${index}`}
               href={`/brands/${brand.slug}`}
-              className={`group relative block w-full transition-transform duration-500 ease-out hover:-translate-y-1 ${getBentoClasses(
-                index
-              )}`}
+              className="group relative block shrink-0 transition-all duration-300 hover:-translate-y-2"
             >
-              {/* Desktop Style: Clean white backdrop with crisp logo display */}
-              <Card className="hidden md:flex relative w-full h-full bg-white rounded-3xl border border-gray-200/60 shadow-2xs hover:shadow-xl hover:shadow-[#002b15]/10 transition-all duration-500 overflow-hidden select-none">
+              {/* Premium Frosted Glass Card */}
+              <Card className="relative w-72 sm:w-80 h-56 sm:h-64 bg-[#002b15]/70 backdrop-blur-2xl rounded-2xl sm:rounded-3xl border border-white/20 shadow-2xl group-hover:shadow-emerald-400/25 group-hover:border-emerald-400/80 group-hover:bg-[#002b15]/85 transition-all duration-300 overflow-hidden flex flex-col justify-between p-5 sm:p-6 select-none">
                 
-                {/* Watermark Logo Accent */}
-                {brand.logoUrl && (
-                  <div className="absolute -right-6 -bottom-6 w-36 h-36 sm:w-44 sm:h-44 opacity-5 pointer-events-none select-none transition-transform duration-700 ease-out group-hover:scale-110 group-hover:rotate-6 z-0">
-                    <Image
-                      src={brand.logoUrl}
-                      alt=""
-                      fill
-                      className="object-contain filter grayscale"
-                      sizes="(max-width: 1024px) 144px, 176px"
-                    />
-                  </div>
-                )}
+                {/* Top Specular Glass Highlights */}
+                <div className="absolute top-0 right-0 h-32 w-32 bg-emerald-400/20 blur-2xl pointer-events-none z-0 group-hover:bg-emerald-300/35 transition-all duration-500" />
+                <div className="absolute top-0 inset-x-0 h-[1px] bg-linear-to-r from-transparent via-white/50 to-transparent z-0" />
 
-                {/* Logo showcase container */}
-                <div className="absolute inset-0 flex items-center justify-center p-12 pb-24 z-10">
+                {/* Top Action Icon */}
+                <div className="flex items-center justify-end z-10">
+                  <div className="flex h-7 w-7 sm:h-8 sm:w-8 items-center justify-center rounded-full bg-white/10 border border-white/20 text-white transition-all duration-300 group-hover:bg-emerald-400 group-hover:text-emerald-950 group-hover:border-emerald-300 group-hover:rotate-45 shadow-md">
+                    <ArrowUpRight className="h-4 w-4" />
+                  </div>
+                </div>
+
+                {/* Expanded Hero Logo Display */}
+                <div className="relative w-full h-24 sm:h-28 rounded-xl bg-white/95 backdrop-blur-md border border-white/30 p-2 flex items-center justify-center my-auto z-10 shadow-lg group-hover:bg-white transition-all duration-300">
                   {brand.logoUrl ? (
-                    <div className="relative w-full h-full max-h-32 transition-transform duration-700 ease-out group-hover:scale-105">
+                    <div className="relative w-56 sm:w-64 h-full transition-transform duration-300 group-hover:scale-105">
                       <Image
                         src={brand.logoUrl}
                         alt={brand.name}
                         fill
-                        sizes="(max-width: 1024px) 33vw, 450px"
+                        sizes="(max-width: 640px) 224px, 256px"
                         className="object-contain"
                       />
                     </div>
                   ) : (
-                    <div className="text-5xl font-black text-[#002b15]/15">
+                    <div className="w-12 h-12 rounded-xl bg-linear-to-br from-emerald-400 to-emerald-600 flex items-center justify-center text-xl font-black text-emerald-950 shadow-md">
                       {brand.name.charAt(0).toUpperCase()}
                     </div>
                   )}
                 </div>
 
-                {/* Soft gradient bottom tint to ensure legible text without obscuring the card */}
-                <div className="absolute inset-x-0 bottom-0 h-1/2 bg-linear-to-t from-gray-950/80 via-gray-950/20 to-transparent pointer-events-none z-10" />
-
-                {/* Bottom-aligned Typography */}
-                <div className="absolute bottom-0 left-0 w-full p-6 sm:p-8 z-20 flex flex-col justify-end">
-                  <h3 className="text-xl md:text-2xl font-black tracking-tight text-white leading-snug uppercase transition-colors line-clamp-1 drop-shadow-xs">
+                {/* Bottom Card Metadata */}
+                <div className="z-10 pt-2.5 border-t border-white/15 group-hover:border-emerald-400/50 transition-colors">
+                  <h3 className="text-sm sm:text-base font-black tracking-tight text-white group-hover:text-emerald-300 transition-colors duration-200 leading-snug line-clamp-1 uppercase drop-shadow-xs">
                     {brand.name}
                   </h3>
-                  <p className="mt-1 text-xs md:text-sm text-gray-200 font-medium leading-relaxed max-w-sm line-clamp-2 drop-shadow-xs">
-                    {brand.description || `Discover authentic products from the official ${brand.name} catalog.`}
+                  <p className="mt-0.5 text-[11px] sm:text-xs text-emerald-100/80 font-medium line-clamp-1 drop-shadow-xs">
+                    {brand.description || `Browse official ${brand.name} items`}
                   </p>
-                </div>
-              </Card>
-
-              {/* Mobile Style: Compact Minimalist Cards */}
-              <Card className="flex md:hidden relative w-full h-full bg-white rounded-2xl border border-gray-200/60 shadow-2xs hover:shadow-lg transition-all duration-500 overflow-hidden flex-col justify-between p-4 select-none">
-                
-                {/* Mobile Watermark */}
-                {brand.logoUrl && (
-                  <div className="absolute -right-4 -bottom-4 w-24 h-24 opacity-5 pointer-events-none select-none transition-transform duration-700 ease-out group-hover:scale-110 z-0">
-                    <Image
-                      src={brand.logoUrl}
-                      alt=""
-                      fill
-                      className="object-contain filter grayscale"
-                      sizes="96px"
-                    />
-                  </div>
-                )}
-
-                {/* Text Content */}
-                <div className="z-10 max-w-37.5">
-                  <h3 className="text-sm font-black tracking-tight text-gray-900 group-hover:text-[#005c2e] transition-colors duration-300 leading-snug line-clamp-1 uppercase">
-                    {brand.name}
-                  </h3>
-                  <p className="mt-1 text-[10px] text-gray-500 leading-normal font-medium line-clamp-2">
-                    {brand.description || `Shop ${brand.name}.`}
-                  </p>
-                </div>
-
-                {/* Compact Logo Badge */}
-                <div className="relative mt-2 self-end w-12 h-12 z-10">
-                  {brand.logoUrl ? (
-                    <Image
-                      src={brand.logoUrl}
-                      alt={brand.name}
-                      fill
-                      sizes="48px"
-                      className="object-contain"
-                    />
-                  ) : (
-                    <div className="w-full h-full rounded-full bg-emerald-50 flex items-center justify-center text-sm font-black text-[#005c2e]">
-                      {brand.name.charAt(0).toUpperCase()}
-                    </div>
-                  )}
                 </div>
               </Card>
             </Link>
           ))}
         </div>
-      </Container>
+      </div>
     </section>
   );
 }

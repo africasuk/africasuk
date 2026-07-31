@@ -26,8 +26,6 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 
-import { Button } from "@/components/ui/button";
-
 interface Profile {
   full_name: string;
   email: string;
@@ -39,8 +37,7 @@ export default function UserMenu() {
   const router = useRouter();
   const supabase = createClient();
 
-  const [profile, setProfile] =
-    useState<Profile | null>(null);
+  const [profile, setProfile] = useState<Profile | null>(null);
 
   useEffect(() => {
     async function loadProfile() {
@@ -52,9 +49,7 @@ export default function UserMenu() {
 
       const { data } = await supabase
         .from("profiles")
-        .select(
-          "full_name,email,avatar_url,role"
-        )
+        .select("full_name,email,avatar_url,role")
         .eq("user_id", user.id)
         .single();
 
@@ -67,8 +62,7 @@ export default function UserMenu() {
   }, [supabase]);
 
   async function logout() {
-    const { error } =
-      await supabase.auth.signOut();
+    const { error } = await supabase.auth.signOut();
 
     if (error) {
       toast.error(error.message);
@@ -76,7 +70,6 @@ export default function UserMenu() {
     }
 
     toast.success("Signed out.");
-
     router.replace("/login");
     router.refresh();
   }
@@ -91,32 +84,29 @@ export default function UserMenu() {
 
   return (
     <DropdownMenu>
-<DropdownMenuTrigger>
-  <Button
-    variant="ghost"
-    className="flex h-10 items-center gap-3 px-2"
-  >
-    <Avatar className="h-8 w-8">
-      <AvatarImage
-        src={profile?.avatar_url ?? ""}
-        alt={profile?.full_name}
-      />
-      <AvatarFallback>{initials}</AvatarFallback>
-    </Avatar>
+      <DropdownMenuTrigger
+        className="flex h-10 items-center gap-3 rounded-lg px-2 hover:bg-accent transition-colors"
+      >
+        <Avatar className="h-8 w-8">
+          <AvatarImage
+            src={profile?.avatar_url ?? ""}
+            alt={profile?.full_name ?? ""}
+          />
+          <AvatarFallback>{initials}</AvatarFallback>
+        </Avatar>
 
-    <div className="hidden text-left md:block">
-      <p className="text-sm font-medium">
-        {profile?.full_name ?? "Loading..."}
-      </p>
+        <div className="hidden text-left md:block">
+          <p className="text-sm font-medium">
+            {profile?.full_name ?? "Loading..."}
+          </p>
 
-      <p className="text-xs text-muted-foreground">
-        {profile?.email ?? ""}
-      </p>
-    </div>
+          <p className="text-xs text-muted-foreground">
+            {profile?.email ?? ""}
+          </p>
+        </div>
 
-    <ChevronDown className="h-4 w-4" />
-  </Button>
-</DropdownMenuTrigger>
+        <ChevronDown className="h-4 w-4" />
+      </DropdownMenuTrigger>
 
       <DropdownMenuContent
         align="end"
@@ -139,18 +129,14 @@ export default function UserMenu() {
         <DropdownMenuSeparator />
 
         <DropdownMenuItem
-          onClick={() =>
-            router.push("/profile")
-          }
+          onClick={() => router.push("/profile")}
         >
           <User className="mr-2 h-4 w-4" />
           Profile
         </DropdownMenuItem>
 
         <DropdownMenuItem
-          onClick={() =>
-            router.push("/settings")
-          }
+          onClick={() => router.push("/settings")}
         >
           <Settings className="mr-2 h-4 w-4" />
           Settings

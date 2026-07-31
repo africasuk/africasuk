@@ -10,7 +10,7 @@ const nextConfig: NextConfig = {
   ],
 
   images: {
-    qualities: [75, 80, 85],
+    qualities: [75, 80, 85, 90],
 
     remotePatterns: [
       {
@@ -19,10 +19,8 @@ const nextConfig: NextConfig = {
       },
       {
         protocol: "https",
-        hostname:
-          "gzfhrrnvstoeoaxdsbxc.supabase.co",
-        pathname:
-          "/storage/v1/object/public/**",
+        hostname: "gzfhrrnvstoeoaxdsbxc.supabase.co",
+        pathname: "/storage/v1/object/public/**",
       },
     ],
   },

@@ -233,7 +233,7 @@ export default function AddAddressDialog({
         }
       }}
     >
-      <DialogTrigger asChild>
+      <DialogTrigger >
         <Button>
           Add Address
         </Button>

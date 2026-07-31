@@ -16,28 +16,29 @@ export default async function RequestProductPage() {
   }
 
   return (
-    <Layout >
-    <div className="container mx-auto max-w-4xl px-4 sm:px-6 py-10 sm:py-16 select-none antialiased">
-      {/* Header & Hero Text */}
-      <div className="mb-8 sm:mb-12 text-center max-w-2xl mx-auto space-y-3">
+    <Layout>
+      <section className="relative overflow-hidden bg-linear-to-b from-[#f8faf8] to-white py-12 sm:py-20">
+        <div className="container mx-auto max-w-4xl px-4 sm:px-6">
+          <div className="mx-auto mb-10 max-w-2xl text-center">
+            <span className="inline-flex rounded-full bg-[#004d26]/10 px-4 py-1 text-xs font-bold uppercase tracking-widest text-[#004d26]">
+              Product Request
+            </span>
 
+            <h1 className="mt-5 text-4xl font-black tracking-tight text-gray-900 sm:text-5xl">
+              Can&apos;t Find a Product?
+            </h1>
 
-        <h1 className="text-3xl sm:text-4xl lg:text-5xl font-black text-gray-900 tracking-tight uppercase">
-          Request a Product
-        </h1>
+            <p className="mt-4 text-base leading-7 text-gray-600">
+              Upload a photo, tell us what you need, and our sourcing team
+              will help you find it.
+            </p>
+          </div>
 
-        <p className="text-sm sm:text-base text-gray-600 leading-relaxed font-medium">
-          Can&apos;t find the product you&apos;re looking for? Upload a photo and tell us
-          what you&apos;re looking for, and our team will try to source it.
-        </p>
-      </div>
-
-      {/* Form Container */}
-      <div className="rounded-3xl border border-gray-100 bg-white/70 backdrop-blur-md p-6 sm:p-10 shadow-2xs transition-all">
-        <RequestProductForm />
-      </div>
-    </div>
-
+          <div className="rounded-3xl border border-gray-200 bg-white p-6 shadow-xl sm:p-10">
+            <RequestProductForm />
+          </div>
+        </div>
+      </section>
     </Layout>
   );
 }

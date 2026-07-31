@@ -17,7 +17,7 @@ export default function LoginModal({
 }: LoginModalProps) {
   return (
     <Dialog>
-      <DialogTrigger asChild>
+      <DialogTrigger >
         {children}
       </DialogTrigger>
 
