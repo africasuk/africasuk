@@ -23,7 +23,7 @@ import { createClient } from "@/lib/auth/client";
 import {
   loginSchema,
   type LoginFormData,
-} from "@africasuk/validation";
+} from "@/lib/validation/login";
 import Logo from "@/components/layout/header/Logo";
 
 // Ensure WebBrowser closes properly on redirect completion

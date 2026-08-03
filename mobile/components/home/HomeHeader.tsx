@@ -128,7 +128,6 @@ const styles = StyleSheet.create<Styles>({
     backgroundColor: "#ffffff",
     paddingHorizontal: 16,
     paddingTop: 12,
-    paddingBottom: 12,
   },
   row: {
     flexDirection: "row",

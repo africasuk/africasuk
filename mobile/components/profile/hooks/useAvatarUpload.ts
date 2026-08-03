@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Alert } from "react-native";
 
 import { createClient } from "@/lib/auth/client";
-import { ProfileRepository } from "@africasuk/database";
+
 
 export type UploadStatus =
   | "idle"
@@ -87,9 +87,16 @@ export function useAvatarUpload(userId: string) {
 
       setStatus("saving");
 
-      await ProfileRepository.update(supabase, userId, {
-        avatarUrl: publicUrl.publicUrl,
-      });
+      const { error } = await (supabase as any)
+        .from("profiles")
+        .update({
+          avatar_url: publicUrl.publicUrl,
+        })
+        .eq("user_id", userId);
+
+      if (error) {
+        throw error;
+      }
 
       setStatus("success");
       Alert.alert("Success", "Profile picture updated successfully.");

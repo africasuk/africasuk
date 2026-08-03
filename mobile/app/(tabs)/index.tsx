@@ -153,7 +153,7 @@ export default function HomeScreen() {
   }, []);
 
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: "#fff" }}>
+    <SafeAreaView style={{ flex: 1, backgroundColor: "#fff", paddingTop: 60 }}>
       <StatusBar
         backgroundColor="#fff"
         barStyle="dark-content"
@@ -174,3 +174,4 @@ export default function HomeScreen() {
     </SafeAreaView>
   );
 }
+

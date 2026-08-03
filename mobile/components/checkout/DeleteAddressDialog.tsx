@@ -8,6 +8,8 @@ import {
   ActivityIndicator,
   Alert,
 } from "react-native";
+import { createClient } from "@/lib/auth/client";
+
 
 interface Props {
   id: string;
@@ -24,40 +26,36 @@ export default function DeleteAddressDialog({
 }: Props) {
   const [deleting, setDeleting] = useState(false);
 
-  async function handleDelete() {
-    try {
-      setDeleting(true);
+async function handleDelete() {
+  try {
+    setDeleting(true);
 
-      const response = await fetch(
-        `${process.env.EXPO_PUBLIC_API_URL}/addresses/${id}`,
-        {
-          method: "DELETE",
-        }
-      );
+    const supabase = createClient();
 
-      const result = await response.json();
+    const { error } = await (supabase as any)
+      .from("addresses")
+      .delete()
+      .eq("id", id);
 
-      if (!response.ok) {
-        throw new Error(
-          result.message ?? "Unable to delete address."
-        );
-      }
+    if (error) throw error;
 
-      Alert.alert("Success", "Address deleted.");
+    Alert.alert("Success", "Address deleted.");
 
-      onOpenChange(false);
-      onDeleted?.();
-    } catch (error) {
-      Alert.alert(
-        "Delete Failed",
-        error instanceof Error
-          ? error.message
-          : "Unable to delete address."
-      );
-    } finally {
-      setDeleting(false);
-    }
+    onOpenChange(false);
+    onDeleted?.();
+  } catch (error) {
+    console.error(error);
+
+    Alert.alert(
+      "Delete Failed",
+      error instanceof Error
+        ? error.message
+        : "Unable to delete address."
+    );
+  } finally {
+    setDeleting(false);
   }
+}
 
   function handleClose() {
     if (deleting) return;

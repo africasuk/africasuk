@@ -14,8 +14,7 @@ import * as Linking from "expo-linking";
 import { Globe, ArrowLeft } from "lucide-react-native";
 
 import type { Brand, ProductWithDetails } from "@africasuk/types";
-import { ProductRepository, BrandRepository } from "@africasuk/database";
-import { ProductQueryService } from "@africasuk/api";
+
 import { createClient } from "@/lib/auth/client";
 import { ProductCard } from "@/components/products/ProductCard";
 
@@ -39,24 +38,29 @@ export default function BrandDetailScreen() {
       setError(null);
 
       const supabase = createClient();
-      const brandRepository = new BrandRepository(supabase);
-      const productService = new ProductQueryService(
-        new ProductRepository(supabase)
-      );
+     const {
+      data: brand,
+      error: brandError,
+    } = await supabase
+      .from("brands")
+      .select("*")
+      .eq("slug", slug)
+      .single<Brand>();
 
-      const brand = await brandRepository.getBySlug(slug);
-
-      if (!brand) {
+      if (brandError || !brand) {
         setError("Brand not found.");
         return;
       }
 
-      const products = (await productService.getAll()).filter(
-        (product) => product.brandId === brand.id
-      );
+      const { data: products, error: productError } = await supabase
+        .from("products")
+        .select("*, colors:product_colors(*)")
+        .eq("brand_id", brand.id);
 
-      setBrand(brand);
-      setProducts(products);
+      if (productError) throw productError;
+
+      setBrand(brand as Brand);
+      setProducts((products as ProductWithDetails[]) ?? []);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Something went wrong.");
     } finally {

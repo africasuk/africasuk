@@ -9,7 +9,7 @@ import {
 } from "react-native";
 import { Redirect, Href } from "expo-router";
 import type { Address, Profile } from "@africasuk/types";
-import { AddressRepository, ProfileRepository } from "@africasuk/database";
+
 
 import { createClient } from "@/lib/auth/client";
 
@@ -41,14 +41,72 @@ export default function CheckoutScreen() {
 
       setIsAuthenticated(true);
 
-const addressRepository = new AddressRepository(supabase);
+const [
+  { data: fetchedAddresses, error: addressError },
+  { data: fetchedProfile, error: profileError },
+] = await Promise.all([
+  supabase
+    .from("addresses")
+    .select("*")
+    .eq("user_id", user.id),
 
-const [fetchedAddresses, fetchedProfile] = await Promise.all([
-  addressRepository.getAll(user.id),
-  ProfileRepository.getByUserId(supabase, user.id),
+  supabase
+    .from("profiles")
+    .select("*")
+    .eq("user_id", user.id)
+    .single(),
 ]);
-      setAddresses(fetchedAddresses ?? []);
-      setProfile(fetchedProfile ?? null);
+
+if (addressError) throw addressError;
+if (profileError) throw profileError;
+
+setAddresses(
+  (fetchedAddresses ?? []).map((address: any) => ({
+    id: address.id,
+    userId: address.user_id,
+
+    label: address.label,
+
+    recipientName: address.recipient_name,
+    phone: address.phone,
+
+    country: address.country,
+    state: address.state,
+    city: address.city,
+    area: address.area,
+
+    street: address.street,
+    building: address.building,
+    apartment: address.apartment,
+    landmark: address.landmark,
+
+    postalCode: address.postal_code,
+
+    latitude: address.latitude,
+    longitude: address.longitude,
+
+    isDefault: address.is_default,
+
+    createdAt: address.created_at,
+    updatedAt: address.updated_at,
+  }))
+);
+const profileData = fetchedProfile as any;
+
+console.log("PROFILE:", profileData);
+
+setProfile(
+  profileData
+    ? ({
+        ...profileData,
+        fullName: profileData.fullName ?? profileData.full_name,
+        avatarUrl: profileData.avatarUrl ?? profileData.avatar_url,
+        isActive: profileData.isActive ?? profileData.is_active,
+        createdAt: profileData.createdAt ?? profileData.created_at,
+        updatedAt: profileData.updatedAt ?? profileData.updated_at,
+      } as unknown as Profile)
+    : null
+);
     } catch (error) {
       console.error("Failed to load checkout data:", error);
     } finally {
@@ -86,7 +144,10 @@ const [fetchedAddresses, fetchedProfile] = await Promise.all([
           </View>
 
           <View style={styles.section}>
-            <CheckoutAddresses initialAddresses={addresses} />
+            <CheckoutAddresses
+                initialAddresses={addresses}
+                onRefresh={loadCheckoutData}
+              />
           </View>
 
           <View style={styles.section}>
@@ -113,6 +174,7 @@ const styles = StyleSheet.create<Styles>({
   container: {
     flex: 1,
     backgroundColor: "#f4f4f4",
+    paddingTop: 60,
   },
   loading: {
     flex: 1,

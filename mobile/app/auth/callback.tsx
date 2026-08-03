@@ -1,28 +1,24 @@
 import { useEffect } from "react";
 import { ActivityIndicator, View } from "react-native";
-import { router, useLocalSearchParams } from "expo-router";
+import { router } from "expo-router";
+import * as Linking from "expo-linking";
 
 import { createClient } from "@/lib/auth/client";
 
-const supabase = createClient();
-
 export default function AuthCallbackScreen() {
-  const { code, redirect } = useLocalSearchParams<{
-    code?: string;
-    redirect?: string;
-  }>();
-
   useEffect(() => {
-    async function handleCallback() {
-      if (!code) {
+    async function handle() {
+      const supabase = createClient();
+
+      const url = await Linking.getInitialURL();
+
+      if (!url) {
         router.replace("/auth/login");
         return;
       }
 
       const { error } =
-        await supabase.auth.exchangeCodeForSession(
-          code
-        );
+        await supabase.auth.exchangeCodeForSession(url);
 
       if (error) {
         console.error(error);
@@ -30,15 +26,11 @@ export default function AuthCallbackScreen() {
         return;
       }
 
-    router.replace(
-      (typeof redirect === "string"
-        ? redirect
-        : "/") as any
-    );
+      router.replace("/");
     }
 
-    handleCallback();
-  }, [code, redirect]);
+    handle();
+  }, []);
 
   return (
     <View

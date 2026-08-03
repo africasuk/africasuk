@@ -10,10 +10,10 @@ import {
 } from "react-native";
 import { router } from "expo-router";
 import * as Location from "expo-location";
-import { MapPin, PencilLine } from "lucide-react-native";
+import { MapPin, PencilLine, X } from "lucide-react-native";
 
 import ManualAddressForm from "./ManualAddressForm";
-
+import { createClient } from "@/lib/auth/client";
 interface AddAddressDialogProps {
   onSuccess?: () => void | Promise<void>;
 }
@@ -47,76 +47,65 @@ async function handleCurrentLocation() {
       throw new Error("Location permission denied.");
     }
 
-    const position =
-      await Location.getCurrentPositionAsync({
-        accuracy: Location.Accuracy.High,
-      });
-      console.log("API URL:", process.env.EXPO_PUBLIC_API_URL);
-console.log("Latitude:", position.coords.latitude);
-console.log("Longitude:", position.coords.longitude);
-console.log(process.env.EXPO_PUBLIC_API_URL);
+    const position = await Location.getCurrentPositionAsync({
+      accuracy: Location.Accuracy.High,
+    });
 
     const geoResponse = await fetch(
-      `${process.env.EXPO_PUBLIC_API_URL}/geocode/reverse`,
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          latitude: position.coords.latitude,
-          longitude: position.coords.longitude,
-        }),
-      }
+      `https://us1.locationiq.com/v1/reverse?key=${process.env.EXPO_PUBLIC_LOCATIONIQ_API_KEY}&lat=${position.coords.latitude}&lon=${position.coords.longitude}&format=json`
     );
 
-    const geo = await geoResponse.json();
+    const locationResult = await geoResponse.json();
+
+    console.log("LocationIQ Response:", locationResult);
 
     if (!geoResponse.ok) {
       throw new Error(
-        geo.message ??
-          "Unable to detect your address."
+        locationResult.error || "Unable to detect your address."
       );
     }
 
-    const saveResponse = await fetch(
-      `${process.env.EXPO_PUBLIC_API_URL}/addresses`,
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          label: "Current Location",
-          country: geo.country,
-          state: geo.state,
-          city: geo.city,
-          area: geo.area,
-          street: geo.street,
-          building: "",
-          apartment: "",
-          landmark: "",
-          postalCode: geo.postalCode,
-          latitude: position.coords.latitude,
-          longitude: position.coords.longitude,
-          isDefault: true,
-        }),
-      }
-    );
+    const supabase = createClient();
 
-    const result = await saveResponse.json();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
 
-    if (!saveResponse.ok) {
-      throw new Error(
-        result.message ??
-          "Unable to save address."
-      );
+    if (!user) {
+      throw new Error("Please login again.");
     }
 
-    Alert.alert(
-      "Success",
-      "Address added successfully."
-    );
+    const { error } = await (supabase as any)
+      .from("addresses")
+      .insert({
+        user_id: user.id,
+        label: "Current Location",
+        recipient_name: user.user_metadata?.full_name ?? "",
+        phone: user.user_metadata?.phone ?? "",
+        country: locationResult.address?.country ?? "",
+        state: locationResult.address?.state ?? "",
+        city:
+          locationResult.address?.city ??
+          locationResult.address?.town ??
+          locationResult.address?.village ??
+          "",
+        area:
+          locationResult.address?.suburb ??
+          locationResult.address?.county ??
+          "",
+        street: locationResult.display_name,
+        building: "",
+        apartment: "",
+        landmark: "",
+        postal_code: locationResult.address?.postcode ?? "",
+        latitude: position.coords.latitude,
+        longitude: position.coords.longitude,
+        is_default: true,
+      });
+
+    if (error) throw error;
+
+    Alert.alert("Success", "Address added successfully.");
 
     await Promise.resolve(onSuccess?.());
 
@@ -137,7 +126,6 @@ console.log(process.env.EXPO_PUBLIC_API_URL);
     setSaving(false);
   }
 }
-
   function handleClose() {
     if (saving) return;
     setOpen(false);
@@ -158,10 +146,22 @@ console.log(process.env.EXPO_PUBLIC_API_URL);
       >
         <View style={styles.overlay}>
           <View style={styles.modal}>
-            <Text style={styles.title}>Add Delivery Address</Text>
-            <Text style={styles.description}>
-              {"Choose how you'd like to add your delivery address."}
-            </Text>
+            {/* Header with Title and Close Button */}
+            <View style={styles.header}>
+              <View style={styles.headerText}>
+                <Text style={styles.title}>Add Delivery Address</Text>
+                <Text style={styles.description}>
+                  {"Choose how you'd like to add your delivery address."}
+                </Text>
+              </View>
+              <Pressable
+                style={styles.closeButton}
+                onPress={handleClose}
+                disabled={saving}
+              >
+                <X size={20} color="#6b7280" />
+              </Pressable>
+            </View>
 
             {method === "menu" && (
               <View style={styles.menu}>
@@ -197,6 +197,14 @@ console.log(process.env.EXPO_PUBLIC_API_URL);
                       Type your address yourself.
                     </Text>
                   </View>
+                </Pressable>
+
+                <Pressable
+                  style={styles.cancelButton}
+                  onPress={handleClose}
+                  disabled={saving}
+                >
+                  <Text style={styles.cancelButtonText}>Cancel</Text>
                 </Pressable>
               </View>
             )}
@@ -238,6 +246,23 @@ const styles = StyleSheet.create({
     borderRadius: 20,
     padding: 20,
   },
+  header: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "flex-start",
+  },
+  headerText: {
+    flex: 1,
+    marginRight: 12,
+  },
+  closeButton: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: "#f3f4f6",
+    alignItems: "center",
+    justifyContent: "center",
+  },
   title: {
     fontSize: 22,
     fontWeight: "800",
@@ -272,6 +297,17 @@ const styles = StyleSheet.create({
   optionDescription: {
     marginTop: 4,
     fontSize: 13,
+    color: "#6b7280",
+  },
+  cancelButton: {
+    paddingVertical: 12,
+    alignItems: "center",
+    justifyContent: "center",
+    marginTop: 4,
+  },
+  cancelButtonText: {
+    fontSize: 15,
+    fontWeight: "600",
     color: "#6b7280",
   },
 });

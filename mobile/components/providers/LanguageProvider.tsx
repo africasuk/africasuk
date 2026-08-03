@@ -1,5 +1,28 @@
-import React, { createContext, useContext, useState, useEffect } from "react";
-import type { Dictionary, Locale } from "@africasuk/i18n";
+import React, { createContext, useContext, useState } from "react";
+
+export type Locale = "en";
+
+export interface Dictionary {
+  common: {
+    login: string;
+    myAccount: string;
+  };
+
+  auth: {
+    welcomeToAfricaSuk: string;
+    signupTitle: string;
+    signupSubtitle: string;
+    continueWithGoogle: string;
+    or: string;
+    fullName: string;
+    emailAddress: string;
+    password: string;
+    confirmPassword: string;
+    createAccount: string;
+    alreadyHaveAccount: string;
+    login: string;
+  };
+}
 
 interface LanguageContextValue {
   locale: Locale;
@@ -12,7 +35,6 @@ const LanguageContext = createContext<LanguageContextValue | null>(null);
 interface Props {
   initialLocale: Locale;
   initialDictionary: Dictionary;
-  // Optional dictionary fetcher/loader for dynamic switching on mobile
   loadDictionary?: (locale: Locale) => Promise<Dictionary>;
   children: React.ReactNode;
 }
@@ -24,7 +46,8 @@ export function LanguageProvider({
   children,
 }: Props) {
   const [locale, setLocaleState] = useState<Locale>(initialLocale);
-  const [dictionary, setDictionary] = useState<Dictionary>(initialDictionary);
+  const [dictionary, setDictionary] =
+    useState<Dictionary>(initialDictionary);
 
   const setLocale = async (newLocale: Locale) => {
     if (newLocale === locale) return;
@@ -33,10 +56,10 @@ export function LanguageProvider({
 
     if (loadDictionary) {
       try {
-        const newDict = await loadDictionary(newLocale);
-        setDictionary(newDict);
+        const newDictionary = await loadDictionary(newLocale);
+        setDictionary(newDictionary);
       } catch (error) {
-        console.error(`Failed to load dictionary for locale: ${newLocale}`, error);
+        console.error("Failed to load dictionary:", error);
       }
     }
   };

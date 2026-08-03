@@ -17,7 +17,7 @@ import { Save, X } from "lucide-react-native";
 
 import type { Profile } from "@africasuk/types";
 import { createClient } from "@/lib/auth/client";
-import { ProfileRepository } from "@africasuk/database";
+
 
 const BRAND = "#005c2e";
 const BRAND_DARK = "#002b15";
@@ -75,11 +75,17 @@ export default function EditProfileModal({
         throw new Error("Please sign in again.");
       }
 
-      await ProfileRepository.update(supabase, user.id, {
-        fullName: name,
-        phone: phoneNumber || null,
-      });
+        const { error } = await (supabase as any)
+          .from("profiles")
+          .update({
+            full_name: name,
+            phone: phoneNumber || null,
+          })
+          .eq("user_id", user.id);
 
+        if (error) {
+          throw error;
+        }
       await Promise.resolve(onSuccess?.());
       onClose();
     } catch (error) {

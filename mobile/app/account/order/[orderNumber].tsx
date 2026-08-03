@@ -25,7 +25,7 @@ import {
 } from "lucide-react-native";
 
 import { createClient } from "@/lib/auth/client";
-import { OrderRepository } from "@africasuk/database";
+
 import type { Order } from "@africasuk/types";
 import { Price } from "@/components/currency/Price";
 
@@ -81,15 +81,20 @@ export default function OrderDetailsScreen() {
         return;
       }
 
-      const orderRepo = new OrderRepository(supabase);
-      const fetchedOrder = await orderRepo.findByOrderNumber(orderNumber);
+      const { data, error: orderError } = await supabase
+        .from("orders")
+        .select("*")
+        .eq("id", orderNumber)
+        .single();
 
-      if (!fetchedOrder) {
+      const fetchedOrder = data as Order | null;
+
+      if (orderError || !fetchedOrder) {
         setError("Order not found.");
         return;
       }
 
-      setOrder(fetchedOrder);
+      setOrder(fetchedOrder as Order);
 
       // 1. Fetch raw order items without fragile implicit joins
       const { data: rawItemsData, error: itemsError } = await supabase
@@ -184,7 +189,9 @@ export default function OrderDetailsScreen() {
         <View style={styles.contentWrapper}>
           {/* Header Module */}
           <View style={styles.card}>
-            <Text style={styles.orderTitle}>Order #{order.orderNumber}</Text>
+            <Text style={styles.orderTitle}>
+              Order #{order.orderNumber ?? order.id.slice(0, 8)}
+            </Text>
             <Text style={styles.orderDate}>Placed on {formattedDate}</Text>
 
             <View style={styles.headerDivider} />
@@ -209,7 +216,7 @@ export default function OrderDetailsScreen() {
               </View>
 
               <Pressable
-                onPress={() => router.push(`/track/${order.orderNumber}` as Href)}
+                onPress={() => router.push(`/track/${order.id}` as Href)}
                 style={styles.trackButtonContainer}
               >
                 <LinearGradient

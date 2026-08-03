@@ -13,17 +13,34 @@ import { CurrencyProvider } from "@/providers/CurrencyProvider";
 import { useColorScheme } from "@/hooks/use-color-scheme";
 import { LanguageProvider } from "@/components/providers/LanguageProvider";
 
-import {
-  getDictionary,
-  type Locale,
-} from "@africasuk/i18n";
+type Locale = "en";
 
+const defaultLocale: Locale = "en";
+
+const initialDictionary = {
+  common: {
+    login: "Login",
+    myAccount: "My Account",
+  },
+
+  auth: {
+    welcomeToAfricaSuk: "Welcome to AfricaSuk!",
+    signupTitle: "Create Account",
+    signupSubtitle: "Create your AfricaSuk account",
+    continueWithGoogle: "Continue with Google",
+    or: "OR",
+    fullName: "Full Name",
+    emailAddress: "Email Address",
+    password: "Password",
+    confirmPassword: "Confirm Password",
+    createAccount: "Create Account",
+    alreadyHaveAccount: "Already have an account?",
+    login: "Login",
+  },
+};
 
 export default function RootLayout() {
   const colorScheme = useColorScheme();
-
-  const defaultLocale: Locale = "en";
-  const initialDictionary = getDictionary(defaultLocale);
 
   return (
     <View
@@ -35,18 +52,12 @@ export default function RootLayout() {
       <LanguageProvider
         initialLocale={defaultLocale}
         initialDictionary={initialDictionary}
-        loadDictionary={async (locale: Locale) =>
-          getDictionary(locale)
-        }
+        loadDictionary={async () => initialDictionary}
       >
         <ExchangeRateProvider>
           <CurrencyProvider>
             <ThemeProvider
-              value={
-                colorScheme === "dark"
-                  ? DarkTheme
-                  : DefaultTheme
-              }
+              value={colorScheme === "dark" ? DarkTheme : DefaultTheme}
             >
               <Stack
                 screenOptions={{

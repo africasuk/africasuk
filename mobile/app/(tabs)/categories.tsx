@@ -15,7 +15,6 @@ import { Image } from "expo-image";
 import { Search, X, ChevronRight, Layers } from "lucide-react-native";
 
 import type { Category } from "@africasuk/types";
-import { CategoryRepository } from "@africasuk/database";
 import { createClient } from "@/lib/auth/client";
 
 const BRAND_COLOR = "#004d26";
@@ -82,19 +81,31 @@ export default function CategoriesScreen() {
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
 
-  const fetchCategories = useCallback(async () => {
-    try {
-      const supabase = createClient();
-      const categoryRepository = new CategoryRepository(supabase);
-      const data = await categoryRepository.getAll();
-      setCategories(data ?? []);
-    } catch (error) {
-      console.error("Error fetching categories:", error);
-    } finally {
-      setLoading(false);
-      setRefreshing(false);
-    }
-  }, []);
+const fetchCategories = useCallback(async () => {
+  try {
+    const supabase = createClient();
+
+    const { data, error } = await supabase
+      .from("categories")
+      .select("*")
+      .eq("is_active", true)
+      .order("sort_order", { ascending: true });
+
+    if (error) throw error;
+
+    setCategories(
+      (data ?? []).map((item: any) => ({
+        ...item,
+        imageUrl: item.image_url,
+      })) as Category[]
+    );
+  } catch (error) {
+    console.error("Error fetching categories:", error);
+  } finally {
+    setLoading(false);
+    setRefreshing(false);
+  }
+}, []);
 
   useEffect(() => {
     fetchCategories();
@@ -174,13 +185,12 @@ export default function CategoriesScreen() {
             {/* Big Prominent Image Section */}
             <View style={styles.imageContainer}>
               {item.imageUrl ? (
-                <Image
-                  source={{ uri: item.imageUrl }}
-                  style={styles.image}
-                  contentFit="cover"
-                  transition={200}
-                />
-              ) : (
+                  <Image
+                    source={{ uri: item.imageUrl }}
+                    style={styles.image}
+                    contentFit="cover"
+                  />
+                ) : (
                 <View style={styles.placeholderContainer}>
                   <Layers size={32} color={BRAND_COLOR} opacity={0.5} />
                 </View>
@@ -210,6 +220,7 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: "#f4f4f4",
+    paddingTop: 60,
   },
   centered: {
     flex: 1,

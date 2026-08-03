@@ -19,7 +19,7 @@ import {
   Radio,
 } from "lucide-react-native";
 
-import { OrderRepository } from "@africasuk/database";
+
 import type { Order } from "@africasuk/types";
 
 import { createClient } from "@/lib/auth/client";
@@ -60,15 +60,18 @@ export function TrackOrderScreen() {
         return;
       }
 
-      const repository = new OrderRepository(supabase);
-      const fetchedOrder = await repository.findByOrderNumber(orderNumber);
+      const { data: fetchedOrder, error: orderError } = await supabase
+        .from("orders")
+        .select("*")
+        .eq("id", orderNumber)
+        .single();
 
-      if (!fetchedOrder) {
+      if (orderError || !fetchedOrder) {
         setError("Order tracking details not found.");
         return;
       }
 
-      setOrder(fetchedOrder);
+      setOrder(fetchedOrder as Order);
     } catch (err) {
       console.error("Failed to load tracking info:", err);
       setError("Unable to load order tracking details.");

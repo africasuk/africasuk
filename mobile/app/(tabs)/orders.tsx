@@ -17,7 +17,6 @@ import { useRouter, Href } from "expo-router";
 import { ShoppingBag, ChevronRight, Package, AlertCircle } from "lucide-react-native";
 
 import { createClient } from "@/lib/auth/client";
-import { OrderRepository } from "@africasuk/database";
 import type { Order } from "@africasuk/types";
 import { Price } from "@/components/currency/Price";
 
@@ -52,10 +51,25 @@ export default function OrdersScreen() {
         return;
       }
 
-      const orderRepo = new OrderRepository(supabase);
-      const data = await orderRepo.findByUser(user.id);
+const { data, error } = await supabase
+  .from("orders")
+  .select(`
+    *,
+    order_items (
+      image
+    )
+  `)
+  .eq("user_id", user.id)
+  .order("created_at", { ascending: false });
 
-      setOrders(data ?? []);
+if (error) throw error;
+
+setOrders(
+  (data ?? []).map((order: any) => ({
+    ...order,
+    image: order.order_items?.[0]?.image ?? null,
+  }))
+);
     } catch (err) {
       console.error("Failed to fetch orders:", err);
       setError("Unable to load orders. Please try again.");
@@ -111,7 +125,7 @@ export default function OrdersScreen() {
           pressed && styles.cardPressed,
         ]}
         onPress={() =>
-          router.push(`/account/order/${item.orderNumber}` as Href)
+          router.push(`/account/order/${item.id}` as Href)
         }
       >
         <View style={styles.cardHeader}>
@@ -265,6 +279,7 @@ const styles = StyleSheet.create<Styles>({
   container: {
     flex: 1,
     backgroundColor: "#f9fafb",
+    paddingTop: 60,
   },
   centerContainer: {
     flex: 1,

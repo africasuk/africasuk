@@ -11,6 +11,7 @@ import {
 import { MoreVertical, Pencil, Star, Trash2 } from "lucide-react-native";
 
 import DeleteAddressDialog from "./DeleteAddressDialog";
+import { createClient } from "@/lib/auth/client";
 
 interface Props {
   id: string;
@@ -29,37 +30,55 @@ export default function AddressActions({
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [loadingDefault, setLoadingDefault] = useState(false);
 
-  async function handleDefault() {
-    try {
-      setLoadingDefault(true);
-      setMenuOpen(false);
+async function handleDefault() {
+  try {
+    setLoadingDefault(true);
+    setMenuOpen(false);
 
-      const response = await fetch(
-        `${process.env.EXPO_PUBLIC_API_URL}/addresses/${id}/default`,
-        {
-          method: "PATCH",
-        }
-      );
+    const supabase = createClient();
 
-      const result = await response.json();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
 
-      if (!response.ok) {
-        throw new Error(
-          result.message ?? "Failed to update default address."
-        );
-      }
-
-      Alert.alert("Success", "Default address updated.");
-      onRefresh?.();
-    } catch (error) {
-      Alert.alert(
-        "Error",
-        error instanceof Error ? error.message : "Something went wrong."
-      );
-    } finally {
-      setLoadingDefault(false);
+    if (!user) {
+      throw new Error("Please login again.");
     }
+
+    // Remove current default address
+    const { error: resetError } = await (supabase as any)
+      .from("addresses")
+      .update({
+        is_default: false,
+      })
+      .eq("user_id", user.id);
+
+    if (resetError) throw resetError;
+
+    // Set selected address as default
+    const { error: updateError } = await (supabase as any)
+      .from("addresses")
+      .update({
+        is_default: true,
+      })
+      .eq("id", id);
+
+    if (updateError) throw updateError;
+
+    Alert.alert("Success", "Default address updated.");
+
+    onRefresh?.();
+  } catch (error) {
+    console.error(error);
+
+    Alert.alert(
+      "Error",
+      error instanceof Error ? error.message : "Something went wrong."
+    );
+  } finally {
+    setLoadingDefault(false);
   }
+}
 
   return (
     <>

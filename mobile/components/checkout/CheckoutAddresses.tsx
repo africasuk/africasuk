@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { View, Text, Pressable, StyleSheet } from "react-native";
-import { MapPin, Check } from "lucide-react-native";
+import { MapPin } from "lucide-react-native";
 
 import type { Address } from "@africasuk/types";
 
@@ -11,9 +11,13 @@ import { useCheckout } from "./CheckoutContext";
 
 interface Props {
   initialAddresses: Address[];
+  onRefresh?: () => void;
 }
 
-export default function CheckoutAddresses({ initialAddresses }: Props) {
+export default function CheckoutAddresses({
+  initialAddresses,
+  onRefresh,
+}: Props) {
   const [editOpen, setEditOpen] = useState(false);
   const [editingAddress, setEditingAddress] = useState<Address | null>(null);
 
@@ -29,7 +33,6 @@ export default function CheckoutAddresses({ initialAddresses }: Props) {
   }, [initialAddresses, selectedAddress, setSelectedAddress]);
 
   const isEmpty = initialAddresses.length === 0;
-
   return (
     <>
       <View style={styles.container}>
@@ -48,7 +51,7 @@ export default function CheckoutAddresses({ initialAddresses }: Props) {
             </View>
           </View>
 
-          <AddAddressDialog />
+          <AddAddressDialog onSuccess={onRefresh} />
         </View>
 
         {/* Empty State vs Address List */}
@@ -80,21 +83,22 @@ export default function CheckoutAddresses({ initialAddresses }: Props) {
                     <View style={styles.addressInfo}>
                       <Text style={styles.addressLabel}>{address.label}</Text>
 
-                      {address.isDefault && (
+                     {address.isDefault && (
                         <View style={styles.defaultBadge}>
-                          <Text style={styles.defaultText}>Default</Text>
+                          <Text style={styles.defaultText}>✓ DEFAULT</Text>
                         </View>
                       )}
                     </View>
 
                     <AddressActions
-                      id={address.id}
-                      isDefault={address.isDefault}
-                      onEdit={() => {
-                        setEditingAddress(address);
-                        setEditOpen(true);
-                      }}
-                    />
+                    id={address.id}
+                    isDefault={address.isDefault}
+                    onRefresh={onRefresh}
+                    onEdit={() => {
+                      setEditingAddress(address);
+                      setEditOpen(true);
+                    }}
+                  />
                   </View>
 
                   <View style={styles.addressBody}>
@@ -108,9 +112,9 @@ export default function CheckoutAddresses({ initialAddresses }: Props) {
                     <Text style={styles.phone}>{address.phone}</Text>
                   </View>
 
-                  {isSelected && (
-                    <View style={styles.checkIcon}>
-                      <Check size={12} color="#fff" strokeWidth={3} />
+                  {address.isDefault && (
+                    <View style={styles.defaultBadge}>
+                      <Text style={styles.defaultText}>✓ DEFAULT</Text>
                     </View>
                   )}
                 </Pressable>
@@ -124,6 +128,7 @@ export default function CheckoutAddresses({ initialAddresses }: Props) {
         open={editOpen}
         address={editingAddress}
         onOpenChange={setEditOpen}
+        onSuccess={onRefresh}
       />
     </>
   );
@@ -220,18 +225,20 @@ const styles = StyleSheet.create({
     color: "#111827",
     marginRight: 8,
   },
-  defaultBadge: {
-    backgroundColor: "#f3f4f6",
-    borderRadius: 6,
-    paddingHorizontal: 6,
-    paddingVertical: 2,
-  },
-  defaultText: {
-    fontSize: 10,
-    fontWeight: "700",
-    color: "#6b7280",
-    textTransform: "uppercase",
-  },
+defaultBadge: {
+  marginLeft: 8,
+  backgroundColor: "#004d26",
+  borderRadius: 999,
+  paddingHorizontal: 10,
+  paddingVertical: 4,
+},
+
+defaultText: {
+  color: "#ffffff",
+  fontSize: 10,
+  fontWeight: "800",
+  letterSpacing: 0.6,
+},
   addressBody: {
     gap: 4,
   },

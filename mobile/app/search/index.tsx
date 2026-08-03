@@ -10,7 +10,6 @@ import {
 } from "react-native";
 import { useLocalSearchParams, Stack } from "expo-router";
 import type { ProductWithDetails } from "@africasuk/types";
-import { SearchRepository } from "@africasuk/database";
 import { createClient } from "@/lib/auth/client";
 
 // Components
@@ -34,11 +33,16 @@ export default function SearchScreen() {
     try {
       setLoading(true);
 
-      const supabase = createClient();
-      const repository = new SearchRepository(supabase);
-      const results = await repository.search(searchTerm);
+    const supabase = createClient();
 
-      setProducts(results);
+    const { data, error } = await supabase
+      .from("products")
+      .select("*, colors:product_colors(*)")
+      .or(`name.ilike.%${searchTerm}%,description.ilike.%${searchTerm}%`);
+
+    if (error) throw error;
+
+    setProducts((data as ProductWithDetails[]) ?? []);
     } catch (error) {
       console.error("Search error:", error);
       setProducts([]);
@@ -55,12 +59,11 @@ return (
   <SafeAreaView style={styles.safeArea}>
     <Stack.Screen options={{ headerShown: false }} />
 
-    <AppHeader
-      showBack
-      title="Search"
-      showCart
-      showNotifications
-    />
+   <AppHeader
+        showBack
+        title="Search"
+        showCart
+      />
 
     <View style={styles.container}>
       {/* Header */}

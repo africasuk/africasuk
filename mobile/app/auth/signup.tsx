@@ -22,7 +22,7 @@ import { useTranslation } from "@/components/providers/LanguageProvider";
 import {
   signupSchema,
   type SignupFormData,
-} from "@africasuk/validation";
+} from "@/lib/validation/signup";
 import { signUp } from "@/lib/auth/signup";
 import { signInWithGoogle } from "@/lib/auth/google";
 

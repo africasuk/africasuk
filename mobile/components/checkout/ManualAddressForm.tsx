@@ -12,12 +12,13 @@ import {
 import { MapPin } from "lucide-react-native";
 import { useForm, Controller, Resolver } from "react-hook-form";
 import * as Location from "expo-location";
+import { createClient } from "@/lib/auth/client";
 
+import type { Address } from "@africasuk/types";
 import {
   addressSchema,
   type AddressFormValues,
-} from "@africasuk/validation";
-import type { Address } from "@africasuk/types";
+} from "@/lib/validation/address";
 
 // Custom typed resolver to avoid Metro bundler @hookform/resolvers subpath export failures
 const createAddressResolver: Resolver<AddressFormValues> = async (values) => {
@@ -68,7 +69,6 @@ export default function ManualAddressForm({
     control,
     handleSubmit,
     setValue,
-    reset,
     formState: { errors },
   } = useForm<AddressFormValues>({
     resolver: createAddressResolver,
@@ -136,66 +136,85 @@ export default function ManualAddressForm({
     }
   }
 
-  async function onSubmit(values: AddressFormValues) {
-    try {
-      setSubmitting(true);
+async function onSubmit(values: AddressFormValues) {
+  try {
+    setSubmitting(true);
 
-      const endpoint =
-        mode === "edit"
-          ? `${process.env.EXPO_PUBLIC_API_URL}/addresses/${address!.id}`
-          : `${process.env.EXPO_PUBLIC_API_URL}/addresses`;
+    const supabase = createClient();
 
-      const response = await fetch(endpoint, {
-        method: mode === "edit" ? "PATCH" : "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(values),
-      });
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
 
-      const result = await response.json();
-
-      if (!response.ok) {
-        throw new Error(
-          result.message ??
-            `Unable to ${mode === "edit" ? "update" : "save"} address.`
-        );
-      }
-
-      Alert.alert(
-        "Success",
-        mode === "edit"
-          ? "Address updated successfully."
-          : "Address saved successfully."
-      );
-
-      if (mode === "create") {
-        reset({
-          label: "Home",
-          country: "South Sudan",
-          state: "Central Equatoria",
-          city: "Juba",
-          area: "",
-          street: "",
-          building: "",
-          apartment: "",
-          landmark: "",
-          postalCode: "",
-          isDefault: true,
-        });
-      }
-
-      await Promise.resolve(onSuccess());
-    } catch (error) {
-      console.error(error);
-      Alert.alert(
-        "Error",
-        error instanceof Error ? error.message : "Unable to save address."
-      );
-    } finally {
-      setSubmitting(false);
+    if (!user) {
+      throw new Error("Please login again.");
     }
+
+    if (mode === "create") {
+      const { error } = await (supabase as any)
+        .from("addresses")
+        .insert({
+          user_id: user.id,
+          label: values.label,
+          recipient_name: user.user_metadata?.full_name ?? "",
+          phone: user.user_metadata?.phone ?? "",
+          country: values.country,
+          state: values.state,
+          city: values.city,
+          area: values.area,
+          street: values.street,
+          building: values.building,
+          apartment: values.apartment,
+          landmark: values.landmark,
+          postal_code: values.postalCode,
+          is_default: values.isDefault,
+        });
+
+      if (error) throw error;
+    } else {
+      const { error } = await (supabase as any)
+        .from("addresses")
+        .update({
+          label: values.label,
+          country: values.country,
+          state: values.state,
+          city: values.city,
+          area: values.area,
+          street: values.street,
+          building: values.building,
+          apartment: values.apartment,
+          landmark: values.landmark,
+          postal_code: values.postalCode,
+          is_default: values.isDefault,
+          updated_at: new Date().toISOString(),
+        })
+        .eq("id", address!.id);
+
+      if (error) throw error;
+    }
+
+    Alert.alert(
+      "Success",
+      mode === "edit"
+        ? "Address updated successfully."
+        : "Address saved successfully."
+    );
+
+    await Promise.resolve(onSuccess());
+
+  } catch (error) {
+    console.error(error);
+
+    Alert.alert(
+      "Error",
+      error instanceof Error
+        ? error.message
+        : "Unable to save address."
+    );
+  } finally {
+    setSubmitting(false);
   }
+}
 
   const fields: {
     name: keyof AddressFormValues;

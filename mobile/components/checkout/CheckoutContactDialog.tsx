@@ -12,6 +12,7 @@ import {
   TextStyle,
 } from "react-native";
 import { Save } from "lucide-react-native";
+import { createClient } from "@/lib/auth/client";
 
 import type { Profile } from "@africasuk/types";
 
@@ -40,72 +41,71 @@ export default function CheckoutContactDialog({
     }
   }, [open, profile]);
 
-  async function save() {
-    const name = fullName.trim();
-    const phoneNumber = phone.trim();
+async function save() {
+  const name = fullName.trim();
+  const phoneNumber = phone.trim();
 
-    if (!name) {
-      Alert.alert("Full Name", "Please enter your full name.");
-      return;
-    }
+  if (!name) {
+    Alert.alert("Full Name", "Please enter your full name.");
+    return;
+  }
 
-    if (!phoneNumber) {
-      Alert.alert("Phone Number", "Please enter your phone number.");
-      return;
-    }
+  if (!phoneNumber) {
+    Alert.alert("Phone Number", "Please enter your phone number.");
+    return;
+  }
 
-    const phoneRegex = /^\+?[0-9]{6,15}$/;
+  const phoneRegex = /^\+?[0-9]{6,15}$/;
 
-    if (!phoneRegex.test(phoneNumber)) {
-      Alert.alert(
-        "Invalid Phone Number",
-        "Please enter a valid phone number."
-      );
-      return;
-    }
+  if (!phoneRegex.test(phoneNumber)) {
+    Alert.alert(
+      "Invalid Phone Number",
+      "Please enter a valid phone number."
+    );
+    return;
+  }
 
+  try {
     setLoading(true);
 
-    try {
-      const response = await fetch(
-        `${process.env.EXPO_PUBLIC_API_URL}/profile`,
-        {
-          method: "PATCH",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            fullName: name,
-            phone: phoneNumber,
-          }),
-        }
-      );
+    const supabase = createClient();
 
-      const result = await response.json();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
 
-      if (!response.ok) {
-        throw new Error(
-          result.message ?? "Failed to update contact information."
-        );
-      }
-
-      Alert.alert("Success", "Contact information updated.");
-
-      await Promise.resolve(onSuccess?.());
-      onOpenChange(false);
-    } catch (error) {
-      console.error(error);
-
-      Alert.alert(
-        "Update Failed",
-        error instanceof Error
-          ? error.message
-          : "Failed to update contact information."
-      );
-    } finally {
-      setLoading(false);
+    if (!user) {
+      throw new Error("Please login again.");
     }
+
+    const { error } = await (supabase as any)
+      .from("profiles")
+      .update({
+        full_name: name,
+        phone: phoneNumber,
+      })
+      .eq("user_id", user.id);
+
+    if (error) throw error;
+
+    Alert.alert("Success", "Contact information updated.");
+
+    await Promise.resolve(onSuccess?.());
+
+    onOpenChange(false);
+  } catch (error) {
+    console.error(error);
+
+    Alert.alert(
+      "Update Failed",
+      error instanceof Error
+        ? error.message
+        : "Failed to update contact information."
+    );
+  } finally {
+    setLoading(false);
   }
+}
 
   function handleClose() {
     if (loading) return;

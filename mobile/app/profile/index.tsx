@@ -10,10 +10,7 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useRouter, Href } from "expo-router";
 
-import {
-  AddressRepository,
-  ProfileRepository,
-} from "@africasuk/database";
+
 import type { Profile, Address } from "@africasuk/types";
 
 import { createClient } from "@/lib/auth/client";
@@ -49,23 +46,36 @@ const fetchProfileData = useCallback(async () => {
       router.replace("/auth/login" as Href);
       return;
     }
+const [
+  { data: fetchedProfile, error: profileError },
+  { data: fetchedAddresses, error: addressError },
+] = await Promise.all([
+  supabase
+    .from("profiles")
+    .select("*")
+    .eq("user_id", user.id)
+    .single(),
 
-    const fetchedProfile = await ProfileRepository.getByUserId(
-      supabase,
-      user.id
-    );
+  supabase
+    .from("addresses")
+    .select("*")
+    .eq("user_id", user.id),
+]);
 
-    if (!fetchedProfile) {
-      setNotFound(true);
-      return;
-    }
+if (profileError || !fetchedProfile) {
+  setNotFound(true);
+  return;
+}
 
-    const addressRepository = new AddressRepository(supabase);
+if (addressError) throw addressError;
 
-    const fetchedAddresses = await addressRepository.getAll(user.id);
+const profileData = fetchedProfile as any;
 
-    setProfile(fetchedProfile);
-    setAddresses(fetchedAddresses);
+setProfile({
+  ...profileData,
+  avatarUrl: profileData.avatar_url,
+} as Profile);
+setAddresses((fetchedAddresses as Address[]) ?? []);
   } catch (err) {
     console.error("Failed to load profile details:", err);
     setError("Unable to load profile information.");

@@ -12,7 +12,7 @@ import {
 import { router, Href } from "expo-router";
 import { LinearGradient } from "expo-linear-gradient";
 import { CreditCard, Wallet, ShieldCheck, AlertCircle } from "lucide-react-native";
-
+import { placeOrder } from "@/lib/orders/placeOrder";
 import { Price } from "@/components/currency/Price";
 import { useCart } from "@/store/cart";
 import { useCheckout } from "./CheckoutContext";
@@ -96,93 +96,44 @@ export default function CheckoutSummary({ profile }: CheckoutSummaryProps) {
       return;
     }
 
-    try {
-      setPlacingOrder(true);
+try {
+  setPlacingOrder(true);
 
-      console.log("API:", process.env.EXPO_PUBLIC_API_URL);
+  const order = await placeOrder({
+    profile,
+    selectedAddress,
+    items,
+    paymentMethod,
+    subtotal,
+    shipping,
+    tax,
+    total,
+  });
 
-console.log({
-  customer: {
-    name: profile.fullName,
-    email: profile.email,
-    phone: profile.phone,
-    country: selectedAddress.country,
-    state: selectedAddress.state,
-    city: selectedAddress.city,
-    address: selectedAddress.street,
-    postalCode: selectedAddress.postalCode,
-  },
-  items: items.map((item) => ({
-    productId: item.productId,
-    variantId: item.variantId,
-    quantity: item.quantity,
-  })),
-  paymentMethod,
-});
+  clear();
 
-console.log("Sending request...");
+if (paymentMethod === "COD") {
+  Alert.alert("Success", "Order placed successfully.");
 
-const response = await fetch(
-  `${process.env.EXPO_PUBLIC_API_URL}/orders`,
-  {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({
-      customer: {
-        name: profile.fullName,
-        email: profile.email,
-        phone: profile.phone ?? undefined,
-        country: selectedAddress.country,
-        state: selectedAddress.state ?? undefined,
-        city: selectedAddress.city,
-        address: selectedAddress.street,
-        postalCode: selectedAddress.postalCode ?? undefined,
-      },
-      items: items.map((item) => ({
-        productId: item.productId,
-        variantId: item.variantId,
-        quantity: item.quantity,
-      })),
-      paymentMethod,
-    }),
-  }
-);
+  router.replace(
+    `/account/order/${order.id}` as Href
+  );
+} else {
+  // TODO: Online payment
+  Alert.alert("Success", "Order created.");
+}
+} catch (error) {
+  console.error("Place Order Error:", error);
 
-console.log("Response status:", response.status);
-
-const text = await response.text();
-
-console.log("Response body:", text);
-
-      const result = await response.json();
-
-      if (!response.ok) {
-        throw new Error(result.message ?? "Failed to place order.");
-      }
-
-      clear();
-
-      if (paymentMethod === "COD") {
-        Alert.alert("Success", "Order placed successfully.");
-
-        router.replace(
-          `/account/orders/${result.order.orderNumber}` as Href
-        );
-      } else {
-        router.push(`/payment/${result.payment.referenceId}` as Href);
-      }
-    } catch (error) {
-      console.error(error);
-
-      Alert.alert(
-        "Order Failed",
-        error instanceof Error ? error.message : "Failed to place order."
-      );
-    } finally {
-      setPlacingOrder(false);
-    }
+  Alert.alert(
+    "Order Failed",
+    error instanceof Error
+      ? error.message
+      : "Failed to place order."
+  );
+} finally {
+  setPlacingOrder(false);
+}
   }
 
   return (

@@ -1,4 +1,4 @@
-import { View, Text, Pressable, StyleSheet } from "react-native";
+import { View, Text, Pressable, StyleSheet, SafeAreaView } from "react-native";
 import { Image } from "expo-image";
 import { useRouter } from "expo-router";
 import {
@@ -27,51 +27,55 @@ export default function AppHeader({
   const router = useRouter();
 
   return (
-    <View style={styles.container}>
-      <View style={styles.left}>
-        {showBack ? (
-          <Pressable
-            style={styles.iconButton}
-            onPress={() => router.back()}
-          >
-            <ArrowLeft size={22} color="#111827" />
-          </Pressable>
-        ) : showLogo ? (
-          <Image
-            source={require("@/assets/images/logo.png")}
-            style={styles.logo}
-            contentFit="contain"
-          />
-        ) : null}
+    <SafeAreaView style={styles.safe}>
+      <View style={styles.container}>
+        <View style={styles.left}>
+          {showBack ? (
+            <Pressable
+              style={styles.iconButton}
+              onPress={() => router.back()}
+            >
+              <ArrowLeft size={22} color="#111827" />
+            </Pressable>
+          ) : showLogo ? (
+            <Image
+              source={require("@/assets/images/logo.png")}
+              style={styles.logo}
+              contentFit="contain"
+            />
+          ) : null}
+        </View>
+
+        <Text numberOfLines={1} style={styles.title}>
+          {title}
+        </Text>
+
+        <View style={styles.right}>
+          {showWishlist && (
+            <Pressable style={styles.iconButton}>
+              <Heart size={21} color="#ef4444" fill="#ef4444" />
+            </Pressable>
+          )}
+
+          {showCart && (
+            <Pressable style={styles.iconButton}>
+              <ShoppingCart size={21} color="#111827" />
+              <View style={styles.badge}>
+                <Text style={styles.badgeText}>2</Text>
+              </View>
+            </Pressable>
+          )}
+        </View>
       </View>
-
-      <Text numberOfLines={1} style={styles.title}>
-        {title}
-      </Text>
-
-      <View style={styles.right}>
-        {showWishlist && (
-          <Pressable style={styles.iconButton}>
-            <Heart size={21} color="#ef4444" fill="#ef4444" />
-          </Pressable>
-        )}
-
-        {showCart && (
-          <Pressable style={styles.iconButton}>
-            <ShoppingCart size={21} color="#111827" />
-            <View style={styles.badge}>
-              <Text style={styles.badgeText}>2</Text>
-            </View>
-          </Pressable>
-        )}
-      </View>
-    </View>
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
   safe: {
     backgroundColor: "#fff",
+    borderBottomWidth: 1,
+    borderBottomColor: "#E5E7EB",
   },
 
   container: {
@@ -80,8 +84,6 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-    borderBottomWidth: 1,
-    borderBottomColor: "#E5E7EB",
     backgroundColor: "#fff",
   },
 
