@@ -1,8 +1,9 @@
 "use client";
 
+import { useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { ArrowUpRight, ChevronRight } from "lucide-react";
+import { ArrowUpRight, ChevronRight, Loader2 } from "lucide-react";
 import type { Brand } from "@africasuk/types";
 
 import Container from "@/components/layout/Container";
@@ -15,6 +16,9 @@ interface Props {
 }
 
 export default function FeaturedBrands({ brands = [] }: Props) {
+  const [loadingSlug, setLoadingSlug] = useState<string | null>(null);
+  const [isNavigatingAll, setIsNavigatingAll] = useState(false);
+
   if (brands.length === 0) return null;
 
   // Limit grid strictly to 15 items overall
@@ -63,10 +67,17 @@ export default function FeaturedBrands({ brands = [] }: Props) {
 
           <Link
             href="/brands"
-            className="group relative inline-flex items-center gap-1.5 sm:gap-2 rounded-full bg-neutral-900 px-4 sm:px-5 py-2 sm:py-2.5 text-[11px] sm:text-sm font-bold tracking-widest uppercase text-white transition-all duration-300 hover:bg-neutral-800 shrink-0 shadow-xs"
+            onClick={() => setIsNavigatingAll(true)}
+            className={`group relative inline-flex items-center gap-1.5 sm:gap-2 rounded-full bg-neutral-900 px-4 sm:px-5 py-2 sm:py-2.5 text-[11px] sm:text-sm font-bold tracking-widest uppercase text-white transition-all duration-300 hover:bg-neutral-800 shrink-0 shadow-xs ${
+              isNavigatingAll || loadingSlug ? "pointer-events-none opacity-80" : ""
+            }`}
           >
             <span>View All</span>
-            <ArrowUpRight className="h-3.5 w-3.5 sm:h-4 sm:w-4 transition-transform duration-300 group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
+            {isNavigatingAll ? (
+              <Loader2 className="h-3.5 w-3.5 sm:h-4 sm:w-4 animate-spin" />
+            ) : (
+              <ArrowUpRight className="h-3.5 w-3.5 sm:h-4 sm:w-4 transition-transform duration-300 group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
+            )}
           </Link>
         </div>
 
@@ -75,15 +86,29 @@ export default function FeaturedBrands({ brands = [] }: Props) {
           {displayBrands.map((brand, index) => {
             const spanClass = tileSpans[index] || "col-span-1 md:col-span-2 row-span-1";
             const mobileVisibility = index >= 5 ? "hidden md:block" : "block";
+            const isThisLoading = loadingSlug === brand.slug;
 
             return (
               <Link
                 key={brand.id}
                 href={`/brands/${brand.slug}`}
-                className={`group relative w-full h-full ${spanClass} ${mobileVisibility}`}
+                onClick={() => setLoadingSlug(brand.slug)}
+                className={`group relative w-full h-full ${spanClass} ${mobileVisibility} ${
+                  loadingSlug || isNavigatingAll ? "pointer-events-none" : ""
+                }`}
               >
-                <Card className="relative w-full h-full bg-[#f8f9fa] rounded-xl sm:rounded-2xl border border-neutral-200/80 shadow-none hover:shadow-lg hover:border-neutral-300 transition-all duration-300 overflow-hidden p-3 sm:p-4 flex flex-col justify-between">
-                  
+                <Card
+                  className={`relative w-full h-full bg-[#f8f9fa] rounded-xl sm:rounded-2xl border border-neutral-200/80 shadow-none hover:shadow-lg hover:border-neutral-300 transition-all duration-300 overflow-hidden p-3 sm:p-4 flex flex-col justify-between ${
+                    isThisLoading ? "opacity-75" : ""
+                  }`}
+                >
+                  {/* CARD LOADING OVERLAY */}
+                  {isThisLoading && (
+                    <div className="absolute inset-0 z-30 flex items-center justify-center bg-white/60 backdrop-blur-[1px]">
+                      <Loader2 className="h-6 w-6 sm:h-7 sm:w-7 animate-spin text-neutral-900 drop-shadow-xs" />
+                    </div>
+                  )}
+
                   {/* WATERMARK LOGO */}
                   {brand.logoUrl && (
                     <div className="absolute right-[-10%] top-1/2 -translate-y-1/2 w-24 h-24 sm:w-40 sm:h-40 opacity-15 group-hover:opacity-25 group-hover:scale-105 transition-all duration-500 pointer-events-none z-0 mix-blend-multiply">
@@ -129,7 +154,6 @@ export default function FeaturedBrands({ brands = [] }: Props) {
                       {brand.description || `Official ${brand.name} collection`}
                     </p>
                   </div>
-
                 </Card>
               </Link>
             );
@@ -138,14 +162,21 @@ export default function FeaturedBrands({ brands = [] }: Props) {
           {/* ELEGANT MOBILE "EXPLORE ALL" CARD */}
           <Link
             href="/brands"
-            className="block md:hidden col-span-1 row-span-1 group relative w-full h-full"
+            onClick={() => setIsNavigatingAll(true)}
+            className={`block md:hidden col-span-1 row-span-1 group relative w-full h-full ${
+              isNavigatingAll || loadingSlug ? "pointer-events-none opacity-80" : ""
+            }`}
           >
             <Card className="relative w-full h-full bg-white rounded-xl border border-dashed border-neutral-300 hover:border-neutral-900 transition-colors flex flex-col items-center justify-center p-3 text-center gap-1 shadow-none">
               <div className="flex h-7 w-7 items-center justify-center rounded-full bg-neutral-100 text-neutral-800 group-hover:bg-neutral-900 group-hover:text-white transition-colors">
-                <ChevronRight className="h-4 w-4" />
+                {isNavigatingAll ? (
+                  <Loader2 className="h-4 w-4 animate-spin text-neutral-900" />
+                ) : (
+                  <ChevronRight className="h-4 w-4" />
+                )}
               </div>
               <span className="text-[11px] font-extrabold uppercase tracking-tight text-neutral-800 leading-tight">
-                Explore All ({brands.length})
+                {isNavigatingAll ? "Loading..." : `Explore All (${brands.length})`}
               </span>
             </Card>
           </Link>

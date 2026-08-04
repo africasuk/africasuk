@@ -1,7 +1,9 @@
 "use client";
 
+import { useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
+import { Loader2 } from "lucide-react";
 import type { ProductWithDetails } from "@africasuk/types";
 import { Price } from "@/components/currency/Price";
 
@@ -12,6 +14,8 @@ interface Props {
 }
 
 export function ProductCard({ product }: Props) {
+  const [isLoading, setIsLoading] = useState(false);
+
   // Determine selected color or default to first color option
   const color =
     product.colors.find((c) => c.id === product.selectedColorId) ??
@@ -28,7 +32,10 @@ export function ProductCard({ product }: Props) {
   return (
     <Link
       href={`/products/${product.slug}${color?.id ? `?color=${color.id}` : ""}`}
-      className="group flex flex-col rounded-xl sm:rounded-2xl border border-gray-100 bg-white p-2 sm:p-3 transition-all duration-300 hover:border-[#002b15]/20 hover:shadow-lg"
+      onClick={() => setIsLoading(true)}
+      className={`group relative flex flex-col rounded-xl sm:rounded-2xl border border-gray-100 bg-white p-2 sm:p-3 transition-all duration-300 hover:border-[#002b15]/20 hover:shadow-lg ${
+        isLoading ? "pointer-events-none opacity-80" : ""
+      }`}
     >
       {/* 1. Image Showcase Frame: Scaled height for mobile */}
       <div className="relative h-36 sm:h-48 md:h-64 w-full overflow-hidden rounded-lg sm:rounded-xl bg-gray-50">
@@ -40,8 +47,15 @@ export function ProductCard({ product }: Props) {
           className="object-cover transition-transform duration-500 ease-out group-hover:scale-105"
         />
 
+        {/* Loading Spinner Overlay */}
+        {isLoading && (
+          <div className="absolute inset-0 z-10 flex items-center justify-center bg-black/20 backdrop-blur-[1px]">
+            <Loader2 className="h-6 w-6 sm:h-8 sm:w-8 animate-spin text-white drop-shadow-md" />
+          </div>
+        )}
+
         {/* Minimalist Color Swatch Preview Pill: Compact size on mobile */}
-        {product.colors.length > 1 && (
+        {product.colors.length > 1 && !isLoading && (
           <div className="absolute bottom-1.5 left-1.5 sm:bottom-2.5 sm:left-2.5 flex items-center gap-0.5 sm:gap-1 rounded-full bg-white/90 backdrop-blur-xs px-1.5 sm:px-2 py-0.5 sm:py-1 shadow-2xs border border-gray-100">
             {product.colors.slice(0, 4).map((c) => (
               <span
@@ -84,7 +98,7 @@ export function ProductCard({ product }: Props) {
           </div>
 
           <span className="hidden sm:inline-block text-[11px] font-semibold text-[#005c2e] opacity-0 group-hover:opacity-100 transition-opacity">
-            View Item →
+            {isLoading ? "Loading..." : "View Item →"}
           </span>
         </div>
       </div>

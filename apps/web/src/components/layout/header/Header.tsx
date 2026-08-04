@@ -1,9 +1,10 @@
-import { cookies } from "next/headers";
+
 import { defaultLocale, getDictionary, type Locale } from "@africasuk/i18n";
 import { createClient } from "@/lib/auth/server";
 
 import TopBar from "./TopBar";
 import MainHeader from "./MainHeader";
+import { cookies } from "next/headers";
 
 export default async function Header() {
   const cookieStore = await cookies();
