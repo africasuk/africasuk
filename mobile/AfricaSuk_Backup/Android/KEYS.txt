@@ -1,0 +1,72 @@
+=========================================
+AFRICA SUK - ANDROID RELEASE KEYS
+=========================================
+
+App Name:
+Africa Suk
+
+Package Name:
+com.africasuk.app
+
+Google Play Console:
+https://play.google.com/console
+
+-----------------------------------------
+FILES
+-----------------------------------------
+
+Android Upload Keystore
+Filename:
+@zaynexs-team__africa-suk.jks
+
+Upload Certificate
+Filename:
+upload_certificate.pem
+
+-----------------------------------------
+EXPO
+-----------------------------------------
+
+Project:
+africa-suk
+
+EAS Project ID:
+170fceea-9a97-4463-a74e-818ac938d14c
+
+Current Build Credentials:
+6aYfDZfYUL
+
+-----------------------------------------
+UPLOAD CERTIFICATE
+-----------------------------------------
+
+SHA1:
+A1:FC:35:70:FD:D2:20:9B:E6:51:34:58:3E:41:22:9B:C4:04:56:00
+
+SHA256:
+88:90:FE:93:1B:AC:35:32:47:78:7A:4E:1C:B2:DC:DE:E1:F4:70:2A:A7:E2:8C:A3:10:1E:CC:14:65:F0:76:32
+
+-----------------------------------------
+PASSWORDS
+-----------------------------------------
+
+Stored securely in:
+□ Bitwarden
+□ 1Password
+□ Google Password Manager
+□ Apple Passwords
+□ Other: ______________________
+
+Do NOT store passwords in this file.
+
+-----------------------------------------
+BACKUP LOCATIONS
+-----------------------------------------
+
+□ Primary Computer
+□ Google Drive
+□ External SSD / USB
+□ Offline Backup
+
+Last Updated:
+_____________________________
