@@ -1,0 +1,31 @@
+export const GENDER_KEYWORDS = {
+  men: [
+    "men",
+    "man",
+    "male",
+    "boy",
+    "boys",
+    "gentleman",
+    "gentlemen",
+    "mens",
+    "men's",
+    "his",
+    "he",
+    "him",
+  ],
+
+  women: [
+    "women",
+    "woman",
+    "female",
+    "girl",
+    "girls",
+    "lady",
+    "ladies",
+    "womens",
+    "women's",
+    "hers",
+    "her",
+    "she",
+  ],
+} as const;

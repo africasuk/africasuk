@@ -7,14 +7,14 @@ import {
 } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { FcGoogle } from "react-icons/fc";
+// import { FcGoogle } from "react-icons/fc"; // TEMPORARILY DISABLED
 import { toast } from "sonner";
 
 import Logo from "@/components/layout/header/Logo";
 import { useTranslation } from "@/components/providers/LanguageProvider";
 
 import { login } from "@/lib/auth/login";
-import { signInWithGoogle } from "@/lib/auth/google";
+// import { signInWithGoogle } from "@/lib/auth/google"; // TEMPORARILY DISABLED
 
 import {
   loginSchema,
@@ -69,6 +69,7 @@ export default function LoginForm() {
     router.refresh();
   };
 
+  /* TEMPORARILY DISABLED: Google Login Handler
   const handleGoogleLogin =
     async () => {
       const { error } =
@@ -80,6 +81,7 @@ export default function LoginForm() {
         toast.error(error.message);
       }
     };
+  */
 
   return (
     <div className="p-8 sm:p-10">
@@ -103,19 +105,16 @@ export default function LoginForm() {
         </p>
       </div>
 
+      {/* TEMPORARILY DISABLED: Google Sign-In & Divider */}
+      {/* 
       <button
         type="button"
-        onClick={
-          handleGoogleLogin
-        }
+        onClick={handleGoogleLogin}
         className="flex w-full cursor-pointer items-center justify-center gap-3 rounded-xl border border-muted bg-background py-3 text-sm font-semibold shadow-sm transition-all duration-200 hover:border-muted-foreground/20 hover:bg-muted/50 active:scale-[0.99]"
       >
         <FcGoogle size={20} />
 
-        {
-          dictionary.auth
-            .continueWithGoogle
-        }
+        {dictionary.auth.continueWithGoogle}
       </button>
 
       <div className="my-6 flex items-center gap-3">
@@ -127,6 +126,7 @@ export default function LoginForm() {
 
         <div className="h-px flex-1 bg-muted/60" />
       </div>
+      */}
 
       <form
         onSubmit={handleSubmit(
@@ -205,7 +205,7 @@ export default function LoginForm() {
         </button>
       </form>
 
-     <div className="mt-6 text-center text-sm text-muted-foreground">
+      <div className="mt-6 text-center text-sm text-muted-foreground">
         {dictionary.auth.noAccount}{" "}
         <Link
           href="/auth/signup"

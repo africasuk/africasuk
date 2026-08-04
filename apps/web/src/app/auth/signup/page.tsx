@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { FcGoogle } from "react-icons/fc";
+// import { FcGoogle } from "react-icons/fc"; // TEMPORARILY DISABLED
 import { toast } from "sonner";
 
 import Logo from "@/components/layout/header/Logo";
@@ -14,7 +14,7 @@ import {
   type SignupFormData,
 } from "@/validation/signup.schema";
 import { signUp } from "@/lib/auth/signup";
-import { signInWithGoogle } from "@/lib/auth/google";
+// import { signInWithGoogle } from "@/lib/auth/google"; // TEMPORARILY DISABLED
 
 export default function SignupPage() {
   const router = useRouter();
@@ -47,12 +47,14 @@ export default function SignupPage() {
     router.push("/");
   };
 
+  /* TEMPORARILY DISABLED: Google Signup Handler
   const handleGoogleSignup = async () => {
     const { error } = await signInWithGoogle();
     if (error) {
       toast.error(error.message);
     }
   };
+  */
 
   return (
     <main className="flex min-h-screen items-center justify-center bg-muted/30 p-6 antialiased selection:bg-[#004d26]/10">
@@ -71,7 +73,8 @@ export default function SignupPage() {
           </p>
         </div>
 
-        {/* Google Signup Provider */}
+        {/* TEMPORARILY DISABLED: Google Signup Provider & Separator */}
+        {/* 
         <button
           type="button"
           onClick={handleGoogleSignup}
@@ -81,7 +84,6 @@ export default function SignupPage() {
           {dictionary.auth.continueWithGoogle}
         </button>
 
-        {/* Premium Geometric Separator */}
         <div className="my-6 flex items-center gap-3">
           <div className="h-px flex-1 bg-muted/60" />
           <span className="text-xs font-bold tracking-widest text-muted-foreground/60">
@@ -89,6 +91,7 @@ export default function SignupPage() {
           </span>
           <div className="h-px flex-1 bg-muted/60" />
         </div>
+        */}
 
         {/* Signup Core Form Inputs */}
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">

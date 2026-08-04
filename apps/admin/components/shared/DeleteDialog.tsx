@@ -70,15 +70,15 @@ export default function DeleteDialog({
 
   return (
     <AlertDialog>
-      <AlertDialogTrigger >
-        <Button
-          variant="destructive"
-          size="sm"
-        >
-          <Trash2 className="mr-2 h-4 w-4" />
-          Delete
-        </Button>
-      </AlertDialogTrigger>
+      {/* Base UI uses render prop instead of asChild to avoid nested <button> elements */}
+      <AlertDialogTrigger
+        render={
+          <Button variant="destructive" size="sm">
+            <Trash2 className="mr-2 h-4 w-4" />
+            Delete
+          </Button>
+        }
+      />
 
       <AlertDialogContent>
         <AlertDialogHeader>

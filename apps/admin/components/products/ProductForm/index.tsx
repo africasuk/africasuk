@@ -223,6 +223,7 @@ export function ProductForm({
             key={colorIndex}
             color={color}
             colorIndex={colorIndex}
+            productName={info.name}
             removeColor={removeColor}
             updateColorField={updateColorField}
             addVariant={addVariant}
