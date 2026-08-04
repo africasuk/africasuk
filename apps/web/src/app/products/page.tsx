@@ -28,16 +28,16 @@ export default async function ProductsPage() {
     <Layout>
       <section className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
         {/* Page Header */}
-        <div className="mb-8 flex flex-col gap-2 md:flex-row md:items-end md:justify-between border-b border-gray-100 pb-6">
+        <div className="mb-8 flex flex-col gap-2 border-b border-gray-100 pb-6 md:flex-row md:items-end md:justify-between">
           <div>
-            <span className="text-xs font-bold tracking-widest text-[#002b15] uppercase">
+            <span className="text-xs font-bold uppercase tracking-widest text-[#002b15]">
               Curated Collection
             </span>
             <h1 className="text-3xl font-extrabold tracking-tight text-gray-900 sm:text-4xl">
               All Products
             </h1>
           </div>
-          <p className="text-xs font-medium tracking-wider text-gray-400 uppercase">
+          <p className="text-xs font-medium uppercase tracking-wider text-gray-400">
             {colorProducts.length} {colorProducts.length === 1 ? "Item" : "Items"} Available
           </p>
         </div>
@@ -51,8 +51,8 @@ export default async function ProductsPage() {
             </p>
           </div>
         ) : (
-          /* Product Grid */
-          <div className="grid gap-6 grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
+          /* Product Grid: 2 cols on Mobile, 3 on Tablet, 4 on Desktop */
+          <div className="grid grid-cols-2 gap-3 sm:gap-6 md:grid-cols-3 lg:grid-cols-4">
             {colorProducts.map((product) => (
               <ProductCard key={product.id} product={product} />
             ))}
