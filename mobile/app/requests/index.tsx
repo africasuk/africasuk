@@ -103,14 +103,13 @@ const {
   data: { session },
 } = await supabase.auth.getSession();
 
-console.log("SESSION:", session);
 
 if (!session) {
   router.replace("/auth/login");
   return;
 }
 
-console.log("USER ID:", session.user.id);
+
 
 const user = session.user;
 

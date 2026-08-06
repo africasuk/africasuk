@@ -1,5 +1,11 @@
-import { SafeAreaView, ScrollView, StatusBar } from "react-native";
+import {
+  SafeAreaView,
+  ScrollView,
+  StatusBar,
+} from "react-native";
 import { useEffect, useState } from "react";
+
+import LoadingText from "@/components/shared/LoadingText";
 
 import { createClient } from "@/lib/auth/client";
 
@@ -10,11 +16,13 @@ import FeaturedBrands from "@/components/home/FeaturedBrands";
 import ContinueShopping from "@/components/home/ContinueShopping";
 import RequestProductSection from "@/components/home/RequestProductSection";
 import HomeHeader from "@/components/home/HomeHeader";
+import Logo from "@/components/layout/header/Logo";
 
 export default function HomeScreen() {
   const [categories, setCategories] = useState<any[]>([]);
   const [brands, setBrands] = useState<any[]>([]);
   const [products, setProducts] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     async function load() {
@@ -147,31 +155,52 @@ export default function HomeScreen() {
       setCategories(formattedCategories);
       setBrands(formattedBrands);
       setProducts(formattedProducts);
+
+      setLoading(false);
     }
 
-    load().catch(console.error);
+    load()
+    .catch(console.error)
+    .finally(() => setLoading(false));
   }, []);
 
+if (loading) {
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: "#fff", paddingTop: 60 }}>
-      <StatusBar
-        backgroundColor="#fff"
-        barStyle="dark-content"
-      />
-
-        <HomeHeader />
-      <ScrollView
-        showsVerticalScrollIndicator={false}
-        contentContainerStyle={{ paddingBottom: 40 }}
-      >
-        <Hero categories={categories} />
-        <Categories categories={categories} />
-        <FeaturedProducts products={products} />
-        <FeaturedBrands brands={brands} />
-        <RequestProductSection />
-        <ContinueShopping />
-      </ScrollView>
+    <SafeAreaView
+      style={{
+        flex: 1,
+        backgroundColor: "#fff",
+        justifyContent: "center",
+        alignItems: "center",
+      }}
+    >
+      <Logo />
+      <LoadingText />
     </SafeAreaView>
   );
+}
+
+return (
+  <SafeAreaView style={{ flex: 1, backgroundColor: "#fff", paddingTop: 60 }}>
+    <StatusBar
+      backgroundColor="#fff"
+      barStyle="dark-content"
+    />
+
+    <HomeHeader />
+
+    <ScrollView
+      showsVerticalScrollIndicator={false}
+      contentContainerStyle={{ paddingBottom: 40 }}
+    >
+      <Hero categories={categories} />
+      <Categories categories={categories} />
+      <FeaturedProducts products={products} />
+      <FeaturedBrands brands={brands} />
+      <RequestProductSection />
+      <ContinueShopping />
+    </ScrollView>
+  </SafeAreaView>
+);
 }
 

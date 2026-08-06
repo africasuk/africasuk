@@ -93,7 +93,7 @@ setAddresses(
 );
 const profileData = fetchedProfile as any;
 
-console.log("PROFILE:", profileData);
+
 
 setProfile(
   profileData

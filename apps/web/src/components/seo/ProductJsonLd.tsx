@@ -73,28 +73,55 @@ offers: product.colors.flatMap((color) =>
     },
 
     hasMerchantReturnPolicy: {
-      "@type": "MerchantReturnPolicy",
+  "@type": "MerchantReturnPolicy",
 
-      applicableCountry: "SS",
+  applicableCountry: "SS",
 
-      returnPolicyCategory:
-        "https://schema.org/MerchantReturnFiniteReturnWindow",
+  returnPolicyCategory:
+    "https://schema.org/MerchantReturnFiniteReturnWindow",
 
-      merchantReturnDays: 7,
+  merchantReturnDays: 7,
 
-      returnMethod:
-        "https://schema.org/ReturnByMail",
+  returnMethod:
+    "https://schema.org/ReturnByMail",
+
+  returnFees:
+    "https://schema.org/FreeReturn",
+},
+
+shippingDetails: {
+  "@type": "OfferShippingDetails",
+
+  shippingDestination: {
+    "@type": "DefinedRegion",
+
+    addressCountry: "SS",
+  },
+
+  shippingRate: {
+    "@type": "MonetaryAmount",
+    value: 0,
+    currency: "USD",
+  },
+
+  deliveryTime: {
+    "@type": "ShippingDeliveryTime",
+
+    handlingTime: {
+      "@type": "QuantitativeValue",
+      minValue: 1,
+      maxValue: 2,
+      unitCode: "DAY",
     },
 
-    shippingDetails: {
-      "@type": "OfferShippingDetails",
-
-      shippingDestination: {
-        "@type": "DefinedRegion",
-
-        addressCountry: "SS",
-      },
+    transitTime: {
+      "@type": "QuantitativeValue",
+      minValue: 3,
+      maxValue: 14,
+      unitCode: "DAY",
     },
+  },
+},
 
     acceptedPaymentMethod: [
       ...(product.allowCod

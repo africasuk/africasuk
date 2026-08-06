@@ -1,267 +1,225 @@
-import React, { useEffect, useRef, useState, useCallback } from "react";
+import React from "react";
 import {
   View,
   Text,
   StyleSheet,
-  ScrollView,
   Pressable,
-  NativeSyntheticEvent,
-  NativeScrollEvent,
+  Dimensions,
 } from "react-native";
+import { Video, ResizeMode } from "expo-av";
 import { useRouter, Href } from "expo-router";
 import { LinearGradient } from "expo-linear-gradient";
-import { Camera, Search, FileText, Truck, ArrowRight } from "lucide-react-native";
+import { Sparkles, Camera } from "lucide-react-native";
 
-const BRAND_LIGHT = "#008744";
-const BRAND_DARK = "#002b15";
-const LIGHT_GREEN = "#E6F0EB";
-
-const CARD_WIDTH = 210;
-const CARD_GAP = 12;
-const CARD_ITEM_SIZE = CARD_WIDTH + CARD_GAP;
+const { height: SCREEN_HEIGHT } = Dimensions.get("window");
 
 export default function RequestProductSection() {
-  const router = useRouter();
-  const scrollViewRef = useRef<ScrollView>(null);
-  const [currentIndex, setCurrentIndex] = useState(0);
-
-  const steps = [
-    {
-      number: "01",
-      title: "Upload Photo",
-      description: "Upload a picture of the product you want to source.",
-      icon: Camera,
-    },
-    {
-      number: "02",
-      title: "Describe Details",
-      description: "Tell us details like preferred color, size, and quantity.",
-      icon: FileText,
-    },
-    {
-      number: "03",
-      title: "We Source It",
-      description: "Our team searches trusted suppliers and notifies you.",
-      icon: Truck,
-    },
-  ];
-
-  // Auto-scroll loop
-  useEffect(() => {
-    const timer = setInterval(() => {
-      const nextIndex = (currentIndex + 1) % steps.length;
-      setCurrentIndex(nextIndex);
-
-      scrollViewRef.current?.scrollTo({
-        x: nextIndex * CARD_ITEM_SIZE,
-        animated: true,
-      });
-    }, 3000);
-
-    return () => clearInterval(timer);
-  }, [currentIndex, steps.length]);
-
-  // Track manual swipes so timer stays synchronized
-  const handleScroll = useCallback(
-    (event: NativeSyntheticEvent<NativeScrollEvent>) => {
-      const contentOffsetX = event.nativeEvent.contentOffset.x;
-      const index = Math.round(contentOffsetX / CARD_ITEM_SIZE);
-      if (index !== currentIndex && index >= 0 && index < steps.length) {
-        setCurrentIndex(index);
-      }
-    },
-    [currentIndex, steps.length]
-  );
+  const router = Router();
 
   return (
     <View style={styles.container}>
-      {/* Badge Header */}
-      <View style={styles.badge}>
-        <Search size={13} color={BRAND_LIGHT} />
-        <Text style={styles.badgeText}>CAN&apos;T FIND A PRODUCT?</Text>
-      </View>
+      {/* Background Video */}
+      <Video
+        source={{
+          uri: "https://gzfhrrnvstoeoaxdsbxc.supabase.co/storage/v1/object/public/videos/Video%20Project%2012.mp4",
+        }}
+        style={styles.videoBackground}
+        resizeMode={ResizeMode.COVER}
+        shouldPlay
+        isLooping
+        isMuted
+        useNativeControls={false}
+      />
 
-      <Text style={styles.title}>Request Any Product</Text>
+      {/* Video Overlays for Contrast & Depth */}
+      <View style={styles.flatOverlay} />
+      <LinearGradient
+        colors={[
+          "rgba(0, 0, 0, 0.8)",
+          "rgba(0, 0, 0, 0.2)",
+          "rgba(0, 0, 0, 0.6)",
+        ]}
+        locations={[0, 0.5, 1]}
+        style={styles.gradientOverlay}
+      />
 
-      <Text style={styles.description}>
-        Looking for a product not listed on AfricaSuk? Upload a photo, tell us
-        what you need, and our sourcing team will find it for you.
-      </Text>
+      {/* Hero Content Container */}
+      <View style={styles.contentContainer}>
+        {/* Sourcing Glass Badge */}
+        <View style={styles.badgeContainer}>
+          <Sparkles size={14} color="#6ee7b7" />
+          <View style={styles.badgeInner}>
+            <Text style={styles.badgeText}>CAN&apos;T FIND IT?</Text>
+          </View>
+        </View>
 
-      {/* Primary Action Button with Brand Gradient */}
-      <Pressable
-        onPress={() => router.push("/request-product" as Href)}
-        style={styles.buttonWrapper}
-      >
-        <LinearGradient
-          colors={[BRAND_LIGHT, BRAND_DARK]}
-          start={{ x: 0, y: 0 }}
-          end={{ x: 1, y: 1 }}
-          style={styles.button}
+        {/* Headline */}
+        <Text style={styles.headline}>Can&apos;t Find What You Need?</Text>
+
+        {/* Subtitle */}
+        <Text style={styles.subtitle}>
+          Snap a photo or share a description. Our sourcing specialists will
+          locate and list it for you.
+        </Text>
+
+        {/* CTA Gradient Button */}
+        <Pressable
+          onPress={() => router.push("/request-product" as Href)}
+          style={({ pressed }) => [
+            styles.buttonWrapper,
+            pressed && styles.buttonPressed,
+          ]}
         >
-          <Camera size={18} color="#ffffff" />
-          <Text style={styles.buttonText}>Request a Product</Text>
-          <ArrowRight size={16} color="#ffffff" />
-        </LinearGradient>
-      </Pressable>
-
-      {/* Auto-sliding Steps Cards */}
-      <ScrollView
-        ref={scrollViewRef}
-        horizontal
-        showsHorizontalScrollIndicator={false}
-        onScroll={handleScroll}
-        scrollEventThrottle={16}
-        snapToInterval={CARD_ITEM_SIZE}
-        decelerationRate="fast"
-        contentContainerStyle={styles.stepsContainer}
-      >
-        {steps.map((step) => {
-          const Icon = step.icon;
-
-          return (
-            <View key={step.number} style={styles.stepCard}>
-              <View style={styles.stepHeader}>
-                <View style={styles.iconBox}>
-                  <Icon size={20} color={BRAND_LIGHT} />
-                </View>
-                <Text style={styles.number}>{step.number}</Text>
-              </View>
-
-              <Text style={styles.stepTitle}>{step.title}</Text>
-
-              <Text numberOfLines={3} style={styles.stepDescription}>
-                {step.description}
-              </Text>
-            </View>
-          );
-        })}
-      </ScrollView>
+          <LinearGradient
+            colors={["#002b15", "#065f46", "#10b981"]}
+            start={{ x: 0, y: 0.5 }}
+            end={{ x: 1, y: 0.5 }}
+            style={styles.buttonGradient}
+          >
+            <Camera size={18} color="#6ee7b7" strokeWidth={2.5} />
+            <Text style={styles.buttonText}>Request Custom Product</Text>
+          </LinearGradient>
+        </Pressable>
+      </View>
     </View>
   );
 }
 
+function Router() {
+  return useRouter();
+}
+
 const styles = StyleSheet.create({
   container: {
-    paddingVertical: 24,
-    paddingHorizontal: 16,
-    backgroundColor: "#ffffff",
-    borderRadius: 24,
-    marginHorizontal: 16,
-    marginVertical: 12,
-    borderWidth: 1,
-    borderColor: "rgba(229, 231, 235, 0.8)",
-    shadowColor: "#000000",
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.04,
-    shadowRadius: 10,
-    elevation: 2,
-  },
-  badge: {
-    alignSelf: "center",
-    flexDirection: "row",
-    alignItems: "center",
-    backgroundColor: LIGHT_GREEN,
-    borderRadius: 20,
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    marginBottom: 10,
-    gap: 6,
-  },
-  badgeText: {
-    color: BRAND_DARK,
-    fontWeight: "800",
-    fontSize: 11,
-    letterSpacing: 0.5,
-  },
-  title: {
-    textAlign: "center",
-    fontSize: 22,
-    fontWeight: "900",
-    color: BRAND_DARK,
-    letterSpacing: -0.3,
-  },
-  description: {
-    marginTop: 8,
-    textAlign: "center",
-    color: "#4b5563",
-    fontSize: 13,
-    lineHeight: 19,
-    paddingHorizontal: 8,
-  },
-  buttonWrapper: {
-    marginTop: 20,
-    borderRadius: 25,
-    overflow: "hidden",
-    shadowColor: BRAND_LIGHT,
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.15,
-    shadowRadius: 6,
-    elevation: 2,
-  },
-  button: {
-    paddingVertical: 14,
-    paddingHorizontal: 22,
+    position: "relative",
+    width: "100%",
+    minHeight: SCREEN_HEIGHT * 0.85,
     justifyContent: "center",
     alignItems: "center",
+    overflow: "hidden",
+    borderTopWidth: 1,
+    borderBottomWidth: 1,
+    borderColor: "rgba(39, 39, 42, 0.6)", // border-zinc-800/60
+  },
+
+  /* Video Layer */
+  videoBackground: {
+    ...StyleSheet.absoluteFillObject,
+    width: "100%",
+    height: "100%",
+    transform: [{ scale: 1.05 }],
+  },
+
+  /* Overlays for readability */
+  flatOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: "rgba(0, 0, 0, 0.35)",
+  },
+  gradientOverlay: {
+    ...StyleSheet.absoluteFillObject,
+  },
+
+  /* Content Alignment */
+  contentContainer: {
+    zIndex: 10,
+    width: "100%",
+    maxWidth: 440,
+    paddingHorizontal: 20,
+    alignItems: "center",
+  },
+
+  /* Badge Styles */
+  badgeContainer: {
     flexDirection: "row",
+    alignItems: "center",
     gap: 8,
+    backgroundColor: "rgba(0, 0, 0, 0.5)",
+    borderWidth: 1,
+    borderColor: "rgba(255, 255, 255, 0.2)",
+    borderRadius: 9999,
+    paddingHorizontal: 14,
+    paddingVertical: 6,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 4,
+    elevation: 4,
+  },
+  badgeInner: {
+    backgroundColor: "rgba(255, 255, 255, 0.1)",
+    borderRadius: 9999,
+    paddingHorizontal: 12,
+    paddingVertical: 3,
+  },
+  badgeText: {
+    color: "#ffffff",
+    fontSize: 11,
+    fontWeight: "800",
+    letterSpacing: 1.2,
+  },
+
+  /* Headline */
+  headline: {
+    marginTop: 20,
+    fontSize: 32,
+    fontWeight: "900",
+    color: "#ffffff",
+    textAlign: "center",
+    lineHeight: 38,
+    letterSpacing: -0.5,
+    /* Text Shadow Effect */
+    textShadowColor: "rgba(0, 0, 0, 0.85)",
+    textShadowOffset: { width: 0, height: 2 },
+    textShadowRadius: 12,
+  },
+
+  /* Subtitle */
+  subtitle: {
+    marginTop: 14,
+    fontSize: 15,
+    fontWeight: "500",
+    color: "#f4f4f5", // text-zinc-100
+    textAlign: "center",
+    lineHeight: 22,
+    paddingHorizontal: 10,
+    /* Text Shadow Effect */
+    textShadowColor: "rgba(0, 0, 0, 0.85)",
+    textShadowOffset: { width: 0, height: 1 },
+    textShadowRadius: 8,
+  },
+
+  /* CTA Button Styles */
+  buttonWrapper: {
+    marginTop: 32,
+    width: "100%",
+    maxWidth: 320,
+    borderRadius: 9999,
+    overflow: "hidden",
+    borderWidth: 1,
+    borderColor: "rgba(52, 211, 153, 0.4)", // border-emerald-400/40
+    shadowColor: "#000000",
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.6,
+    shadowRadius: 16,
+    elevation: 8,
+  },
+  buttonGradient: {
+    height: 54,
+    width: "100%",
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 10,
+    paddingHorizontal: 24,
   },
   buttonText: {
     color: "#ffffff",
-    fontWeight: "800",
-    fontSize: 14,
+    fontSize: 15,
+    fontWeight: "700",
     letterSpacing: 0.3,
   },
-  stepsContainer: {
-    paddingTop: 24,
-    paddingBottom: 4,
-    gap: CARD_GAP,
-  },
-  stepCard: {
-    width: CARD_WIDTH,
-    backgroundColor: "#f9fafb",
-    borderRadius: 18,
-    padding: 16,
-    borderWidth: 1,
-    borderColor: "#f3f4f6",
-  },
-  stepHeader: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    marginBottom: 14,
-  },
-  iconBox: {
-    width: 40,
-    height: 40,
-    borderRadius: 12,
-    backgroundColor: "#ffffff",
-    justifyContent: "center",
-    alignItems: "center",
-    borderWidth: 1,
-    borderColor: "#e5e7eb",
-    shadowColor: "#000000",
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.03,
-    shadowRadius: 2,
-    elevation: 1,
-  },
-  number: {
-    fontSize: 18,
-    fontWeight: "900",
-    color: BRAND_LIGHT,
-    letterSpacing: -0.5,
-  },
-  stepTitle: {
-    fontSize: 14,
-    fontWeight: "800",
-    color: BRAND_DARK,
-    marginBottom: 4,
-  },
-  stepDescription: {
-    color: "#6b7280",
-    lineHeight: 18,
-    fontSize: 12,
+  buttonPressed: {
+    opacity: 0.9,
+    transform: [{ scale: 0.98 }],
   },
 });

@@ -5,7 +5,6 @@ import {
   SafeAreaView,
   ScrollView,
   StyleSheet,
-  View,
   ViewStyle,
 } from "react-native";
 import { Stack } from "expo-router";
@@ -32,10 +31,7 @@ export default function LoginScreen() {
           keyboardShouldPersistTaps="handled"
           showsVerticalScrollIndicator={false}
         >
-          {/* Centered Card Wrapper matching web's max-w-md */}
-          <View style={styles.card}>
-            <LoginForm />
-          </View>
+          <LoginForm />
         </ScrollView>
       </KeyboardAvoidingView>
     </SafeAreaView>
@@ -46,7 +42,6 @@ type Styles = {
   container: ViewStyle;
   keyboardView: ViewStyle;
   scrollContent: ViewStyle;
-  card: ViewStyle;
 };
 
 const styles = StyleSheet.create<Styles>({
@@ -62,19 +57,5 @@ const styles = StyleSheet.create<Styles>({
     justifyContent: "center",
     alignItems: "center",
     padding: 24,
-  },
-  card: {
-    width: "100%",
-    maxWidth: 440, // Equivalent to max-w-md
-    backgroundColor: "#ffffff",
-    borderRadius: 16,
-    borderWidth: 1,
-    borderColor: "#e4e4e7",
-    padding: 24,
-    shadowColor: "#000000",
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.05,
-    shadowRadius: 12,
-    elevation: 3,
   },
 });

@@ -29,17 +29,19 @@ export default function SearchProductList({
 }: SearchProductListProps) {
   const router = useRouter();
 
+
+  
   // Flatten products across colors and variants
   const items = useMemo(() => {
-    return products.flatMap((product) =>
-      product.colors.map((color) => ({
-        ...product,
-        color,
-        variant: color.variants[0],
-        compositeId: `${product.id}-${color.id}`,
-      }))
-    );
-  }, [products]);
+  return products.flatMap((product) =>
+    (product.colors ?? []).map((color) => ({
+      ...product,
+      color,
+      variant: color.variants?.[0],
+      compositeId: `${product.id}-${color.id}`,
+    }))
+  );
+}, [products]);
 
   const handleNavigate = (slug: string, colorId: string) => {
     // Standard template literal string fixes the Expo Router type error TS2322
@@ -54,8 +56,14 @@ export default function SearchProductList({
       showsVerticalScrollIndicator={false}
       renderItem={({ item }) => {
         const imageUrl =
-          item.color.images?.[0]?.imageUrl ??
-          "https://via.placeholder.com/150";
+      (
+        item.color.images?.[0] as {
+          imageUrl?: string;
+          image_url?: string;
+        }
+      )?.image_url ??
+      item.color.images?.[0]?.imageUrl ??
+      "https://via.placeholder.com/150";
 
         const cartAndWishlistItem = {
           productId: item.id.toString(),

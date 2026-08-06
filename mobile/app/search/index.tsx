@@ -35,10 +35,19 @@ export default function SearchScreen() {
 
     const supabase = createClient();
 
-    const { data, error } = await supabase
-      .from("products")
-      .select("*, colors:product_colors(*)")
-      .or(`name.ilike.%${searchTerm}%,description.ilike.%${searchTerm}%`);
+const { data, error } = await supabase
+  .from("products")
+  .select(`
+    *,
+    brand:brands(*),
+    category:categories(*),
+    colors:product_colors(
+      *,
+      images:product_images(*),
+      variants:product_variants(*)
+    )
+  `)
+  .or(`name.ilike.%${searchTerm}%,description.ilike.%${searchTerm}%`);
 
     if (error) throw error;
 

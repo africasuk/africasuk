@@ -4,18 +4,20 @@ import {
   Text,
   TextInput,
   Pressable,
-  StyleSheet,
-  ScrollView,
-  KeyboardAvoidingView,
-  Platform,
   ActivityIndicator,
+  StyleSheet,
   Alert,
+  ViewStyle,
+  TextStyle,
+  KeyboardAvoidingView,
+  ScrollView,
+  Platform,
 } from "react-native";
-import { useRouter } from "expo-router";
 import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { useRouter, Href } from "expo-router";
 import { LinearGradient } from "expo-linear-gradient";
-import Svg, { Path } from "react-native-svg";
+// import Svg, { Path } from "react-native-svg"; // TEMPORARILY DISABLED
 
 import Logo from "@/components/layout/header/Logo";
 import { useTranslation } from "@/components/providers/LanguageProvider";
@@ -24,7 +26,7 @@ import {
   type SignupFormData,
 } from "@/lib/validation/signup";
 import { signUp } from "@/lib/auth/signup";
-import { signInWithGoogle } from "@/lib/auth/google";
+// import { signInWithGoogle } from "@/lib/auth/google"; // TEMPORARILY DISABLED
 
 const BRAND_LIGHT = "#008744";
 const BRAND_DARK = "#002b15";
@@ -32,31 +34,33 @@ const BORDER_COLOR = "#e5e7eb";
 const TEXT_MUTED = "#6b7280";
 const DESTRUCTIVE = "#ef4444";
 
-// Google SVG Brand Logo Icon
-function GoogleLogo({ size = 18 }: { size?: number }) {
-  return (
-    <Svg width={size} height={size} viewBox="0 0 24 24">
-      <Path
-        d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
-        fill="#4285F4"
-      />
-      <Path
-        d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"
-        fill="#34A853"
-      />
-      <Path
-        d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"
-        fill="#FBBC05"
-      />
-      <Path
-        d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"
-        fill="#EA4335"
-      />
-    </Svg>
-  );
-}
+/* ============================================================================
+ * TEMPORARILY DISABLED: Google Logo Component
+ * ============================================================================ */
+// function GoogleLogo({ size = 18 }: { size?: number }) {
+//   return (
+//     <Svg width={size} height={size} viewBox="0 0 24 24">
+//       <Path
+//         d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
+//         fill="#4285F4"
+//       />
+//       <Path
+//         d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"
+//         fill="#34A853"
+//       />
+//       <Path
+//         d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"
+//         fill="#FBBC05"
+//       />
+//       <Path
+//         d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"
+//         fill="#EA4335"
+//       />
+//     </Svg>
+//   );
+// }
 
-export default function SignupScreen() {
+export default function SignupPage() {
   const router = useRouter();
   const { dictionary } = useTranslation();
 
@@ -84,7 +88,7 @@ export default function SignupScreen() {
       });
 
       if (error) {
-        Alert.alert("Signup Error", error.message);
+        Alert.alert("Error", error.message);
         return;
       }
 
@@ -96,13 +100,15 @@ export default function SignupScreen() {
     }
   };
 
-  const handleGoogleSignup = async () => {
-    const { error } = await signInWithGoogle();
-
-    if (error) {
-      Alert.alert("Google Sign In", error.message);
-    }
-  };
+  /* ============================================================================
+   * TEMPORARILY DISABLED: Google Signup Handler
+   * ============================================================================ */
+  // const handleGoogleSignup = async () => {
+  //   const { error } = await signInWithGoogle();
+  //   if (error) {
+  //     Alert.alert("Error", error.message);
+  //   }
+  // };
 
   return (
     <KeyboardAvoidingView
@@ -114,9 +120,10 @@ export default function SignupScreen() {
         showsVerticalScrollIndicator={false}
         keyboardShouldPersistTaps="handled"
       >
+        {/* Centered Card Container */}
         <View style={styles.card}>
           {/* Brand Header Stack */}
-          <View style={styles.headerStack}>
+          <View style={styles.header}>
             <View style={styles.logoWrapper}>
               <Logo />
             </View>
@@ -124,7 +131,10 @@ export default function SignupScreen() {
             <Text style={styles.subtitle}>{dictionary.auth.signupSubtitle}</Text>
           </View>
 
-          {/* Google Signup Button */}
+          {/* ============================================================================
+           * TEMPORARILY DISABLED: Google Signup Provider & Separator
+           * ============================================================================ */}
+          {/* 
           <Pressable
             onPress={handleGoogleSignup}
             style={({ pressed }) => [
@@ -140,16 +150,16 @@ export default function SignupScreen() {
             </View>
           </Pressable>
 
-          {/* Geometric Separator */}
           <View style={styles.separatorContainer}>
             <View style={styles.separatorLine} />
             <Text style={styles.separatorText}>{dictionary.auth.or}</Text>
             <View style={styles.separatorLine} />
           </View>
+          */}
 
-          {/* Core Signup Form */}
-          <View style={styles.form}>
-            {/* Full Name Input */}
+          {/* Signup Core Form Inputs */}
+          <View style={styles.formGroup}>
+            {/* Full Name */}
             <View style={styles.inputContainer}>
               <Controller
                 control={control}
@@ -171,7 +181,7 @@ export default function SignupScreen() {
               )}
             </View>
 
-            {/* Email Address Input */}
+            {/* Email Address */}
             <View style={styles.inputContainer}>
               <Controller
                 control={control}
@@ -195,7 +205,7 @@ export default function SignupScreen() {
               )}
             </View>
 
-            {/* Password Input */}
+            {/* Password */}
             <View style={styles.inputContainer}>
               <Controller
                 control={control}
@@ -218,7 +228,7 @@ export default function SignupScreen() {
               )}
             </View>
 
-            {/* Confirm Password Input */}
+            {/* Confirm Password */}
             <View style={styles.inputContainer}>
               <Controller
                 control={control}
@@ -246,14 +256,14 @@ export default function SignupScreen() {
               )}
             </View>
 
-            {/* Submit Action with AfricaSuk Brand Gradient */}
+            {/* Core Submit Call Action */}
             <Pressable
               onPress={handleSubmit(onSubmit)}
               disabled={isSubmitting}
               style={({ pressed }) => [
                 styles.submitButtonWrapper,
                 pressed && !isSubmitting && styles.buttonPressed,
-                isSubmitting && styles.disabledButton,
+                isSubmitting && styles.disabled,
               ]}
             >
               <LinearGradient
@@ -273,12 +283,12 @@ export default function SignupScreen() {
             </Pressable>
           </View>
 
-          {/* Context Switching Link */}
-          <View style={styles.footer}>
+          {/* Context Switching Footnote */}
+          <View style={styles.footerRow}>
             <Text style={styles.footerText}>
               {dictionary.auth.alreadyHaveAccount}{" "}
             </Text>
-            <Pressable onPress={() => router.push("/auth/login" as any)}>
+            <Pressable onPress={() => router.push("/auth/login" as Href)}>
               <Text style={styles.loginLink}>{dictionary.auth.login}</Text>
             </Pressable>
           </View>
@@ -288,94 +298,121 @@ export default function SignupScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+type Styles = {
+  container: ViewStyle;
+  scrollContent: ViewStyle;
+  card: ViewStyle;
+  header: ViewStyle;
+  logoWrapper: ViewStyle;
+  title: TextStyle;
+  subtitle: TextStyle;
+  /* GOOGLE STYLES TYPES */
+  googleButton: ViewStyle;
+  googleButtonContent: ViewStyle;
+  googleButtonText: TextStyle;
+  separatorContainer: ViewStyle;
+  separatorLine: ViewStyle;
+  separatorText: TextStyle;
+  /* END GOOGLE STYLES TYPES */
+  formGroup: ViewStyle;
+  inputContainer: ViewStyle;
+  input: TextStyle;
+  inputError: TextStyle;
+  errorText: TextStyle;
+  submitButtonWrapper: ViewStyle;
+  submitButton: ViewStyle;
+  submitButtonText: TextStyle;
+  buttonPressed: ViewStyle;
+  disabled: ViewStyle;
+  footerRow: ViewStyle;
+  footerText: TextStyle;
+  loginLink: TextStyle;
+};
+
+const styles = StyleSheet.create<Styles>({
   container: {
     flex: 1,
     backgroundColor: "#f9fafb",
   },
-
   scrollContent: {
     flexGrow: 1,
-    justifyContent: "center",
+    justifyContent: "center", // Top-to-bottom centering
+    alignItems: "center",     // Left-to-right centering
     paddingHorizontal: 16,
-    paddingVertical: 20,
+    paddingVertical: 24,
   },
-
   card: {
+    width: "100%",
+    maxWidth: 400,
     backgroundColor: "#ffffff",
     borderRadius: 20,
-    padding: 20,
+    paddingHorizontal: 20,
+    paddingVertical: 24,
     borderWidth: 1,
     borderColor: "rgba(229, 231, 235, 0.8)",
-
+    alignItems: "center", // Centers all children horizontally
     shadowColor: "#000",
-    shadowOffset: {
-      width: 0,
-      height: 4,
-    },
+    shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.05,
     shadowRadius: 12,
     elevation: 3,
   },
-
-  headerStack: {
-    alignItems: "flex-start",
-    marginBottom: 16,
+  header: {
+    marginBottom: 20,
+    alignItems: "center",
+    width: "100%",
   },
-
   logoWrapper: {
-    marginBottom: 10,
+    marginBottom: 12,
+    alignItems: "center",
   },
-
   title: {
-    fontSize: 24,
-    fontWeight: "900",
+    fontSize: 20,
+    fontWeight: "800",
     color: BRAND_DARK,
-    letterSpacing: -0.4,
+    letterSpacing: -0.2,
+    textAlign: "center",
   },
-
   subtitle: {
-    marginTop: 3,
-    fontSize: 13,
-    lineHeight: 18,
+    fontSize: 12,
     color: TEXT_MUTED,
+    marginTop: 3,
+    textAlign: "center",
   },
-
+  /* ============================================================================
+   * GOOGLE BUTTON & SEPARATOR STYLES
+   * ============================================================================ */
   googleButton: {
-    height: 44,
+    height: 46,
+    width: "100%",
     borderRadius: 12,
     borderWidth: 1,
     borderColor: BORDER_COLOR,
     backgroundColor: "#ffffff",
-
     alignItems: "center",
     justifyContent: "center",
   },
-
   googleButtonContent: {
     flexDirection: "row",
     alignItems: "center",
     gap: 10,
   },
-
   googleButtonText: {
     fontSize: 13,
     fontWeight: "700",
     color: "#374151",
   },
-
   separatorContainer: {
     flexDirection: "row",
     alignItems: "center",
+    width: "100%",
     marginVertical: 14,
   },
-
   separatorLine: {
     flex: 1,
     height: 1,
     backgroundColor: BORDER_COLOR,
   },
-
   separatorText: {
     marginHorizontal: 12,
     fontSize: 11,
@@ -384,40 +421,40 @@ const styles = StyleSheet.create({
     letterSpacing: 1,
     textTransform: "uppercase",
   },
-
-  form: {
-    gap: 12,
+  formGroup: {
+    gap: 14,
+    width: "100%",
+    alignItems: "center",
   },
-
   inputContainer: {
-    gap: 4,
+    width: "100%",
+    alignItems: "center",
   },
-
   input: {
-    height: 44,
+    height: 46,
+    width: "100%",
     borderRadius: 12,
     borderWidth: 1,
     borderColor: BORDER_COLOR,
     backgroundColor: "#ffffff",
     paddingHorizontal: 14,
-
     fontSize: 13,
     color: "#111827",
+    textAlign: "center", // Keeps placeholder and text centered
   },
-
   inputError: {
     borderColor: DESTRUCTIVE,
   },
-
   errorText: {
-    marginLeft: 2,
+    marginTop: 4,
     fontSize: 11,
-    fontWeight: "500",
     color: DESTRUCTIVE,
+    fontWeight: "500",
+    textAlign: "center",
   },
-
   submitButtonWrapper: {
     marginTop: 6,
+    width: "100%",
     borderRadius: 12,
     overflow: "hidden",
     shadowColor: BRAND_LIGHT,
@@ -426,45 +463,42 @@ const styles = StyleSheet.create({
     shadowRadius: 6,
     elevation: 2,
   },
-
   submitButton: {
-    height: 44,
-    alignItems: "center",
+    height: 46,
+    width: "100%",
     justifyContent: "center",
+    alignItems: "center",
   },
-
   submitButtonText: {
-    color: "#ffffff",
     fontSize: 14,
     fontWeight: "800",
+    color: "#ffffff",
     letterSpacing: 0.3,
+    textAlign: "center",
   },
-
-  disabledButton: {
-    opacity: 0.5,
-  },
-
   buttonPressed: {
     opacity: 0.9,
     transform: [{ scale: 0.98 }],
   },
-
-  footer: {
+  disabled: {
+    opacity: 0.5,
+  },
+  footerRow: {
     flexDirection: "row",
     justifyContent: "center",
     alignItems: "center",
-    flexWrap: "wrap",
-    marginTop: 18,
+    marginTop: 20,
+    width: "100%",
   },
-
   footerText: {
     fontSize: 13,
     color: TEXT_MUTED,
+    textAlign: "center",
   },
-
   loginLink: {
     fontSize: 13,
     fontWeight: "800",
     color: BRAND_LIGHT,
+    textAlign: "center",
   },
 });
