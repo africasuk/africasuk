@@ -99,29 +99,40 @@ export default async function ProductDetailsPage({
   searchParams: Promise<{ color?: string }>;
 }) {
 
-  const { slug } = await params;
-  const { color } = await searchParams;
+const { slug } = await params;
+const { color } = await searchParams;
 
-  const db = await createServerSupabaseClient();
+const db = await createServerSupabaseClient();
 
-  const service = new ProductQueryService(
-    new ProductRepository(db)
-  );
+const repository = new ProductRepository(db);
 
-  const product = await service.getBySlug(slug);
+const service = new ProductQueryService(repository);
 
-  if (!product) {
-    notFound();
-  }
+const product = await service.getBySlug(slug);
 
+if (!product) {
+  notFound();
+}
 
-  return (
-    <Layout>
-      <ProductJsonLd product={product} />
+const allProducts = (await repository.getAll()) ?? [];
+
+const relatedProducts = allProducts
+  .filter(
+    (item) =>
+      item.categoryId === product.categoryId &&
+      item.id !== product.id
+  )
+  .slice(0, 10);
+
+return (
+  <Layout>
+    <ProductJsonLd product={product} />
+
     <ProductDetails
       product={product}
       selectedColorId={color}
+      relatedProducts={relatedProducts}
     />
-    </Layout>
-  );
+  </Layout>
+);
 }

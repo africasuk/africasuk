@@ -60,18 +60,26 @@ export default function MobileProductDetailsPage() {
               )
             : slug;
 
-        const data =
-          await service.getBySlug(
-            baseSlug
-          );
+       const data = await service.getBySlug(baseSlug);
 
-        if (!data) {
-          throw new Error(
-            "Product not found"
-          );
-        }
+if (!data) {
+  throw new Error("Product not found");
+}
 
-        setProduct(data);
+      const allProducts = await service.getAll();
+
+      const relatedProducts = allProducts.filter(
+        (item) =>
+          item.id !== data.id &&
+          item.categoryId === data.categoryId
+      );
+
+      setProduct({
+        ...data,
+        relatedProducts,
+      } as ProductWithDetails & {
+        relatedProducts: ProductWithDetails[];
+      });
       } catch (err: any) {
         console.error(
           "Error fetching product:",
@@ -150,11 +158,15 @@ export default function MobileProductDetailsPage() {
             "#111827",
         }}
       />
-
-      <ProductDetails
-        product={product}
-        selectedColorId={color}
-      />
+        <ProductDetails
+          product={product}
+          selectedColorId={color}
+          relatedProducts={
+            (product as ProductWithDetails & {
+              relatedProducts: ProductWithDetails[];
+            }).relatedProducts
+          }
+        />
     </ScrollView>
   );
 }

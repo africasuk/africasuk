@@ -1,5 +1,4 @@
-import { View, Text, ScrollView, Pressable, StyleSheet } from "react-native";
-import { useRouter } from "expo-router";
+import { View, Text, ScrollView, StyleSheet } from "react-native";
 import type { ProductWithDetails } from "@africasuk/types";
 
 import { ProductCard } from "./ProductCard";
@@ -9,7 +8,6 @@ interface Props {
 }
 
 export function RelatedProducts({ products }: Props) {
-  const router = useRouter();
 
   if (!products || products.length === 0) {
     return null;
@@ -25,13 +23,12 @@ export function RelatedProducts({ products }: Props) {
         contentContainerStyle={styles.scrollContent}
       >
         {products.map((product) => (
-          <Pressable
+          <View
             key={product.id}
-            onPress={() => router.push(`/products/${product.slug}` as any)}
             style={styles.cardWrapper}
           >
             <ProductCard product={product} />
-          </Pressable>
+          </View>
         ))}
       </ScrollView>
     </View>

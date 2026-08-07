@@ -90,12 +90,27 @@ export function ProductDetails({
       </View>
 
       {/* Bottom Section: Related Products */}
-      {relatedProducts.length > 0 && (
-        <View style={styles.relatedContainer}>
-          <Text style={styles.relatedTitle}>Recommended For You</Text>
-          <RelatedProducts products={relatedProducts} />
-        </View>
-      )}
+      {(() => {
+        const filteredProducts = relatedProducts.filter(
+          (item) => item.id !== product.id
+        );
+
+        if (!filteredProducts.length) {
+          return null;
+        }
+
+        return (
+          <View style={styles.relatedContainer}>
+            <Text style={styles.relatedTitle}>
+              Recommended For You
+            </Text>
+
+            <RelatedProducts
+              products={filteredProducts}
+            />
+          </View>
+        );
+      })()}
     </View>
   );
 }

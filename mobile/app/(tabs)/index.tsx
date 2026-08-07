@@ -1,10 +1,9 @@
 import {
-  SafeAreaView,
   ScrollView,
   StatusBar,
 } from "react-native";
 import { useEffect, useState } from "react";
-
+import { SafeAreaView } from "react-native-safe-area-context";
 import LoadingText from "@/components/shared/LoadingText";
 
 import { createClient } from "@/lib/auth/client";

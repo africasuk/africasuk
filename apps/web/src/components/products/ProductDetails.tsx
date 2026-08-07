@@ -94,7 +94,9 @@ export function ProductDetails({
           <h3 className="text-xl font-black text-gray-900 uppercase tracking-tight mb-6">
             Recommended For You
           </h3>
-          <RelatedProducts products={relatedProducts} />
+          <RelatedProducts
+                products={relatedProducts}
+              />
         </div>
       )}
     </div>
