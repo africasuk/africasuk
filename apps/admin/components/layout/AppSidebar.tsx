@@ -19,6 +19,7 @@ import {
   FileBarChart,
   Shield,
   Settings,
+  MessageSquare,
 } from "lucide-react";
 
 import {
@@ -55,6 +56,7 @@ const icons = {
   reports: FileBarChart,
   shield: Shield,
   settings: Settings,
+  reviews: MessageSquare,
 } as const;
 
 export default function AppSidebar({

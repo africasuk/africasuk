@@ -11,7 +11,8 @@ export type IconName =
   | "truck"
   | "reports"
   | "shield"
-  | "settings";
+  | "settings"
+  | "reviews";
 
 export interface NavigationItem {
   title: string;
@@ -38,28 +39,34 @@ export const navigation: NavigationGroup[] = [
     ],
   },
   {
-    title: "Catalog",
-    items: [
-      {
-        title: "Products",
-        href: "/products",
-        icon: "package",
-        permission: Permissions.PRODUCTS_VIEW,
-      },
-      {
-        title: "Categories",
-        href: "/categories",
-        icon: "shapes",
-        permission: Permissions.CATEGORIES_VIEW,
-      },
-      {
-        title: "Brands",
-        href: "/brands",
-        icon: "tags",
-        permission: Permissions.BRANDS_VIEW,
-      },
-    ],
-  },
+  title: "Catalog",
+  items: [
+    {
+      title: "Products",
+      href: "/products",
+      icon: "package",
+      permission: Permissions.PRODUCTS_VIEW,
+    },
+    {
+      title: "Categories",
+      href: "/categories",
+      icon: "shapes",
+      permission: Permissions.CATEGORIES_VIEW,
+    },
+    {
+      title: "Brands",
+      href: "/brands",
+      icon: "tags",
+      permission: Permissions.BRANDS_VIEW,
+    },
+    {
+      title: "Reviews",
+      href: "/reviews",
+      icon: "reviews",
+      permission: Permissions.REVIEWS_VIEW,
+    },
+  ],
+},
   {
     title: "Sales",
     items: [
