@@ -6,10 +6,9 @@ interface Props {
   label?: string;
 }
 
-export default function TruckMarker({ label = "Live Location" }: Props) {
-  const labelText = label.toUpperCase();
-  // Dynamic pill width based on text length to prevent clipping or fixed truncation
-  const pillWidth = Math.max(54, labelText.length * 5.2 + 18);
+export default function TruckMarker({ label = "Live location" }: Props) {
+  // Dynamic pill width based on sentence-case text length
+  const pillWidth = Math.max(60, label.length * 5.5 + 18);
   const halfPill = pillWidth / 2;
 
   return (
@@ -80,12 +79,12 @@ export default function TruckMarker({ label = "Live Location" }: Props) {
         </foreignObject>
       </g>
 
-      {/* Floating Status Badge Label (Positioned BELOW circle at y = +20 to avoid obscuring waypoint markers) */}
+      {/* Floating Status Badge Label (Positioned BELOW circle at y = +20) */}
       <g
         transform="translate(0, 20)"
         className="transition-transform duration-300 group-hover:translate-y-0.5"
       >
-        {/* Pill Background - Deep Navy */}
+        {/* Pill Background - Deep Green */}
         <rect
           x={-halfPill}
           y={-7}
@@ -107,18 +106,18 @@ export default function TruckMarker({ label = "Live Location" }: Props) {
           />
         </circle>
 
-        {/* Label Text - Lightweight & Clean */}
+        {/* Label Text - Lightweight & Clean Sentence Case */}
         <text
           x={3}
           y={2.8}
           textAnchor="middle"
-          fontSize={7.5}
+          fontSize={8}
           fill="#ffffff"
           fontWeight={500}
-          letterSpacing="0.04em"
-          className="uppercase font-sans antialiased"
+          letterSpacing="0.01em"
+          className="font-sans antialiased"
         >
-          {labelText}
+          {label}
         </text>
       </g>
     </g>

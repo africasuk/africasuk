@@ -12,22 +12,17 @@ export async function createServerSupabaseClient() {
         getAll() {
           return cookieStore.getAll();
         },
+
         setAll(cookiesToSet) {
           try {
             cookiesToSet.forEach(
-              ({
-                name,
-                value,
-                options,
-              }) => {
-                cookieStore.set(
-                  name,
-                  value,
-                  options
-                );
+              ({ name, value, options }) => {
+                cookieStore.set(name, value, options);
               }
             );
-          } catch {}
+          } catch {
+            // Server Component cannot always modify cookies.
+          }
         },
       },
     }

@@ -86,24 +86,24 @@ export default function MapMarker({
           <Icon
             size={11}
             color={color}
-            strokeWidth={3}
+            strokeWidth={2.5}
           />
         </div>
       </foreignObject>
 
-      {/* High-Precision Premium Label */}
+      {/* High-Precision Refined Label */}
       <text
         x={textOffsets.x}
         y={textOffsets.y}
         textAnchor={textOffsets.textAnchor}
-        fontSize={10}
+        fontSize={11}
         fill="#f8fafc"
-        fontWeight={800}
-        letterSpacing="0.08em"
+        fontWeight={500}
+        letterSpacing="0.01em"
         stroke="#090d16"
-        strokeWidth={4}
+        strokeWidth={3}
         paintOrder="stroke"
-        className="uppercase font-sans antialiased"
+        className="font-sans antialiased"
       >
         {label}
       </text>

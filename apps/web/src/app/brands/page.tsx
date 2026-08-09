@@ -2,12 +2,10 @@ import Image from "next/image";
 import Link from "next/link";
 
 import { BrandRepository } from "@africasuk/database";
-
 import { createClient } from "@/lib/auth/server";
 
 import Container from "@/components/layout/Container";
 import Layout from "@/components/layout/Layout";
-
 import { Card } from "@/components/ui/card";
 
 export default async function BrandsPage() {
@@ -20,91 +18,63 @@ export default async function BrandsPage() {
 
   return (
     <Layout>
-      <section className="py-12 lg:py-16 bg-[#f4f4f4] min-h-screen antialiased selection:bg-[#004d26]/10">
+      <section className="py-12 sm:py-16 bg-white min-h-screen antialiased select-none border-b border-gray-100">
         <Container>
-          {/* Section Header */}
-          <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between px-2 select-none">
-            <div>
-              <h1 className="text-3xl sm:text-4xl font-black tracking-tight text-neutral-900">
-                Brands
+          {/* Page Header */}
+          <div className="mb-10 sm:mb-12 flex items-end justify-between gap-4 border-b border-gray-100 pb-8">
+            <div className="space-y-1">
+              <h1 className="text-3xl sm:text-4xl font-semibold tracking-tight text-gray-900">
+                Official Brands
               </h1>
-              <p className="mt-2 text-sm sm:text-base text-neutral-500 max-w-2xl">
-                Explore products from trusted global and local partners. Find your favorite brands and browse their complete collections.
+              <p className="text-xs sm:text-sm text-gray-500 font-normal max-w-2xl">
+                Explore products from our trusted global and local partners. Find your favorite brands and browse their complete collections.
               </p>
             </div>
 
-            <div className="inline-flex items-center self-start sm:self-end rounded-full bg-white border border-neutral-200/60 px-4 py-1.5 text-xs font-bold text-neutral-700 shadow-xs">
+            <p className="text-xs font-semibold text-gray-500">
               {brands.length} {brands.length === 1 ? "Brand" : "Brands"}
-            </div>
+            </p>
           </div>
 
           {/* Brands Grid */}
           {brands.length === 0 ? (
-            <div className="rounded-3xl border border-neutral-200/60 bg-white py-24 text-center select-none shadow-xs">
-              <h2 className="text-xl font-extrabold text-neutral-900">
+            <div className="rounded-2xl border border-dashed border-gray-200 bg-gray-50/50 py-24 text-center select-none shadow-none">
+              <h2 className="text-lg font-semibold text-gray-800">
                 No Brands Found
               </h2>
-              <p className="mt-2 text-sm text-neutral-500 max-w-xs mx-auto">
-                Brands will appear here once they are added.
+              <p className="mt-1 text-xs sm:text-sm text-gray-500 max-w-sm mx-auto">
+                Brands will appear here once they are added to our partners catalog.
               </p>
             </div>
           ) : (
-            <div className="grid grid-cols-2 gap-3 sm:gap-6 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6">
+            /* Category Grid: Optimized responsive column counts and gaps */
+            <div className="grid grid-cols-2 gap-3 sm:gap-5 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 lg:gap-6">
               {brands.map((brand) => (
                 <Link
                   key={brand.id}
                   href={`/brands/${brand.slug}`}
-                  className="group block w-full transition-transform duration-500 ease-out hover:-translate-y-1"
+                  className="group relative block w-full"
                 >
-                  <Card className="relative w-full h-full bg-white rounded-2xl border border-neutral-200/60 shadow-xs hover:shadow-lg hover:shadow-neutral-200/50 transition-all duration-500 overflow-hidden flex flex-col justify-between p-4 select-none min-h-55 md:min-h-60">
+                  <Card className="relative h-28 sm:h-32 w-full rounded-2xl border border-gray-100 bg-gray-50/50 p-4 flex flex-col items-center justify-center transition-all duration-300 hover:bg-white hover:border-[#005c2e]/20 hover:shadow-md">
                     
-                    {/* 
-                      Luxury Watermark Background Logo:
-                      Positions a massive, desaturated logo at low opacity that scales & rotates on hover.
-                    */}
-                    {brand.logoUrl && (
-                      <div className="absolute -right-6 -bottom-6 w-36 h-36 sm:w-44 sm:h-44 opacity-[0.04] sm:opacity-[0.06] pointer-events-none select-none transition-transform duration-700 ease-out group-hover:scale-110 group-hover:rotate-6 z-0">
-                        <Image
-                          src={brand.logoUrl}
-                          alt=""
-                          fill
-                          className="object-contain filter grayscale"
-                          sizes="(max-width: 640px) 144px, 176px"
-                        />
-                      </div>
-                    )}
-
-                    {/* Brand Name & Description Details */}
-                    <div className="z-10 max-w-37.5 sm:max-w-xs">
-                      <h3 className="text-sm sm:text-base font-extrabold tracking-tight text-neutral-900 group-hover:text-[#004d26] transition-colors duration-300 leading-snug line-clamp-1">
-                        {brand.name}
-                      </h3>
-                      {brand.description && (
-                        <p className="mt-1 text-[10px] sm:text-xs text-neutral-500 leading-normal sm:leading-relaxed font-medium line-clamp-2">
-                          {brand.description}
-                        </p>
-                      )}
-                    </div>
-
-                    {/* Crisp, Forefront Brand Logo */}
-                    <div className="relative mt-3 self-end w-12 h-12 sm:w-16 sm:h-16 shrink-0 z-10">
+                    {/* Brand Logo or Fallback Name */}
+                    <div className="relative w-full h-full flex items-center justify-center">
                       {brand.logoUrl ? (
-                        <div className="relative w-full h-full transition-transform duration-500 ease-out group-hover:scale-105 group-hover:-rotate-1">
+                        <div className="relative w-full h-12 max-w-30 transition-transform duration-300 group-hover:scale-105">
                           <Image
                             src={brand.logoUrl}
                             alt={brand.name}
                             fill
-                            sizes="(max-width: 640px) 48px, 64px"
+                            sizes="(max-width: 640px) 40vw, 20vw"
                             className="object-contain"
                           />
                         </div>
                       ) : (
-                        <div className="w-full h-full rounded-full bg-[#004d26]/10 flex items-center justify-center text-sm sm:text-lg font-black text-[#004d26] transition-transform duration-500 group-hover:scale-105">
-                          {brand.name.charAt(0).toUpperCase()}
-                        </div>
+                        <span className="text-sm font-semibold text-gray-800 text-center line-clamp-1">
+                          {brand.name}
+                        </span>
                       )}
                     </div>
-
                   </Card>
                 </Link>
               ))}

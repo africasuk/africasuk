@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { MoveRight, Home, ShoppingBag, Search } from "lucide-react";
+import { MoveRight, Home, ShoppingBag } from "lucide-react";
 import Container from "@/components/layout/Container";
 
 export default function NotFound() {

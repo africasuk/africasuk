@@ -43,67 +43,173 @@ export class ProductRepository {
     };
   }
 
-  async getAll() {
-    const { data, error } = await this.db
-      .from("products")
-      .select(`
+async getAll() {
+  const { data, error } = await this.db
+    .from("products")
+    .select(`
+      *,
+      category:categories(*),
+      brand:brands(*),
+      colors:product_colors(
         *,
-        category:categories(*),
-        brand:brands(*),
-        colors:product_colors(
-          *,
-          images:product_images(*),
-          variants:product_variants(*)
-        )
-      `)
-      .order("created_at", {
-        ascending: false,
-      });
+        images:product_images(*),
+        variants:product_variants(*)
+      )
+    `)
+    .order("created_at", {
+      ascending: false,
+    });
 
-    if (error) throw error;
+  if (error) throw error;
 
-      return data?.map((product: any) => ({
-        ...product,
+  const products = data ?? [];
 
-        allowCod: product.allow_cod,
-        allowOnlinePayment:
-          product.allow_online_payment,
-
-        categoryId: product.category_id,
-        brandId: product.brand_id,
-        isActive: product.is_active,
-        createdAt: product.created_at,
-        updatedAt: product.updated_at,
-
-      colors: (product.colors ?? []).map((color: any) => ({
-        ...color,
-        productId: color.product_id,
-        hexCode: color.hex_code,
-        createdAt: color.created_at,
-        updatedAt: color.updated_at,
-
-        images: (color.images ?? []).map((image: any) => ({
-          ...image,
-          productColorId: image.product_color_id,
-          imageUrl: image.image_url,
-          sortOrder: image.sort_order,
-          createdAt: image.created_at,
-        })),
-
-        variants: (color.variants ?? []).map((variant: any) => ({
-          ...variant,
-          productColorId: variant.product_color_id,
-          optionName: variant.option_name,
-          optionValue: variant.option_value,
-          isActive: variant.is_active,
-          price: Number(variant.price),
-          stock: variant.stock,
-          createdAt: variant.created_at,
-          updatedAt: variant.updated_at,
-        })),
-      })),
-    }));
+  if (products.length === 0) {
+    return [];
   }
+
+  // Get product IDs
+  const productIds = products.map(
+    (product: any) => product.id,
+  );
+
+  // Get approved reviews
+  const {
+    data: reviews,
+    error: reviewsError,
+  } = await this.db
+    .from("reviews")
+    .select("product_id, rating")
+    .in("product_id", productIds)
+    .eq("status", "APPROVED");
+
+  if (reviewsError) throw reviewsError;
+
+  // Calculate rating for each product
+  const ratingMap = new Map<
+    string,
+    {
+      total: number;
+      count: number;
+    }
+  >();
+
+  for (const review of reviews ?? []) {
+    const current =
+      ratingMap.get(review.product_id) ?? {
+        total: 0,
+        count: 0,
+      };
+
+    current.total += Number(review.rating);
+    current.count += 1;
+
+    ratingMap.set(
+      review.product_id,
+      current,
+    );
+  }
+
+  return products.map((product: any) => {
+    const rating =
+      ratingMap.get(product.id);
+
+    return {
+      ...product,
+
+      allowCod: product.allow_cod,
+
+      allowOnlinePayment:
+        product.allow_online_payment,
+
+      categoryId: product.category_id,
+
+      brandId: product.brand_id,
+
+      isActive: product.is_active,
+
+      createdAt: product.created_at,
+
+      updatedAt: product.updated_at,
+
+      rating: {
+        averageRating: rating
+          ? Number(
+              (
+                rating.total /
+                rating.count
+              ).toFixed(1),
+            )
+          : 0,
+
+        reviewCount:
+          rating?.count ?? 0,
+      },
+
+      colors: (product.colors ?? []).map(
+        (color: any) => ({
+          ...color,
+
+          productId: color.product_id,
+
+          hexCode: color.hex_code,
+
+          createdAt: color.created_at,
+
+          updatedAt: color.updated_at,
+
+          images: (
+            color.images ?? []
+          ).map((image: any) => ({
+            ...image,
+
+            productColorId:
+              image.product_color_id,
+
+            imageUrl:
+              image.image_url,
+
+            sortOrder:
+              image.sort_order,
+
+            createdAt:
+              image.created_at,
+          })),
+
+          variants: (
+            color.variants ?? []
+          ).map((variant: any) => ({
+            ...variant,
+
+            productColorId:
+              variant.product_color_id,
+
+            optionName:
+              variant.option_name,
+
+            optionValue:
+              variant.option_value,
+
+            isActive:
+              variant.is_active,
+
+            price: Number(
+              variant.price,
+            ),
+
+            stock: variant.stock,
+
+            createdAt:
+              variant.created_at,
+
+            updatedAt:
+              variant.updated_at,
+          })),
+        }),
+      ),
+    };
+  });
+}
 
   async getById(
     id: string
@@ -300,22 +406,37 @@ async updatePaymentSettings(
   if (error) throw error;
 }
 
-async search(
-  query: string
-) {
-  const { data, error } =
-    await this.db.rpc(
-      "search_products",
-      {
-        search_query: query,
-      }
-    );
+async search(query: string) {
+  const { data, error } = await this.db.rpc(
+    "search_products",
+    {
+      search_query: query,
+    }
+  );
 
   if (error) {
     throw error;
   }
 
-  return data ?? [];
+  return (data ?? []).map((product: any) => ({
+    ...product,
+
+    categoryId: product.category_id,
+    brandId: product.brand_id,
+
+    isActive: product.is_active,
+    allowCod: product.allow_cod,
+    allowOnlinePayment:
+      product.allow_online_payment,
+
+    createdAt: product.created_at,
+    updatedAt: product.updated_at,
+
+    rating: {
+      averageRating: Number(product.rating ?? 0),
+      reviewCount: Number(product.review_count ?? 0),
+    },
+  }));
 }
 
   async updateStatus(
@@ -332,5 +453,41 @@ async search(
   if (error) {
     throw error;
   }
+}
+
+private async getProductRating(
+  productId: string,
+) {
+  const {
+    data,
+    error,
+  } = await this.db
+    .from("reviews")
+    .select("rating")
+    .eq("product_id", productId)
+    .eq("status", "APPROVED");
+
+  if (error) throw error;
+
+  if (!data || data.length === 0) {
+    return {
+      averageRating: 0,
+      reviewCount: 0,
+    };
+  }
+
+  const total = data.reduce(
+    (sum, review) =>
+      sum + Number(review.rating),
+    0,
+  );
+
+  return {
+    averageRating: Number(
+      (total / data.length).toFixed(1),
+    ),
+
+    reviewCount: data.length,
+  };
 }
 }

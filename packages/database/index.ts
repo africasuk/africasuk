@@ -16,5 +16,7 @@ export * from "./repositories/AddressRepository";
 export * from "./repositories/ExchangeRateRepository";
 export * from "./repositories/PaymentRepository";
 
+export * from "./repositories/review.repository";
+
 export * from "./client";
 export * from "./types";

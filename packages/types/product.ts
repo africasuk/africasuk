@@ -109,7 +109,6 @@ export interface UpdateProductDto
 
 
 export interface ProductWithDetails extends Product {
-
   category?: {
     id: string;
     name: string;
@@ -120,11 +119,15 @@ export interface ProductWithDetails extends Product {
     name: string;
   };
 
-
   colors: (
     ProductColor & {
       images: ProductImage[];
       variants: ProductVariant[];
     }
   )[];
+
+  rating: {
+    averageRating: number;
+    reviewCount: number;
+  };
 }

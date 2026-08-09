@@ -46,7 +46,7 @@ const createCustomPin = (label: string, color: string) =>
   });
 
 // Live Truck Marker (Label sits BELOW the icon circle)
-const createTruckPin = (label: string = "LIVE LOCATION") =>
+const createTruckPin = (label: string = "Live location") =>
   L.divIcon({
     className: "custom-truck-pin",
     html: `
@@ -55,7 +55,7 @@ const createTruckPin = (label: string = "LIVE LOCATION") =>
         <div style="background-color: #005c2e; width: 28px; height: 28px; border-radius: 50%; display: flex; align-items: center; justify-content: center; border: 2px solid white; box-shadow: 0 2px 6px rgba(0,0,0,0.22);">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 18V6a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2v11a1 1 0 0 0 1 1h2"/><path d="M15 18H9"/><path d="M19 18h2a1 1 0 0 0 1-1v-3.65a1 1 0 0 0-.22-.624l-3.48-4.35A1 1 0 0 0 17.52 8H14"/><circle cx="17" cy="18" r="2"/><circle cx="7" cy="18" r="2"/></svg>
         </div>
-        <!-- Label Badge (Floats below the icon so it never obscures checkpoint names) -->
+        <!-- Label Badge -->
         <div style="background-color: #002b15; padding: 2px 7px; border-radius: 9999px; color: #34d399; font-size: 8px; font-weight: 500; text-transform: uppercase; letter-spacing: 0.03em; border: 1px solid rgba(255,255,255,0.4); box-shadow: 0 2px 4px rgba(0,0,0,0.15); margin-top: 3px; white-space: nowrap;">
           ${label}
         </div>
@@ -63,6 +63,7 @@ const createTruckPin = (label: string = "LIVE LOCATION") =>
     `,
     iconSize: [0, 0],
   });
+
 export default function TrackingMap({ status }: Props) {
   const [fullRoadRoute, setFullRoadRoute] = useState<[number, number][]>([]);
 
@@ -124,7 +125,6 @@ export default function TrackingMap({ status }: Props) {
         const data = await res.json();
 
         if (data.routes?.[0]?.geometry?.coordinates) {
-          // OSRM provides [lng, lat] -> convert to Leaflet's [lat, lng]
           const parsedRoute: [number, number][] = data.routes[0].geometry.coordinates.map(
             (coord: [number, number]) => [coord[1], coord[0]]
           );
@@ -144,7 +144,6 @@ export default function TrackingMap({ status }: Props) {
       return { completedPolyline: [], remainingPolyline: [] };
     }
 
-    // Find closest route index to current truck location
     let closestIndex = 0;
     let minDistance = Infinity;
 
@@ -170,14 +169,13 @@ export default function TrackingMap({ status }: Props) {
         scrollWheelZoom={false}
         className="h-full w-full z-0"
       >
-        {/* Free, Clean CartoDB Positron High-Detail Tile Layer */}
         <TileLayer
           attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> &copy; <a href="https://carto.com/attributions">CARTO</a>'
           url="https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png"
           maxZoom={19}
         />
 
-        {/* Active Route Following Real Highways (Emerald Green) */}
+        {/* Active Route Following Real Highways */}
         {completedPolyline.length > 1 && (
           <Polyline
             positions={completedPolyline}
@@ -190,7 +188,7 @@ export default function TrackingMap({ status }: Props) {
           />
         )}
 
-        {/* Remaining Highway Segment (Dashed Grey) */}
+        {/* Remaining Highway Segment */}
         {remainingPolyline.length > 1 && (
           <Polyline
             positions={remainingPolyline}
@@ -204,25 +202,22 @@ export default function TrackingMap({ status }: Props) {
           />
         )}
 
-        {/* Kampala Hub */}
+        {/* Waypoints */}
         <Marker
           position={[LOGISTICS_POINTS.kampala.coordinates[1], LOGISTICS_POINTS.kampala.coordinates[0]]}
           icon={createCustomPin("Kampala Hub", "#002b15")}
         />
 
-        {/* Nimule Border */}
         <Marker
           position={[LOGISTICS_POINTS.nimule.coordinates[1], LOGISTICS_POINTS.nimule.coordinates[0]]}
           icon={createCustomPin("Nimule Border", "#d97706")}
         />
 
-        {/* Juba Hub */}
         <Marker
           position={[LOGISTICS_POINTS.juba.coordinates[1], LOGISTICS_POINTS.juba.coordinates[0]]}
           icon={createCustomPin("Juba Hub", "#005c2e")}
         />
 
-        {/* Customer Destination */}
         <Marker
           position={[LOGISTICS_POINTS.customer.coordinates[1], LOGISTICS_POINTS.customer.coordinates[0]]}
           icon={createCustomPin("Customer", "#dc2626")}
@@ -236,17 +231,17 @@ export default function TrackingMap({ status }: Props) {
       <div className="absolute bottom-4 left-4 right-4 z-10 sm:left-6 sm:right-auto sm:w-80 rounded-2xl border border-gray-200/80 bg-white/95 p-4 shadow-xl backdrop-blur-md select-none">
         <div className="flex items-center justify-between">
           <div>
-            <p className="text-[10px] font-black uppercase tracking-widest text-gray-400">
+            <p className="text-xs font-medium text-gray-400">
               Est. Distance
             </p>
-            <p className="text-xl font-black text-[#002b15]">674.2 km</p>
+            <p className="text-lg font-semibold text-[#002b15]">674.2 km</p>
           </div>
           <div className="h-8 w-px bg-gray-200" />
           <div>
-            <p className="text-[10px] font-black uppercase tracking-widest text-gray-400">
+            <p className="text-xs font-medium text-gray-400">
               Route Status
             </p>
-            <p className="text-sm font-extrabold text-[#005c2e] uppercase">
+            <p className="text-sm font-semibold text-[#005c2e]">
               On Schedule
             </p>
           </div>

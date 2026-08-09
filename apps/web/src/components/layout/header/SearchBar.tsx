@@ -20,9 +20,7 @@ export default function SearchBar({}: SearchBarProps) {
   const formRef = useRef<HTMLFormElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
-  const [inputValue, setInputValue] = useState(
-    searchParams.get("q") ?? ""
-  );
+  const [inputValue, setInputValue] = useState(searchParams.get("q") ?? "");
   const [suggestions, setSuggestions] = useState<ProductWithDetails[]>([]);
   const [loading, setLoading] = useState(false);
 
@@ -72,10 +70,9 @@ export default function SearchBar({}: SearchBarProps) {
       if (trimmed) {
         fetchSuggestions(trimmed);
 
-        router.replace(
-          `/search?q=${encodeURIComponent(trimmed)}`,
-          { scroll: false }
-        );
+        router.replace(`/search?q=${encodeURIComponent(trimmed)}`, {
+          scroll: false,
+        });
       } else {
         if (pathname.startsWith("/search")) {
           router.replace("/products", {
@@ -149,7 +146,7 @@ export default function SearchBar({}: SearchBarProps) {
         </Button>
       </div>
 
-      {(suggestions.length > 0 || inputValue.trim()) && (
+      {(suggestions.length > 0 || (inputValue.trim() && loading)) && (
         <div className="absolute top-12 left-0 right-0 z-50 overflow-hidden rounded-2xl border border-gray-100 bg-white shadow-xl">
           <div className="max-h-72 overflow-y-auto divide-y divide-gray-50">
             {suggestions.map((product) => (

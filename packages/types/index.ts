@@ -14,3 +14,4 @@ export * from "./payment";
 export * from "./address";
 export * from "./order-tracking";
 export * from "./orderTracking";
+export * from "./review";

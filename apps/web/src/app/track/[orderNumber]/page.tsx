@@ -52,13 +52,13 @@ export default async function TrackOrderPage({ params }: Props) {
       <div className="mb-6 flex flex-wrap items-center justify-between gap-4">
         <Link
           href={`/account/orders/${order.orderNumber}`}
-          className="inline-flex items-center gap-2 rounded-full border border-gray-200/80 bg-white px-4 py-2 text-xs font-black uppercase tracking-wider text-[#002b15] shadow-2xs hover:bg-gray-50 hover:border-gray-300 transition-all active:scale-98 cursor-pointer"
+          className="inline-flex items-center gap-2 rounded-full border border-gray-200/80 bg-white px-4 py-2 text-xs font-medium text-[#002b15] shadow-2xs hover:bg-gray-50 hover:border-gray-300 transition-all active:scale-98 cursor-pointer"
         >
           <ChevronLeft className="h-4 w-4" />
           <span>Back to Order</span>
         </Link>
 
-        <div className="flex items-center gap-2 rounded-full border border-emerald-100 bg-emerald-50/60 px-4 py-2 text-xs font-black uppercase tracking-widest text-[#005c2e]">
+        <div className="flex items-center gap-2 rounded-full border border-emerald-100 bg-emerald-50/60 px-4 py-2 text-xs font-medium text-[#005c2e]">
           <Truck className="h-4 w-4" />
           <span>Order #{order.orderNumber}</span>
         </div>
@@ -76,16 +76,16 @@ export default async function TrackOrderPage({ params }: Props) {
 
             <div>
               <div className="flex flex-wrap items-center gap-3">
-                <h1 className="text-2xl sm:text-3xl font-black uppercase tracking-tight text-[#002b15]">
+                <h1 className="text-2xl sm:text-3xl font-semibold tracking-tight text-[#002b15]">
                   Track Order
                 </h1>
-                <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-50 px-3 py-1 text-[10px] font-extrabold uppercase tracking-widest text-[#005c2e] border border-emerald-100">
+                <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-50 px-3 py-1 text-xs font-medium text-[#005c2e] border border-emerald-100">
                   <Radio className="h-3 w-3 animate-pulse text-emerald-600" />
                   <span>Live Telemetry</span>
                 </span>
               </div>
 
-              <p className="mt-1 text-xs sm:text-sm font-medium text-gray-500">
+              <p className="mt-1 text-xs sm:text-sm font-normal text-gray-500">
                 Real-time route tracking across regional logistics corridors.
               </p>
             </div>
@@ -94,21 +94,21 @@ export default async function TrackOrderPage({ params }: Props) {
           {/* Quick Metrics */}
           <div className="flex flex-wrap items-center gap-3 border-t border-gray-100 pt-4 md:border-t-0 md:pt-0">
             <div className="rounded-2xl bg-gray-50/80 border border-gray-200/60 px-4 py-2.5">
-              <span className="flex items-center gap-1.5 text-[10px] font-black uppercase tracking-wider text-gray-400">
+              <span className="flex items-center gap-1.5 text-xs font-medium text-gray-400">
                 <Clock className="h-3.5 w-3.5 text-[#005c2e]" />
                 Current Status
               </span>
-              <p className="mt-0.5 text-xs font-extrabold uppercase tracking-wide text-[#002b15]">
+              <p className="mt-0.5 text-xs font-semibold text-[#002b15]">
                 {formattedStatus}
               </p>
             </div>
 
             <div className="rounded-2xl bg-gray-50/80 border border-gray-200/60 px-4 py-2.5">
-              <span className="flex items-center gap-1.5 text-[10px] font-black uppercase tracking-wider text-gray-400">
+              <span className="flex items-center gap-1.5 text-xs font-medium text-gray-400">
                 <MapPin className="h-3.5 w-3.5 text-[#005c2e]" />
                 Corridor
               </span>
-              <p className="mt-0.5 text-xs font-extrabold uppercase tracking-wide text-[#002b15]">
+              <p className="mt-0.5 text-xs font-semibold text-[#002b15]">
                 Uganda → South Sudan
               </p>
             </div>
@@ -122,11 +122,11 @@ export default async function TrackOrderPage({ params }: Props) {
         <div className="flex items-center justify-between px-2">
           <div className="flex items-center gap-2">
             <Globe2 className="h-4 w-4 text-[#005c2e]" />
-            <h2 className="text-xs font-black uppercase tracking-widest text-[#002b15]">
+            <h2 className="text-xs font-semibold text-[#002b15]">
               Live Route Overview
             </h2>
           </div>
-          <span className="text-[10px] font-extrabold uppercase tracking-wider text-gray-400">
+          <span className="text-xs font-normal text-gray-400">
             Auto-Sync Active
           </span>
         </div>

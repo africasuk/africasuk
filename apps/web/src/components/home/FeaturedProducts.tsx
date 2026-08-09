@@ -1,11 +1,10 @@
 "use client";
 
 import Link from "next/link";
+import { ArrowUpRight } from "lucide-react";
 import type { ProductWithDetails } from "@africasuk/types";
 
 import Container from "@/components/layout/Container";
-import { Button } from "@/components/ui/button";
-
 import SectionHeader from "../shared/SectionHeader";
 import { ProductCard } from "../products/ProductCard";
 
@@ -38,24 +37,24 @@ export default function FeaturedProducts({ products = [] }: Props) {
     .slice(0, 12);
 
   return (
-    <section className="bg-gray-50/50 py-16 lg:py-20 antialiased selection:bg-[#002b15]/10 border-y border-gray-100 select-none">
+    <section className="bg-white py-12 sm:py-16 antialiased border-y border-gray-100 select-none">
       <Container>
         <SectionHeader
           title="Featured Products"
           description="Hand-picked premium selections curated exclusively for you."
           action={
-            <Button
-              asChild
-              variant="outline"
-              className="rounded-full border-gray-200 font-bold text-xs sm:text-sm text-gray-800 transition-all duration-300 hover:border-[#005c2e] hover:bg-[#002b15] hover:text-white"
+            <Link
+              href="/products"
+              className="group inline-flex items-center gap-1.5 text-xs sm:text-sm font-semibold text-[#005c2e] hover:text-[#002b15] transition-colors shrink-0"
             >
-              <Link href="/products">View All Collection</Link>
-            </Button>
+              <span>View All Collection</span>
+              <ArrowUpRight className="h-4 w-4 transition-transform duration-200 group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
+            </Link>
           }
         />
 
-        {/* Product Grid - Fixed squeezed issue by using spacious responsive columns */}
-        <div className="mt-10 grid grid-cols-2 gap-4 sm:gap-6 md:grid-cols-3 lg:grid-cols-4 lg:gap-8">
+        {/* Product Grid */}
+        <div className="mt-8 sm:mt-10 grid grid-cols-2 gap-3 sm:gap-5 md:grid-cols-3 lg:grid-cols-4 lg:gap-6">
           {featuredColorProducts.map((product) => (
             <ProductCard key={product.id} product={product} />
           ))}

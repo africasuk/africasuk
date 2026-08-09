@@ -20,6 +20,7 @@ import Layout from "@/components/layout/Layout";
 import ScrollIndicator from "@/components/layout/ScrollIndicator";
 import { RequestProductSection } from "@/components/home/RequestProductSection";
 import GenderSection from "@/components/home/GenderSection";
+import { ButtonSection } from "@/components/home/ButtonSection";
 
 export default async function HomePage() {
   const supabase = await createClient();
@@ -78,12 +79,15 @@ export default async function HomePage() {
     <Layout>
       <Hero categories={categories} />
 
+      
       <Categories categories={categories} />
 
       <GenderSection />
 
       <FeaturedProducts products={products} />
 
+      <ButtonSection />
+      
       <FeaturedBrands brands={brands} />
       
       <RequestProductSection />

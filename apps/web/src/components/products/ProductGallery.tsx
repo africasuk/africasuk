@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
+import { createPortal } from "react-dom";
 import Image from "next/image";
 
 interface Props {
@@ -13,12 +14,17 @@ interface Props {
 export function ProductGallery({ images }: Props) {
   const [selectedIndex, setSelectedIndex] = useState(0);
   const [isLightboxOpen, setIsLightboxOpen] = useState(false);
+  const [isMounted, setIsMounted] = useState(false);
 
   // Touch & Drag Sliding State
   const [touchStart, setTouchStart] = useState<number | null>(null);
   const [touchEnd, setTouchEnd] = useState<number | null>(null);
 
   const imagesCount = images?.length ?? 0;
+
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
 
   const handlePrev = useCallback(() => {
     setSelectedIndex((prev) => (prev === 0 ? imagesCount - 1 : prev - 1));
@@ -75,10 +81,9 @@ export function ProductGallery({ images }: Props) {
     if (isRightSwipe) handlePrev();
   };
 
-  // Safe early return AFTER all React hooks have been invoked
   if (!images || images.length === 0) {
     return (
-      <div className="relative h-96 w-full rounded-2xl bg-gray-50 flex items-center justify-center text-gray-400 text-sm">
+      <div className="relative h-96 w-full rounded-2xl bg-gray-50 flex items-center justify-center text-gray-400 text-sm font-normal">
         No image available
       </div>
     );
@@ -111,8 +116,8 @@ export function ProductGallery({ images }: Props) {
 
           {/* Click to Zoom Overlay Indicator */}
           <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors flex items-center justify-center">
-            <span className="opacity-0 group-hover:opacity-100 bg-[#002b15]/90 text-white text-xs font-semibold px-4 py-2 rounded-full backdrop-blur-xs transition-all duration-200 shadow-md">
-              Click to view full screen ↗
+            <span className="opacity-0 group-hover:opacity-100 bg-[#002b15]/90 text-white text-xs font-medium px-4 py-2 rounded-full backdrop-blur-xs transition-all duration-200 shadow-md">
+              Click to view full screen
             </span>
           </div>
 
@@ -123,16 +128,18 @@ export function ProductGallery({ images }: Props) {
               onClick={(e) => e.stopPropagation()}
             >
               <button
+                type="button"
                 onClick={handlePrev}
                 aria-label="Previous image"
-                className="w-9 h-9 rounded-full bg-white/90 backdrop-blur-xs border border-gray-200 text-gray-800 flex items-center justify-center shadow-xs hover:bg-[#002b15] hover:text-white hover:border-[#002b15] transition-all"
+                className="w-9 h-9 rounded-full bg-white/90 backdrop-blur-xs border border-gray-200 text-gray-800 flex items-center justify-center shadow-xs hover:bg-[#002b15] hover:text-white hover:border-[#002b15] transition-all cursor-pointer"
               >
                 &#8249;
               </button>
               <button
+                type="button"
                 onClick={handleNext}
                 aria-label="Next image"
-                className="w-9 h-9 rounded-full bg-[#002b15] text-white flex items-center justify-center shadow-xs hover:bg-[#002b15]/90 transition-all"
+                className="w-9 h-9 rounded-full bg-[#002b15] text-white flex items-center justify-center shadow-xs hover:bg-[#002b15]/90 transition-all cursor-pointer"
               >
                 &#8250;
               </button>
@@ -143,8 +150,8 @@ export function ProductGallery({ images }: Props) {
         {/* Thumbnail Bar */}
         {images.length > 1 && (
           <div className="flex flex-col items-center gap-2 w-full">
-            <span className="text-[10px] font-bold tracking-widest text-gray-400 uppercase self-end mr-1">
-              PRODUCT VIEW
+            <span className="text-xs font-medium text-gray-500 self-end mr-1">
+              Product views
             </span>
             <div className="flex gap-2.5 overflow-x-auto p-1 max-w-full no-scrollbar">
               {images.map((image, index) => {
@@ -157,9 +164,10 @@ export function ProductGallery({ images }: Props) {
 
                 return (
                   <button
+                    type="button"
                     key={image.id}
                     onClick={() => setSelectedIndex(index)}
-                    className={`relative h-16 w-16 min-w-16 rounded-xl overflow-hidden bg-gray-50 border-2 transition-all ${
+                    className={`relative h-16 w-16 min-w-16 rounded-xl overflow-hidden bg-gray-50 border-2 transition-all cursor-pointer ${
                       isSelected
                         ? "border-[#002b15] ring-2 ring-[#002b15]/20 shadow-xs"
                         : "border-transparent opacity-60 hover:opacity-100 hover:border-gray-200"
@@ -180,64 +188,71 @@ export function ProductGallery({ images }: Props) {
         )}
       </div>
 
-      {/* 2. FULL-SCREEN SLIDING LIGHTBOX MODAL */}
-      {isLightboxOpen && (
-        <div className="fixed inset-0 z-50 bg-black/95 backdrop-blur-md flex items-center justify-center select-none animate-in fade-in duration-200">
-          {/* Close Button */}
-          <button
-            onClick={() => setIsLightboxOpen(false)}
-            className="absolute top-6 right-6 z-50 text-white/70 hover:text-white bg-white/10 hover:bg-white/20 h-10 w-10 rounded-full flex items-center justify-center text-xl transition-all cursor-pointer"
-            aria-label="Close modal"
-          >
-            ✕
-          </button>
+      {/* 2. FULL-SCREEN LIGHTBOX MODAL (PORTAL TO DOCUMENT BODY) */}
+      {isLightboxOpen &&
+        isMounted &&
+        createPortal(
+          <div className="fixed inset-0 z-9999 bg-black/95 backdrop-blur-md flex flex-col justify-between p-4 sm:p-6 select-none animate-in fade-in duration-200 overflow-hidden w-screen h-screen top-0 left-0">
+            {/* Top Bar: Counter & Close Button */}
+            <div className="w-full flex items-center justify-between z-10 sm:px-4">
+              <div className="text-xs font-medium text-white/90 bg-white/10 px-3.5 py-1.5 rounded-full backdrop-blur-md">
+                {selectedIndex + 1} / {images.length}
+              </div>
 
-          {/* Image Counter */}
-          <div className="absolute top-6 left-6 z-50 text-xs font-semibold text-white/70 tracking-widest uppercase bg-white/10 px-3 py-1.5 rounded-full">
-            {selectedIndex + 1} / {images.length}
-          </div>
-
-          {/* Slidable Screen-Fitting Center View */}
-          <div
-            className="relative w-full h-full max-w-6xl max-h-[85vh] px-4 sm:px-12 flex items-center justify-center"
-            onTouchStart={onTouchStart}
-            onTouchMove={onTouchMove}
-            onTouchEnd={onTouchEnd}
-          >
-            <div className="relative w-full h-full">
-              <Image
-                src={currentImageSrc}
-                alt={`Product detail view ${selectedIndex + 1}`}
-                fill
-                priority
-                sizes="100vw"
-                className="object-contain"
-              />
+              <button
+                type="button"
+                onClick={() => setIsLightboxOpen(false)}
+                className="text-white/80 hover:text-white bg-white/10 hover:bg-white/20 h-10 w-10 rounded-full flex items-center justify-center text-xl transition-all cursor-pointer backdrop-blur-md"
+                aria-label="Close modal"
+              >
+                ✕
+              </button>
             </div>
-          </div>
 
-          {/* Sliding Control Arrows */}
-          {images.length > 1 && (
-            <>
-              <button
-                onClick={handlePrev}
-                aria-label="Previous photo"
-                className="absolute left-4 sm:left-8 top-1/2 -translate-y-1/2 z-50 h-12 w-12 rounded-full bg-black/40 border border-white/20 text-white flex items-center justify-center text-2xl hover:bg-[#002b15] hover:border-[#002b15] transition-all cursor-pointer"
-              >
-                &#8249;
-              </button>
+            {/* Main Center Image - Expanded Max Viewport Height */}
+            <div
+              className="relative w-full h-[82vh] sm:h-[86vh] max-w-7xl mx-auto flex items-center justify-center my-auto px-2 sm:px-12"
+              onTouchStart={onTouchStart}
+              onTouchMove={onTouchMove}
+              onTouchEnd={onTouchEnd}
+            >
+              <div className="relative w-full h-full">
+                <Image
+                  src={currentImageSrc}
+                  alt={`Product detail view ${selectedIndex + 1}`}
+                  fill
+                  priority
+                  sizes="100vw"
+                  className="object-contain"
+                />
+              </div>
+            </div>
 
-              <button
-                onClick={handleNext}
-                aria-label="Next photo"
-                className="absolute right-4 sm:right-8 top-1/2 -translate-y-1/2 z-50 h-12 w-12 rounded-full bg-black/40 border border-white/20 text-white flex items-center justify-center text-2xl hover:bg-[#002b15] hover:border-[#002b15] transition-all cursor-pointer"
-              >
-                &#8250;
-              </button>
-            </>
-          )}
-        </div>
-      )}
+            {/* Sliding Control Arrows */}
+            {images.length > 1 && (
+              <>
+                <button
+                  type="button"
+                  onClick={handlePrev}
+                  aria-label="Previous photo"
+                  className="fixed left-3 sm:left-8 top-1/2 -translate-y-1/2 z-20 h-11 w-11 sm:h-13 sm:w-13 rounded-full bg-black/60 border border-white/20 text-white flex items-center justify-center text-2xl hover:bg-[#002b15] hover:border-[#002b15] transition-all cursor-pointer backdrop-blur-md shadow-lg"
+                >
+                  &#8249;
+                </button>
+
+                <button
+                  type="button"
+                  onClick={handleNext}
+                  aria-label="Next photo"
+                  className="fixed right-3 sm:right-8 top-1/2 -translate-y-1/2 z-20 h-11 w-11 sm:h-13 sm:w-13 rounded-full bg-black/60 border border-white/20 text-white flex items-center justify-center text-2xl hover:bg-[#002b15] hover:border-[#002b15] transition-all cursor-pointer backdrop-blur-md shadow-lg"
+                >
+                  &#8250;
+                </button>
+              </>
+            )}
+          </div>,
+          document.body
+        )}
     </>
   );
 }

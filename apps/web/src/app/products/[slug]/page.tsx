@@ -4,12 +4,15 @@ import { ProductJsonLd } from "@/components/seo/ProductJsonLd";
 
 import {
   ProductRepository,
+  ReviewRepository,
+  OrderRepository,
+  OrderItemRepository,
 } from "@africasuk/database";
 
 import {
   ProductQueryService,
+  ReviewService,
 } from "@africasuk/api";
-
 import {
   createServerSupabaseClient,
 } from "@/lib/supabase/server";
@@ -114,6 +117,19 @@ if (!product) {
   notFound();
 }
 
+const reviewService = new ReviewService(
+  new ReviewRepository(db),
+  new OrderRepository(db),
+  new OrderItemRepository(db),
+);
+
+const reviews = await reviewService.getProductReviews(
+  product.id,
+);
+
+const rating = await reviewService.getProductRating(
+  product.id,
+);
 const allProducts = (await repository.getAll()) ?? [];
 
 const relatedProducts = allProducts
@@ -126,12 +142,18 @@ const relatedProducts = allProducts
 
 return (
   <Layout>
-    <ProductJsonLd product={product} />
+    <ProductJsonLd
+      product={product}
+      reviews={reviews}
+      rating={rating}
+    />
 
     <ProductDetails
       product={product}
       selectedColorId={color}
       relatedProducts={relatedProducts}
+      reviews={reviews}
+      rating={rating}
     />
   </Layout>
 );

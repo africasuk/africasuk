@@ -7,6 +7,7 @@ import type { ProductWithDetails } from "@africasuk/types";
 import SearchProductList from "@/components/search/SearchProductList";
 import { SearchEmptyState } from "@/components/search/SearchEmptyState";
 import type { Metadata } from "next";
+import SearchScrollReset from "@/components/search/SearchScrollReset";
 
 interface Props {
   searchParams: Promise<{
@@ -74,6 +75,7 @@ export default async function SearchPage({
 
   return (
     <Layout>
+      <SearchScrollReset query={q} />
       <section className="min-h-screen bg-muted/20 py-8 lg:py-12 antialiased selection:bg-[#004d26]/10">
         <Container>
           <div className="mx-auto max-w-5xl space-y-6">

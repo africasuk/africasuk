@@ -26,7 +26,6 @@ import { Toaster } from "@/components/ui/sonner";
 import "./globals.css";
 import { CurrencyProvider } from "providers/CurrencyProvider";
 import { ExchangeRateProvider } from "providers/ExchangeRateProvider";
-import { OrganizationJsonLd, WebsiteJsonLd, } from "./structured-data";
 
 export const metadata: Metadata = {
   metadataBase: new URL("https://africasuk.com"),
@@ -221,41 +220,30 @@ export default async function RootLayout({
 
   const currentRate =
     await exchangeRateService.getCurrent();
-
-  return (
-    <html
-      lang={locale}
-      dir={dir}
-      suppressHydrationWarning
-      data-scroll-behavior="smooth"
-    >
-      <body className="bg-background font-sans antialiased text-foreground">
-      <OrganizationJsonLd />
-      <WebsiteJsonLd />
-        <LanguageProvider
-          locale={locale}
-          dictionary={dictionary}
-        >
-          <CurrencyProvider
-            initialCurrency={currency}
+return (
+  <html lang={locale} dir={dir}>
+    <body>
+      
+      <LanguageProvider
+        locale={locale}
+        dictionary={dictionary}
+      >
+        <CurrencyProvider initialCurrency={currency}>
+          <ExchangeRateProvider
+            initialRate={currentRate?.rate ?? 1}
           >
-            <ExchangeRateProvider
-              initialRate={
-                currentRate?.rate ?? 1
-              }
-            >
-              {children}
+            {children}
 
-              <Toaster
-                richColors
-                position="top-right"
-                closeButton
-                duration={4000}
-              />
-            </ExchangeRateProvider>
-          </CurrencyProvider>
-        </LanguageProvider>
-      </body>
-    </html>
-  );
+            <Toaster
+              richColors
+              position="top-right"
+              closeButton
+              duration={4000}
+            />
+          </ExchangeRateProvider>
+        </CurrencyProvider>
+      </LanguageProvider>
+    </body>
+  </html>
+);
 }
