@@ -34,11 +34,11 @@ export default function FeaturedProducts({ products = [] }: Props) {
           colors: [color],
         }))
     )
-    .slice(0, 12);
+    .slice(0, 24); // 1. Increased slice limit to fill 2-3 full rows on ultra-wide screens
 
   return (
     <section className="bg-white py-12 sm:py-16 antialiased border-y border-gray-100 select-none">
-      <Container>
+      <Container className="max-w-none w-full px-4 sm:px-6 lg:px-12">
         <SectionHeader
           title="Featured Products"
           description="Hand-picked premium selections curated exclusively for you."
@@ -53,8 +53,10 @@ export default function FeaturedProducts({ products = [] }: Props) {
           }
         />
 
-        {/* Product Grid */}
-        <div className="mt-8 sm:mt-10 grid grid-cols-2 gap-3 sm:gap-5 md:grid-cols-3 lg:grid-cols-4 lg:gap-6">
+        {/* 
+          2. auto-fit stretches grid tracks gracefully to fill empty space edge-to-edge
+        */}
+        <div className="mt-8 sm:mt-10 grid grid-cols-2 gap-3 sm:gap-5 sm:grid-cols-[repeat(auto-fit,minmax(200px,1fr))] lg:gap-6">
           {featuredColorProducts.map((product) => (
             <ProductCard key={product.id} product={product} />
           ))}

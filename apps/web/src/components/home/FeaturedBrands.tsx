@@ -21,12 +21,13 @@ export default function FeaturedBrands({ brands = [] }: Props) {
 
   if (brands.length === 0) return null;
 
-  // Display top 10 brands in a balanced grid
-  const displayBrands = brands.slice(0, 10);
+  // Display top brands (increased slice limit to seamlessly fill wide rows)
+  const displayBrands = brands.slice(0, 18);
 
   return (
     <section className="py-12 sm:py-16 bg-white border-y border-gray-100 select-none">
-      <Container>
+      {/* Container override for edge-to-edge layout on large screens */}
+      <Container className="max-w-none w-full px-4 sm:px-6 lg:px-12">
         {/* Section Header */}
         <div className="mb-8 sm:mb-10 flex items-end justify-between gap-4">
           <div className="space-y-1">
@@ -55,7 +56,8 @@ export default function FeaturedBrands({ brands = [] }: Props) {
         </div>
 
         {/* --- Brand Grid --- */}
-        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3 sm:gap-4">
+        {/* Responsive auto-fit grid maintains ideal card dimensions while expanding across widescreen */}
+        <div className="grid grid-cols-2 gap-3 sm:gap-4 sm:grid-cols-[repeat(auto-fit,minmax(180px,1fr))]">
           {displayBrands.map((brand) => {
             const isThisLoading = loadingSlug === brand.slug;
 
@@ -64,7 +66,7 @@ export default function FeaturedBrands({ brands = [] }: Props) {
                 key={brand.id}
                 href={`/brands/${brand.slug}`}
                 onClick={() => setLoadingSlug(brand.slug)}
-                className={`group relative ${
+                className={`group relative w-full ${
                   loadingSlug || isNavigatingAll ? "pointer-events-none" : ""
                 }`}
               >

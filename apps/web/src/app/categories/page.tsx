@@ -20,7 +20,7 @@ export default async function CategoriesPage() {
   return (
     <Layout>
       <section className="py-12 sm:py-16 bg-white select-none antialiased border-b border-gray-100">
-        <Container>
+        <Container className="max-w-none w-full px-4 sm:px-6 lg:px-12">
           {/* Page Header */}
           <div className="mb-10 sm:mb-12 border-b border-gray-100 pb-8 space-y-1.5">
             <h1 className="text-3xl sm:text-4xl font-semibold tracking-tight text-gray-950">
@@ -35,7 +35,7 @@ export default async function CategoriesPage() {
 
           {/* Empty State Fallback */}
           {categories.length === 0 ? (
-            <div className="flex flex-col items-center justify-center rounded-2xl border border-dashed border-gray-200 bg-gray-50/50 py-20 text-center">
+            <div className="flex flex-col items-center justify-center rounded-none border border-dashed border-gray-200 bg-gray-50/50 py-20 text-center">
               <p className="text-base font-semibold text-gray-800">
                 No categories found
               </p>
@@ -45,22 +45,22 @@ export default async function CategoriesPage() {
               </p>
             </div>
           ) : (
-            /* Category Grid: Optimized responsive column counts and gaps */
-            <div className="grid grid-cols-2 gap-3 sm:gap-5 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 lg:gap-6">
+            /* Widescreen Fluid Grid with Square Corners */
+            <div className="grid grid-cols-2 gap-3 sm:gap-5 sm:grid-cols-[repeat(auto-fit,minmax(200px,1fr))] lg:gap-6">
               {categories.map((category) => (
                 <Link
                   key={category.id}
                   href={`/categories/${category.slug}`}
                   className="group relative block w-full"
                 >
-                  <Card className="relative h-44 sm:h-48 w-full rounded-2xl border border-gray-100 bg-gray-50/50 shadow-xs hover:bg-white hover:border-[#005c2e]/20 hover:shadow-lg transition-all duration-300 overflow-hidden select-none">
+                  <Card className="relative h-44 sm:h-48 w-full rounded-none  bg-gray-50/50 shadow-xs hover:bg-white hover:border-[#005c2e]/20 hover:shadow-lg transition-all duration-300 overflow-hidden select-none">
                     {/* Full-bleed background image */}
                     {category.imageUrl ? (
                       <Image
                         src={category.imageUrl}
                         alt={category.name}
                         fill
-                        sizes="(max-width: 640px) 50vw, (max-width: 1024px) 25vw, 250px"
+                        sizes="(max-width: 640px) 50vw, (max-width: 1024px) 25vw, 300px"
                         className="object-cover transition-transform duration-500 ease-out group-hover:scale-105"
                       />
                     ) : (
@@ -69,8 +69,7 @@ export default async function CategoriesPage() {
                       </div>
                     )}
 
-                    {/* Elegant bottom gradient overlay */}
-                    {/* TAILWIND FIX: Changed bg-gradient-to-t to bg-linear-to-t */}
+                    {/* Bottom gradient overlay */}
                     <div className="absolute inset-x-0 bottom-0 h-2/3 bg-linear-to-t from-black/85 via-black/40 to-transparent transition-opacity duration-300 group-hover:opacity-90" />
 
                     {/* Content Overlay */}

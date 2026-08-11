@@ -87,7 +87,7 @@ export default function Categories({ categories = [] }: Props) {
                   index
                 )} ${loadingSlug || isNavigatingAll ? "pointer-events-none" : ""}`}
               >
-                <Card className="relative w-full h-full bg-gray-100 rounded-2xl border border-gray-100 shadow-xs hover:shadow-md transition-all duration-300 overflow-hidden select-none">
+                <Card className="relative w-full h-full bg-gray-100 rounded-none border border-gray-100 shadow-xs hover:shadow-md transition-all duration-300 overflow-hidden select-none">
                   {/* CARD LOADING OVERLAY */}
                   {isThisLoading && (
                     <div className="absolute inset-0 z-30 flex items-center justify-center bg-black/20 backdrop-blur-[1px]">
