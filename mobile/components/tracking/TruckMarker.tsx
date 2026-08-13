@@ -1,6 +1,6 @@
 import React, { useEffect, useRef } from "react";
 import { View, Text, StyleSheet, Animated } from "react-native";
-import Svg, { Circle, Rect, Defs, Filter, FeDropShadow } from "react-native-svg";
+import Svg, { Rect, Defs, Filter, FeDropShadow } from "react-native-svg";
 import { Truck } from "lucide-react-native";
 
 interface Props {
@@ -10,12 +10,12 @@ interface Props {
 export default function TruckMarker({ label = "Live Location" }: Props) {
   const labelText = label.toUpperCase();
 
-  // Dynamic pill width calculation
+  // Dynamic label width calculation
   const pillWidth = Math.max(54, labelText.length * 5.2 + 18);
   const halfPill = pillWidth / 2;
 
   // Pulse & Indicator animations
-  const auraRadius = useRef(new Animated.Value(13)).current;
+  const auraSize = useRef(new Animated.Value(26)).current;
   const auraOpacity = useRef(new Animated.Value(0.25)).current;
   const dotOpacity = useRef(new Animated.Value(1)).current;
 
@@ -24,13 +24,13 @@ export default function TruckMarker({ label = "Live Location" }: Props) {
     const auraAnimation = Animated.loop(
       Animated.parallel([
         Animated.sequence([
-          Animated.timing(auraRadius, {
-            toValue: 22,
+          Animated.timing(auraSize, {
+            toValue: 44,
             duration: 1200,
             useNativeDriver: false,
           }),
-          Animated.timing(auraRadius, {
-            toValue: 13,
+          Animated.timing(auraSize, {
+            toValue: 26,
             duration: 1200,
             useNativeDriver: false,
           }),
@@ -73,24 +73,24 @@ export default function TruckMarker({ label = "Live Location" }: Props) {
       auraAnimation.stop();
       dotAnimation.stop();
     };
-  }, [auraRadius, auraOpacity, dotOpacity]);
+  }, [auraSize, auraOpacity, dotOpacity]);
 
   return (
     <View style={styles.container}>
-      {/* Subtle Ambient Pulse Aura */}
+      {/* Sharp Ambient Pulse Aura */}
       <Animated.View
         style={[
           styles.pulseAura,
           {
-            width: Animated.multiply(auraRadius, 2),
-            height: Animated.multiply(auraRadius, 2),
-            borderRadius: auraRadius,
+            width: auraSize,
+            height: auraSize,
+            borderRadius: 0, // Sharp square
             opacity: auraOpacity,
           },
         ]}
       />
 
-      {/* Central Vehicle Badge */}
+      {/* Central Vehicle Square Badge */}
       <View style={styles.badgeWrapper}>
         <Svg width={36} height={36} viewBox="-18 -18 36 36">
           <Defs>
@@ -104,21 +104,25 @@ export default function TruckMarker({ label = "Live Location" }: Props) {
               />
             </Filter>
           </Defs>
-          <Circle
-            r={13}
+          <Rect
+            x={-13}
+            y={-13}
+            width={26}
+            height={26}
+            rx={0} // Sharp corners
             fill="#005c2e"
             stroke="#ffffff"
-            strokeWidth={1.8}
+            strokeWidth={1.5}
             filter="url(#truck-shadow)"
           />
         </Svg>
         {/* Centered Truck Icon */}
         <View style={styles.iconContainer}>
-          <Truck size={11} color="#ffffff" strokeWidth={1.8} />
+          <Truck size={12} color="#ffffff" strokeWidth={1.5} />
         </View>
       </View>
 
-      {/* Floating Status Badge Label */}
+      {/* Floating Status Badge Label with Sharp Corners */}
       <View style={[styles.pillContainer, { width: pillWidth, marginLeft: -halfPill }]}>
         <Svg width={pillWidth} height={14} viewBox={`-${halfPill} -7 ${pillWidth} 14`}>
           <Rect
@@ -126,14 +130,14 @@ export default function TruckMarker({ label = "Live Location" }: Props) {
             y={-7}
             width={pillWidth}
             height={14}
-            rx={7}
+            rx={0} // Sharp corners
             fill="#002b15"
             stroke="rgba(255, 255, 255, 0.4)"
             strokeWidth={1}
           />
         </Svg>
 
-        {/* Live Indicator Dot */}
+        {/* Live Indicator Dot (Sharp Square) */}
         <Animated.View
           style={[
             styles.liveDot,
@@ -164,6 +168,7 @@ const styles = StyleSheet.create({
   pulseAura: {
     position: "absolute",
     backgroundColor: "#10b981",
+    borderRadius: 0,
   },
   badgeWrapper: {
     justifyContent: "center",
@@ -177,7 +182,7 @@ const styles = StyleSheet.create({
   },
   pillContainer: {
     position: "absolute",
-    top: 38,
+    top: 40,
     left: "50%",
     height: 14,
     justifyContent: "center",
@@ -185,9 +190,9 @@ const styles = StyleSheet.create({
   },
   liveDot: {
     position: "absolute",
-    width: 3.6,
-    height: 3.6,
-    borderRadius: 1.8,
+    width: 3.5,
+    height: 3.5,
+    borderRadius: 0, // Sharp square indicator
     backgroundColor: "#34d399",
   },
   textWrapper: {
@@ -199,7 +204,7 @@ const styles = StyleSheet.create({
   labelText: {
     color: "#ffffff",
     fontSize: 7.5,
-    fontWeight: "500",
+    fontWeight: "400", // Non-bold clean typography
     letterSpacing: 0.3,
     textTransform: "uppercase",
   },

@@ -22,7 +22,7 @@ export default function WishlistScreen() {
     setRefreshing(true);
     // Force re-fetch trigger down to children
     setRefreshKey((prev) => prev + 1);
-    
+
     // Simulate brief pull-to-refresh delay
     setTimeout(() => {
       setRefreshing(false);
@@ -34,7 +34,7 @@ export default function WishlistScreen() {
       <Stack.Screen
         options={{
           title: "My Wishlist",
-          headerTitleStyle: { fontWeight: "800", color: BRAND_DARK },
+          headerTitleStyle: { fontWeight: "500", color: BRAND_DARK },
           headerShadowVisible: false,
         }}
       />
@@ -73,7 +73,7 @@ const styles = StyleSheet.create({
   },
   container: {
     paddingHorizontal: 16,
-    paddingTop: 12,
+    paddingTop: 60,
   },
   listContainer: {
     marginTop: 16,

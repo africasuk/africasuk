@@ -179,7 +179,7 @@ export default function CategoryScreen() {
         showsVerticalScrollIndicator={false}
         contentContainerStyle={styles.content}
       >
-        {/* Improved Hero Header Card */}
+        {/* Clean Hero Header Card with Sharp Borders */}
         <View style={styles.headerCard}>
           {/* Background Image Watermark */}
           {category.imageUrl && (
@@ -191,7 +191,7 @@ export default function CategoryScreen() {
           )}
 
           <View style={styles.headerTopRow}>
-            {/* Category Avatar Frame */}
+            {/* Category Avatar Box - Sharp Borders */}
             <View style={styles.imageBox}>
               {category.imageUrl ? (
                 <Image
@@ -209,7 +209,7 @@ export default function CategoryScreen() {
               )}
             </View>
 
-            {/* Item Count Badge */}
+            {/* Item Count Badge - Sharp Borders */}
             <View style={styles.badge}>
               <Text style={styles.badgeText}>
                 {totalItemsCount} {totalItemsCount === 1 ? "Item" : "Items"}
@@ -254,6 +254,7 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: "#f4f4f4",
+    paddingTop: 50,
   },
   content: {
     padding: 16,
@@ -266,24 +267,19 @@ const styles = StyleSheet.create({
     backgroundColor: "#f4f4f4",
   },
   notFound: {
-    fontSize: 16,
-    fontWeight: "700",
+    fontSize: 15,
+    fontWeight: "400",
     color: BRAND_DARK,
   },
   headerCard: {
     backgroundColor: "#ffffff",
-    borderRadius: 20,
+    borderRadius: 0, // Sharp corners
     padding: 18,
     marginBottom: 20,
     borderWidth: 1,
-    borderColor: "rgba(229, 231, 235, 0.8)",
+    borderColor: "#e5e7eb",
     position: "relative",
     overflow: "hidden",
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.04,
-    shadowRadius: 6,
-    elevation: 2,
   },
   watermarkImage: {
     position: "absolute",
@@ -291,7 +287,7 @@ const styles = StyleSheet.create({
     bottom: -20,
     width: 170,
     height: 170,
-    opacity: 0.14, // 👈 Increased from 0.06 to 0.14 for better visibility
+    opacity: 0.12,
   },
   headerTopRow: {
     flexDirection: "row",
@@ -303,7 +299,7 @@ const styles = StyleSheet.create({
   imageBox: {
     width: 64,
     height: 64,
-    borderRadius: 16,
+    borderRadius: 0, // Sharp corners
     backgroundColor: "#f9fafb",
     borderWidth: 1,
     borderColor: "#e5e7eb",
@@ -318,14 +314,14 @@ const styles = StyleSheet.create({
   letterAvatar: {
     width: "100%",
     height: "100%",
-    borderRadius: 12,
+    borderRadius: 0,
     backgroundColor: "rgba(0, 77, 38, 0.08)",
     justifyContent: "center",
     alignItems: "center",
   },
   letterText: {
-    fontSize: 24,
-    fontWeight: "900",
+    fontSize: 22,
+    fontWeight: "500", // Non-bold
     color: BRAND_COLOR,
   },
   badge: {
@@ -334,10 +330,10 @@ const styles = StyleSheet.create({
     borderColor: "#e5e7eb",
     paddingHorizontal: 12,
     paddingVertical: 5,
-    borderRadius: 9999,
+    borderRadius: 0, // Sharp corners
   },
   badgeText: {
-    fontWeight: "700",
+    fontWeight: "400", // Non-bold regular
     color: "#374151",
     fontSize: 12,
   },
@@ -345,10 +341,10 @@ const styles = StyleSheet.create({
     zIndex: 1,
   },
   title: {
-    fontSize: 26,
-    fontWeight: "900",
+    fontSize: 22,
+    fontWeight: "500", // Non-bold clean header weight
     color: BRAND_DARK,
-    letterSpacing: -0.3,
+    letterSpacing: 0.2,
   },
   description: {
     marginTop: 6,
@@ -364,8 +360,8 @@ const styles = StyleSheet.create({
     paddingHorizontal: 2,
   },
   gridHeaderTitle: {
-    fontSize: 13,
-    fontWeight: "800",
+    fontSize: 12,
+    fontWeight: "500", // Non-bold text
     color: "#374151",
     textTransform: "uppercase",
     letterSpacing: 0.8,
@@ -378,7 +374,7 @@ const styles = StyleSheet.create({
   },
   emptyContainer: {
     backgroundColor: "#ffffff",
-    borderRadius: 20,
+    borderRadius: 0, // Sharp corners
     borderWidth: 1,
     borderColor: "#e5e7eb",
     paddingVertical: 40,
@@ -388,7 +384,7 @@ const styles = StyleSheet.create({
   },
   emptyText: {
     color: "#6b7280",
-    fontSize: 14,
-    fontWeight: "600",
+    fontSize: 13,
+    fontWeight: "400",
   },
 });

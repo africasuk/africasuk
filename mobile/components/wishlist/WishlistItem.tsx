@@ -1,5 +1,6 @@
 import React from "react";
-import { View, Text, StyleSheet, Image, TouchableOpacity } from "react-native";
+import { View, Text, StyleSheet, TouchableOpacity } from "react-native";
+import { Image } from "expo-image";
 import { useRouter } from "expo-router";
 import { Trash2, ShoppingCart, ArrowRight } from "lucide-react-native";
 import type { WishlistItem as WishlistItemType } from "@africasuk/types";
@@ -13,6 +14,7 @@ interface Props {
 }
 
 const BRAND_DARK = "#002b15";
+const BRAND_GREEN = "#005c2e";
 
 export default function WishlistItem({ item }: Props) {
   const router = useRouter();
@@ -32,7 +34,7 @@ export default function WishlistItem({ item }: Props) {
 
   return (
     <View style={styles.card}>
-      {/* Product Image */}
+      {/* Product Image - Sharp Corners */}
       <TouchableOpacity
         activeOpacity={0.85}
         onPress={handleNavigate}
@@ -41,7 +43,8 @@ export default function WishlistItem({ item }: Props) {
         <Image
           source={{ uri: item.image }}
           style={styles.image}
-          resizeMode="cover"
+          contentFit="cover"
+          transition={200}
         />
       </TouchableOpacity>
 
@@ -65,32 +68,32 @@ export default function WishlistItem({ item }: Props) {
             style={styles.removeButton}
             hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
           >
-            <Trash2 size={16} color="#9ca3af" />
+            <Trash2 size={15} color="#9ca3af" />
           </TouchableOpacity>
         </View>
 
         <View style={styles.priceContainer}>
-          <Price price={item.price} />
+          <Price price={item.price} style={styles.priceText} />
         </View>
 
-        {/* Action Buttons */}
+        {/* Action Buttons - Sharp Corners */}
         <View style={styles.actionsRow}>
           <TouchableOpacity
-            activeOpacity={0.8}
+            activeOpacity={0.85}
             onPress={handleAddToCart}
             style={styles.cartButton}
           >
-            <ShoppingCart size={14} color="#ffffff" />
+            <ShoppingCart size={13} color="#ffffff" />
             <Text style={styles.cartButtonText}>Add to Cart</Text>
           </TouchableOpacity>
 
           <TouchableOpacity
-            activeOpacity={0.8}
+            activeOpacity={0.85}
             onPress={handleNavigate}
             style={styles.viewButton}
           >
             <Text style={styles.viewButtonText}>View</Text>
-            <ArrowRight size={14} color="#6b7280" />
+            <ArrowRight size={13} color="#6b7280" />
           </TouchableOpacity>
         </View>
       </View>
@@ -102,25 +105,20 @@ const styles = StyleSheet.create({
   card: {
     flexDirection: "row",
     gap: 12,
-    borderRadius: 16,
+    borderRadius: 0, // Sharp corners design language
     borderWidth: 1,
     borderColor: "#e5e7eb",
     backgroundColor: "#ffffff",
     padding: 12,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.05,
-    shadowRadius: 2,
-    elevation: 1,
   },
   imageWrapper: {
     width: 80,
     height: 80,
-    borderRadius: 12,
+    borderRadius: 0, // Sharp corners
     overflow: "hidden",
     backgroundColor: "#f9fafb",
     borderWidth: 1,
-    borderColor: "#f3f4f6",
+    borderColor: "#e5e7eb",
   },
   image: {
     width: "100%",
@@ -140,8 +138,8 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   title: {
-    fontSize: 14,
-    fontWeight: "800",
+    fontSize: 13,
+    fontWeight: "500", // Non-bold clean header weight
     color: BRAND_DARK,
   },
   removeButton: {
@@ -149,6 +147,11 @@ const styles = StyleSheet.create({
   },
   priceContainer: {
     marginTop: 2,
+  },
+  priceText: {
+    fontSize: 13,
+    fontWeight: "500", // Clean regular weight
+    color: BRAND_GREEN,
   },
   actionsRow: {
     flexDirection: "row",
@@ -163,17 +166,16 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     gap: 6,
-    backgroundColor: BRAND_DARK,
+    backgroundColor: BRAND_GREEN,
     paddingHorizontal: 10,
     paddingVertical: 6,
-    borderRadius: 8,
+    borderRadius: 0, // Sharp corners
   },
   cartButtonText: {
     fontSize: 11,
-    fontWeight: "800",
+    fontWeight: "500", // Clean regular weight
     color: "#ffffff",
-    textTransform: "uppercase",
-    letterSpacing: 0.5,
+    letterSpacing: 0.2,
   },
   viewButton: {
     flexDirection: "row",
@@ -184,13 +186,12 @@ const styles = StyleSheet.create({
     borderColor: "#e5e7eb",
     paddingHorizontal: 10,
     paddingVertical: 6,
-    borderRadius: 8,
+    borderRadius: 0, // Sharp corners
   },
   viewButtonText: {
     fontSize: 11,
-    fontWeight: "800",
+    fontWeight: "500", // Clean regular weight
     color: BRAND_DARK,
-    textTransform: "uppercase",
-    letterSpacing: 0.5,
+    letterSpacing: 0.2,
   },
 });

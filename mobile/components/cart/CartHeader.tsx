@@ -18,10 +18,12 @@ export default function CartHeader() {
   return (
     <View style={styles.container}>
       <View style={styles.row}>
+        {/* Icon Wrapper - Sharp Corners */}
         <View style={styles.iconWrapper}>
-          <ShoppingCart size={28} color={BRAND} />
+          <ShoppingCart size={22} color={BRAND} />
         </View>
 
+        {/* Text Area */}
         <View style={styles.textWrapper}>
           <Text style={styles.title}>Shopping Cart</Text>
 
@@ -38,7 +40,8 @@ const styles = StyleSheet.create({
   container: {
     borderBottomWidth: 1,
     borderBottomColor: "#e5e7eb",
-    paddingBottom: 20,
+    paddingBottom: 16,
+    marginBottom: 16,
   },
   row: {
     flexDirection: "row",
@@ -46,10 +49,12 @@ const styles = StyleSheet.create({
     gap: 12,
   },
   iconWrapper: {
-    width: 48,
-    height: 48,
-    borderRadius: 16,
+    width: 44,
+    height: 44,
+    borderRadius: 0, // Sharp corners design language
     backgroundColor: "#ecfdf5",
+    borderWidth: 1,
+    borderColor: "#a7f3d0",
     justifyContent: "center",
     alignItems: "center",
   },
@@ -57,14 +62,14 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   title: {
-    fontSize: 22,
-    fontWeight: "900",
+    fontSize: 18,
+    fontWeight: "500", // Non-bold clean header weight
     color: BRAND_DARK,
-    letterSpacing: -0.5,
+    letterSpacing: 0.2,
   },
   subtitle: {
-    fontSize: 13,
-    fontWeight: "500",
+    fontSize: 12,
+    fontWeight: "400", // Clean regular weight
     color: "#6b7280",
     marginTop: 2,
   },

@@ -3,11 +3,11 @@ import {
   View,
   Text,
   StyleSheet,
-  Image,
   TouchableOpacity,
   ActivityIndicator,
   Alert,
 } from "react-native";
+import { Image } from "expo-image";
 import * as ImagePicker from "expo-image-picker";
 import { Camera, Trash2, User } from "lucide-react-native";
 
@@ -93,14 +93,19 @@ export default function AvatarUploader({
 
   return (
     <View style={styles.container}>
-      {/* Upload Zone & Image Preview */}
+      {/* Upload Zone & Image Preview - Sharp Corners */}
       <View style={styles.dropZone}>
         <View style={styles.avatarContainer}>
           {activeAvatarUri ? (
-            <Image source={{ uri: activeAvatarUri }} style={styles.avatarImage} />
+            <Image
+              source={{ uri: activeAvatarUri }}
+              style={styles.avatarImage}
+              contentFit="cover"
+              transition={200}
+            />
           ) : (
             <View style={styles.avatarPlaceholder}>
-              <User size={40} color="#9ca3af" />
+              <User size={36} color="#9ca3af" />
             </View>
           )}
         </View>
@@ -114,14 +119,14 @@ export default function AvatarUploader({
           style={styles.chooseButton}
           onPress={pickImage}
           disabled={uploading}
-          activeOpacity={0.8}
+          activeOpacity={0.85}
         >
-          <Camera size={16} color={BRAND_DARK} style={styles.buttonIcon} />
+          <Camera size={14} color={BRAND_DARK} style={styles.buttonIcon} />
           <Text style={styles.chooseButtonText}>Choose Image</Text>
         </TouchableOpacity>
       </View>
 
-      {/* Selected File Details */}
+      {/* Selected File Details - Sharp Corners */}
       {file && (
         <View style={styles.fileCard}>
           <View style={styles.fileInfo}>
@@ -139,12 +144,12 @@ export default function AvatarUploader({
             disabled={uploading}
             activeOpacity={0.7}
           >
-            <Trash2 size={18} color="#ef4444" />
+            <Trash2 size={16} color="#ef4444" />
           </TouchableOpacity>
         </View>
       )}
 
-      {/* Progress Status View */}
+      {/* Progress Status View - Sharp Corners */}
       {uploading && (
         <View style={styles.statusCard}>
           <ActivityIndicator size="small" color={BRAND} />
@@ -162,7 +167,7 @@ export default function AvatarUploader({
         </View>
       )}
 
-      {/* Action Controls */}
+      {/* Action Controls - Sharp Corners */}
       <View style={styles.actions}>
         <TouchableOpacity
           style={styles.removeButton}
@@ -182,7 +187,7 @@ export default function AvatarUploader({
           onPress={() => {
             void handleUpload();
           }}
-          activeOpacity={0.8}
+          activeOpacity={0.85}
         >
           {uploading ? (
             <ActivityIndicator size="small" color="#ffffff" />
@@ -200,20 +205,20 @@ const styles = StyleSheet.create({
     gap: 16,
   },
   dropZone: {
-    borderRadius: 20,
-    borderWidth: 2,
+    borderRadius: 0, // Sharp corners design language
+    borderWidth: 1,
     borderStyle: "dashed",
-    borderColor: "#e5e7eb",
+    borderColor: "#d1d5db",
     padding: 20,
     alignItems: "center",
     backgroundColor: "#f9fafb",
   },
   avatarContainer: {
-    width: 120,
-    height: 120,
-    borderRadius: 60,
-    borderWidth: 2,
-    borderColor: "#d1fae5",
+    width: 100,
+    height: 100,
+    borderRadius: 0, // Sharp corners
+    borderWidth: 1,
+    borderColor: "#e5e7eb",
     overflow: "hidden",
     marginBottom: 12,
     backgroundColor: "#ffffff",
@@ -221,22 +226,22 @@ const styles = StyleSheet.create({
   avatarImage: {
     width: "100%",
     height: "100%",
-    resizeMode: "cover",
   },
   avatarPlaceholder: {
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
-    backgroundColor: "#f3f4f6",
+    backgroundColor: "#f9fafb",
   },
   title: {
-    fontSize: 16,
-    fontWeight: "800",
+    fontSize: 15,
+    fontWeight: "500", // Non-bold clean header weight
     color: BRAND_DARK,
+    letterSpacing: 0.2,
   },
   subtitle: {
     fontSize: 12,
-    fontWeight: "500",
+    fontWeight: "400",
     color: "#6b7280",
     marginTop: 2,
     textAlign: "center",
@@ -247,17 +252,17 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: "#e5e7eb",
     backgroundColor: "#ffffff",
-    paddingVertical: 10,
-    paddingHorizontal: 16,
-    borderRadius: 9999,
-    marginTop: 16,
+    paddingVertical: 9,
+    paddingHorizontal: 14,
+    borderRadius: 0, // Sharp corners
+    marginTop: 14,
   },
   buttonIcon: {
     marginRight: 6,
   },
   chooseButtonText: {
-    fontSize: 13,
-    fontWeight: "700",
+    fontSize: 12,
+    fontWeight: "500", // Clean regular weight
     color: BRAND_DARK,
   },
   fileCard: {
@@ -266,7 +271,7 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
     borderWidth: 1,
     borderColor: "#e5e7eb",
-    borderRadius: 14,
+    borderRadius: 0, // Sharp corners
     padding: 12,
     backgroundColor: "#ffffff",
   },
@@ -275,34 +280,35 @@ const styles = StyleSheet.create({
     marginRight: 10,
   },
   fileName: {
-    fontSize: 13,
-    fontWeight: "700",
+    fontSize: 12,
+    fontWeight: "500", // Clean weight
     color: BRAND_DARK,
   },
   fileSize: {
     fontSize: 11,
+    fontWeight: "400",
     color: "#6b7280",
     marginTop: 2,
   },
   deleteButton: {
-    padding: 6,
+    padding: 4,
   },
   statusCard: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 12,
-    backgroundColor: "#f0fdf4",
+    gap: 10,
+    backgroundColor: "#ecfdf5",
     borderWidth: 1,
-    borderColor: "#d1fae5",
+    borderColor: "#a7f3d0",
     padding: 12,
-    borderRadius: 14,
+    borderRadius: 0, // Sharp corners
   },
   statusTextContainer: {
     flex: 1,
   },
   statusTitle: {
-    fontSize: 13,
-    fontWeight: "700",
+    fontSize: 12,
+    fontWeight: "500",
     color: BRAND_DARK,
   },
   statusSubtitle: {
@@ -315,34 +321,37 @@ const styles = StyleSheet.create({
     justifyContent: "flex-end",
     alignItems: "center",
     gap: 10,
-    marginTop: 8,
+    marginTop: 4,
   },
   removeButton: {
     borderWidth: 1,
     borderColor: "#e5e7eb",
-    paddingVertical: 12,
-    paddingHorizontal: 16,
-    borderRadius: 9999,
+    paddingVertical: 10,
+    paddingHorizontal: 14,
+    borderRadius: 0, // Sharp corners
+    backgroundColor: "#ffffff",
   },
   removeButtonText: {
-    fontSize: 13,
-    fontWeight: "700",
+    fontSize: 12,
+    fontWeight: "500", // Clean regular weight
     color: "#4b5563",
   },
   saveButton: {
     backgroundColor: BRAND,
-    paddingVertical: 12,
-    paddingHorizontal: 18,
-    borderRadius: 9999,
+    paddingVertical: 10,
+    paddingHorizontal: 16,
+    borderRadius: 0, // Sharp corners
     alignItems: "center",
     justifyContent: "center",
   },
   disabledSaveButton: {
-    opacity: 0.5,
+    backgroundColor: "#e5e7eb",
+    opacity: 0.8,
   },
   saveButtonText: {
     color: "#ffffff",
-    fontSize: 13,
-    fontWeight: "800",
+    fontSize: 12,
+    fontWeight: "500", // Clean regular button weight
+    letterSpacing: 0.2,
   },
 });

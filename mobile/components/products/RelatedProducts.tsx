@@ -8,13 +8,13 @@ interface Props {
 }
 
 export function RelatedProducts({ products }: Props) {
-
   if (!products || products.length === 0) {
     return null;
   }
 
   return (
     <View style={styles.container}>
+      {/* Title - Clean & Unbolded */}
       <Text style={styles.title}>Related Products</Text>
 
       <ScrollView
@@ -23,10 +23,7 @@ export function RelatedProducts({ products }: Props) {
         contentContainerStyle={styles.scrollContent}
       >
         {products.map((product) => (
-          <View
-            key={product.id}
-            style={styles.cardWrapper}
-          >
+          <View key={product.id} style={styles.cardWrapper}>
             <ProductCard product={product} />
           </View>
         ))}
@@ -37,20 +34,21 @@ export function RelatedProducts({ products }: Props) {
 
 const styles = StyleSheet.create({
   container: {
-    marginVertical: 20,
-    gap: 12,
+    marginVertical: 18,
+    gap: 10,
   },
   title: {
-    fontSize: 20,
-    fontWeight: "700",
+    fontSize: 16,
+    fontWeight: "500", // Non-bold clean header weight
     color: "#111827",
     paddingHorizontal: 16,
+    letterSpacing: 0.2,
   },
   scrollContent: {
     paddingHorizontal: 16,
     gap: 12,
   },
   cardWrapper: {
-    width: 160,
+    width: 156,
   },
 });

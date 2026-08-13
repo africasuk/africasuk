@@ -5,9 +5,9 @@ import {
   StyleSheet,
   Pressable,
   Modal,
-  Image,
   TouchableOpacity,
 } from "react-native";
+import { Image } from "expo-image";
 import { DollarSign, Check, ChevronRight } from "lucide-react-native";
 
 import { useCurrency } from "@/providers/CurrencyProvider";
@@ -51,7 +51,7 @@ export function CurrencySwitcher() {
         onPress={() => setModalVisible(true)}
       >
         <View style={styles.left}>
-          <DollarSign size={20} color={BRAND} />
+          <DollarSign size={18} color={BRAND} />
           <Text style={styles.rowText}>Currency</Text>
         </View>
 
@@ -59,7 +59,7 @@ export function CurrencySwitcher() {
           <Image
             source={{ uri: activeCurrency.flagUrl }}
             style={styles.flagIcon}
-            resizeMode="cover"
+            contentFit="cover"
           />
           <Text style={styles.activeCode}>{activeCurrency.label}</Text>
           <ChevronRight size={18} color="#9ca3af" />
@@ -93,12 +93,13 @@ export function CurrencySwitcher() {
                     isSelected && styles.optionRowSelected,
                   ]}
                   onPress={() => handleSelect(code)}
+                  activeOpacity={0.85}
                 >
                   <View style={styles.optionLeft}>
                     <Image
                       source={{ uri: item.flagUrl }}
                       style={styles.optionFlag}
-                      resizeMode="cover"
+                      contentFit="cover"
                     />
                     <View style={styles.labelContainer}>
                       <Text style={styles.optionLabel}>{item.label}</Text>
@@ -106,7 +107,7 @@ export function CurrencySwitcher() {
                     </View>
                   </View>
 
-                  {isSelected && <Check size={18} color={BRAND} />}
+                  {isSelected && <Check size={16} color={BRAND} />}
                 </TouchableOpacity>
               );
             })}
@@ -129,9 +130,9 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   rowText: {
-    marginLeft: 14,
-    fontSize: 16,
-    fontWeight: "600",
+    marginLeft: 12,
+    fontSize: 14,
+    fontWeight: "500", // Non-bold clean weight
     color: "#111827",
   },
   right: {
@@ -142,11 +143,13 @@ const styles = StyleSheet.create({
   flagIcon: {
     width: 20,
     height: 14,
-    borderRadius: 2,
+    borderRadius: 0, // Sharp corners design language
+    borderWidth: 1,
+    borderColor: "#e5e7eb",
   },
   activeCode: {
-    fontSize: 14,
-    fontWeight: "500",
+    fontSize: 13,
+    fontWeight: "400",
     color: "#6b7280",
   },
   modalOverlay: {
@@ -159,31 +162,33 @@ const styles = StyleSheet.create({
   modalContent: {
     width: "100%",
     backgroundColor: "#ffffff",
-    borderRadius: 18,
+    borderRadius: 0, // Sharp corners
+    borderWidth: 1,
+    borderColor: "#e5e7eb",
     padding: 20,
-    elevation: 5,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.15,
-    shadowRadius: 10,
   },
   modalTitle: {
-    fontSize: 18,
-    fontWeight: "700",
+    fontSize: 16,
+    fontWeight: "500", // Clean regular header weight
     color: "#111827",
     marginBottom: 16,
+    letterSpacing: 0.2,
   },
   optionRow: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-    paddingVertical: 12,
+    paddingVertical: 10,
     paddingHorizontal: 12,
-    borderRadius: 12,
-    marginBottom: 6,
+    borderRadius: 0, // Sharp corners
+    borderWidth: 1,
+    borderColor: "#e5e7eb",
+    marginBottom: 8,
+    backgroundColor: "#ffffff",
   },
   optionRowSelected: {
     backgroundColor: "#f0fdf4",
+    borderColor: "#a7f3d0",
   },
   optionLeft: {
     flexDirection: "row",
@@ -191,21 +196,24 @@ const styles = StyleSheet.create({
     gap: 12,
   },
   optionFlag: {
-    width: 26,
-    height: 18,
-    borderRadius: 2,
+    width: 24,
+    height: 16,
+    borderRadius: 0, // Sharp corners
+    borderWidth: 1,
+    borderColor: "#e5e7eb",
   },
   labelContainer: {
     flexDirection: "column",
   },
   optionLabel: {
-    fontSize: 15,
-    fontWeight: "700",
+    fontSize: 13,
+    fontWeight: "500", // Clean weight
     color: "#111827",
   },
   optionSublabel: {
-    fontSize: 12,
+    fontSize: 11,
     fontWeight: "400",
     color: "#6b7280",
+    marginTop: 1,
   },
 });

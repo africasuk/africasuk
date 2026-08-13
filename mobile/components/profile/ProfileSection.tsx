@@ -51,5 +51,6 @@ export default function ProfileSection({ profile, onRefresh }: Props) {
 const styles = StyleSheet.create({
   container: {
     width: "100%",
+    backgroundColor: "#ffffff",
   },
 });

@@ -16,8 +16,6 @@ import { createClient } from "@/lib/auth/client";
 
 const supabase = createClient();
 
-
-
 const BRAND_GREEN = "#004d26";
 
 export interface ProductRequest {
@@ -33,6 +31,22 @@ export interface ProductRequest {
 function RequestCard({ request }: { request: ProductRequest }) {
   if (!request) return null;
 
+  const getStatusBadgeStyle = (status: ProductRequest["status"]) => {
+    switch (status) {
+      case "available":
+        return { bg: "#ecfdf5", border: "#a7f3d0", text: "#047857" };
+      case "sourcing":
+        return { bg: "#eff6ff", border: "#bfdbfe", text: "#1d4ed8" };
+      case "unavailable":
+        return { bg: "#fef2f2", border: "#fecaca", text: "#b91c1c" };
+      case "pending":
+      default:
+        return { bg: "#f3f4f6", border: "#e5e7eb", text: "#374151" };
+    }
+  };
+
+  const statusStyle = getStatusBadgeStyle(request.status);
+
   return (
     <View style={styles.card}>
       <View style={styles.cardContent}>
@@ -47,11 +61,11 @@ function RequestCard({ request }: { request: ProductRequest }) {
         <View style={styles.cardDetails}>
           <View>
             <Text style={styles.phoneText}>
-              {request.phone || "No phone"}
+              {request.phone || "No phone provided"}
             </Text>
 
             <Text style={styles.descriptionText}>
-              {request.description || "No description"}
+              {request.description || "No description provided."}
             </Text>
           </View>
 
@@ -68,6 +82,7 @@ function RequestCard({ request }: { request: ProductRequest }) {
               {!!request.product_link && (
                 <TouchableOpacity
                   style={styles.orderButton}
+                  activeOpacity={0.8}
                   onPress={() => Linking.openURL(request.product_link!)}
                 >
                   <Text style={styles.orderButtonText}>
@@ -78,8 +93,21 @@ function RequestCard({ request }: { request: ProductRequest }) {
             </View>
           ) : (
             <View style={styles.statusBadgeWrapper}>
-              <View style={styles.statusBadge}>
-                <Text style={styles.statusBadgeText}>
+              <View
+                style={[
+                  styles.statusBadge,
+                  {
+                    backgroundColor: statusStyle.bg,
+                    borderColor: statusStyle.border,
+                  },
+                ]}
+              >
+                <Text
+                  style={[
+                    styles.statusBadgeText,
+                    { color: statusStyle.text },
+                  ]}
+                >
                   {request.status ?? "pending"}
                 </Text>
               </View>
@@ -99,19 +127,16 @@ export default function MyRequestsScreen() {
 
   const fetchRequests = useCallback(async () => {
     try {
-const {
-  data: { session },
-} = await supabase.auth.getSession();
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
 
+      if (!session) {
+        router.replace("/auth/login");
+        return;
+      }
 
-if (!session) {
-  router.replace("/auth/login");
-  return;
-}
-
-
-
-const user = session.user;
+      const user = session.user;
 
       const { data, error } = await supabase
         .from("product_requests")
@@ -186,7 +211,7 @@ const user = session.user;
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#f9fafb",
+    backgroundColor: "#ffffff",
   },
   header: {
     flexDirection: "row",
@@ -197,19 +222,19 @@ const styles = StyleSheet.create({
     paddingBottom: 16,
     backgroundColor: "#ffffff",
     borderBottomWidth: 1,
-    borderBottomColor: "#f3f4f6",
+    borderBottomColor: "#e5e7eb",
   },
   backButton: {
-    padding: 6,
+    padding: 4,
   },
   headerTitle: {
-    fontSize: 16,
-    fontWeight: "800",
+    fontSize: 15,
+    fontWeight: "500", // Non-bold clean header
     color: "#111827",
     letterSpacing: 0.5,
   },
   placeholder: {
-    width: 32,
+    width: 28,
   },
   centerContainer: {
     flex: 1,
@@ -220,30 +245,25 @@ const styles = StyleSheet.create({
     padding: 16,
   },
   card: {
-    backgroundColor: "rgba(255, 255, 255, 0.8)",
-    borderRadius: 16,
+    backgroundColor: "#ffffff",
+    borderRadius: 0, // Sharp corners
     borderWidth: 1,
-    borderColor: "#f3f4f6",
+    borderColor: "#e5e7eb",
     padding: 16,
-    shadowColor: "#000000",
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.03,
-    shadowRadius: 4,
-    elevation: 1,
     marginBottom: 16,
   },
   cardContent: {
     flexDirection: "column",
-    gap: 16,
+    gap: 14,
   },
   imageWrapper: {
     height: 160,
     width: "100%",
-    borderRadius: 12,
+    borderRadius: 0, // Sharp corners
     overflow: "hidden",
     backgroundColor: "#f9fafb",
     borderWidth: 1,
-    borderColor: "#f3f4f6",
+    borderColor: "#e5e7eb",
   },
   image: {
     width: "100%",
@@ -254,80 +274,79 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
   },
   phoneText: {
-    fontSize: 16,
-    fontWeight: "700",
+    fontSize: 14,
+    fontWeight: "500", // Clean regular weight
     color: "#111827",
   },
   descriptionText: {
-    marginTop: 8,
-    fontSize: 14,
+    marginTop: 6,
+    fontSize: 13,
+    fontWeight: "400",
     color: "#4b5563",
-    lineHeight: 20,
+    lineHeight: 18,
   },
   availableBanner: {
-    marginTop: 16,
+    marginTop: 14,
     backgroundColor: "#ecfdf5",
     borderWidth: 1,
     borderColor: "#a7f3d0",
-    borderRadius: 12,
-    padding: 16,
+    borderRadius: 0, // Sharp corners
+    padding: 14,
   },
   availableTitle: {
-    fontSize: 15,
-    fontWeight: "800",
+    fontSize: 14,
+    fontWeight: "500", // Clean weight
     color: BRAND_GREEN,
   },
   availableSubtitle: {
     marginTop: 4,
     fontSize: 12,
-    fontWeight: "500",
+    fontWeight: "400",
     color: "#065f46",
-    lineHeight: 18,
+    lineHeight: 16,
   },
   orderButton: {
-    marginTop: 16,
+    marginTop: 12,
     backgroundColor: BRAND_GREEN,
-    borderRadius: 12,
+    borderRadius: 0, // Sharp corners
     paddingVertical: 10,
     paddingHorizontal: 16,
     alignSelf: "flex-start",
   },
   orderButtonText: {
     color: "#ffffff",
-    fontSize: 13,
-    fontWeight: "700",
+    fontSize: 12,
+    fontWeight: "500", // Clean button text weight
   },
   statusBadgeWrapper: {
-    marginTop: 16,
+    marginTop: 12,
     alignItems: "flex-start",
   },
   statusBadge: {
-    backgroundColor: "#ecfdf5",
     borderWidth: 1,
-    borderColor: "#d1fae5",
-    paddingHorizontal: 14,
+    paddingHorizontal: 12,
     paddingVertical: 4,
-    borderRadius: 20,
+    borderRadius: 0, // Sharp corners
   },
   statusBadgeText: {
-    fontSize: 12,
-    fontWeight: "600",
-    color: BRAND_GREEN,
-    textTransform: "capitalize",
+    fontSize: 11,
+    fontWeight: "500",
+    textTransform: "uppercase",
+    letterSpacing: 0.5,
   },
   emptyContainer: {
-    backgroundColor: "rgba(255, 255, 255, 0.6)",
-    borderRadius: 16,
+    backgroundColor: "#ffffff",
+    borderRadius: 0, // Sharp corners
     borderWidth: 1,
-    borderColor: "#f3f4f6",
+    borderColor: "#e5e7eb",
     padding: 32,
     alignItems: "center",
     justifyContent: "center",
     marginTop: 24,
   },
   emptyText: {
-    fontSize: 14,
-    fontWeight: "500",
+    fontSize: 13,
+    fontWeight: "400",
     color: "#6b7280",
     textAlign: "center",
   },

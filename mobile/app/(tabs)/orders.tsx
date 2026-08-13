@@ -21,7 +21,7 @@ import type { Order } from "@africasuk/types";
 import { Price } from "@/components/currency/Price";
 
 const BRAND_LIGHT = "#008744";
-const BRAND_DARK = "#002b15";
+const BRAND_DARK = "#111827";
 const LIGHT_GREEN = "#ecfdf5";
 
 // Extend Order type interface locally if not yet updated in @africasuk/types package
@@ -51,25 +51,25 @@ export default function OrdersScreen() {
         return;
       }
 
-const { data, error } = await supabase
-  .from("orders")
-  .select(`
-    *,
-    order_items (
-      image
-    )
-  `)
-  .eq("user_id", user.id)
-  .order("created_at", { ascending: false });
+      const { data, error } = await supabase
+        .from("orders")
+        .select(`
+          *,
+          order_items (
+            image
+          )
+        `)
+        .eq("user_id", user.id)
+        .order("created_at", { ascending: false });
 
-if (error) throw error;
+      if (error) throw error;
 
-setOrders(
-  (data ?? []).map((order: any) => ({
-    ...order,
-    image: order.order_items?.[0]?.image ?? null,
-  }))
-);
+      setOrders(
+        (data ?? []).map((order: any) => ({
+          ...order,
+          image: order.order_items?.[0]?.image ?? null,
+        }))
+      );
     } catch (err) {
       console.error("Failed to fetch orders:", err);
       setError("Unable to load orders. Please try again.");
@@ -297,32 +297,27 @@ const styles = StyleSheet.create<Styles>({
     marginBottom: 20,
   },
   title: {
-    fontSize: 26,
-    fontWeight: "900",
+    fontSize: 24,
+    fontWeight: "500", // Unbolded clean title
     color: BRAND_DARK,
-    letterSpacing: -0.3,
+    letterSpacing: 0.2,
   },
   subtitle: {
-    fontSize: 14,
+    fontSize: 13,
+    fontWeight: "400",
     color: "#6b7280",
     marginTop: 4,
   },
   orderCard: {
     backgroundColor: "#ffffff",
-    borderRadius: 16,
+    borderRadius: 0, // Sharp border
     padding: 16,
     marginBottom: 12,
     borderWidth: 1,
-    borderColor: "rgba(229, 231, 235, 0.8)",
-    shadowColor: "#000000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.03,
-    shadowRadius: 6,
-    elevation: 2,
+    borderColor: "#e5e7eb",
   },
   cardPressed: {
     opacity: 0.9,
-    transform: [{ scale: 0.99 }],
   },
   cardHeader: {
     flexDirection: "row",
@@ -336,7 +331,7 @@ const styles = StyleSheet.create<Styles>({
   },
   orderNumber: {
     fontSize: 14,
-    fontWeight: "800",
+    fontWeight: "500", // Non-bold header weight
     color: BRAND_DARK,
   },
   cardDivider: {
@@ -361,7 +356,7 @@ const styles = StyleSheet.create<Styles>({
   productImage: {
     width: 56,
     height: 56,
-    borderRadius: 10,
+    borderRadius: 0, // Sharp border
     backgroundColor: "#f3f4f6",
     borderWidth: 1,
     borderColor: "#e5e7eb",
@@ -369,11 +364,11 @@ const styles = StyleSheet.create<Styles>({
   dateLabel: {
     fontSize: 12,
     color: "#6b7280",
-    fontWeight: "500",
+    fontWeight: "400",
   },
   totalAmount: {
-    fontSize: 15,
-    fontWeight: "800",
+    fontSize: 14,
+    fontWeight: "500", // Non-bold price text
     color: BRAND_DARK,
     marginTop: 2,
   },
@@ -385,21 +380,23 @@ const styles = StyleSheet.create<Styles>({
   },
   detailsText: {
     fontSize: 13,
-    fontWeight: "800",
+    fontWeight: "500", // Non-bold trigger text
     color: BRAND_LIGHT,
   },
   badge: {
     paddingHorizontal: 8,
     paddingVertical: 4,
-    borderRadius: 6,
+    borderRadius: 0, // Sharp border
   },
   badgeText: {
     fontSize: 10,
-    fontWeight: "800",
+    fontWeight: "500", // Non-bold badge text
     letterSpacing: 0.5,
   },
   badgePending: {
     backgroundColor: "#fef3c7",
+    borderWidth: 1,
+    borderColor: "#fde68a",
   },
   badgeTextPending: {
     color: "#d97706",
@@ -414,26 +411,35 @@ const styles = StyleSheet.create<Styles>({
   },
   badgeError: {
     backgroundColor: "#fee2e2",
+    borderWidth: 1,
+    borderColor: "#fca5a5",
   },
   badgeTextError: {
     color: "#dc2626",
   },
   badgeInfo: {
     backgroundColor: "#e0f2fe",
+    borderWidth: 1,
+    borderColor: "#bae6fd",
   },
   badgeTextInfo: {
     color: "#0284c7",
   },
   emptyContainer: {
+    backgroundColor: "#ffffff",
+    borderRadius: 0, // Sharp border
+    borderWidth: 1,
+    borderColor: "#e5e7eb",
     alignItems: "center",
     justifyContent: "center",
-    paddingVertical: 60,
-    paddingHorizontal: 24,
+    paddingVertical: 50,
+    paddingHorizontal: 20,
+    marginTop: 12,
   },
   emptyIconCircle: {
-    width: 64,
-    height: 64,
-    borderRadius: 32,
+    width: 60,
+    height: 60,
+    borderRadius: 0, // Sharp border
     backgroundColor: LIGHT_GREEN,
     justifyContent: "center",
     alignItems: "center",
@@ -442,12 +448,13 @@ const styles = StyleSheet.create<Styles>({
     borderColor: "#a7f3d0",
   },
   emptyTitle: {
-    fontSize: 18,
-    fontWeight: "800",
+    fontSize: 16,
+    fontWeight: "500", // Non-bold
     color: BRAND_DARK,
   },
   emptySubtitle: {
-    fontSize: 14,
+    fontSize: 13,
+    fontWeight: "400",
     color: "#6b7280",
     textAlign: "center",
     marginTop: 4,
@@ -457,15 +464,16 @@ const styles = StyleSheet.create<Styles>({
     backgroundColor: BRAND_LIGHT,
     paddingHorizontal: 20,
     paddingVertical: 12,
-    borderRadius: 12,
+    borderRadius: 0, // Sharp border
   },
   shopButtonText: {
     color: "#ffffff",
-    fontWeight: "800",
-    fontSize: 14,
+    fontWeight: "500", // Non-bold
+    fontSize: 13,
   },
   errorText: {
-    fontSize: 14,
+    fontSize: 13,
+    fontWeight: "400",
     color: "#374151",
     marginTop: 12,
     textAlign: "center",
@@ -475,11 +483,11 @@ const styles = StyleSheet.create<Styles>({
     paddingHorizontal: 16,
     paddingVertical: 8,
     backgroundColor: BRAND_LIGHT,
-    borderRadius: 8,
+    borderRadius: 0, // Sharp border
   },
   retryText: {
     color: "#ffffff",
-    fontWeight: "700",
+    fontWeight: "500", // Non-bold
     fontSize: 13,
   },
 });

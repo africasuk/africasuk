@@ -20,7 +20,7 @@ import { createClient } from "@/lib/auth/client";
 const BRAND_COLOR = "#004d26";
 const BRAND_DARK = "#111827";
 
-// Standalone Header component to avoid TextInput losing focus on re-renders
+// Standalone Header component with sharp inputs & unbolded headers
 function CategoriesHeader({
   count,
   searchQuery,
@@ -40,6 +40,7 @@ function CategoriesHeader({
           </Text>
         </View>
 
+        {/* Sharp Badge */}
         <View style={styles.badge}>
           <Text style={styles.badgeText}>
             {count} {count === 1 ? "Category" : "Categories"}
@@ -47,7 +48,7 @@ function CategoriesHeader({
         </View>
       </View>
 
-      {/* Search Input Bar */}
+      {/* Search Input Bar with Sharp Borders */}
       <View style={styles.searchBar}>
         <Search size={18} color="#9ca3af" style={styles.searchIcon} />
         <TextInput
@@ -81,31 +82,31 @@ export default function CategoriesScreen() {
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
 
-const fetchCategories = useCallback(async () => {
-  try {
-    const supabase = createClient();
+  const fetchCategories = useCallback(async () => {
+    try {
+      const supabase = createClient();
 
-    const { data, error } = await supabase
-      .from("categories")
-      .select("*")
-      .eq("is_active", true)
-      .order("sort_order", { ascending: true });
+      const { data, error } = await supabase
+        .from("categories")
+        .select("*")
+        .eq("is_active", true)
+        .order("sort_order", { ascending: true });
 
-    if (error) throw error;
+      if (error) throw error;
 
-    setCategories(
-      (data ?? []).map((item: any) => ({
-        ...item,
-        imageUrl: item.image_url,
-      })) as Category[]
-    );
-  } catch (error) {
-    console.error("Error fetching categories:", error);
-  } finally {
-    setLoading(false);
-    setRefreshing(false);
-  }
-}, []);
+      setCategories(
+        (data ?? []).map((item: any) => ({
+          ...item,
+          imageUrl: item.image_url,
+        })) as Category[]
+      );
+    } catch (error) {
+      console.error("Error fetching categories:", error);
+    } finally {
+      setLoading(false);
+      setRefreshing(false);
+    }
+  }, []);
 
   useEffect(() => {
     fetchCategories();
@@ -139,7 +140,7 @@ const fetchCategories = useCallback(async () => {
       <Stack.Screen
         options={{
           title: "Categories",
-          headerTitleStyle: { fontWeight: "800", color: BRAND_DARK },
+          headerTitleStyle: { fontWeight: "500", color: BRAND_DARK },
         }}
       />
 
@@ -179,25 +180,25 @@ const fetchCategories = useCallback(async () => {
         renderItem={({ item }) => (
           <TouchableOpacity
             style={styles.card}
-            activeOpacity={0.8}
+            activeOpacity={0.85}
             onPress={() => router.push(`/categories/${item.slug}` as never)}
           >
-            {/* Big Prominent Image Section */}
+            {/* Big Image Section - Sharp Borders */}
             <View style={styles.imageContainer}>
               {item.imageUrl ? (
-                  <Image
-                    source={{ uri: item.imageUrl }}
-                    style={styles.image}
-                    contentFit="cover"
-                  />
-                ) : (
+                <Image
+                  source={{ uri: item.imageUrl }}
+                  style={styles.image}
+                  contentFit="cover"
+                />
+              ) : (
                 <View style={styles.placeholderContainer}>
                   <Layers size={32} color={BRAND_COLOR} opacity={0.5} />
                 </View>
               )}
             </View>
 
-            {/* Clean White Bottom Info Panel */}
+            {/* Bottom Info Panel */}
             <View style={styles.cardInfo}>
               <View style={styles.cardHeaderRow}>
                 <Text style={styles.categoryName} numberOfLines={1}>
@@ -248,13 +249,15 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   title: {
-    fontSize: 28,
-    fontWeight: "900",
+    fontSize: 24,
+    fontWeight: "500", // Clean regular header weight
     color: BRAND_DARK,
+    letterSpacing: 0.2,
   },
   subtitle: {
     marginTop: 4,
-    fontSize: 13,
+    fontSize: 12,
+    fontWeight: "400",
     color: "#6b7280",
     lineHeight: 18,
   },
@@ -264,11 +267,11 @@ const styles = StyleSheet.create({
     borderColor: "#e5e7eb",
     paddingHorizontal: 12,
     paddingVertical: 6,
-    borderRadius: 9999,
+    borderRadius: 0, // Sharp border
   },
   badgeText: {
     fontSize: 12,
-    fontWeight: "700",
+    fontWeight: "400", // Non-bold
     color: "#374151",
   },
   searchBar: {
@@ -276,8 +279,8 @@ const styles = StyleSheet.create({
     alignItems: "center",
     backgroundColor: "#ffffff",
     borderWidth: 1,
-    borderColor: "rgba(229, 231, 235, 0.8)",
-    borderRadius: 14,
+    borderColor: "#e5e7eb",
+    borderRadius: 0, // Sharp border
     paddingHorizontal: 12,
     height: 44,
     marginTop: 16,
@@ -287,26 +290,22 @@ const styles = StyleSheet.create({
   },
   searchInput: {
     flex: 1,
-    fontSize: 14,
+    fontSize: 13,
+    fontWeight: "400",
     color: BRAND_DARK,
     paddingVertical: 0,
   },
   card: {
     flex: 1,
-    height: 210, // Increased height for larger visual presence
+    height: 210,
     backgroundColor: "#ffffff",
-    borderRadius: 18,
+    borderRadius: 0, // Sharp border
     borderWidth: 1,
-    borderColor: "rgba(229, 231, 235, 0.8)",
-    overflow: "hidden", // Clips image cleanly to card borders
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.04,
-    shadowRadius: 4,
-    elevation: 2,
+    borderColor: "#e5e7eb",
+    overflow: "hidden",
   },
   imageContainer: {
-    flex: 1, // Takes up ~70% of total card height
+    flex: 1,
     width: "100%",
     backgroundColor: "#f3f4f6",
     alignItems: "center",
@@ -315,6 +314,7 @@ const styles = StyleSheet.create({
   image: {
     width: "100%",
     height: "100%",
+    borderRadius: 0,
   },
   placeholderContainer: {
     flex: 1,
@@ -336,21 +336,21 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
   },
   categoryName: {
-    fontSize: 15,
-    fontWeight: "800",
+    fontSize: 14,
+    fontWeight: "500", // Clean regular weight
     color: BRAND_DARK,
     flex: 1,
     marginRight: 4,
   },
   categoryCaption: {
     fontSize: 11,
-    fontWeight: "500",
+    fontWeight: "400",
     color: "#6b7280",
     marginTop: 2,
   },
   emptyCard: {
     backgroundColor: "#ffffff",
-    borderRadius: 20,
+    borderRadius: 0, // Sharp border
     borderWidth: 1,
     borderColor: "#e5e7eb",
     paddingVertical: 40,
@@ -359,12 +359,13 @@ const styles = StyleSheet.create({
     marginTop: 16,
   },
   emptyTitle: {
-    fontSize: 16,
-    fontWeight: "800",
+    fontSize: 15,
+    fontWeight: "500", // Non-bold
     color: BRAND_DARK,
   },
   emptySubtitle: {
     fontSize: 13,
+    fontWeight: "400",
     color: "#6b7280",
     textAlign: "center",
     marginTop: 4,

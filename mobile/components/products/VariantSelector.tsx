@@ -230,7 +230,10 @@ export function VariantSelector({ product, onColorChange }: Props) {
       {/* 3. PRICE & STOCK DISPLAY */}
       <View style={styles.priceSection}>
         <View style={styles.priceRow}>
-          <Price price={Number(selectedVariant.price)} />
+          <Price
+            price={Number(selectedVariant.price)}
+            style={styles.price}
+          />
 
           <View
             style={[
@@ -265,10 +268,10 @@ export function VariantSelector({ product, onColorChange }: Props) {
 
 const styles = StyleSheet.create({
   container: {
-    gap: 20,
+    gap: 18,
   },
   section: {
-    gap: 10,
+    gap: 8,
   },
   sectionHeader: {
     flexDirection: "row",
@@ -277,31 +280,31 @@ const styles = StyleSheet.create({
   },
   sectionLabel: {
     fontSize: 11,
-    fontWeight: "800",
+    fontWeight: "500",
     color: "#6b7280",
     textTransform: "uppercase",
     letterSpacing: 0.8,
   },
   colorNameValue: {
     fontSize: 12,
-    fontWeight: "800",
+    fontWeight: "500",
     color: BRAND_DARK,
     textTransform: "capitalize",
   },
   chipsContainer: {
     flexDirection: "row",
     flexWrap: "wrap",
-    gap: 10,
+    gap: 8,
   },
   colorChip: {
     flexDirection: "row",
     alignItems: "center",
     gap: 8,
     paddingLeft: 6,
-    paddingRight: 14,
+    paddingRight: 12,
     paddingVertical: 6,
-    borderRadius: 20,
-    borderWidth: 1.5,
+    borderRadius: 0,
+    borderWidth: 1,
   },
   selectedColorChip: {
     borderColor: BRAND_LIGHT,
@@ -312,12 +315,12 @@ const styles = StyleSheet.create({
     backgroundColor: "#ffffff",
   },
   thumbnailBubble: {
-    width: 24,
-    height: 24,
-    borderRadius: 12,
+    width: 22,
+    height: 22,
+    borderRadius: 0,
     overflow: "hidden",
     borderWidth: 1,
-    borderColor: "rgba(0,0,0,0.1)",
+    borderColor: "#e5e7eb",
     backgroundColor: "#f3f4f6",
   },
   chipThumbnail: {
@@ -326,22 +329,23 @@ const styles = StyleSheet.create({
   },
   colorChipText: {
     fontSize: 12,
-    fontWeight: "700",
+    fontWeight: "400",
   },
   selectedColorText: {
     color: BRAND_DARK,
+    fontWeight: "500",
   },
   unselectedColorText: {
     color: "#4b5563",
   },
   sizeButton: {
-    minWidth: 44,
-    height: 40,
+    minWidth: 48,
+    height: 42,
     paddingHorizontal: 14,
     alignItems: "center",
     justifyContent: "center",
-    borderRadius: 10,
-    borderWidth: 1.5,
+    borderRadius: 0,
+    borderWidth: 1,
   },
   selectedSizeButton: {
     backgroundColor: BRAND_DARK,
@@ -356,11 +360,12 @@ const styles = StyleSheet.create({
     borderColor: "#f3f4f6",
   },
   sizeButtonText: {
-    fontSize: 12,
-    fontWeight: "800",
+    fontSize: 14,
+    fontWeight: "600",
   },
   selectedSizeText: {
     color: "#ffffff",
+    fontWeight: "700",
   },
   availableSizeText: {
     color: "#111827",
@@ -369,7 +374,7 @@ const styles = StyleSheet.create({
     color: "#9ca3af",
   },
   priceSection: {
-    paddingTop: 16,
+    paddingTop: 14,
     borderTopWidth: 1,
     borderTopColor: "#f3f4f6",
   },
@@ -378,15 +383,20 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "space-between",
   },
+  price: {
+    fontSize: 20,
+    fontWeight: "700",
+    color: BRAND_DARK,
+  },
   stockBadgeWrapper: {
-    paddingHorizontal: 10,
+    paddingHorizontal: 8,
     paddingVertical: 4,
-    borderRadius: 12,
+    borderRadius: 0,
     borderWidth: 1,
   },
   stockBadgeText: {
     fontSize: 11,
-    fontWeight: "800",
+    fontWeight: "500",
   },
   inStockBg: {
     backgroundColor: "#ecfdf5",
@@ -405,7 +415,7 @@ const styles = StyleSheet.create({
   actionsRow: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 12,
+    gap: 10,
     paddingTop: 4,
   },
   addToCartFlex: {
@@ -413,6 +423,5 @@ const styles = StyleSheet.create({
   },
   pressedState: {
     opacity: 0.85,
-    transform: [{ scale: 0.98 }],
   },
 });

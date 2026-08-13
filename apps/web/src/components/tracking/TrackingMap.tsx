@@ -107,37 +107,50 @@ export default function TrackingMap({ status }: Props) {
   }, [status]);
 
   // Fetch real highway geometry from the free OSRM Routing engine
-  useEffect(() => {
-    async function fetchRealRoads() {
-      try {
-        const waypoints = [
-          LOGISTICS_POINTS.kampala.coordinates,
-          LOGISTICS_POINTS.nimule.coordinates,
-          LOGISTICS_POINTS.juba.coordinates,
-          LOGISTICS_POINTS.customer.coordinates,
-        ];
+useEffect(() => {
+  async function fetchRealRoads() {
+    try {
+      const waypoints = [
+        LOGISTICS_POINTS.kampala.coordinates,
+        LOGISTICS_POINTS.nimule.coordinates,
+        LOGISTICS_POINTS.juba.coordinates,
+        LOGISTICS_POINTS.customer.coordinates,
+      ];
 
-        const coordString = waypoints.map((pt) => `${pt[0]},${pt[1]}`).join(";");
+      const coordString = waypoints
+        .map(([lng, lat]) => `${lng},${lat}`)
+        .join(";");
 
-        const res = await fetch(
-          `https://router.project-osrm.org/route/v1/driving/${coordString}?overview=full&geometries=geojson`
-        );
-        const data = await res.json();
+      const url =
+        `https://router.project-osrm.org/route/v1/driving/${coordString}` +
+        `?overview=full&geometries=geojson`;
 
-        if (data.routes?.[0]?.geometry?.coordinates) {
-          const parsedRoute: [number, number][] = data.routes[0].geometry.coordinates.map(
-            (coord: [number, number]) => [coord[1], coord[0]]
-          );
-          setFullRoadRoute(parsedRoute);
-        }
-      } catch (error) {
-        console.error("Failed to load OSRM road geometry:", error);
+      const res = await fetch(url);
+
+      if (!res.ok) {
+        throw new Error(`OSRM HTTP ${res.status}`);
       }
+
+      const data = await res.json();
+
+      if (data.routes?.[0]?.geometry?.coordinates) {
+        const parsedRoute: [number, number][] =
+          data.routes[0].geometry.coordinates.map(
+            ([lng, lat]: [number, number]) => [lat, lng]
+          );
+
+        setFullRoadRoute(parsedRoute);
+      }
+    } catch (error) {
+      console.error("OSRM unavailable, using fallback route:", error);
+
+      // Don't break the map if OSRM is unavailable
+      setFullRoadRoute([]);
     }
+  }
 
-    fetchRealRoads();
-  }, []);
-
+  fetchRealRoads();
+}, []);
   // Split full road polyline into Completed vs Remaining based on truck position
   const { completedPolyline, remainingPolyline } = useMemo(() => {
     if (!fullRoadRoute.length) {

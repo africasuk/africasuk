@@ -93,9 +93,11 @@ export default function RequestProductScreen() {
     setImage(null);
     setIsSuccess(false);
   };
-const navigateToRequests = () => {
-  router.push("/requests" as const);
-};
+
+  const navigateToRequests = () => {
+    router.push("/requests" as const);
+  };
+
   return (
     <View style={styles.container}>
       <KeyboardAvoidingView
@@ -107,7 +109,7 @@ const navigateToRequests = () => {
           keyboardShouldPersistTaps="handled"
         >
           {/* Top Bar Navigation to View Requests */}
-         <View style={styles.topNavigation}>
+          <View style={styles.topNavigation}>
             <TouchableOpacity
               style={styles.viewRequestsHeaderBtn}
               onPress={() => router.push("/requests")}
@@ -132,7 +134,7 @@ const navigateToRequests = () => {
           {isSuccess ? (
             /* Success State */
             <View style={styles.successCard}>
-              <CheckCircle2 size={56} color={BRAND_GREEN} />
+              <CheckCircle2 size={48} color={BRAND_GREEN} />
               <Text style={styles.successTitle}>Request Submitted!</Text>
               <Text style={styles.successText}>
                 We&apos;ve received your request. Our team will review it and
@@ -143,8 +145,9 @@ const navigateToRequests = () => {
               <TouchableOpacity
                 style={styles.primaryButton}
                 onPress={navigateToRequests}
+                activeOpacity={0.85}
               >
-                <ListOrdered size={18} color="#ffffff" style={{ marginRight: 8 }} />
+                <ListOrdered size={16} color="#ffffff" style={{ marginRight: 8 }} />
                 <Text style={styles.primaryButtonText}>View Requested Products</Text>
               </TouchableOpacity>
 
@@ -152,11 +155,16 @@ const navigateToRequests = () => {
               <TouchableOpacity
                 style={styles.outlineButton}
                 onPress={() => router.replace("/")}
+                activeOpacity={0.85}
               >
                 <Text style={styles.outlineButtonText}>Return to Home</Text>
               </TouchableOpacity>
 
-              <TouchableOpacity style={styles.secondaryButton} onPress={handleReset}>
+              <TouchableOpacity
+                style={styles.secondaryButton}
+                onPress={handleReset}
+                activeOpacity={0.7}
+              >
                 <Text style={styles.secondaryButtonText}>Submit Another Request</Text>
               </TouchableOpacity>
             </View>
@@ -175,8 +183,9 @@ const navigateToRequests = () => {
                   <TouchableOpacity
                     style={styles.removeImageButton}
                     onPress={() => setImage(null)}
+                    activeOpacity={0.8}
                   >
-                    <X size={18} color="#ffffff" />
+                    <X size={16} color="#ffffff" />
                   </TouchableOpacity>
                 </View>
               ) : (
@@ -186,7 +195,7 @@ const navigateToRequests = () => {
                   activeOpacity={0.7}
                 >
                   <View style={styles.dropzoneIconCircle}>
-                    <Camera size={24} color={BRAND_GREEN} />
+                    <Camera size={20} color={BRAND_GREEN} />
                   </View>
                   <Text style={styles.dropzoneText}>
                     Tap to upload or take a photo
@@ -230,13 +239,13 @@ const navigateToRequests = () => {
                 style={[styles.primaryButton, isSubmitting && styles.buttonDisabled]}
                 onPress={handleSubmit}
                 disabled={isSubmitting}
-                activeOpacity={0.8}
+                activeOpacity={0.85}
               >
                 {isSubmitting ? (
                   <ActivityIndicator color="#ffffff" size="small" />
                 ) : (
                   <>
-                    <UploadCloud size={18} color="#ffffff" style={{ marginRight: 8 }} />
+                    <UploadCloud size={16} color="#ffffff" style={{ marginRight: 8 }} />
                     <Text style={styles.primaryButtonText}>Submit Request</Text>
                   </>
                 )}
@@ -252,8 +261,8 @@ const navigateToRequests = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#f9fafb",
-    paddingTop: 70,
+    backgroundColor: "#ffffff",
+    paddingTop: 50,
   },
   scrollContent: {
     padding: 16,
@@ -266,15 +275,17 @@ const styles = StyleSheet.create({
   viewRequestsHeaderBtn: {
     flexDirection: "row",
     alignItems: "center",
-    backgroundColor: "#e6f0eb",
+    backgroundColor: "#ecfdf5",
+    borderWidth: 1,
+    borderColor: "#a7f3d0",
     paddingHorizontal: 12,
     paddingVertical: 6,
-    borderRadius: 20,
+    borderRadius: 0, // Sharp corners
     gap: 6,
   },
   viewRequestsHeaderBtnText: {
     fontSize: 12,
-    fontWeight: "700",
+    fontWeight: "500", // Clean regular weight
     color: BRAND_GREEN,
   },
   headerBox: {
@@ -282,79 +293,79 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   title: {
-    fontSize: 22,
-    fontWeight: "900",
+    fontSize: 18,
+    fontWeight: "500", // Non-bold clean header
     color: "#111827",
     letterSpacing: 0.5,
-    marginBottom: 8,
+    marginBottom: 6,
   },
   subtitle: {
-    fontSize: 13,
-    color: "#4b5563",
+    fontSize: 12,
+    fontWeight: "400",
+    color: "#6b7280",
     textAlign: "center",
     lineHeight: 18,
     paddingHorizontal: 12,
   },
   formCard: {
     backgroundColor: "#ffffff",
-    borderRadius: 20,
+    borderRadius: 0, // Sharp corners
     padding: 18,
     borderWidth: 1,
     borderColor: "#e5e7eb",
-    shadowColor: "#000000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.04,
-    shadowRadius: 8,
-    elevation: 2,
   },
   inputGroup: {
     marginTop: 16,
   },
   inputLabel: {
-    fontSize: 13,
-    fontWeight: "700",
+    fontSize: 12,
+    fontWeight: "500", // Clean weight
     color: "#374151",
     marginBottom: 6,
   },
   input: {
     backgroundColor: "#f9fafb",
     borderWidth: 1,
-    borderColor: "#d1d5db",
-    borderRadius: 12,
+    borderColor: "#e5e7eb",
+    borderRadius: 0, // Sharp corners
     paddingHorizontal: 14,
     paddingVertical: 10,
-    fontSize: 14,
+    fontSize: 13,
+    fontWeight: "400",
     color: "#111827",
   },
   textArea: {
     minHeight: 100,
   },
   dropzone: {
-    borderWidth: 2,
-    borderColor: "#e5e7eb",
+    borderWidth: 1,
+    borderColor: "#d1d5db",
     borderStyle: "dashed",
-    borderRadius: 14,
+    borderRadius: 0, // Sharp corners
     backgroundColor: "#f9fafb",
     padding: 24,
     alignItems: "center",
     justifyContent: "center",
   },
   dropzoneIconCircle: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
-    backgroundColor: "#e6f0eb",
+    width: 44,
+    height: 44,
+    borderRadius: 0, // Sharp square container
+    backgroundColor: "#ecfdf5",
+    borderWidth: 1,
+    borderColor: "#a7f3d0",
     alignItems: "center",
     justifyContent: "center",
     marginBottom: 8,
   },
   dropzoneText: {
     fontSize: 13,
-    fontWeight: "600",
+    fontWeight: "500",
     color: "#111827",
   },
   dropzoneSubtext: {
     fontSize: 11,
+    fontWeight: "400",
     color: "#6b7280",
     marginTop: 2,
   },
@@ -362,7 +373,9 @@ const styles = StyleSheet.create({
     position: "relative",
     width: "100%",
     height: 200,
-    borderRadius: 14,
+    borderRadius: 0, // Sharp corners
+    borderWidth: 1,
+    borderColor: "#e5e7eb",
     overflow: "hidden",
   },
   imagePreview: {
@@ -373,17 +386,17 @@ const styles = StyleSheet.create({
     position: "absolute",
     top: 10,
     right: 10,
-    backgroundColor: "rgba(0,0,0,0.6)",
-    width: 30,
-    height: 30,
-    borderRadius: 15,
+    backgroundColor: "rgba(0,0,0,0.75)",
+    width: 28,
+    height: 28,
+    borderRadius: 0, // Sharp corners
     alignItems: "center",
     justifyContent: "center",
   },
   primaryButton: {
     backgroundColor: BRAND_GREEN,
-    borderRadius: 25,
-    paddingVertical: 14,
+    borderRadius: 0, // Sharp corners
+    paddingVertical: 12,
     paddingHorizontal: 16,
     width: "100%",
     flexDirection: "row",
@@ -393,14 +406,14 @@ const styles = StyleSheet.create({
   },
   primaryButtonText: {
     color: "#ffffff",
-    fontSize: 15,
-    fontWeight: "700",
+    fontSize: 13,
+    fontWeight: "500", // Clean regular button weight
   },
   outlineButton: {
     backgroundColor: "transparent",
     borderWidth: 1,
-    borderColor: "#d1d5db",
-    borderRadius: 25,
+    borderColor: "#e5e7eb",
+    borderRadius: 0, // Sharp corners
     paddingVertical: 12,
     width: "100%",
     alignItems: "center",
@@ -408,28 +421,29 @@ const styles = StyleSheet.create({
   },
   outlineButtonText: {
     color: "#374151",
-    fontSize: 14,
-    fontWeight: "700",
+    fontSize: 13,
+    fontWeight: "500",
   },
   buttonDisabled: {
     opacity: 0.7,
   },
   successCard: {
     backgroundColor: "#ffffff",
-    borderRadius: 20,
+    borderRadius: 0, // Sharp corners
     padding: 24,
     alignItems: "center",
     borderWidth: 1,
     borderColor: "#e5e7eb",
   },
   successTitle: {
-    fontSize: 20,
-    fontWeight: "800",
+    fontSize: 18,
+    fontWeight: "500", // Clean weight
     color: "#111827",
     marginTop: 12,
   },
   successText: {
     fontSize: 13,
+    fontWeight: "400",
     color: "#4b5563",
     textAlign: "center",
     marginTop: 8,
@@ -442,7 +456,7 @@ const styles = StyleSheet.create({
   },
   secondaryButtonText: {
     color: BRAND_GREEN,
-    fontWeight: "700",
-    fontSize: 13,
+    fontWeight: "500",
+    fontSize: 12,
   },
 });

@@ -37,7 +37,7 @@ const styles = StyleSheet.create({
   button: {
     height: 44,
     width: 44,
-    borderRadius: 8,
+    borderRadius: 0, // Sharp corners design language
     borderWidth: 1,
     alignItems: "center",
     justifyContent: "center",
@@ -51,7 +51,6 @@ const styles = StyleSheet.create({
     borderColor: "#fecdd3",
   },
   pressed: {
-    opacity: 0.8,
-    transform: [{ scale: 0.96 }],
+    opacity: 0.85,
   },
 });

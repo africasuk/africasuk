@@ -1,5 +1,6 @@
 import React from "react";
-import { View, Text, StyleSheet, Image, TouchableOpacity } from "react-native";
+import { View, Text, StyleSheet, TouchableOpacity } from "react-native";
+import { Image } from "expo-image";
 import { Camera, Pencil, User, ShieldCheck, Mail } from "lucide-react-native";
 
 import type { Profile } from "@africasuk/types";
@@ -27,27 +28,28 @@ export default function ProfileCard({
       <View style={styles.contentColumn}>
         {/* Top Header Row: Avatar & Identity Details */}
         <View style={styles.identityRow}>
-          {/* Avatar Container with Camera Trigger Badge */}
+          {/* Avatar Container with Camera Trigger Badge - Sharp Corners */}
           <View style={styles.avatarWrapper}>
             <View style={styles.avatarFrame}>
               {profile.avatarUrl ? (
                 <Image
                   source={{ uri: profile.avatarUrl }}
                   style={styles.avatarImage}
-                  resizeMode="cover"
+                  contentFit="cover"
+                  transition={200}
                 />
               ) : (
-                <User size={36} color="#9ca3af" />
+                <User size={32} color="#9ca3af" />
               )}
             </View>
 
-            {/* Camera Button Badge */}
+            {/* Camera Button Badge - Sharp Corners */}
             <TouchableOpacity
               style={styles.cameraBadge}
-              activeOpacity={0.8}
+              activeOpacity={0.85}
               onPress={onChangeAvatar}
             >
-              <Camera size={14} color="#ffffff" />
+              <Camera size={13} color="#ffffff" />
             </TouchableOpacity>
           </View>
 
@@ -58,18 +60,18 @@ export default function ProfileCard({
               <Text style={styles.userName} numberOfLines={1}>
                 {profile.fullName || "AfricaSuk User"}
               </Text>
-              <ShieldCheck size={18} color={BRAND} />
+              <ShieldCheck size={16} color={BRAND} />
             </View>
 
             {/* Email */}
             <View style={styles.emailRow}>
-              <Mail size={13} color="#9ca3af" />
+              <Mail size={12} color="#9ca3af" />
               <Text style={styles.emailText} numberOfLines={1}>
                 {profile.email}
               </Text>
             </View>
 
-            {/* Role Badge */}
+            {/* Role Badge - Sharp Corners */}
             <View style={styles.badgeContainer}>
               <View style={styles.roleBadge}>
                 <View style={styles.roleDot} />
@@ -79,13 +81,13 @@ export default function ProfileCard({
           </View>
         </View>
 
-        {/* Action Button: Edit Profile */}
+        {/* Action Button: Edit Profile - Sharp Corners */}
         <TouchableOpacity
           style={styles.editButton}
-          activeOpacity={0.8}
+          activeOpacity={0.85}
           onPress={onEdit}
         >
-          <Pencil size={14} color={BRAND} />
+          <Pencil size={13} color={BRAND_DARK} />
           <Text style={styles.editButtonText}>Edit Profile</Text>
         </TouchableOpacity>
       </View>
@@ -96,33 +98,28 @@ export default function ProfileCard({
 const styles = StyleSheet.create({
   card: {
     backgroundColor: "#ffffff",
-    borderRadius: 24,
+    borderRadius: 0, // Sharp corners design language
     borderWidth: 1,
-    borderColor: "rgba(229, 231, 235, 0.8)",
-    padding: 20,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.04,
-    shadowRadius: 3,
-    elevation: 1,
+    borderColor: "#e5e7eb",
+    padding: 18,
   },
   contentColumn: {
-    gap: 20,
+    gap: 16,
   },
   identityRow: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 16,
+    gap: 14,
   },
   avatarWrapper: {
     position: "relative",
   },
   avatarFrame: {
-    width: 80,
-    height: 80,
-    borderRadius: 24,
-    borderWidth: 2,
-    borderColor: "#d1fae5",
+    width: 72,
+    height: 72,
+    borderRadius: 0, // Sharp corners
+    borderWidth: 1,
+    borderColor: "#e5e7eb",
     backgroundColor: "#f9fafb",
     justifyContent: "center",
     alignItems: "center",
@@ -134,21 +131,16 @@ const styles = StyleSheet.create({
   },
   cameraBadge: {
     position: "absolute",
-    bottom: -4,
-    right: -4,
-    width: 32,
-    height: 32,
-    borderRadius: 12,
+    bottom: -2,
+    right: -2,
+    width: 28,
+    height: 28,
+    borderRadius: 0, // Sharp corners
     backgroundColor: BRAND_DARK,
     justifyContent: "center",
     alignItems: "center",
-    borderWidth: 2,
+    borderWidth: 1,
     borderColor: "#ffffff",
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.15,
-    shadowRadius: 3,
-    elevation: 3,
   },
   detailsContainer: {
     flex: 1,
@@ -160,11 +152,10 @@ const styles = StyleSheet.create({
     gap: 6,
   },
   userName: {
-    fontSize: 18,
-    fontWeight: "900",
+    fontSize: 16,
+    fontWeight: "500", // Non-bold clean header weight
     color: BRAND_DARK,
-    textTransform: "uppercase",
-    letterSpacing: -0.3,
+    letterSpacing: 0.2,
     flexShrink: 1,
   },
   emailRow: {
@@ -174,7 +165,7 @@ const styles = StyleSheet.create({
   },
   emailText: {
     fontSize: 12,
-    fontWeight: "500",
+    fontWeight: "400",
     color: "#6b7280",
   },
   badgeContainer: {
@@ -187,20 +178,20 @@ const styles = StyleSheet.create({
     gap: 6,
     backgroundColor: "#ecfdf5",
     borderWidth: 1,
-    borderColor: "#d1fae5",
-    paddingHorizontal: 10,
+    borderColor: "#a7f3d0",
+    paddingHorizontal: 8,
     paddingVertical: 3,
-    borderRadius: 9999,
+    borderRadius: 0, // Sharp corners
   },
   roleDot: {
-    width: 6,
-    height: 6,
-    borderRadius: 3,
+    width: 5,
+    height: 5,
+    borderRadius: 0, // Sharp square indicator
     backgroundColor: BRAND,
   },
   roleText: {
-    fontSize: 10,
-    fontWeight: "900",
+    fontSize: 9,
+    fontWeight: "500", // Clean regular weight
     color: BRAND,
     textTransform: "uppercase",
     letterSpacing: 0.8,
@@ -209,19 +200,18 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
-    gap: 8,
+    gap: 6,
     backgroundColor: "#ffffff",
     borderWidth: 1,
-    borderColor: "rgba(229, 231, 235, 0.8)",
-    paddingVertical: 12,
+    borderColor: "#e5e7eb",
+    paddingVertical: 10,
     paddingHorizontal: 16,
-    borderRadius: 16,
+    borderRadius: 0, // Sharp corners
   },
   editButtonText: {
     fontSize: 12,
-    fontWeight: "900",
+    fontWeight: "500", // Clean regular weight
     color: BRAND_DARK,
-    textTransform: "uppercase",
-    letterSpacing: 0.8,
+    letterSpacing: 0.2,
   },
 });

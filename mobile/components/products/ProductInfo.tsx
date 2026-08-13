@@ -5,7 +5,7 @@ import {
   Pressable,
   Share,
   StyleSheet,
-  Clipboard, // <-- React Native built-in
+  Clipboard,
 } from "react-native";
 import { Share2, Copy, Check } from "lucide-react-native";
 
@@ -20,19 +20,19 @@ export function ProductInfo({ product }: Props) {
 
   const productUrl = `https://africasuk.com/products/${product.slug}`;
 
-    const handleCopyLink = async () => {
-      try {
-        await Clipboard.setString(productUrl);
+  const handleCopyLink = async () => {
+    try {
+      await Clipboard.setString(productUrl);
 
-        setCopied(true);
+      setCopied(true);
 
-        setTimeout(() => {
-          setCopied(false);
-        }, 2000);
-      } catch (err) {
-        console.error("Failed to copy link:", err);
-      }
-    };
+      setTimeout(() => {
+        setCopied(false);
+      }, 2000);
+    } catch (err) {
+      console.error("Failed to copy link:", err);
+    }
+  };
 
   const handleNativeShare = async () => {
     try {
@@ -62,7 +62,7 @@ export function ProductInfo({ product }: Props) {
           )}
         </View>
 
-        {/* Action Buttons */}
+        {/* Action Buttons (Pill / Rounded) */}
         <View style={styles.actionsContainer}>
           {/* Native Share */}
           <Pressable
@@ -72,7 +72,7 @@ export function ProductInfo({ product }: Props) {
               pressed && styles.buttonPressed,
             ]}
           >
-            <Share2 size={14} color="#6b7280" />
+            <Share2 size={13} color="#6b7280" />
             <Text style={styles.actionButtonText}>Share</Text>
           </Pressable>
 
@@ -87,12 +87,12 @@ export function ProductInfo({ product }: Props) {
           >
             {copied ? (
               <>
-                <Check size={14} color="#ffffff" />
+                <Check size={13} color="#ffffff" />
                 <Text style={styles.copiedButtonText}>Copied!</Text>
               </>
             ) : (
               <>
-                <Copy size={14} color="#6b7280" />
+                <Copy size={13} color="#6b7280" />
                 <Text style={styles.actionButtonText}>Copy Link</Text>
               </>
             )}
@@ -100,7 +100,7 @@ export function ProductInfo({ product }: Props) {
         </View>
       </View>
 
-      {/* Product Title */}
+      {/* Product Title - Explicit Regular Weight */}
       <Text style={styles.title}>{product.name}</Text>
 
       {/* Description */}
@@ -113,7 +113,7 @@ export function ProductInfo({ product }: Props) {
 
 const styles = StyleSheet.create({
   container: {
-    gap: 12,
+    gap: 10,
   },
   headerRow: {
     flexDirection: "row",
@@ -129,8 +129,8 @@ const styles = StyleSheet.create({
   },
   metadataText: {
     fontSize: 11,
-    fontWeight: "700",
-    color: "#9ca3af",
+    fontWeight: "400",
+    color: "#6b7280",
     textTransform: "uppercase",
     letterSpacing: 0.8,
   },
@@ -160,30 +160,28 @@ const styles = StyleSheet.create({
   },
   buttonPressed: {
     opacity: 0.8,
-    transform: [{ scale: 0.96 }],
   },
   actionButtonText: {
     fontSize: 12,
-    fontWeight: "700",
+    fontWeight: "400",
     color: "#4b5563",
   },
   copiedButtonText: {
     fontSize: 12,
-    fontWeight: "700",
+    fontWeight: "400",
     color: "#ffffff",
   },
   title: {
-    fontSize: 26,
-    fontWeight: "900",
+    fontSize: 20,
+    fontWeight: "400", // Strictly regular/unbolded
     color: "#111827",
-    textTransform: "uppercase",
-    letterSpacing: -0.5,
-    lineHeight: 32,
+    letterSpacing: 0,
+    lineHeight: 26,
   },
   description: {
     fontSize: 13,
     lineHeight: 20,
     color: "#6b7280",
-    fontWeight: "500",
+    fontWeight: "400",
   },
 });

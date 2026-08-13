@@ -1,6 +1,6 @@
 import React, { useEffect, useRef } from "react";
 import { View, Text, StyleSheet, Animated } from "react-native";
-import Svg, { G, Path, Circle, Defs, Filter, FeDropShadow } from "react-native-svg";
+import Svg, { Rect, Defs, Filter, FeDropShadow } from "react-native-svg";
 import {
   Building2,
   Factory,
@@ -31,7 +31,7 @@ export default function MapMarker({
       : Home;
 
   // Pulsing animation for radar ring
-  const pulseAnim = useRef(new Animated.Value(14)).current;
+  const pulseAnim = useRef(new Animated.Value(28)).current;
   const opacityAnim = useRef(new Animated.Value(0.4)).current;
 
   useEffect(() => {
@@ -39,12 +39,12 @@ export default function MapMarker({
       Animated.parallel([
         Animated.sequence([
           Animated.timing(pulseAnim, {
-            toValue: 30,
+            toValue: 46,
             duration: 1400,
             useNativeDriver: false,
           }),
           Animated.timing(pulseAnim, {
-            toValue: 14,
+            toValue: 28,
             duration: 1400,
             useNativeDriver: false,
           }),
@@ -86,48 +86,58 @@ export default function MapMarker({
 
   return (
     <View style={styles.container}>
-      {/* Animated Radar Pulse Outer Ring */}
+      {/* Animated Radar Pulse Outer Square */}
       <Animated.View
         style={[
           styles.pulseRing,
           {
-            width: Animated.multiply(pulseAnim, 2),
-            height: Animated.multiply(pulseAnim, 2),
-            borderRadius: pulseAnim,
+            width: pulseAnim,
+            height: pulseAnim,
+            borderRadius: 0, // Sharp square pulse
             backgroundColor: color,
             opacity: opacityAnim,
           },
         ]}
       />
 
-      {/* SVG Map Pin Teardrop Badge */}
-      <Svg width={60} height={60} viewBox="-30 -35 60 60">
+      {/* SVG Square Pin Badge */}
+      <Svg width={60} height={60} viewBox="-30 -30 60 60">
         <Defs>
           <Filter id={`shadow-${type}`} x="-50%" y="-50%" width="200%" height="200%">
             <FeDropShadow
               dx="0"
-              dy="4"
-              stdDeviation="3"
+              dy="2"
+              stdDeviation="2.5"
               floodColor="#002b15"
-              floodOpacity="0.4"
+              floodOpacity="0.25"
             />
           </Filter>
         </Defs>
 
-        <G filter={`url(#shadow-${type})`}>
-          <Path
-            d="M 0 -26 C -12 -26 -16 -12 0 0 C 16 -12 12 -26 0 -26 Z"
-            fill={color}
-            stroke="#ffffff"
-            strokeWidth={2.5}
-          />
-          <Circle cx={0} cy={-16} r={8.5} fill="#ffffff" />
-        </G>
+        <Rect
+          x={-14}
+          y={-14}
+          width={28}
+          height={28}
+          rx={0} // Sharp corners
+          fill={color}
+          stroke="#ffffff"
+          strokeWidth={1.5}
+          filter={`url(#shadow-${type})`}
+        />
+        <Rect
+          x={-9}
+          y={-9}
+          width={18}
+          height={18}
+          rx={0}
+          fill="#ffffff"
+        />
       </Svg>
 
-      {/* Centered Native Icon over the Pin Badge */}
+      {/* Centered Icon over the Pin Badge */}
       <View style={styles.iconContainer}>
-        <Icon size={11} color={color} strokeWidth={3} />
+        <Icon size={12} color={color} strokeWidth={2} />
       </View>
 
       {/* High-Precision Label */}
@@ -148,12 +158,12 @@ const styles = StyleSheet.create({
   },
   pulseRing: {
     position: "absolute",
+    borderRadius: 0,
   },
   iconContainer: {
     position: "absolute",
-    top: 6,
-    width: 16,
-    height: 16,
+    width: 18,
+    height: 18,
     justifyContent: "center",
     alignItems: "center",
   },
@@ -162,14 +172,16 @@ const styles = StyleSheet.create({
   },
   labelText: {
     color: "#f8fafc",
-    fontSize: 10,
-    fontWeight: "800",
-    letterSpacing: 0.8,
+    fontSize: 9.5,
+    fontWeight: "500", // Non-bold clean typography
+    letterSpacing: 0.5,
     textTransform: "uppercase",
-    backgroundColor: "rgba(9, 13, 22, 0.85)",
+    backgroundColor: "rgba(9, 13, 22, 0.9)",
     paddingHorizontal: 6,
     paddingVertical: 2,
-    borderRadius: 4,
+    borderRadius: 0, // Sharp border
+    borderWidth: 1,
+    borderColor: "rgba(255, 255, 255, 0.2)",
     overflow: "hidden",
   },
 });

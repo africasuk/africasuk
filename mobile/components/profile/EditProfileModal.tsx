@@ -18,7 +18,6 @@ import { Save, X } from "lucide-react-native";
 import type { Profile } from "@africasuk/types";
 import { createClient } from "@/lib/auth/client";
 
-
 const BRAND = "#005c2e";
 const BRAND_DARK = "#002b15";
 
@@ -75,17 +74,17 @@ export default function EditProfileModal({
         throw new Error("Please sign in again.");
       }
 
-        const { error } = await (supabase as any)
-          .from("profiles")
-          .update({
-            full_name: name,
-            phone: phoneNumber || null,
-          })
-          .eq("user_id", user.id);
+      const { error } = await (supabase as any)
+        .from("profiles")
+        .update({
+          full_name: name,
+          phone: phoneNumber || null,
+        })
+        .eq("user_id", user.id);
 
-        if (error) {
-          throw error;
-        }
+      if (error) {
+        throw error;
+      }
       await Promise.resolve(onSuccess?.());
       onClose();
     } catch (error) {
@@ -125,8 +124,10 @@ export default function EditProfileModal({
                   style={styles.closeButton}
                   onPress={onClose}
                   disabled={loading}
+                  activeOpacity={0.7}
+                  hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
                 >
-                  <X size={20} color="#6b7280" />
+                  <X size={18} color="#6b7280" />
                 </TouchableOpacity>
               </View>
 
@@ -163,6 +164,7 @@ export default function EditProfileModal({
                     style={styles.cancelButton}
                     onPress={onClose}
                     disabled={loading}
+                    activeOpacity={0.7}
                   >
                     <Text style={styles.cancelText}>Cancel</Text>
                   </TouchableOpacity>
@@ -171,12 +173,13 @@ export default function EditProfileModal({
                     style={[styles.saveButton, loading && styles.disabledButton]}
                     onPress={save}
                     disabled={loading}
+                    activeOpacity={0.85}
                   >
                     {loading ? (
                       <ActivityIndicator size="small" color="#ffffff" />
                     ) : (
                       <>
-                        <Save size={16} color="#ffffff" style={styles.saveIcon} />
+                        <Save size={14} color="#ffffff" style={styles.saveIcon} />
                         <Text style={styles.saveText}>Save Changes</Text>
                       </>
                     )}
@@ -194,7 +197,7 @@ export default function EditProfileModal({
 const styles = StyleSheet.create({
   overlay: {
     flex: 1,
-    backgroundColor: "rgba(0, 0, 0, 0.5)",
+    backgroundColor: "rgba(0, 0, 0, 0.4)",
     justifyContent: "flex-end",
   },
   keyboardView: {
@@ -202,15 +205,12 @@ const styles = StyleSheet.create({
   },
   container: {
     backgroundColor: "#ffffff",
-    borderTopLeftRadius: 28,
-    borderTopRightRadius: 28,
-    padding: 24,
-    gap: 20,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: -2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 8,
-    elevation: 5,
+    borderTopLeftRadius: 0, // Sharp corners design language
+    borderTopRightRadius: 0, // Sharp corners design language
+    borderTopWidth: 1,
+    borderColor: "#e5e7eb",
+    padding: 20,
+    gap: 16,
   },
   header: {
     flexDirection: "row",
@@ -218,13 +218,14 @@ const styles = StyleSheet.create({
     alignItems: "flex-start",
   },
   title: {
-    fontSize: 20,
-    fontWeight: "800",
+    fontSize: 16,
+    fontWeight: "500", // Non-bold clean header weight
     color: BRAND_DARK,
+    letterSpacing: 0.2,
   },
   subtitle: {
-    fontSize: 13,
-    fontWeight: "500",
+    fontSize: 12,
+    fontWeight: "400", // Clean regular weight
     color: "#6b7280",
     marginTop: 2,
   },
@@ -232,62 +233,66 @@ const styles = StyleSheet.create({
     padding: 4,
   },
   form: {
-    gap: 16,
+    gap: 14,
   },
   field: {
     gap: 6,
   },
   label: {
-    fontSize: 13,
-    fontWeight: "700",
-    color: BRAND_DARK,
+    fontSize: 12,
+    fontWeight: "500", // Clean weight
+    color: "#374151",
   },
   input: {
     backgroundColor: "#f9fafb",
     borderWidth: 1,
     borderColor: "#e5e7eb",
-    borderRadius: 12,
+    borderRadius: 0, // Sharp corners
     paddingHorizontal: 14,
-    paddingVertical: 12,
-    fontSize: 14,
+    paddingVertical: 10,
+    fontSize: 13,
+    fontWeight: "400",
     color: BRAND_DARK,
   },
   actions: {
     flexDirection: "row",
     justifyContent: "flex-end",
     alignItems: "center",
-    gap: 12,
-    marginTop: 8,
+    gap: 10,
+    marginTop: 6,
   },
   cancelButton: {
-    paddingVertical: 12,
-    paddingHorizontal: 18,
-    borderRadius: 9999,
+    paddingVertical: 10,
+    paddingHorizontal: 16,
+    borderRadius: 0, // Sharp corners
     borderWidth: 1,
     borderColor: "#e5e7eb",
+    backgroundColor: "#ffffff",
   },
   cancelText: {
-    fontSize: 13,
-    fontWeight: "700",
+    fontSize: 12,
+    fontWeight: "500", // Clean regular weight
     color: "#4b5563",
   },
   saveButton: {
     flexDirection: "row",
     alignItems: "center",
     backgroundColor: BRAND,
-    paddingVertical: 12,
-    paddingHorizontal: 20,
-    borderRadius: 9999,
+    paddingVertical: 10,
+    paddingHorizontal: 18,
+    borderRadius: 0, // Sharp corners
   },
   disabledButton: {
-    opacity: 0.6,
+    backgroundColor: "#e5e7eb",
+    opacity: 0.8,
   },
   saveIcon: {
     marginRight: 6,
   },
   saveText: {
-    fontSize: 13,
-    fontWeight: "800",
+    fontSize: 12,
+    fontWeight: "500", // Clean regular weight
     color: "#ffffff",
+    letterSpacing: 0.2,
   },
 });

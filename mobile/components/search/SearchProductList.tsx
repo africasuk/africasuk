@@ -15,7 +15,7 @@ import { useRouter } from "expo-router";
 import { ShoppingCart } from "lucide-react-native";
 import type { ProductWithDetails } from "@africasuk/types";
 
-// Named import fixes TS2613 & ESLint import/no-named-as-default
+import { useCart } from "@/store/cart";
 import { WishlistButton } from "../products/WishlistButton";
 
 const BRAND = "#004d26";
@@ -28,23 +28,21 @@ export default function SearchProductList({
   products,
 }: SearchProductListProps) {
   const router = useRouter();
+  const addItemToCart = useCart((state) => state.addItem);
 
-
-  
   // Flatten products across colors and variants
   const items = useMemo(() => {
-  return products.flatMap((product) =>
-    (product.colors ?? []).map((color) => ({
-      ...product,
-      color,
-      variant: color.variants?.[0],
-      compositeId: `${product.id}-${color.id}`,
-    }))
-  );
-}, [products]);
+    return products.flatMap((product) =>
+      (product.colors ?? []).map((color) => ({
+        ...product,
+        color,
+        variant: color.variants?.[0],
+        compositeId: `${product.id}-${color.id}`,
+      }))
+    );
+  }, [products]);
 
   const handleNavigate = (slug: string, colorId: string) => {
-    // Standard template literal string fixes the Expo Router type error TS2322
     router.push(`/products/${slug}?color=${colorId}` as const);
   };
 
@@ -56,14 +54,14 @@ export default function SearchProductList({
       showsVerticalScrollIndicator={false}
       renderItem={({ item }) => {
         const imageUrl =
-      (
-        item.color.images?.[0] as {
-          imageUrl?: string;
-          image_url?: string;
-        }
-      )?.image_url ??
-      item.color.images?.[0]?.imageUrl ??
-      "https://via.placeholder.com/150";
+          (
+            item.color.images?.[0] as {
+              imageUrl?: string;
+              image_url?: string;
+            }
+          )?.image_url ??
+          item.color.images?.[0]?.imageUrl ??
+          "https://via.placeholder.com/150";
 
         const cartAndWishlistItem = {
           productId: item.id.toString(),
@@ -98,7 +96,7 @@ export default function SearchProductList({
           >
             {/* Main Content Row: Image + Details */}
             <View style={styles.mainRow}>
-              {/* Image */}
+              {/* Image - Sharp Borders */}
               <View style={styles.imageWrapper}>
                 <Image
                   source={{ uri: imageUrl }}
@@ -129,7 +127,7 @@ export default function SearchProductList({
                   )}
                 </View>
 
-                {/* Badges */}
+                {/* Badges - Sharp Borders */}
                 {item.variant && (
                   <View style={styles.badgeRow}>
                     <View style={styles.secondaryBadge}>
@@ -160,17 +158,17 @@ export default function SearchProductList({
             >
               <WishlistButton item={cartAndWishlistItem} />
 
-             <TouchableOpacity
+              <TouchableOpacity
                 style={styles.cartButton}
                 activeOpacity={0.8}
                 onPress={() => {
-                    // Cast to 'any' or 'Href' to allow unmapped routes temporarily
-                    router.push("/cart" as any);
+                  addItemToCart(cartAndWishlistItem);
+                  router.push("/cart" as any);
                 }}
-                >
+              >
                 <ShoppingCart size={14} color="#ffffff" />
                 <Text style={styles.cartButtonText}>Add to Cart</Text>
-                </TouchableOpacity>
+              </TouchableOpacity>
             </View>
           </Pressable>
         );
@@ -209,15 +207,10 @@ const styles = StyleSheet.create<Styles>({
   },
   card: {
     backgroundColor: "#ffffff",
-    borderRadius: 14,
+    borderRadius: 0, // Sharp corners
     borderWidth: 1,
     borderColor: "#e5e7eb",
     padding: 12,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.04,
-    shadowRadius: 3,
-    elevation: 1,
   },
   cardPressed: {
     backgroundColor: "#f9fafb",
@@ -229,11 +222,11 @@ const styles = StyleSheet.create<Styles>({
   imageWrapper: {
     width: 88,
     height: 88,
-    borderRadius: 10,
+    borderRadius: 0, // Sharp corners
     backgroundColor: "#f3f4f6",
     overflow: "hidden",
     borderWidth: 1,
-    borderColor: "#f3f4f6",
+    borderColor: "#e5e7eb",
   },
   image: {
     width: "100%",
@@ -245,7 +238,7 @@ const styles = StyleSheet.create<Styles>({
   },
   title: {
     fontSize: 14,
-    fontWeight: "700",
+    fontWeight: "500", // Non-bold clean title weight
     color: "#111827",
   },
   metaRow: {
@@ -256,10 +249,11 @@ const styles = StyleSheet.create<Styles>({
   },
   metaText: {
     fontSize: 11,
+    fontWeight: "400",
     color: "#6b7280",
   },
   metaValue: {
-    fontWeight: "600",
+    fontWeight: "500",
     color: "#374151",
   },
   badgeRow: {
@@ -272,29 +266,31 @@ const styles = StyleSheet.create<Styles>({
     backgroundColor: "#f3f4f6",
     paddingHorizontal: 8,
     paddingVertical: 2,
-    borderRadius: 6,
+    borderRadius: 0, // Sharp corners
+    borderWidth: 1,
+    borderColor: "#e5e7eb",
   },
   secondaryBadgeText: {
     fontSize: 10,
     color: "#4b5563",
-    fontWeight: "500",
+    fontWeight: "400",
   },
   stockBadge: {
-    backgroundColor: "rgba(16, 185, 129, 0.1)",
+    backgroundColor: "#ecfdf5",
     borderWidth: 1,
-    borderColor: "rgba(16, 185, 129, 0.2)",
+    borderColor: "#a7f3d0",
     paddingHorizontal: 8,
     paddingVertical: 2,
-    borderRadius: 6,
+    borderRadius: 0, // Sharp corners
   },
   stockBadgeText: {
     fontSize: 10,
     color: "#059669",
-    fontWeight: "600",
+    fontWeight: "500",
   },
   price: {
-    fontSize: 15,
-    fontWeight: "800",
+    fontSize: 14,
+    fontWeight: "500", // Clean regular price weight
     color: BRAND,
     marginTop: 4,
   },
@@ -315,11 +311,11 @@ const styles = StyleSheet.create<Styles>({
     backgroundColor: BRAND,
     paddingHorizontal: 12,
     paddingVertical: 6,
-    borderRadius: 8,
+    borderRadius: 0, // Sharp corners
   },
   cartButtonText: {
     color: "#ffffff",
     fontSize: 12,
-    fontWeight: "600",
+    fontWeight: "500", // Non-bold button text
   },
 });

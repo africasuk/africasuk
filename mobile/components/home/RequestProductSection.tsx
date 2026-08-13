@@ -4,17 +4,14 @@ import {
   Text,
   StyleSheet,
   Pressable,
-  Dimensions,
 } from "react-native";
 import { Video, ResizeMode } from "expo-av";
 import { useRouter, Href } from "expo-router";
 import { LinearGradient } from "expo-linear-gradient";
-import { Sparkles, Camera } from "lucide-react-native";
-
-const { height: SCREEN_HEIGHT } = Dimensions.get("window");
+import { Camera, Search } from "lucide-react-native";
 
 export default function RequestProductSection() {
-  const router = Router();
+  const router = useRouter();
 
   return (
     <View style={styles.container}>
@@ -31,7 +28,7 @@ export default function RequestProductSection() {
         useNativeControls={false}
       />
 
-      {/* Video Overlays for Contrast & Depth */}
+      {/* Video Overlays for Contrast & Depth (Colors Retained) */}
       <View style={styles.flatOverlay} />
       <LinearGradient
         colors={[
@@ -45,9 +42,9 @@ export default function RequestProductSection() {
 
       {/* Hero Content Container */}
       <View style={styles.contentContainer}>
-        {/* Sourcing Glass Badge */}
-        <View style={styles.badgeContainer}>
-          <Sparkles size={14} color="#6ee7b7" />
+        {/* Sourcing Glass Badge - Retained Colors + Sharp Borders */}
+       <View style={styles.badgeContainer}>
+          <Search size={12} color="#6ee7b7" />
           <View style={styles.badgeInner}>
             <Text style={styles.badgeText}>CAN&apos;T FIND IT?</Text>
           </View>
@@ -62,7 +59,7 @@ export default function RequestProductSection() {
           locate and list it for you.
         </Text>
 
-        {/* CTA Gradient Button */}
+        {/* CTA Gradient Button - Retained Original Colors + Sharp Borders */}
         <Pressable
           onPress={() => router.push("/request-product" as Href)}
           style={({ pressed }) => [
@@ -76,7 +73,7 @@ export default function RequestProductSection() {
             end={{ x: 1, y: 0.5 }}
             style={styles.buttonGradient}
           >
-            <Camera size={18} color="#6ee7b7" strokeWidth={2.5} />
+            <Camera size={16} color="#6ee7b7" strokeWidth={2} />
             <Text style={styles.buttonText}>Request Custom Product</Text>
           </LinearGradient>
         </Pressable>
@@ -85,15 +82,11 @@ export default function RequestProductSection() {
   );
 }
 
-function Router() {
-  return useRouter();
-}
-
 const styles = StyleSheet.create({
   container: {
     position: "relative",
     width: "100%",
-    minHeight: SCREEN_HEIGHT * 0.85,
+    height: 360,
     justifyContent: "center",
     alignItems: "center",
     overflow: "hidden",
@@ -107,10 +100,9 @@ const styles = StyleSheet.create({
     ...StyleSheet.absoluteFillObject,
     width: "100%",
     height: "100%",
-    transform: [{ scale: 1.05 }],
   },
 
-  /* Overlays for readability */
+  /* Overlays for readability (Retained) */
   flatOverlay: {
     ...StyleSheet.absoluteFillObject,
     backgroundColor: "rgba(0, 0, 0, 0.35)",
@@ -128,98 +120,85 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
 
-  /* Badge Styles */
+  /* Badge Styles (Original Colors + Sharp Corners) */
   badgeContainer: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 8,
+    gap: 6,
     backgroundColor: "rgba(0, 0, 0, 0.5)",
     borderWidth: 1,
     borderColor: "rgba(255, 255, 255, 0.2)",
-    borderRadius: 9999,
-    paddingHorizontal: 14,
-    paddingVertical: 6,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.25,
-    shadowRadius: 4,
-    elevation: 4,
+    borderRadius: 0, // Sharp corners
+    paddingHorizontal: 10,
+    paddingVertical: 4,
   },
   badgeInner: {
     backgroundColor: "rgba(255, 255, 255, 0.1)",
-    borderRadius: 9999,
-    paddingHorizontal: 12,
-    paddingVertical: 3,
+    borderRadius: 0, // Sharp corners
+    paddingHorizontal: 8,
+    paddingVertical: 2,
   },
   badgeText: {
     color: "#ffffff",
-    fontSize: 11,
-    fontWeight: "800",
-    letterSpacing: 1.2,
+    fontSize: 10,
+    fontWeight: "500", // Unbolded clean weight
+    letterSpacing: 0.8,
   },
 
   /* Headline */
   headline: {
-    marginTop: 20,
-    fontSize: 32,
-    fontWeight: "900",
+    marginTop: 14,
+    fontSize: 22,
+    fontWeight: "500", // Unbolded clean weight
     color: "#ffffff",
     textAlign: "center",
-    lineHeight: 38,
-    letterSpacing: -0.5,
-    /* Text Shadow Effect */
+    lineHeight: 28,
+    letterSpacing: 0.2,
     textShadowColor: "rgba(0, 0, 0, 0.85)",
     textShadowOffset: { width: 0, height: 2 },
-    textShadowRadius: 12,
+    textShadowRadius: 8,
   },
 
   /* Subtitle */
   subtitle: {
-    marginTop: 14,
-    fontSize: 15,
-    fontWeight: "500",
+    marginTop: 8,
+    fontSize: 13,
+    fontWeight: "400",
     color: "#f4f4f5", // text-zinc-100
     textAlign: "center",
-    lineHeight: 22,
+    lineHeight: 18,
     paddingHorizontal: 10,
-    /* Text Shadow Effect */
     textShadowColor: "rgba(0, 0, 0, 0.85)",
     textShadowOffset: { width: 0, height: 1 },
-    textShadowRadius: 8,
+    textShadowRadius: 6,
   },
 
-  /* CTA Button Styles */
+  /* CTA Button Styles (Original Colors + Sharp Corners) */
   buttonWrapper: {
-    marginTop: 32,
+    marginTop: 20,
     width: "100%",
-    maxWidth: 320,
-    borderRadius: 9999,
+    maxWidth: 280,
+    borderRadius: 0, // Sharp corners
     overflow: "hidden",
     borderWidth: 1,
     borderColor: "rgba(52, 211, 153, 0.4)", // border-emerald-400/40
-    shadowColor: "#000000",
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.6,
-    shadowRadius: 16,
-    elevation: 8,
   },
   buttonGradient: {
-    height: 54,
+    height: 46,
     width: "100%",
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
-    gap: 10,
-    paddingHorizontal: 24,
+    gap: 8,
+    paddingHorizontal: 20,
   },
   buttonText: {
     color: "#ffffff",
-    fontSize: 15,
-    fontWeight: "700",
+    fontSize: 13,
+    fontWeight: "500", // Unbolded clean weight
     letterSpacing: 0.3,
   },
   buttonPressed: {
     opacity: 0.9,
-    transform: [{ scale: 0.98 }],
   },
 });

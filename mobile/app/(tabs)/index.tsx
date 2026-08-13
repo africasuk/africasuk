@@ -1,11 +1,12 @@
-import {
-  ScrollView,
-  StatusBar,
-} from "react-native";
-import { useEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
+import { StatusBar } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import LoadingText from "@/components/shared/LoadingText";
+import Animated, {
+  useAnimatedScrollHandler,
+  useSharedValue,
+} from "react-native-reanimated";
 
+import LoadingText from "@/components/shared/LoadingText";
 import { createClient } from "@/lib/auth/client";
 
 import Hero from "@/components/home/Hero";
@@ -22,6 +23,16 @@ export default function HomeScreen() {
   const [brands, setBrands] = useState<any[]>([]);
   const [products, setProducts] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+
+  // Shared scroll position value for Reanimated
+  const scrollY = useSharedValue(0);
+
+  // Scroll event handler to track scroll position on UI thread
+  const scrollHandler = useAnimatedScrollHandler({
+    onScroll: (event) => {
+      scrollY.value = event.contentOffset.y;
+    },
+  });
 
   useEffect(() => {
     async function load() {
@@ -159,47 +170,48 @@ export default function HomeScreen() {
     }
 
     load()
-    .catch(console.error)
-    .finally(() => setLoading(false));
+      .catch(console.error)
+      .finally(() => setLoading(false));
   }, []);
 
-if (loading) {
+  if (loading) {
+    return (
+      <SafeAreaView
+        edges={["top"]}
+        style={{
+          flex: 1,
+          backgroundColor: "#fff",
+          justifyContent: "center",
+          alignItems: "center",
+        }}
+      >
+        <Logo />
+        <LoadingText />
+      </SafeAreaView>
+    );
+  }
+
   return (
-    <SafeAreaView
-      style={{
-        flex: 1,
-        backgroundColor: "#fff",
-        justifyContent: "center",
-        alignItems: "center",
-      }}
-    >
-      <Logo />
-      <LoadingText />
+    <SafeAreaView edges={["top"]} style={{ flex: 1, backgroundColor: "#fff" }}>
+      <StatusBar backgroundColor="#fff" barStyle="dark-content" />
+
+      {/* Sticky Header receiving scroll position */}
+      <HomeHeader scrollY={scrollY} />
+
+      {/* Animated ScrollView capturing scroll events */}
+      <Animated.ScrollView
+        onScroll={scrollHandler}
+        scrollEventThrottle={16}
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={{ paddingBottom: 20 }}
+      >
+        <Hero categories={categories} />
+        <Categories categories={categories} />
+        <FeaturedProducts products={products} />
+        <FeaturedBrands brands={brands} />
+        <RequestProductSection />
+        <ContinueShopping />
+      </Animated.ScrollView>
     </SafeAreaView>
   );
 }
-
-return (
-  <SafeAreaView style={{ flex: 1, backgroundColor: "#fff", paddingTop: 60 }}>
-    <StatusBar
-      backgroundColor="#fff"
-      barStyle="dark-content"
-    />
-
-    <HomeHeader />
-
-    <ScrollView
-      showsVerticalScrollIndicator={false}
-      contentContainerStyle={{ paddingBottom: 40 }}
-    >
-      <Hero categories={categories} />
-      <Categories categories={categories} />
-      <FeaturedProducts products={products} />
-      <FeaturedBrands brands={brands} />
-      <RequestProductSection />
-      <ContinueShopping />
-    </ScrollView>
-  </SafeAreaView>
-);
-}
-

@@ -11,7 +11,7 @@ import ContinueShoppingCard from "./ContinueShoppingCard";
 const BRAND_LIGHT = "#008744";
 const BRAND_DARK = "#002b15";
 const LIGHT_GREEN = "#ecfdf5";
-const BRAND_BORDER = "rgba(0, 92, 46, 0.25)";
+const BRAND_BORDER = "#a7f3d0";
 
 export default function ContinueShopping() {
   const items = useCart((state) => state.items);
@@ -77,7 +77,7 @@ export default function ContinueShopping() {
           <Text style={styles.checkoutButtonText}>
             Continue to Checkout
           </Text>
-          <ArrowRight size={18} color="#ffffff" />
+          <ArrowRight size={16} color="#ffffff" />
         </LinearGradient>
       </Pressable>
     </View>
@@ -87,24 +87,19 @@ export default function ContinueShopping() {
 const styles = StyleSheet.create({
   container: {
     backgroundColor: "#ffffff",
-    borderRadius: 24,
+    borderRadius: 0, // Sharp corners design language
     marginHorizontal: 16,
     marginVertical: 12,
     paddingHorizontal: 16,
     paddingVertical: 20,
     borderWidth: 1,
-    borderColor: "rgba(229, 231, 235, 0.8)",
-    shadowColor: "#000000",
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.03,
-    shadowRadius: 10,
-    elevation: 2,
+    borderColor: "#e5e7eb",
   },
 
   header: {
     flexDirection: "row",
     justifyContent: "space-between",
-    alignItems: "flex-end",
+    alignItems: "flex-start",
     marginBottom: 20,
     gap: 12,
   },
@@ -114,31 +109,32 @@ const styles = StyleSheet.create({
   },
 
   title: {
-    fontSize: 22,
-    fontWeight: "900",
+    fontSize: 18,
+    fontWeight: "500", // Clean regular weight
     color: BRAND_DARK,
-    letterSpacing: -0.3,
+    letterSpacing: 0.2,
   },
 
   description: {
     marginTop: 4,
-    fontSize: 13,
+    fontSize: 12,
+    fontWeight: "400",
     color: "#6b7280",
     lineHeight: 18,
   },
 
   itemCountHighlight: {
     color: BRAND_LIGHT,
-    fontWeight: "800",
+    fontWeight: "500",
   },
 
   outlineButton: {
-    borderWidth: 1.5,
+    borderWidth: 1,
     borderColor: BRAND_BORDER,
     backgroundColor: LIGHT_GREEN,
-    borderRadius: 20,
-    paddingHorizontal: 14,
-    height: 38,
+    borderRadius: 0, // Sharp corners
+    paddingHorizontal: 12,
+    height: 36,
     flexDirection: "row",
     justifyContent: "center",
     alignItems: "center",
@@ -147,7 +143,7 @@ const styles = StyleSheet.create({
 
   outlineButtonText: {
     fontSize: 12,
-    fontWeight: "800",
+    fontWeight: "500", // Non-bold clean text
     color: BRAND_DARK,
   },
 
@@ -156,27 +152,22 @@ const styles = StyleSheet.create({
   },
 
   row: {
-    gap: 12,
+    justifyContent: "space-between",
     marginBottom: 12,
   },
 
   cardWrapper: {
-    flex: 1,
+    width: "48%", // Perfectly locks 2-column card widths
   },
 
   checkoutButtonWrapper: {
     marginTop: 16,
-    borderRadius: 16,
+    borderRadius: 0, // Sharp corners
     overflow: "hidden",
-    shadowColor: BRAND_LIGHT,
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.15,
-    shadowRadius: 6,
-    elevation: 2,
   },
 
   checkoutButton: {
-    height: 50,
+    height: 46,
     flexDirection: "row",
     justifyContent: "center",
     alignItems: "center",
@@ -186,13 +177,12 @@ const styles = StyleSheet.create({
 
   checkoutButtonText: {
     color: "#ffffff",
-    fontSize: 15,
-    fontWeight: "800",
+    fontSize: 13,
+    fontWeight: "500", // Non-bold clean button weight
     letterSpacing: 0.3,
   },
 
   pressedState: {
     opacity: 0.9,
-    transform: [{ scale: 0.98 }],
   },
 });

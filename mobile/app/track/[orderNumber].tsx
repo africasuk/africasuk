@@ -19,7 +19,6 @@ import {
   Radio,
 } from "lucide-react-native";
 
-
 import type { Order } from "@africasuk/types";
 
 import { createClient } from "@/lib/auth/client";
@@ -29,6 +28,7 @@ const BRAND = "#005c2e";
 const BRAND_DARK = "#002b15";
 
 function formatStatus(status: string) {
+  if (!status) return "Pending";
   return status
     .toLowerCase()
     .split("_")
@@ -40,7 +40,7 @@ export function TrackOrderScreen() {
   const { orderNumber } = useLocalSearchParams<{ orderNumber: string }>();
   const router = useRouter();
 
-  const [order, setOrder] = useState<Order | null>(null);
+  const [order, setOrder] = useState<(Order & Record<string, any>) | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -71,7 +71,7 @@ export function TrackOrderScreen() {
         return;
       }
 
-      setOrder(fetchedOrder as Order);
+      setOrder(fetchedOrder as Order & Record<string, any>);
     } catch (err) {
       console.error("Failed to load tracking info:", err);
       setError("Unable to load order tracking details.");
@@ -110,6 +110,7 @@ export function TrackOrderScreen() {
   }
 
   const formattedStatus = formatStatus(order.status);
+  const displayOrderNum = order.order_number ?? order.orderNumber ?? order.id.slice(0, 8);
 
   return (
     <SafeAreaView style={styles.safeArea} edges={["top", "bottom"]}>
@@ -117,7 +118,7 @@ export function TrackOrderScreen() {
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
       >
-        {/* Top Navigation & Order ID Badge */}
+        {/* Top Navigation & Order ID Badge - Sharp Borders */}
         <View style={styles.topBar}>
           <TouchableOpacity
             style={styles.backButton}
@@ -130,15 +131,15 @@ export function TrackOrderScreen() {
 
           <View style={styles.orderBadge}>
             <Truck size={14} color={BRAND} />
-            <Text style={styles.orderBadgeText}>Order #{order.orderNumber}</Text>
+            <Text style={styles.orderBadgeText}>Order #{displayOrderNum}</Text>
           </View>
         </View>
 
-        {/* Hero Header Card */}
+        {/* Hero Header Card - Sharp Borders & Unbolded Typography */}
         <View style={styles.heroCard}>
           <View style={styles.heroMainRow}>
             <View style={styles.iconContainer}>
-              <PackageCheck size={24} color="#ffffff" />
+              <PackageCheck size={22} color="#ffffff" />
             </View>
 
             <View style={styles.titleWrapper}>
@@ -206,10 +207,11 @@ const styles = StyleSheet.create({
     alignItems: "center",
     padding: 24,
     backgroundColor: "#f8fafc",
+    paddingTop: 50,
   },
   errorText: {
-    fontSize: 14,
-    fontWeight: "700",
+    fontSize: 13,
+    fontWeight: "400",
     color: "#dc2626",
     marginBottom: 16,
     textAlign: "center",
@@ -218,12 +220,12 @@ const styles = StyleSheet.create({
     backgroundColor: BRAND_DARK,
     paddingHorizontal: 20,
     paddingVertical: 10,
-    borderRadius: 9999,
+    borderRadius: 0, // Sharp corners
   },
   retryButtonText: {
     color: "#ffffff",
     fontSize: 12,
-    fontWeight: "800",
+    fontWeight: "500", // Non-bold button text
     textTransform: "uppercase",
   },
   scrollContent: {
@@ -242,14 +244,14 @@ const styles = StyleSheet.create({
     gap: 4,
     backgroundColor: "#ffffff",
     borderWidth: 1,
-    borderColor: "rgba(229, 231, 235, 0.8)",
+    borderColor: "#e5e7eb",
     paddingHorizontal: 12,
     paddingVertical: 8,
-    borderRadius: 9999,
+    borderRadius: 0, // Sharp corners
   },
   backButtonText: {
-    fontSize: 10,
-    fontWeight: "900",
+    fontSize: 11,
+    fontWeight: "500", // Non-bold text
     color: BRAND_DARK,
     textTransform: "uppercase",
     letterSpacing: 0.5,
@@ -260,30 +262,25 @@ const styles = StyleSheet.create({
     gap: 6,
     backgroundColor: "#ecfdf5",
     borderWidth: 1,
-    borderColor: "#d1fae5",
+    borderColor: "#a7f3d0",
     paddingHorizontal: 12,
     paddingVertical: 8,
-    borderRadius: 9999,
+    borderRadius: 0, // Sharp corners
   },
   orderBadgeText: {
-    fontSize: 10,
-    fontWeight: "900",
+    fontSize: 11,
+    fontWeight: "500", // Non-bold text
     color: BRAND,
     textTransform: "uppercase",
-    letterSpacing: 0.8,
+    letterSpacing: 0.5,
   },
   heroCard: {
     backgroundColor: "#ffffff",
-    borderRadius: 24,
+    borderRadius: 0, // Sharp corners
     borderWidth: 1,
-    borderColor: "rgba(229, 231, 235, 0.8)",
+    borderColor: "#e5e7eb",
     padding: 20,
     marginBottom: 20,
-    elevation: 1,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.05,
-    shadowRadius: 2,
   },
   heroMainRow: {
     flexDirection: "row",
@@ -291,9 +288,9 @@ const styles = StyleSheet.create({
     gap: 12,
   },
   iconContainer: {
-    width: 48,
-    height: 48,
-    borderRadius: 16,
+    width: 44,
+    height: 44,
+    borderRadius: 0, // Sharp corners
     backgroundColor: BRAND_DARK,
     justifyContent: "center",
     alignItems: "center",
@@ -309,10 +306,10 @@ const styles = StyleSheet.create({
   },
   pageTitle: {
     fontSize: 20,
-    fontWeight: "900",
+    fontWeight: "500", // Clean regular title weight
     color: BRAND_DARK,
     textTransform: "uppercase",
-    letterSpacing: -0.5,
+    letterSpacing: 0.2,
   },
   liveTag: {
     flexDirection: "row",
@@ -320,21 +317,21 @@ const styles = StyleSheet.create({
     gap: 4,
     backgroundColor: "#ecfdf5",
     borderWidth: 1,
-    borderColor: "#d1fae5",
+    borderColor: "#a7f3d0",
     paddingHorizontal: 8,
     paddingVertical: 2,
-    borderRadius: 9999,
+    borderRadius: 0, // Sharp corners
   },
   liveTagText: {
     fontSize: 9,
-    fontWeight: "800",
+    fontWeight: "500", // Non-bold text
     color: BRAND,
     textTransform: "uppercase",
     letterSpacing: 0.5,
   },
   subtitle: {
     fontSize: 12,
-    fontWeight: "500",
+    fontWeight: "400",
     color: "#6b7280",
     marginTop: 4,
   },
@@ -348,10 +345,10 @@ const styles = StyleSheet.create({
   },
   metricCard: {
     flex: 1,
-    backgroundColor: "rgba(249, 250, 251, 0.8)",
+    backgroundColor: "#f9fafb",
     borderWidth: 1,
-    borderColor: "rgba(229, 231, 235, 0.6)",
-    borderRadius: 16,
+    borderColor: "#e5e7eb",
+    borderRadius: 0, // Sharp corners
     padding: 10,
   },
   metricLabelRow: {
@@ -361,14 +358,14 @@ const styles = StyleSheet.create({
   },
   metricLabel: {
     fontSize: 9,
-    fontWeight: "900",
+    fontWeight: "500", // Non-bold label
     color: "#9ca3af",
     textTransform: "uppercase",
     letterSpacing: 0.5,
   },
   metricValue: {
     fontSize: 11,
-    fontWeight: "800",
+    fontWeight: "500", // Non-bold metric value
     color: BRAND_DARK,
     textTransform: "uppercase",
     marginTop: 4,
@@ -389,14 +386,14 @@ const styles = StyleSheet.create({
   },
   mapHeaderTitle: {
     fontSize: 11,
-    fontWeight: "900",
+    fontWeight: "500", // Non-bold header
     color: BRAND_DARK,
     textTransform: "uppercase",
     letterSpacing: 0.8,
   },
   syncText: {
     fontSize: 9,
-    fontWeight: "800",
+    fontWeight: "500",
     color: "#9ca3af",
     textTransform: "uppercase",
     letterSpacing: 0.5,

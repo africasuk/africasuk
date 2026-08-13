@@ -11,51 +11,70 @@ interface Props {
 export default function Categories({ categories = [] }: Props) {
   return (
     <View style={styles.container}>
+      {/* Header */}
       <View style={styles.header}>
-        <View>
+        <View style={styles.headerTextContainer}>
           <Text style={styles.title}>SHOP BY CATEGORY</Text>
           <Text style={styles.subtitle}>
             Discover verified premium brands across our curated departments.
           </Text>
         </View>
 
-        <TouchableOpacity onPress={() => router.push("/(tabs)/categories" as never)}>
+        <TouchableOpacity
+          onPress={() => router.push("/(tabs)/categories" as never)}
+          activeOpacity={0.7}
+        >
           <Text style={styles.viewAll}>View All</Text>
         </TouchableOpacity>
       </View>
 
+      {/* Grid */}
       <View style={styles.grid}>
         {categories.slice(0, 6).map((category) => (
           <TouchableOpacity
             key={category.id}
-            style={styles.card}
-            activeOpacity={0.9}
+            style={styles.cardContainer}
+            activeOpacity={0.85}
             onPress={() =>
               router.push(`/categories/${category.slug}` as never)
             }
           >
-            {category.imageUrl ? (
-              <Image
-                source={{ uri: category.imageUrl }}
-                style={styles.image}
-              />
-            ) : (
-              <View style={styles.placeholder} />
-            )}
+            {/* Image Box - No rounded borders */}
+            <View style={styles.imageBox}>
+              {category.imageUrl ? (
+                <Image
+                  source={{ uri: category.imageUrl }}
+                  style={styles.image}
+                  resizeMode="cover"
+                />
+              ) : (
+                <View style={styles.placeholder} />
+              )}
+            </View>
 
-            <View style={styles.overlay}>
+            {/* Name under every card - Non-bold */}
+            <View style={styles.details}>
               <Text numberOfLines={1} style={styles.name}>
                 {category.name}
               </Text>
-
-              <Text numberOfLines={2} style={styles.description}>
-                {category.description ??
-                  `Explore ${category.name.toLowerCase()} collection.`}
-              </Text>
+              {category.description && (
+                <Text numberOfLines={1} style={styles.description}>
+                  {category.description}
+                </Text>
+              )}
             </View>
           </TouchableOpacity>
         ))}
       </View>
+
+      {/* All Categories Button */}
+      <TouchableOpacity
+        style={styles.allCategoriesBtn}
+        activeOpacity={0.85}
+        onPress={() => router.push("/(tabs)/categories" as never)}
+      >
+        <Text style={styles.allCategoriesBtnText}>All Categories</Text>
+      </TouchableOpacity>
     </View>
   );
 }
@@ -64,32 +83,39 @@ const styles = StyleSheet.create({
   container: {
     paddingHorizontal: 16,
     paddingVertical: 24,
-    backgroundColor: "#fafafa",
+    backgroundColor: "#ffffff",
   },
 
   header: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "flex-end",
-    marginBottom: 18,
+    marginBottom: 20,
+  },
+
+  headerTextContainer: {
+    flex: 1,
+    paddingRight: 12,
   },
 
   title: {
-    fontSize: 24,
-    fontWeight: "900",
+    fontSize: 18,
+    fontWeight: "500", // Non-bold clean weight
     color: "#111827",
+    letterSpacing: 0.5,
   },
 
   subtitle: {
     marginTop: 4,
     color: "#6b7280",
-    fontSize: 13,
-    maxWidth: 250,
+    fontSize: 12,
+    fontWeight: "400", // Regular
   },
 
   viewAll: {
-    color: "#005c2e",
-    fontWeight: "700",
+    color: "#002b15",
+    fontSize: 13,
+    fontWeight: "500", // Clean regular
   },
 
   grid: {
@@ -98,44 +124,65 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
   },
 
-  card: {
+  cardContainer: {
     width: "48%",
-    height: 220,
-    borderRadius: 20,
+    marginBottom: 20,
+    backgroundColor: "#ffffff",
+  },
+
+  imageBox: {
+    width: "100%",
+    height: 170,
+    backgroundColor: "#f3f4f6",
+    borderRadius: 0, // Explicitly no rounded borders
     overflow: "hidden",
-    marginBottom: 12,
-    backgroundColor: "#eee",
   },
 
   image: {
     width: "100%",
     height: "100%",
-    position: "absolute",
+    borderRadius: 0,
   },
 
   placeholder: {
     flex: 1,
-    backgroundColor: "#ddd",
+    backgroundColor: "#e5e7eb",
   },
 
-  overlay: {
-    position: "absolute",
-    bottom: 0,
-    left: 0,
-    right: 0,
-    padding: 14,
-    backgroundColor: "rgba(0,0,0,0.45)",
+  details: {
+    paddingTop: 8,
+    paddingHorizontal: 2,
   },
 
   name: {
-    color: "#fff",
-    fontWeight: "900",
-    fontSize: 18,
+    color: "#111827",
+    fontWeight: "500", // Regular/medium weight (not bold)
+    fontSize: 14,
   },
 
   description: {
-    color: "#f3f4f6",
-    fontSize: 12,
-    marginTop: 4,
+    color: "#6b7280",
+    fontSize: 11,
+    fontWeight: "400",
+    marginTop: 2,
+  },
+
+  allCategoriesBtn: {
+    width: "100%",
+    height: 46,
+    backgroundColor: "#ffffff",
+    borderWidth: 1,
+    borderColor: "#111827",
+    borderRadius: 0, // No rounded corners
+    justifyContent: "center",
+    alignItems: "center",
+    marginTop: 10,
+  },
+
+  allCategoriesBtnText: {
+    color: "#111827",
+    fontSize: 13,
+    fontWeight: "500", // Unbolded, clean
+    letterSpacing: 0.3,
   },
 });

@@ -31,9 +31,7 @@ export default function CartSummary() {
         {/* Subtotal Row */}
         <View style={styles.row}>
           <Text style={styles.label}>Subtotal</Text>
-          <Text style={styles.valueText}>
-            <Price price={subtotal} />
-          </Text>
+          <Price price={subtotal} style={styles.valueText} />
         </View>
 
         {/* Shipping Row */}
@@ -45,15 +43,13 @@ export default function CartSummary() {
         {/* Total Divider & Row */}
         <View style={styles.totalRow}>
           <Text style={styles.totalLabel}>Total</Text>
-          <Text style={styles.totalValueText}>
-            <Price price={total} />
-          </Text>
+          <Price price={total} style={styles.totalValueText} />
         </View>
 
-        {/* Checkout Button */}
+        {/* Checkout Button - Sharp Corners */}
         <TouchableOpacity
           style={[styles.checkoutButton, isEmpty && styles.disabledButton]}
-          activeOpacity={0.8}
+          activeOpacity={0.85}
           disabled={isEmpty}
           onPress={() => router.push("/checkout")}
         >
@@ -67,21 +63,17 @@ export default function CartSummary() {
 const styles = StyleSheet.create({
   card: {
     backgroundColor: "#ffffff",
-    borderRadius: 20,
+    borderRadius: 0, // Sharp corners design language
     borderWidth: 1,
-    borderColor: "rgba(229, 231, 235, 0.8)",
-    padding: 20,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.05,
-    shadowRadius: 4,
-    elevation: 2,
+    borderColor: "#e5e7eb",
+    padding: 18,
   },
   title: {
-    fontSize: 18,
-    fontWeight: "800",
+    fontSize: 16,
+    fontWeight: "500", // Non-bold clean header weight
     color: BRAND_DARK,
     marginBottom: 16,
+    letterSpacing: 0.2,
   },
   section: {
     gap: 12,
@@ -92,18 +84,18 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
   },
   label: {
-    fontSize: 14,
-    fontWeight: "500",
+    fontSize: 13,
+    fontWeight: "400",
     color: "#6b7280",
   },
   valueText: {
-    fontSize: 14,
-    fontWeight: "700",
+    fontSize: 13,
+    fontWeight: "500", // Clean regular weight
     color: BRAND_DARK,
   },
   freeBadge: {
-    fontSize: 14,
-    fontWeight: "700",
+    fontSize: 13,
+    fontWeight: "500", // Clean regular weight
     color: BRAND,
   },
   totalRow: {
@@ -116,37 +108,30 @@ const styles = StyleSheet.create({
     marginTop: 4,
   },
   totalLabel: {
-    fontSize: 16,
-    fontWeight: "800",
+    fontSize: 15,
+    fontWeight: "500", // Clean weight
     color: BRAND_DARK,
   },
   totalValueText: {
-    fontSize: 18,
-    fontWeight: "900",
+    fontSize: 16,
+    fontWeight: "500", // Clean weight
     color: BRAND_DARK,
   },
   checkoutButton: {
     backgroundColor: BRAND,
-    paddingVertical: 14,
-    borderRadius: 9999,
+    paddingVertical: 12,
+    borderRadius: 0, // Sharp corners
     alignItems: "center",
     justifyContent: "center",
     marginTop: 12,
-    shadowColor: BRAND,
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.2,
-    shadowRadius: 4,
-    elevation: 2,
   },
   disabledButton: {
-    backgroundColor: "#d1d5db",
-    shadowOpacity: 0,
-    elevation: 0,
+    backgroundColor: "#e5e7eb",
   },
   checkoutButtonText: {
     color: "#ffffff",
-    fontSize: 14,
-    fontWeight: "800",
-    letterSpacing: 0.2,
+    fontSize: 13,
+    fontWeight: "500", // Clean regular button weight
+    letterSpacing: 0.3,
   },
 });

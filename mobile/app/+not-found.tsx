@@ -15,8 +15,9 @@ export default function NotFoundScreen() {
       />
 
       <View style={styles.container}>
+        {/* Icon Frame - Sharp Corners */}
         <View style={styles.iconWrapper}>
-          <TriangleAlert size={72} color={BRAND} />
+          <TriangleAlert size={52} color={BRAND} />
         </View>
 
         <Text style={styles.code}>404</Text>
@@ -30,9 +31,10 @@ export default function NotFoundScreen() {
           renamed, or doesn&apos;t exist.
         </Text>
 
+        {/* Action Button - Sharp Corners */}
         <Link href="/(tabs)" asChild>
           <Pressable style={styles.button}>
-            <House size={18} color="#fff" />
+            <House size={16} color="#ffffff" />
             <Text style={styles.buttonText}>
               Go to Home
             </Text>
@@ -46,59 +48,65 @@ export default function NotFoundScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#FFFFFF",
+    backgroundColor: "#ffffff",
     justifyContent: "center",
     alignItems: "center",
     paddingHorizontal: 32,
   },
 
   iconWrapper: {
-    width: 120,
-    height: 120,
-    borderRadius: 60,
-    backgroundColor: "#ECFDF5",
+    width: 96,
+    height: 96,
+    borderRadius: 0, // Sharp corners design language
+    backgroundColor: "#ecfdf5",
+    borderWidth: 1,
+    borderColor: "#a7f3d0",
     justifyContent: "center",
     alignItems: "center",
-    marginBottom: 24,
+    marginBottom: 20,
   },
 
   code: {
-    fontSize: 56,
-    fontWeight: "800",
+    fontSize: 44,
+    fontWeight: "500", // Non-bold clean weight
     color: BRAND,
+    letterSpacing: 1,
   },
 
   title: {
-    marginTop: 12,
-    fontSize: 24,
-    fontWeight: "700",
+    marginTop: 8,
+    fontSize: 18,
+    fontWeight: "500", // Non-bold clean weight
     color: "#111827",
     textAlign: "center",
+    letterSpacing: 0.2,
   },
 
   description: {
-    marginTop: 10,
-    fontSize: 15,
-    lineHeight: 24,
-    color: "#6B7280",
+    marginTop: 8,
+    fontSize: 13,
+    lineHeight: 20,
+    fontWeight: "400", // Clean regular weight
+    color: "#6b7280",
     textAlign: "center",
-    maxWidth: 320,
+    maxWidth: 300,
   },
 
   button: {
-    marginTop: 32,
+    marginTop: 28,
     backgroundColor: BRAND,
-    borderRadius: 12,
-    paddingHorizontal: 24,
-    paddingVertical: 14,
+    borderRadius: 0, // Sharp corners design language
+    paddingHorizontal: 22,
+    paddingVertical: 12,
     flexDirection: "row",
     alignItems: "center",
     gap: 8,
   },
 
   buttonText: {
-    color: "#FFFFFF",
-    fontWeight: "700",
-    fontSize: 15,
+    color: "#ffffff",
+    fontWeight: "500", // Clean regular weight
+    fontSize: 13,
+    letterSpacing: 0.2,
   },
 });

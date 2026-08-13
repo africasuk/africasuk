@@ -57,8 +57,9 @@ export default function ChangeAvatarModal({
                 style={styles.closeButton}
                 onPress={onClose}
                 activeOpacity={0.7}
+                hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
               >
-                <X size={20} color="#6b7280" />
+                <X size={18} color="#6b7280" />
               </TouchableOpacity>
             </View>
 
@@ -78,20 +79,17 @@ export default function ChangeAvatarModal({
 const styles = StyleSheet.create({
   overlay: {
     flex: 1,
-    backgroundColor: "rgba(0, 0, 0, 0.5)",
+    backgroundColor: "rgba(0, 0, 0, 0.4)",
     justifyContent: "flex-end",
   },
   container: {
     backgroundColor: "#ffffff",
-    borderTopLeftRadius: 28,
-    borderTopRightRadius: 28,
-    padding: 24,
-    gap: 20,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: -2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 8,
-    elevation: 5,
+    borderTopLeftRadius: 0, // Sharp corners design language
+    borderTopRightRadius: 0, // Sharp corners design language
+    borderTopWidth: 1,
+    borderColor: "#e5e7eb",
+    padding: 20,
+    gap: 16,
   },
   header: {
     flexDirection: "row",
@@ -103,13 +101,14 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   title: {
-    fontSize: 20,
-    fontWeight: "800",
+    fontSize: 16,
+    fontWeight: "500", // Non-bold clean header weight
     color: BRAND_DARK,
+    letterSpacing: 0.2,
   },
   subtitle: {
-    fontSize: 13,
-    fontWeight: "500",
+    fontSize: 12,
+    fontWeight: "400", // Clean regular weight
     color: "#6b7280",
     marginTop: 4,
     lineHeight: 18,

@@ -19,7 +19,7 @@ const LIGHT_GREEN = "#ecfdf5";
 export default function ContinueShoppingCard({ item }: Props) {
   return (
     <View style={styles.card}>
-      {/* Product Image */}
+      {/* Product Image Frame - Sharp Corners */}
       <TouchableOpacity
         activeOpacity={0.85}
         onPress={() => router.push(`/products/${item.slug}` as never)}
@@ -69,7 +69,7 @@ export default function ContinueShoppingCard({ item }: Props) {
 
           <View style={[styles.summaryCol, styles.alignRight]}>
             <Text style={styles.label}>Total</Text>
-            <Price price={item.price * item.quantity} />
+            <Price price={item.price * item.quantity} style={styles.priceText} />
           </View>
         </View>
 
@@ -102,15 +102,10 @@ const styles = StyleSheet.create({
   card: {
     flex: 1,
     backgroundColor: "#ffffff",
-    borderRadius: 18,
+    borderRadius: 0, // Sharp corners design language
     overflow: "hidden",
     borderWidth: 1,
-    borderColor: "rgba(229, 231, 235, 0.8)",
-    elevation: 2,
-    shadowColor: "#000000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.04,
-    shadowRadius: 8,
+    borderColor: "#e5e7eb",
   },
 
   imageWrapper: {
@@ -118,7 +113,7 @@ const styles = StyleSheet.create({
     aspectRatio: 1,
     backgroundColor: "#f9fafb",
     borderBottomWidth: 1,
-    borderBottomColor: "#f3f4f6",
+    borderBottomColor: "#e5e7eb",
   },
 
   image: {
@@ -134,7 +129,7 @@ const styles = StyleSheet.create({
 
   name: {
     fontSize: 13,
-    fontWeight: "800",
+    fontWeight: "500", // Non-bold clean title
     color: BRAND_DARK,
     lineHeight: 18,
     minHeight: 36,
@@ -149,7 +144,7 @@ const styles = StyleSheet.create({
 
   option: {
     backgroundColor: LIGHT_GREEN,
-    borderRadius: 6,
+    borderRadius: 0, // Sharp corners
     paddingHorizontal: 6,
     paddingVertical: 2,
     maxWidth: "100%",
@@ -160,19 +155,19 @@ const styles = StyleSheet.create({
   optionText: {
     fontSize: 10,
     color: BRAND_DARK,
-    fontWeight: "700",
+    fontWeight: "400", // Clean regular weight
   },
 
   summary: {
     marginTop: 8,
     backgroundColor: "#f9fafb",
-    borderRadius: 10,
+    borderRadius: 0, // Sharp corners
     padding: 8,
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
     borderWidth: 1,
-    borderColor: "#f3f4f6",
+    borderColor: "#e5e7eb",
   },
 
   summaryCol: {
@@ -184,28 +179,31 @@ const styles = StyleSheet.create({
   },
 
   label: {
-    fontSize: 10,
+    fontSize: 9,
     color: "#6b7280",
-    fontWeight: "700",
+    fontWeight: "500",
     textTransform: "uppercase",
+    letterSpacing: 0.5,
   },
 
   value: {
-    fontSize: 12,
-    fontWeight: "800",
+    fontSize: 11,
+    fontWeight: "500",
     color: "#111827",
+    marginTop: 1,
+  },
+
+  priceText: {
+    fontSize: 11,
+    fontWeight: "500",
+    color: BRAND_DARK,
     marginTop: 1,
   },
 
   buttonWrapper: {
     marginTop: 10,
-    borderRadius: 20,
+    borderRadius: 0, // Sharp corners
     overflow: "hidden",
-    shadowColor: BRAND_LIGHT,
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.12,
-    shadowRadius: 4,
-    elevation: 2,
   },
 
   button: {
@@ -219,13 +217,12 @@ const styles = StyleSheet.create({
 
   buttonText: {
     color: "#ffffff",
-    fontWeight: "800",
+    fontWeight: "500", // Clean button text weight
     fontSize: 12,
     letterSpacing: 0.2,
   },
 
   pressedState: {
     opacity: 0.9,
-    transform: [{ scale: 0.98 }],
   },
 });

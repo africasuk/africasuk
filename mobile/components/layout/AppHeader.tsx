@@ -1,13 +1,12 @@
 import { View, Text, Pressable, StyleSheet, SafeAreaView } from "react-native";
 import { Image } from "expo-image";
-import { useRouter } from "expo-router";
-import {
-  ArrowLeft,
-  Heart,
-  ShoppingCart,
-} from "lucide-react-native";
+import { useRouter, Href } from "expo-router";
+import { ArrowLeft, Heart, ShoppingCart } from "lucide-react-native";
 
-const BRAND = "#004d26";
+import { useWishlist } from "@/store/wishlist";
+import { useCart } from "@/store/cart";
+
+const BADGE_RED = "#ef4444";
 
 interface Props {
   title?: string;
@@ -26,16 +25,27 @@ export default function AppHeader({
 }: Props) {
   const router = useRouter();
 
+  // Live counts directly from Zustand stores
+  const wishlistCount = useWishlist((state) => state.items.length);
+  const cartCount = useCart((state) =>
+    state.items.reduce((acc, item) => acc + item.quantity, 0)
+  );
+
   return (
     <SafeAreaView style={styles.safe}>
       <View style={styles.container}>
+        {/* Left Action Area */}
         <View style={styles.left}>
           {showBack ? (
             <Pressable
-              style={styles.iconButton}
+              style={({ pressed }) => [
+                styles.iconButton,
+                pressed && styles.buttonPressed,
+              ]}
               onPress={() => router.back()}
+              hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
             >
-              <ArrowLeft size={22} color="#111827" />
+              <ArrowLeft size={20} color="#111827" />
             </Pressable>
           ) : showLogo ? (
             <Image
@@ -46,23 +56,52 @@ export default function AppHeader({
           ) : null}
         </View>
 
+        {/* Title Header - Clean Weight */}
         <Text numberOfLines={1} style={styles.title}>
           {title}
         </Text>
 
+        {/* Right Actions Area */}
         <View style={styles.right}>
           {showWishlist && (
-            <Pressable style={styles.iconButton}>
-              <Heart size={21} color="#ef4444" fill="#ef4444" />
+            <Pressable
+              style={({ pressed }) => [
+                styles.iconButton,
+                pressed && styles.buttonPressed,
+              ]}
+              onPress={() => router.push("/wishlist" as Href)}
+            >
+              <Heart
+                size={18}
+                color={wishlistCount > 0 ? BADGE_RED : "#111827"}
+                fill={wishlistCount > 0 ? BADGE_RED : "transparent"}
+              />
+              {wishlistCount > 0 && (
+                <View style={styles.badge}>
+                  <Text style={styles.badgeText}>
+                    {wishlistCount > 99 ? "99+" : wishlistCount}
+                  </Text>
+                </View>
+              )}
             </Pressable>
           )}
 
           {showCart && (
-            <Pressable style={styles.iconButton}>
-              <ShoppingCart size={21} color="#111827" />
-              <View style={styles.badge}>
-                <Text style={styles.badgeText}>2</Text>
-              </View>
+            <Pressable
+              style={({ pressed }) => [
+                styles.iconButton,
+                pressed && styles.buttonPressed,
+              ]}
+              onPress={() => router.push("/cart" as Href)}
+            >
+              <ShoppingCart size={18} color="#111827" />
+              {cartCount > 0 && (
+                <View style={styles.badge}>
+                  <Text style={styles.badgeText}>
+                    {cartCount > 99 ? "99+" : cartCount}
+                  </Text>
+                </View>
+              )}
             </Pressable>
           )}
         </View>
@@ -73,69 +112,80 @@ export default function AppHeader({
 
 const styles = StyleSheet.create({
   safe: {
-    backgroundColor: "#fff",
+    backgroundColor: "#ffffff",
     borderBottomWidth: 1,
-    borderBottomColor: "#E5E7EB",
+    borderBottomColor: "#e5e7eb",
   },
 
   container: {
-    height: 64,
+    height: 56,
     paddingHorizontal: 16,
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-    backgroundColor: "#fff",
+    backgroundColor: "#ffffff",
+    paddingTop: 60,
   },
 
   left: {
-    width: 90,
+    width: 80,
     justifyContent: "center",
   },
 
   right: {
-    width: 90,
+    width: 80,
     flexDirection: "row",
     justifyContent: "flex-end",
-    gap: 10,
+    alignItems: "center",
+    gap: 8,
   },
 
   title: {
     flex: 1,
     textAlign: "center",
-    fontSize: 18,
-    fontWeight: "700",
+    fontSize: 16,
+    fontWeight: "500", // Non-bold clean header weight
     color: "#111827",
+    letterSpacing: 0.2,
   },
 
   logo: {
-    width: 120,
-    height: 34,
+    width: 100,
+    height: 30,
   },
 
   iconButton: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: "#F3F4F6",
+    width: 36,
+    height: 36,
+    borderRadius: 0, // Sharp corners
+    backgroundColor: "#f3f4f6",
+    borderWidth: 1,
+    borderColor: "#e5e7eb",
     justifyContent: "center",
     alignItems: "center",
+    position: "relative",
+  },
+
+  buttonPressed: {
+    opacity: 0.8,
   },
 
   badge: {
     position: "absolute",
-    top: -2,
-    right: -2,
-    backgroundColor: BRAND,
-    width: 18,
-    height: 18,
-    borderRadius: 9,
+    top: -4,
+    right: -4,
+    backgroundColor: BADGE_RED,
+    minWidth: 16,
+    height: 16,
+    borderRadius: 0, // Sharp square badge
     justifyContent: "center",
     alignItems: "center",
+    paddingHorizontal: 3,
   },
 
   badgeText: {
-    color: "#fff",
-    fontSize: 10,
-    fontWeight: "700",
+    color: "#ffffff",
+    fontSize: 9,
+    fontWeight: "500", // Clean regular weight
   },
 });

@@ -36,10 +36,10 @@ export default function SavedAddresses({ addresses, onRefresh }: Props) {
 
         <TouchableOpacity
           style={styles.addButton}
-          activeOpacity={0.8}
+          activeOpacity={0.85}
           onPress={() => setAddOpen(true)}
         >
-          <Plus size={16} color="#ffffff" />
+          <Plus size={14} color="#ffffff" />
           <Text style={styles.addButtonText}>Add</Text>
         </TouchableOpacity>
       </View>
@@ -48,7 +48,7 @@ export default function SavedAddresses({ addresses, onRefresh }: Props) {
       {addresses.length === 0 ? (
         <View style={styles.emptyContainer}>
           <View style={styles.emptyIconCircle}>
-            <MapPin size={24} color="#9ca3af" />
+            <MapPin size={22} color="#9ca3af" />
           </View>
           <Text style={styles.emptyTitle}>No saved addresses</Text>
           <Text style={styles.emptySubtitle}>
@@ -57,7 +57,7 @@ export default function SavedAddresses({ addresses, onRefresh }: Props) {
 
           <TouchableOpacity
             style={styles.emptyAddButton}
-            activeOpacity={0.8}
+            activeOpacity={0.85}
             onPress={() => setAddOpen(true)}
           >
             <Plus size={14} color={BRAND_DARK} />
@@ -72,7 +72,7 @@ export default function SavedAddresses({ addresses, onRefresh }: Props) {
               <View style={styles.addressCardHeader}>
                 <View style={styles.labelContainer}>
                   <View style={styles.labelTitleRow}>
-                    <Home size={16} color={BRAND} />
+                    <Home size={15} color={BRAND} />
                     <Text style={styles.labelTitle} numberOfLines={1}>
                       {address.label}
                     </Text>
@@ -145,15 +145,10 @@ export default function SavedAddresses({ addresses, onRefresh }: Props) {
 const styles = StyleSheet.create({
   card: {
     backgroundColor: "#ffffff",
-    borderRadius: 24,
+    borderRadius: 0, // Sharp corners design language
     borderWidth: 1,
-    borderColor: "rgba(229, 231, 235, 0.8)",
-    padding: 20,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.04,
-    shadowRadius: 3,
-    elevation: 1,
+    borderColor: "#e5e7eb",
+    padding: 18,
   },
   header: {
     flexDirection: "row",
@@ -166,13 +161,14 @@ const styles = StyleSheet.create({
     paddingRight: 12,
   },
   title: {
-    fontSize: 18,
-    fontWeight: "800",
+    fontSize: 16,
+    fontWeight: "500", // Non-bold clean header weight
     color: BRAND_DARK,
+    letterSpacing: 0.2,
   },
   subtitle: {
     fontSize: 12,
-    fontWeight: "500",
+    fontWeight: "400",
     color: "#6b7280",
     marginTop: 2,
   },
@@ -181,41 +177,44 @@ const styles = StyleSheet.create({
     alignItems: "center",
     gap: 4,
     backgroundColor: BRAND,
-    paddingHorizontal: 14,
-    paddingVertical: 8,
-    borderRadius: 9999,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 0, // Sharp corners
   },
   addButtonText: {
     fontSize: 12,
-    fontWeight: "800",
+    fontWeight: "500", // Clean regular weight
     color: "#ffffff",
   },
   emptyContainer: {
-    borderRadius: 16,
+    borderRadius: 0, // Sharp corners
     borderWidth: 1,
     borderStyle: "dashed",
-    borderColor: "#e5e7eb",
-    paddingVertical: 28,
+    borderColor: "#d1d5db",
+    paddingVertical: 24,
     paddingHorizontal: 16,
     alignItems: "center",
     backgroundColor: "#f9fafb",
   },
   emptyIconCircle: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
-    backgroundColor: "#f3f4f6",
+    width: 44,
+    height: 44,
+    borderRadius: 0, // Sharp square container
+    backgroundColor: "#ffffff",
+    borderWidth: 1,
+    borderColor: "#e5e7eb",
     alignItems: "center",
     justifyContent: "center",
     marginBottom: 10,
   },
   emptyTitle: {
     fontSize: 14,
-    fontWeight: "800",
+    fontWeight: "500",
     color: BRAND_DARK,
   },
   emptySubtitle: {
     fontSize: 12,
+    fontWeight: "400",
     color: "#6b7280",
     marginTop: 2,
     textAlign: "center",
@@ -227,26 +226,26 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: "#e5e7eb",
     backgroundColor: "#ffffff",
-    paddingHorizontal: 16,
+    paddingHorizontal: 14,
     paddingVertical: 8,
-    borderRadius: 9999,
+    borderRadius: 0, // Sharp corners
     marginTop: 14,
   },
   emptyAddButtonText: {
     fontSize: 12,
-    fontWeight: "800",
+    fontWeight: "500",
     color: BRAND_DARK,
   },
   listContainer: {
     gap: 12,
   },
   addressCard: {
-    borderRadius: 16,
+    borderRadius: 0, // Sharp corners
     borderWidth: 1,
     borderColor: "#e5e7eb",
-    padding: 16,
+    padding: 14,
     backgroundColor: "#ffffff",
-    gap: 10,
+    gap: 8,
   },
   addressCardHeader: {
     flexDirection: "row",
@@ -263,39 +262,43 @@ const styles = StyleSheet.create({
     gap: 6,
   },
   labelTitle: {
-    fontSize: 14,
-    fontWeight: "800",
+    fontSize: 13,
+    fontWeight: "500", // Clean weight
     color: BRAND_DARK,
     flexShrink: 1,
   },
   defaultBadge: {
     alignSelf: "flex-start",
     backgroundColor: "#ecfdf5",
-    paddingHorizontal: 8,
+    borderWidth: 1,
+    borderColor: "#a7f3d0",
+    paddingHorizontal: 6,
     paddingVertical: 2,
-    borderRadius: 6,
+    borderRadius: 0, // Sharp corners
   },
   defaultBadgeText: {
-    fontSize: 10,
-    fontWeight: "800",
+    fontSize: 9,
+    fontWeight: "500",
     color: BRAND,
     textTransform: "uppercase",
+    letterSpacing: 0.5,
   },
   detailsContainer: {
     gap: 2,
   },
   recipientName: {
     fontSize: 13,
-    fontWeight: "800",
+    fontWeight: "500",
     color: "#1f2937",
   },
   phoneText: {
     fontSize: 11,
-    fontWeight: "500",
+    fontWeight: "400",
     color: "#6b7280",
   },
   streetText: {
     fontSize: 12,
+    fontWeight: "400",
     color: "#4b5563",
     marginTop: 2,
   },
@@ -306,12 +309,12 @@ const styles = StyleSheet.create({
   },
   cityStateText: {
     fontSize: 12,
-    fontWeight: "700",
+    fontWeight: "400",
     color: "#374151",
   },
   countryText: {
     fontSize: 10,
-    fontWeight: "800",
+    fontWeight: "500",
     color: "#9ca3af",
     textTransform: "uppercase",
     letterSpacing: 0.8,

@@ -10,6 +10,7 @@ import {
   ViewStyle,
   TextStyle,
   ImageStyle,
+  Linking,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useLocalSearchParams, useRouter, Href } from "expo-router";
@@ -17,7 +18,7 @@ import { LinearGradient } from "expo-linear-gradient";
 import {
   Package,
   Truck,
-  ArrowRight, 
+  ArrowRight,
   MapPin,
   CreditCard,
   Clock,
@@ -25,13 +26,13 @@ import {
 } from "lucide-react-native";
 
 import { createClient } from "@/lib/auth/client";
-
 import type { Order } from "@africasuk/types";
 import { Price } from "@/components/currency/Price";
+import { ReviewForm } from "@/components/products/ReviewForm";
 
 const BRAND = "#005c2e";
 const BRAND_LIGHT = "#008744";
-const BRAND_DARK = "#002b15";
+const BRAND_DARK = "#111827";
 
 type OrderItemRow = {
   id: string;
@@ -60,7 +61,8 @@ export default function OrderDetailsScreen() {
   const { orderNumber } = useLocalSearchParams<{ orderNumber: string }>();
   const router = useRouter();
 
-  const [order, setOrder] = useState<Order | null>(null);
+  // Explicitly typed to support Supabase snake_case & type safe Order interface
+  const [order, setOrder] = useState<(Order & Record<string, any>) | null>(null);
   const [items, setItems] = useState<OrderItemRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -87,16 +89,15 @@ export default function OrderDetailsScreen() {
         .eq("id", orderNumber)
         .single();
 
-      const fetchedOrder = data as Order | null;
-
-      if (orderError || !fetchedOrder) {
+      if (orderError || !data) {
         setError("Order not found.");
         return;
       }
 
-      setOrder(fetchedOrder as Order);
+      const fetchedOrder = data as Order & Record<string, any>;
+      setOrder(fetchedOrder);
 
-      // 1. Fetch raw order items without fragile implicit joins
+      // 1. Fetch raw order items
       const { data: rawItemsData, error: itemsError } = await supabase
         .from("order_items")
         .select("*")
@@ -108,7 +109,6 @@ export default function OrderDetailsScreen() {
         return;
       }
 
-      // Explicitly type rawItems to avoid TS 'never[]' inference
       const rawItems = (rawItemsData as RawOrderItem[]) ?? [];
 
       if (rawItems.length === 0) {
@@ -116,7 +116,7 @@ export default function OrderDetailsScreen() {
         return;
       }
 
-      // 2. Hydrate product details manually to avoid PGRST200 schema join mismatches
+      // 2. Hydrate product details
       const productIds = Array.from(
         new Set(rawItems.map((i) => i.product_id).filter(Boolean))
       );
@@ -137,9 +137,50 @@ export default function OrderDetailsScreen() {
         }
       }
 
+      // 3. Hydrate variant details
+      const variantIds = Array.from(
+        new Set(
+          rawItems
+            .map((item) => item.variant_id)
+            .filter(Boolean)
+        )
+      );
+
+      let variantsMap: Record<string, any> = {};
+
+      if (variantIds.length > 0) {
+        const { data: variantsData, error: variantsError } =
+          await supabase
+            .from("product_variants")
+            .select("id, option_name, option_value")
+            .in("id", variantIds);
+
+        if (variantsError) {
+          console.error("Failed to fetch variants:", variantsError);
+        }
+
+        if (variantsData) {
+          variantsMap = (variantsData as any[]).reduce((acc, variant) => {
+            acc[variant.id] = variant;
+            return acc;
+          }, {} as Record<string, any>);
+        }
+      }
+
+      // 4. Build hydrated order items
       const hydratedItems: OrderItemRow[] = rawItems.map((item) => ({
         ...item,
-        product: item.product_id ? productsMap[item.product_id] ?? null : null,
+
+        product: item.product_id
+          ? productsMap[item.product_id] ?? null
+          : null,
+
+        variant: item.variant_id
+          ? {
+              optionName: variantsMap[item.variant_id]?.option_name,
+              optionValue: variantsMap[item.variant_id]?.option_value,
+            }
+          : null,
       }));
 
       setItems(hydratedItems);
@@ -175,10 +216,25 @@ export default function OrderDetailsScreen() {
     );
   }
 
-  const formattedDate = new Date(order.createdAt).toLocaleString(undefined, {
-    dateStyle: "medium",
-    timeStyle: "short",
-  });
+  // Safe field extractions
+  const rawDate = order.created_at ?? order.createdAt;
+  const formattedDate = rawDate
+    ? new Date(rawDate).toLocaleString(undefined, {
+        dateStyle: "medium",
+        timeStyle: "short",
+      })
+    : "N/A";
+
+  const paymentStatus = order.payment_status ?? order.paymentStatus ?? "PENDING";
+  const paymentMethod = order.payment_method ?? order.paymentMethod ?? "CREDIT CARD";
+  const customerName = order.customer_name ?? order.customerName ?? order.shipping_name ?? "N/A";
+  const customerPhone = order.customer_phone ?? order.customerPhone ?? order.shipping_phone;
+  const postalCode = order.postal_code ?? order.postalCode;
+  const deliveryStart = order.estimated_delivery_start ?? order.estimatedDeliveryStart;
+  const deliveryEnd = order.estimated_delivery_end ?? order.estimatedDeliveryEnd;
+  const deliveryUpdated = order.estimated_delivery_updated_at ?? order.estimatedDeliveryUpdatedAt;
+
+  const isDelivered = (order.status ?? "").toUpperCase() === "DELIVERED";
 
   return (
     <SafeAreaView style={styles.container}>
@@ -190,7 +246,7 @@ export default function OrderDetailsScreen() {
           {/* Header Module */}
           <View style={styles.card}>
             <Text style={styles.orderTitle}>
-              Order #{order.orderNumber ?? order.id.slice(0, 8)}
+              Order #{order.order_number ?? order.orderNumber ?? order.id.slice(0, 8)}
             </Text>
             <Text style={styles.orderDate}>Placed on {formattedDate}</Text>
 
@@ -208,17 +264,22 @@ export default function OrderDetailsScreen() {
                 <View style={styles.metaItem}>
                   <Text style={styles.metaLabel}>Payment:</Text>
                   <View style={styles.paymentChip}>
-                    <Text style={styles.paymentChipText}>
-                      {order.paymentStatus}
-                    </Text>
+                    <Text style={styles.paymentChipText}>{paymentStatus}</Text>
                   </View>
                 </View>
               </View>
 
               <Pressable
-                onPress={() => router.push(`/track/${order.id}` as Href)}
-                style={styles.trackButtonContainer}
-              >
+                    onPress={() => {
+                      const orderNumber =
+                        order.order_number ?? order.orderNumber ?? order.id;
+
+                      Linking.openURL(
+                        `https://www.africasuk.com/track/${orderNumber}`
+                      );
+                    }}
+                    style={styles.trackButtonContainer}
+                  >
                 <LinearGradient
                   colors={[BRAND_LIGHT, BRAND_DARK]}
                   start={{ x: 0, y: 0 }}
@@ -241,22 +302,22 @@ export default function OrderDetailsScreen() {
               </View>
 
               <View style={styles.addressBody}>
-                <Text style={styles.customerName}>{order.customerName}</Text>
+                <Text style={styles.customerName}>{customerName}</Text>
                 <Text style={styles.addressText}>{order.address}</Text>
                 <Text style={styles.addressText}>
                   {order.city}
                   {order.state ? `, ${order.state}` : ""}
                 </Text>
                 <Text style={styles.countryText}>{order.country}</Text>
-                {order.postalCode && (
-                  <Text style={styles.postalText}>{order.postalCode}</Text>
+                {postalCode && (
+                  <Text style={styles.postalText}>{postalCode}</Text>
                 )}
               </View>
 
-              {order.customerPhone && (
+              {customerPhone && (
                 <View style={styles.phoneContainer}>
                   <Text style={styles.phoneLabel}>Phone: </Text>
-                  <Text style={styles.phoneValue}>{order.customerPhone}</Text>
+                  <Text style={styles.phoneValue}>{customerPhone}</Text>
                 </View>
               )}
             </View>
@@ -270,42 +331,28 @@ export default function OrderDetailsScreen() {
               <View style={styles.summaryList}>
                 <View style={styles.summaryRow}>
                   <Text style={styles.summaryLabel}>Subtotal</Text>
-                  <Price
-                    price={order.subtotal}
-                    style={styles.summaryValue}
-                  />
+                  <Price price={order.subtotal} style={styles.summaryValue} />
                 </View>
 
                 <View style={styles.summaryRow}>
                   <Text style={styles.summaryLabel}>Shipping Fee</Text>
-                  <Price
-                    price={order.shipping}
-                    style={styles.summaryValue}
-                  />
+                  <Price price={order.shipping} style={styles.summaryValue} />
                 </View>
 
                 <View style={styles.summaryRow}>
                   <Text style={styles.summaryLabel}>Tax</Text>
-                  <Price
-                    price={order.tax}
-                    style={styles.summaryValue}
-                  />
+                  <Price price={order.tax} style={styles.summaryValue} />
                 </View>
 
                 <View style={[styles.summaryRow, styles.totalRow]}>
                   <Text style={styles.totalLabel}>Total Charged</Text>
-                  <Price
-                    price={order.total}
-                    style={styles.totalValue}
-                  />
+                  <Price price={order.total} style={styles.totalValue} />
                 </View>
 
                 <View style={styles.methodRow}>
                   <Text style={styles.metaLabel}>Method</Text>
                   <View style={styles.methodChip}>
-                    <Text style={styles.methodChipText}>
-                      {order.paymentMethod}
-                    </Text>
+                    <Text style={styles.methodChipText}>{paymentMethod}</Text>
                   </View>
                 </View>
               </View>
@@ -319,36 +366,39 @@ export default function OrderDetailsScreen() {
               <Text style={styles.cardHeading}>Estimated Arrival</Text>
             </View>
 
-            {order.estimatedDeliveryStart && order.estimatedDeliveryEnd ? (
+            {deliveryStart && deliveryEnd ? (
               <>
                 <Text style={styles.deliveryDateRange}>
-                  {new Date(order.estimatedDeliveryStart).toLocaleDateString(
-                    undefined,
-                    { day: "numeric", month: "short", year: "numeric" }
-                  )}{" "}
+                  {new Date(deliveryStart).toLocaleDateString(undefined, {
+                    day: "numeric",
+                    month: "short",
+                    year: "numeric",
+                  })}{" "}
                   —{" "}
-                  {new Date(order.estimatedDeliveryEnd).toLocaleDateString(
-                    undefined,
-                    { day: "numeric", month: "short", year: "numeric" }
-                  )}
+                  {new Date(deliveryEnd).toLocaleDateString(undefined, {
+                    day: "numeric",
+                    month: "short",
+                    year: "numeric",
+                  })}
                 </Text>
                 <Text style={styles.deliverySubtext}>
                   Delivery estimates may change depending on supplier
                   availability, customs clearance, and local transit schedules.
                 </Text>
 
-                {order.estimatedDeliveryUpdatedAt && (
+                {deliveryUpdated && (
                   <View style={styles.updateTimeRow}>
                     <Clock size={12} color="#9ca3af" />
                     <Text style={styles.updateTimeText}>
                       Updated{" "}
-                      {new Date(
-                        order.estimatedDeliveryUpdatedAt
-                      ).toLocaleDateString(undefined, {
-                        day: "numeric",
-                        month: "short",
-                        year: "numeric",
-                      })}
+                      {new Date(deliveryUpdated).toLocaleDateString(
+                        undefined,
+                        {
+                          day: "numeric",
+                          month: "short",
+                          year: "numeric",
+                        }
+                      )}
                     </Text>
                   </View>
                 )}
@@ -363,7 +413,7 @@ export default function OrderDetailsScreen() {
             )}
           </View>
 
-          {/* Order Items */}
+          {/* Order Items & Reviews */}
           <View style={styles.card}>
             <View style={styles.cardHeaderWithIcon}>
               <Package size={16} color={BRAND} />
@@ -373,62 +423,96 @@ export default function OrderDetailsScreen() {
             </View>
 
             <View style={styles.itemsList}>
-              {items.map((item) => (
-                <View key={item.id} style={styles.itemRow}>
-                  <View style={styles.itemImageContainer}>
-                    {item.image ? (
-                      <Image
-                        source={{ uri: item.image }}
-                        style={styles.itemImage}
-                      />
-                    ) : (
-                      <Text style={styles.noImageText}>No Image</Text>
+              {items.map((item, index) => {
+                const isLast = index === items.length - 1;
+
+                return (
+                  <View
+                    key={item.id}
+                    style={[
+                      styles.itemContainer,
+                      !isLast && styles.itemBorderBottom,
+                    ]}
+                  >
+                    {/* Main Row: Image, Info & Price */}
+                    <View style={styles.itemMainRow}>
+                      <View style={styles.itemImageContainer}>
+                        {item.image ? (
+                          <Image
+                            source={{ uri: item.image }}
+                            style={styles.itemImage}
+                          />
+                        ) : (
+                          <Text style={styles.noImageText}>No Image</Text>
+                        )}
+                      </View>
+
+                      <View style={styles.itemDetails}>
+                        <Text style={styles.itemName}>
+                          {item.product?.name ?? item.name}
+                        </Text>
+
+                        <View style={styles.itemTagsRow}>
+                          {/* Brand */}
+                          {item.product?.brand?.name && (
+                            <View style={styles.brandTag}>
+                              <Text style={styles.brandTagText}>
+                                {item.product.brand.name}
+                              </Text>
+                            </View>
+                          )}
+
+                          {/* Category */}
+                          {item.product?.category?.name && (
+                            <View style={styles.categoryTag}>
+                              <Text style={styles.categoryTagText}>
+                                {item.product.category.name}
+                              </Text>
+                            </View>
+                          )}
+                        </View>
+
+                        {/* Variant */}
+                        {item.variant?.optionName && (
+                          <View style={styles.variantTag}>
+                            <Text style={styles.variantTagText}>
+                              {item.variant.optionName}: {item.variant.optionValue}
+                            </Text>
+                          </View>
+                        )}
+
+                        <View style={styles.itemQtyPriceRow}>
+                          <Text style={styles.itemQtyText}>
+                            Qty: <Text style={styles.boldText}>{item.quantity}</Text>
+                          </Text>
+
+                          <Price price={item.price} style={styles.itemUnitText} />
+                        </View>
+                      </View>
+
+                      <View style={styles.itemTotalContainer}>
+                        <Text style={styles.itemTotalLabel}>Item Total</Text>
+                        <Price
+                          price={item.price * item.quantity}
+                          style={styles.itemTotalValue}
+                        />
+                      </View>
+                    </View>
+
+                    {/* Dedicated Full-Width Review Form (Only for Delivered Orders) */}
+                    {isDelivered && (
+                      <View style={styles.reviewFormWrapper}>
+                        <ReviewForm
+                          productId={item.product_id}
+                          orderId={order.id}
+                          orderItemId={item.id}
+                          variantId={item.variant_id}
+                        />
+                      </View>
                     )}
                   </View>
-
-                  <View style={styles.itemDetails}>
-                    <Text style={styles.itemName}>
-                      {item.product?.name ?? item.name}
-                    </Text>
-
-                    <View style={styles.itemTagsRow}>
-                      {item.product?.brand?.name && (
-                        <View style={styles.brandTag}>
-                          <Text style={styles.brandTagText}>
-                            {item.product.brand.name}
-                          </Text>
-                        </View>
-                      )}
-                      {item.product?.category?.name && (
-                        <View style={styles.categoryTag}>
-                          <Text style={styles.categoryTagText}>
-                            {item.product.category.name}
-                          </Text>
-                        </View>
-                      )}
-                    </View>
-
-                    <View style={styles.itemQtyPriceRow}>
-                      <Text style={styles.itemQtyText}>
-                        Qty: <Text style={styles.boldText}>{item.quantity}</Text>
-                      </Text>
-
-                      <Price
-                        price={item.price}
-                        style={styles.itemUnitText}
-                      />
-                    </View>
-                  </View>
-
-                  <View style={styles.itemTotalContainer}>
-                    <Text style={styles.itemTotalLabel}>Item Total</Text>
-                    <Price
-                      price={item.price * item.quantity}
-                      style={styles.itemTotalValue}
-                    />
-                  </View>
-                </View>
-              ))}
+                );
+              })}
             </View>
           </View>
         </View>
@@ -443,9 +527,6 @@ type Styles = {
   scrollContent: ViewStyle;
   contentWrapper: ViewStyle;
   card: ViewStyle;
-  verifiedBadgeContainer: ViewStyle;
-  verifiedBadge: ViewStyle;
-  verifiedText: TextStyle;
   orderTitle: TextStyle;
   orderDate: TextStyle;
   headerDivider: ViewStyle;
@@ -489,7 +570,9 @@ type Styles = {
   pulseDot: ViewStyle;
   awaitingText: TextStyle;
   itemsList: ViewStyle;
-  itemRow: ViewStyle;
+  itemContainer: ViewStyle;
+  itemBorderBottom: ViewStyle;
+  itemMainRow: ViewStyle;
   itemImageContainer: ViewStyle;
   itemImage: ImageStyle;
   noImageText: TextStyle;
@@ -500,6 +583,8 @@ type Styles = {
   brandTagText: TextStyle;
   categoryTag: ViewStyle;
   categoryTagText: TextStyle;
+  variantTag: ViewStyle;
+  variantTagText: TextStyle;
   itemQtyPriceRow: ViewStyle;
   itemQtyText: TextStyle;
   itemUnitText: TextStyle;
@@ -510,6 +595,7 @@ type Styles = {
   errorText: TextStyle;
   retryButton: ViewStyle;
   retryText: TextStyle;
+  reviewFormWrapper: ViewStyle;
 };
 
 const styles = StyleSheet.create<Styles>({
@@ -536,45 +622,21 @@ const styles = StyleSheet.create<Styles>({
   },
   card: {
     backgroundColor: "#ffffff",
-    borderRadius: 20,
+    borderRadius: 0,
     borderWidth: 1,
-    borderColor: "rgba(229, 231, 235, 0.8)",
+    borderColor: "#e5e7eb",
     padding: 20,
-    shadowColor: "#000000",
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.04,
-    shadowRadius: 2,
-    elevation: 1,
-  },
-  verifiedBadgeContainer: {
-    flexDirection: "row",
-    marginBottom: 8,
-  },
-  verifiedBadge: {
-    backgroundColor: "#ecfdf5",
-    borderWidth: 1,
-    borderColor: "#a7f3d0",
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-    borderRadius: 12,
-  },
-  verifiedText: {
-    fontSize: 10,
-    fontWeight: "800",
-    textTransform: "uppercase",
-    letterSpacing: 1,
-    color: "#047857",
   },
   orderTitle: {
-    fontSize: 22,
-    fontWeight: "900",
+    fontSize: 20,
+    fontWeight: "500",
     textTransform: "uppercase",
-    letterSpacing: -0.5,
+    letterSpacing: 0.2,
     color: BRAND_DARK,
   },
   orderDate: {
     fontSize: 13,
-    fontWeight: "500",
+    fontWeight: "400",
     color: "#6b7280",
     marginTop: 4,
   },
@@ -600,7 +662,7 @@ const styles = StyleSheet.create<Styles>({
   },
   metaLabel: {
     fontSize: 11,
-    fontWeight: "700",
+    fontWeight: "500",
     color: "#9ca3af",
     textTransform: "uppercase",
     letterSpacing: 0.5,
@@ -609,11 +671,13 @@ const styles = StyleSheet.create<Styles>({
     backgroundColor: "#f3f4f6",
     paddingHorizontal: 10,
     paddingVertical: 2,
-    borderRadius: 8,
+    borderRadius: 0,
+    borderWidth: 1,
+    borderColor: "#e5e7eb",
   },
   statusChipText: {
     fontSize: 11,
-    fontWeight: "900",
+    fontWeight: "500",
     textTransform: "uppercase",
     color: BRAND_DARK,
   },
@@ -621,16 +685,18 @@ const styles = StyleSheet.create<Styles>({
     backgroundColor: "#ecfdf5",
     paddingHorizontal: 10,
     paddingVertical: 2,
-    borderRadius: 8,
+    borderRadius: 0,
+    borderWidth: 1,
+    borderColor: "#a7f3d0",
   },
   paymentChipText: {
     fontSize: 11,
-    fontWeight: "900",
+    fontWeight: "500",
     textTransform: "uppercase",
     color: "#047857",
   },
   trackButtonContainer: {
-    borderRadius: 24,
+    borderRadius: 0,
     overflow: "hidden",
   },
   trackButton: {
@@ -639,14 +705,14 @@ const styles = StyleSheet.create<Styles>({
     gap: 8,
     paddingHorizontal: 18,
     paddingVertical: 12,
-    borderRadius: 24,
+    borderRadius: 0,
   },
   trackButtonText: {
     color: "#ffffff",
     fontSize: 12,
-    fontWeight: "900",
+    fontWeight: "500",
     textTransform: "uppercase",
-    letterSpacing: 1,
+    letterSpacing: 0.5,
   },
   grid: {
     gap: 16,
@@ -659,9 +725,9 @@ const styles = StyleSheet.create<Styles>({
   },
   cardHeading: {
     fontSize: 11,
-    fontWeight: "900",
+    fontWeight: "500",
     textTransform: "uppercase",
-    letterSpacing: 1,
+    letterSpacing: 0.8,
     color: BRAND_DARK,
   },
   addressBody: {
@@ -669,18 +735,18 @@ const styles = StyleSheet.create<Styles>({
   },
   customerName: {
     fontSize: 15,
-    fontWeight: "700",
+    fontWeight: "500",
     color: "#111827",
     marginBottom: 4,
   },
   addressText: {
     fontSize: 13,
-    fontWeight: "500",
+    fontWeight: "400",
     color: "#4b5563",
   },
   countryText: {
     fontSize: 11,
-    fontWeight: "700",
+    fontWeight: "500",
     textTransform: "uppercase",
     letterSpacing: 0.5,
     color: "#6b7280",
@@ -688,6 +754,7 @@ const styles = StyleSheet.create<Styles>({
   },
   postalText: {
     fontSize: 12,
+    fontWeight: "400",
     color: "#9ca3af",
   },
   phoneContainer: {
@@ -699,12 +766,12 @@ const styles = StyleSheet.create<Styles>({
   },
   phoneLabel: {
     fontSize: 12,
-    fontWeight: "600",
+    fontWeight: "400",
     color: "#6b7280",
   },
   phoneValue: {
     fontSize: 12,
-    fontWeight: "600",
+    fontWeight: "500",
     color: "#111827",
   },
   summaryList: {
@@ -717,12 +784,12 @@ const styles = StyleSheet.create<Styles>({
   },
   summaryLabel: {
     fontSize: 13,
-    fontWeight: "500",
+    fontWeight: "400",
     color: "#4b5563",
   },
   summaryValue: {
     fontSize: 13,
-    fontWeight: "600",
+    fontWeight: "500",
     color: "#111827",
   },
   totalRow: {
@@ -733,14 +800,14 @@ const styles = StyleSheet.create<Styles>({
   },
   totalLabel: {
     fontSize: 12,
-    fontWeight: "900",
+    fontWeight: "500",
     textTransform: "uppercase",
     letterSpacing: 0.5,
     color: BRAND_DARK,
   },
   totalValue: {
-    fontSize: 16,
-    fontWeight: "900",
+    fontSize: 15,
+    fontWeight: "500",
     color: BRAND_DARK,
   },
   methodRow: {
@@ -755,24 +822,26 @@ const styles = StyleSheet.create<Styles>({
     backgroundColor: "#f3f4f6",
     paddingHorizontal: 10,
     paddingVertical: 2,
-    borderRadius: 8,
+    borderRadius: 0,
+    borderWidth: 1,
+    borderColor: "#e5e7eb",
   },
   methodChipText: {
     fontSize: 11,
-    fontWeight: "800",
+    fontWeight: "500",
     textTransform: "uppercase",
     color: BRAND_DARK,
   },
   deliveryDateRange: {
-    fontSize: 18,
-    fontWeight: "900",
+    fontSize: 16,
+    fontWeight: "500",
     textTransform: "uppercase",
-    letterSpacing: -0.5,
+    letterSpacing: 0.2,
     color: BRAND_DARK,
   },
   deliverySubtext: {
     fontSize: 12,
-    fontWeight: "500",
+    fontWeight: "400",
     color: "#6b7280",
     marginTop: 6,
     lineHeight: 18,
@@ -785,7 +854,7 @@ const styles = StyleSheet.create<Styles>({
   },
   updateTimeText: {
     fontSize: 10,
-    fontWeight: "700",
+    fontWeight: "400",
     textTransform: "uppercase",
     letterSpacing: 0.5,
     color: "#9ca3af",
@@ -798,29 +867,33 @@ const styles = StyleSheet.create<Styles>({
   pulseDot: {
     width: 8,
     height: 8,
-    borderRadius: 4,
+    borderRadius: 0,
     backgroundColor: "#f59e0b",
   },
   awaitingText: {
     fontSize: 13,
-    fontWeight: "500",
+    fontWeight: "400",
     color: "#6b7280",
   },
   itemsList: {
     gap: 16,
   },
-  itemRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 12,
+  itemContainer: {
+    paddingBottom: 16,
+  },
+  itemBorderBottom: {
     borderBottomWidth: 1,
     borderBottomColor: "#f3f4f6",
-    paddingBottom: 16,
+  },
+  itemMainRow: {
+    flexDirection: "row",
+    alignItems: "flex-start",
+    gap: 12,
   },
   itemImageContainer: {
     width: 72,
     height: 72,
-    borderRadius: 12,
+    borderRadius: 0,
     backgroundColor: "#f9fafb",
     borderWidth: 1,
     borderColor: "#e5e7eb",
@@ -835,7 +908,7 @@ const styles = StyleSheet.create<Styles>({
   },
   noImageText: {
     fontSize: 9,
-    fontWeight: "700",
+    fontWeight: "400",
     color: "#9ca3af",
     textTransform: "uppercase",
   },
@@ -845,7 +918,7 @@ const styles = StyleSheet.create<Styles>({
   },
   itemName: {
     fontSize: 14,
-    fontWeight: "800",
+    fontWeight: "500",
     color: BRAND_DARK,
   },
   itemTagsRow: {
@@ -857,11 +930,13 @@ const styles = StyleSheet.create<Styles>({
     backgroundColor: "#ecfdf5",
     paddingHorizontal: 6,
     paddingVertical: 2,
-    borderRadius: 6,
+    borderRadius: 0,
+    borderWidth: 1,
+    borderColor: "#a7f3d0",
   },
   brandTagText: {
     fontSize: 9,
-    fontWeight: "800",
+    fontWeight: "500",
     textTransform: "uppercase",
     color: "#047857",
   },
@@ -869,13 +944,29 @@ const styles = StyleSheet.create<Styles>({
     backgroundColor: "#f3f4f6",
     paddingHorizontal: 6,
     paddingVertical: 2,
-    borderRadius: 6,
+    borderRadius: 0,
+    borderWidth: 1,
+    borderColor: "#e5e7eb",
   },
   categoryTagText: {
     fontSize: 9,
-    fontWeight: "800",
+    fontWeight: "500",
     textTransform: "uppercase",
     color: "#4b5563",
+  },
+  variantTag: {
+    alignSelf: "flex-start",
+    backgroundColor: "#f3f4f6",
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 0,
+    borderWidth: 1,
+    borderColor: "#e5e7eb",
+  },
+  variantTagText: {
+    fontSize: 10,
+    fontWeight: "500",
+    color: "#374151",
   },
   itemQtyPriceRow: {
     flexDirection: "row",
@@ -884,34 +975,40 @@ const styles = StyleSheet.create<Styles>({
   },
   itemQtyText: {
     fontSize: 12,
+    fontWeight: "400",
     color: "#6b7280",
   },
   itemUnitText: {
     fontSize: 12,
+    fontWeight: "400",
     color: "#6b7280",
   },
   boldText: {
-    fontWeight: "700",
+    fontWeight: "500",
     color: "#111827",
   },
   itemTotalContainer: {
     alignItems: "flex-end",
-    minWidth: 70,
   },
   itemTotalLabel: {
     fontSize: 9,
-    fontWeight: "700",
+    fontWeight: "400",
     textTransform: "uppercase",
     color: "#9ca3af",
   },
   itemTotalValue: {
-    fontSize: 14,
-    fontWeight: "900",
+    fontSize: 13,
+    fontWeight: "500",
     color: BRAND_DARK,
     marginTop: 2,
   },
+  reviewFormWrapper: {
+    width: "100%",
+    marginTop: 12,
+  },
   errorText: {
-    fontSize: 14,
+    fontSize: 13,
+    fontWeight: "400",
     color: "#374151",
     marginTop: 12,
     textAlign: "center",
@@ -921,11 +1018,11 @@ const styles = StyleSheet.create<Styles>({
     paddingHorizontal: 16,
     paddingVertical: 8,
     backgroundColor: BRAND,
-    borderRadius: 8,
+    borderRadius: 0,
   },
   retryText: {
     color: "#ffffff",
-    fontWeight: "600",
+    fontWeight: "500",
     fontSize: 13,
   },
 });

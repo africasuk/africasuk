@@ -12,6 +12,12 @@ import {
 import { Image } from "expo-image";
 import { Heart, ShoppingCart, Search, X } from "lucide-react-native";
 import { useRouter } from "expo-router";
+import Animated, {
+  useAnimatedStyle,
+  interpolate,
+  Extrapolation,
+  SharedValue,
+} from "react-native-reanimated";
 
 import SearchBar from "@/components/layout/header/SearchBar";
 import { useWishlist } from "@/store/wishlist";
@@ -19,20 +25,69 @@ import { useCart } from "@/store/cart";
 
 const BADGE_RED = "#ef4444";
 
-export default function HomeHeader() {
+interface HomeHeaderProps {
+  scrollY: SharedValue<number>;
+}
+
+export default function HomeHeader({ scrollY }: HomeHeaderProps) {
   const router = useRouter();
   const [isSearching, setIsSearching] = useState(false);
 
-  // Live counts directly from your Zustand stores
+  // Live counts directly from Zustand stores
   const wishlistCount = useWishlist((state) => state.items.length);
   const cartCount = useCart((state) =>
     state.items.reduce((acc, item) => acc + item.quantity, 0)
   );
 
+  // Animate the Logo & Wishlist/Cart container hiding on scroll
+  const hideOnScrollStyle = useAnimatedStyle(() => {
+    const opacity = interpolate(
+      scrollY.value,
+      [0, 40],
+      [1, 0],
+      Extrapolation.CLAMP
+    );
+
+    const width = interpolate(
+      scrollY.value,
+      [0, 50],
+      [80, 0],
+      Extrapolation.CLAMP
+    );
+
+    return {
+      opacity,
+      width,
+      overflow: "hidden",
+    };
+  });
+
+  const hideActionsStyle = useAnimatedStyle(() => {
+    const opacity = interpolate(
+      scrollY.value,
+      [0, 40],
+      [1, 0],
+      Extrapolation.CLAMP
+    );
+
+    const width = interpolate(
+      scrollY.value,
+      [0, 50],
+      [84, 0],
+      Extrapolation.CLAMP
+    );
+
+    return {
+      opacity,
+      width,
+      overflow: "hidden",
+    };
+  });
+
   return (
     <View style={styles.container}>
       <View style={styles.row}>
-        {/* Full-width Search Mode */}
+        {/* Full-width Search Mode when tapped */}
         {isSearching ? (
           <View style={styles.expandedSearchWrapper}>
             <View style={styles.searchFlex}>
@@ -49,16 +104,16 @@ export default function HomeHeader() {
           </View>
         ) : (
           <>
-            {/* Left: Logo */}
-            <View style={styles.logoContainer}>
+            {/* Left: Collapsible Logo */}
+            <Animated.View style={[styles.logoContainer, hideOnScrollStyle]}>
               <Image
                 source={require("@/assets/images/logo.png")}
                 style={styles.logo}
                 contentFit="contain"
               />
-            </View>
+            </Animated.View>
 
-            {/* Center: Search Trigger Pill */}
+            {/* Center: Search Trigger Pill (Kept Rounded) */}
             <Pressable
               style={styles.searchTriggerPill}
               onPress={() => setIsSearching(true)}
@@ -67,14 +122,13 @@ export default function HomeHeader() {
               <Text style={styles.searchText}>Search...</Text>
             </Pressable>
 
-            {/* Right Actions: Real Wishlist & Cart Badges */}
-            <View style={styles.actions}>
-              {/* Wishlist Button */}
+            {/* Right: Collapsible Actions */}
+            <Animated.View style={[styles.actions, hideActionsStyle]}>
               <Pressable
                 style={styles.iconButton}
                 onPress={() => router.push("/wishlist" as any)}
               >
-                <Heart size={20} color="#111827" />
+                <Heart size={18} color="#111827" />
                 {wishlistCount > 0 && (
                   <View style={styles.badge}>
                     <Text style={styles.badgeText}>
@@ -84,12 +138,11 @@ export default function HomeHeader() {
                 )}
               </Pressable>
 
-              {/* Cart Button */}
               <Pressable
                 style={styles.iconButton}
                 onPress={() => router.push("/cart" as any)}
               >
-                <ShoppingCart size={20} color="#111827" />
+                <ShoppingCart size={18} color="#111827" />
                 {cartCount > 0 && (
                   <View style={styles.badge}>
                     <Text style={styles.badgeText}>
@@ -98,7 +151,7 @@ export default function HomeHeader() {
                   </View>
                 )}
               </Pressable>
-            </View>
+            </Animated.View>
           </>
         )}
       </View>
@@ -128,13 +181,13 @@ const styles = StyleSheet.create<Styles>({
     backgroundColor: "#ffffff",
     paddingHorizontal: 16,
     paddingTop: 12,
+    paddingBottom: 8,
   },
   row: {
     flexDirection: "row",
     alignItems: "center",
-    justifyContent: "space-between",
     height: 44,
-    gap: 10,
+    gap: 8,
   },
   logoContainer: {
     justifyContent: "center",
@@ -147,7 +200,7 @@ const styles = StyleSheet.create<Styles>({
     flex: 1,
     height: 38,
     backgroundColor: "#F3F4F6",
-    borderRadius: 19,
+    borderRadius: 19, // Kept rounded pill design for search
     flexDirection: "row",
     alignItems: "center",
     paddingHorizontal: 12,
@@ -157,7 +210,7 @@ const styles = StyleSheet.create<Styles>({
   },
   searchText: {
     fontSize: 13,
-    fontWeight: "500",
+    fontWeight: "400",
     color: "#6b7280",
   },
   actions: {
@@ -168,19 +221,21 @@ const styles = StyleSheet.create<Styles>({
   iconButton: {
     width: 38,
     height: 38,
-    borderRadius: 19,
-    backgroundColor: "#F3F4F6",
+    borderRadius: 0, // Sharp square button
+    backgroundColor: "#ffffff",
+    borderWidth: 1,
+    borderColor: "#e5e7eb",
     justifyContent: "center",
     alignItems: "center",
   },
   badge: {
     position: "absolute",
-    top: -2,
-    right: -2,
+    top: -3,
+    right: -3,
     backgroundColor: BADGE_RED,
     minWidth: 16,
     height: 16,
-    borderRadius: 8,
+    borderRadius: 0, // Sharp square badge
     justifyContent: "center",
     alignItems: "center",
     paddingHorizontal: 3,
@@ -188,7 +243,7 @@ const styles = StyleSheet.create<Styles>({
   badgeText: {
     color: "#ffffff",
     fontSize: 9,
-    fontWeight: "700",
+    fontWeight: "500",
   },
   expandedSearchWrapper: {
     flex: 1,

@@ -5,7 +5,13 @@ export default function robots(): MetadataRoute.Robots {
     rules: [
       {
         userAgent: "*",
-        allow: "/",
+        allow: [
+          "/",
+          "/terms/",
+          "/delete-account/",
+          "/returns/",
+          "/request-product/",
+        ],
         disallow: [
           "/admin/",
           "/api/",
@@ -21,10 +27,30 @@ export default function robots(): MetadataRoute.Robots {
       {
         userAgent: "Googlebot",
         allow: "/",
+        disallow: [
+          "/admin/",
+          "/api/",
+          "/auth/",
+          "/checkout/",
+          "/cart/",
+          "/account/",
+          "/orders/",
+          "/wishlist/",
+        ],
       },
       {
         userAgent: "Bingbot",
         allow: "/",
+        disallow: [
+          "/admin/",
+          "/api/",
+          "/auth/",
+          "/checkout/",
+          "/cart/",
+          "/account/",
+          "/orders/",
+          "/wishlist/",
+        ],
       },
     ],
 

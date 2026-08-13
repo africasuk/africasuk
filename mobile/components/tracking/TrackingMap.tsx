@@ -64,40 +64,54 @@ export default function TrackingMap({ status }: Props) {
   }, [status]);
 
   // Fetch real highway route geometry from OSRM
-  useEffect(() => {
-    async function fetchRealRoads() {
-      try {
-        const waypoints = [
-          LOGISTICS_POINTS.kampala.coordinates,
-          LOGISTICS_POINTS.nimule.coordinates,
-          LOGISTICS_POINTS.juba.coordinates,
-          LOGISTICS_POINTS.customer.coordinates,
-        ];
+ useEffect(() => {
+  async function fetchRealRoads() {
+    try {
+      const waypoints = [
+        LOGISTICS_POINTS.kampala.coordinates,
+        LOGISTICS_POINTS.nimule.coordinates,
+        LOGISTICS_POINTS.juba.coordinates,
+        LOGISTICS_POINTS.customer.coordinates,
+      ];
 
-        const coordString = waypoints.map((pt) => `${pt[0]},${pt[1]}`).join(";");
+      const coordString = waypoints
+        .map(([lng, lat]) => `${lng},${lat}`)
+        .join(";");
 
-        const res = await fetch(
-          `https://router.project-osrm.org/route/v1/driving/${coordString}?overview=full&geometries=geojson`
-        );
-        const data = await res.json();
+      const url =
+        `https://router.project-osrm.org/route/v1/driving/${coordString}` +
+        `?overview=full&geometries=geojson`;
 
-        if (data.routes?.[0]?.geometry?.coordinates) {
-          // OSRM provides [lng, lat] -> convert to React Native Maps format { latitude, longitude }
-          const parsedRoute = data.routes[0].geometry.coordinates.map(
-            (coord: [number, number]) => ({
-              latitude: coord[1],
-              longitude: coord[0],
-            })
-          );
-          setFullRoadRoute(parsedRoute);
-        }
-      } catch (error) {
-        console.error("Failed to load OSRM road geometry:", error);
+      const response = await fetch(url);
+
+      if (!response.ok) {
+        throw new Error(`OSRM returned ${response.status}`);
       }
-    }
 
-    fetchRealRoads();
-  }, []);
+      const data = await response.json();
+
+      const coordinates = data.routes?.[0]?.geometry?.coordinates;
+
+      if (!coordinates) {
+        throw new Error("No route returned by OSRM");
+      }
+
+      const parsedRoute = coordinates.map(
+        ([lng, lat]: [number, number]) => ({
+          latitude: lat,
+          longitude: lng,
+        })
+      );
+
+      setFullRoadRoute(parsedRoute);
+    } catch  {
+      console.warn("OSRM unavailable. Map will load without road route.");
+      setFullRoadRoute([]);
+    }
+  }
+
+  fetchRealRoads();
+}, []);
 
   // Split polyline into Completed vs Remaining based on current truck position
   const { completedPolyline, remainingPolyline } = useMemo(() => {
@@ -139,7 +153,7 @@ export default function TrackingMap({ status }: Props) {
           <Polyline
             coordinates={completedPolyline}
             strokeColor="#005c2e"
-            strokeWidth={5}
+            strokeWidth={4}
           />
         )}
 
@@ -148,7 +162,7 @@ export default function TrackingMap({ status }: Props) {
           <Polyline
             coordinates={remainingPolyline}
             strokeColor="#94a3b8"
-            strokeWidth={3.5}
+            strokeWidth={3}
             lineDashPattern={[6, 8]}
           />
         )}
@@ -200,7 +214,7 @@ export default function TrackingMap({ status }: Props) {
         {/* Live Truck Marker */}
         <Marker coordinate={truckCoords} anchor={{ x: 0.5, y: 0.5 }}>
           <View style={styles.truckPinContainer}>
-            <View style={styles.truckCircle}>
+            <View style={styles.truckSquare}>
               <Truck size={14} color="#ffffff" />
             </View>
             <View style={styles.truckBadge}>
@@ -210,7 +224,7 @@ export default function TrackingMap({ status }: Props) {
         </Marker>
       </MapView>
 
-      {/* Floating Summary Overlay */}
+      {/* Floating Summary Overlay with Sharp Corners */}
       <View style={styles.summaryCard}>
         <View style={styles.summaryRow}>
           <View>
@@ -245,10 +259,10 @@ const styles = StyleSheet.create({
   container: {
     height: 480,
     width: "100%",
-    borderRadius: 24,
+    borderRadius: 0, // Sharp corners
     overflow: "hidden",
     borderWidth: 1,
-    borderColor: "rgba(229, 231, 235, 0.8)",
+    borderColor: "#e5e7eb",
     position: "relative",
   },
   map: {
@@ -261,19 +275,14 @@ const styles = StyleSheet.create({
   pinBadge: {
     paddingHorizontal: 8,
     paddingVertical: 3,
-    borderRadius: 12,
+    borderRadius: 0, // Sharp corners
     borderWidth: 1,
     borderColor: "rgba(255, 255, 255, 0.9)",
-    elevation: 2,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.15,
-    shadowRadius: 2,
   },
   pinText: {
     color: "#ffffff",
     fontSize: 9,
-    fontWeight: "700",
+    fontWeight: "500", // Non-bold
     textTransform: "uppercase",
     letterSpacing: 0.5,
   },
@@ -285,33 +294,28 @@ const styles = StyleSheet.create({
   pinDot: {
     width: 6,
     height: 6,
-    borderRadius: 3,
+    borderRadius: 0, // Sharp corners
     borderWidth: 1,
     borderColor: "#ffffff",
   },
   truckPinContainer: {
     alignItems: "center",
   },
-  truckCircle: {
+  truckSquare: {
     width: 28,
     height: 28,
-    borderRadius: 14,
+    borderRadius: 0, // Sharp corners
     backgroundColor: "#005c2e",
     justifyContent: "center",
     alignItems: "center",
-    borderWidth: 2,
+    borderWidth: 1.5,
     borderColor: "#ffffff",
-    elevation: 3,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.22,
-    shadowRadius: 3,
   },
   truckBadge: {
     backgroundColor: "#002b15",
     paddingHorizontal: 7,
     paddingVertical: 2,
-    borderRadius: 10,
+    borderRadius: 0, // Sharp corners
     borderWidth: 1,
     borderColor: "rgba(255, 255, 255, 0.4)",
     marginTop: 3,
@@ -319,7 +323,7 @@ const styles = StyleSheet.create({
   truckBadgeText: {
     color: "#34d399",
     fontSize: 8,
-    fontWeight: "700",
+    fontWeight: "500", // Non-bold
     textTransform: "uppercase",
   },
   summaryCard: {
@@ -327,16 +331,11 @@ const styles = StyleSheet.create({
     bottom: 16,
     left: 16,
     right: 16,
-    backgroundColor: "rgba(255, 255, 255, 0.95)",
-    borderRadius: 16,
+    backgroundColor: "#ffffff",
+    borderRadius: 0, // Sharp corners
     padding: 16,
     borderWidth: 1,
-    borderColor: "rgba(229, 231, 235, 0.8)",
-    elevation: 4,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.1,
-    shadowRadius: 6,
+    borderColor: "#e5e7eb",
   },
   summaryRow: {
     flexDirection: "row",
@@ -345,14 +344,14 @@ const styles = StyleSheet.create({
   },
   summaryLabel: {
     fontSize: 10,
-    fontWeight: "900",
+    fontWeight: "500", // Non-bold
     color: "#9ca3af",
     textTransform: "uppercase",
     letterSpacing: 0.8,
   },
   summaryValue: {
-    fontSize: 18,
-    fontWeight: "900",
+    fontSize: 16,
+    fontWeight: "500", // Non-bold clean weight
     color: "#002b15",
     marginTop: 2,
   },
@@ -362,8 +361,8 @@ const styles = StyleSheet.create({
     backgroundColor: "#e5e7eb",
   },
   statusText: {
-    fontSize: 14,
-    fontWeight: "800",
+    fontSize: 13,
+    fontWeight: "500", // Non-bold clean weight
     color: "#005c2e",
     textTransform: "uppercase",
     marginTop: 2,

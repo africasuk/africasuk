@@ -38,31 +38,70 @@ export default function BrandDetailScreen() {
       setError(null);
 
       const supabase = createClient();
-     const {
-      data: brand,
-      error: brandError,
-    } = await supabase
-      .from("brands")
-      .select("*")
-      .eq("slug", slug)
-      .single<Brand>();
 
-      if (brandError || !brand) {
+      // =========================
+      // BRAND
+      // =========================
+      const { data: brandData, error: brandError } = await supabase
+        .from("brands")
+        .select("*")
+        .eq("slug", slug)
+        .single();
+
+      if (brandError || !brandData) {
         setError("Brand not found.");
         return;
       }
 
-      const { data: products, error: productError } = await supabase
+      // DB uses snake_case, app uses camelCase
+      const brand: Brand = {
+        ...(brandData as any),
+        logoUrl: (brandData as any).logo_url ?? null,
+      };
+
+      // =========================
+      // PRODUCTS + COLORS + IMAGES
+      // =========================
+      const { data: productData, error: productError } = await supabase
         .from("products")
-        .select("*, colors:product_colors(*)")
+        .select(`
+          *,
+          colors:product_colors(
+            *,
+            images:product_images(*)
+          )
+        `)
         .eq("brand_id", brand.id);
 
       if (productError) throw productError;
 
-      setBrand(brand as Brand);
-      setProducts((products as ProductWithDetails[]) ?? []);
+      // Convert DB fields to mobile TypeScript fields
+      const mappedProducts: ProductWithDetails[] = (productData ?? []).map(
+        (product: any) => ({
+          ...product,
+
+          colors: (product.colors ?? []).map((color: any) => ({
+            ...color,
+
+            // product_images uses snake_case in Supabase
+            images: (color.images ?? []).map((image: any) => ({
+              ...image,
+              imageUrl: image.image_url ?? image.url ?? null,
+            })),
+          })),
+        })
+      );
+
+      setBrand(brand);
+      setProducts(mappedProducts);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Something went wrong.");
+      console.error("Failed to fetch brand:", err);
+
+      setError(
+        err instanceof Error
+          ? err.message
+          : "Something went wrong."
+      );
     } finally {
       setLoading(false);
       setRefreshing(false);
@@ -118,6 +157,7 @@ export default function BrandDetailScreen() {
         <TouchableOpacity
           style={styles.backButton}
           onPress={() => router.back()}
+          activeOpacity={0.85}
         >
           <ArrowLeft size={16} color="#ffffff" />
           <Text style={styles.backButtonText}>Go Back</Text>
@@ -128,15 +168,18 @@ export default function BrandDetailScreen() {
 
   const renderHeader = () => (
     <View style={styles.headerContainer}>
-      {/* Brand Header Card */}
+      {/* Brand Header Card - Sharp Corners */}
       <View style={styles.brandCard}>
         {/* Logo Container */}
         <View style={styles.logoContainer}>
           {brand.logoUrl ? (
             <Image
-              source={{ uri: brand.logoUrl }}
+              source={{
+                uri: String(brand.logoUrl).trim(),
+              }}
               style={styles.logoImage}
               contentFit="contain"
+              cachePolicy="disk"
               transition={200}
             />
           ) : (
@@ -187,7 +230,7 @@ export default function BrandDetailScreen() {
       <Stack.Screen
         options={{
           title: brand.name,
-          headerTitleStyle: { fontWeight: "800", color: BRAND_DARK },
+          headerTitleStyle: { fontWeight: "500", color: BRAND_DARK },
         }}
       />
 
@@ -228,15 +271,15 @@ export default function BrandDetailScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#f4f4f4",
-    paddingTop: 60,
+    backgroundColor: "#ffffff",
+    paddingTop: 12,
   },
   centered: {
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
     padding: 20,
-    backgroundColor: "#f4f4f4",
+    backgroundColor: "#ffffff",
   },
   listContent: {
     padding: 16,
@@ -256,23 +299,18 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     backgroundColor: "#ffffff",
-    borderRadius: 20,
+    borderRadius: 0, // Sharp corners design language
     borderWidth: 1,
-    borderColor: "rgba(229, 231, 235, 0.8)",
+    borderColor: "#e5e7eb",
     padding: 16,
     gap: 14,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.04,
-    shadowRadius: 3,
-    elevation: 1,
   },
   logoContainer: {
-    width: 80,
-    height: 80,
-    borderRadius: 16,
+    width: 76,
+    height: 76,
+    borderRadius: 0, // Sharp corners
     borderWidth: 1,
-    borderColor: "#f3f4f6",
+    borderColor: "#e5e7eb",
     backgroundColor: "#ffffff",
     alignItems: "center",
     justifyContent: "center",
@@ -283,21 +321,22 @@ const styles = StyleSheet.create({
     height: "100%",
   },
   logoFallback: {
-    fontSize: 28,
-    fontWeight: "900",
+    fontSize: 24,
+    fontWeight: "500", // Clean weight
     color: BRAND_COLOR,
   },
   brandDetails: {
     flex: 1,
   },
   brandName: {
-    fontSize: 18,
-    fontWeight: "900",
+    fontSize: 16,
+    fontWeight: "500", // Clean regular weight
     color: BRAND_DARK,
+    letterSpacing: 0.2,
   },
   brandDescription: {
     fontSize: 12,
-    fontWeight: "500",
+    fontWeight: "400",
     color: "#6b7280",
     marginTop: 2,
     lineHeight: 16,
@@ -311,13 +350,15 @@ const styles = StyleSheet.create({
   },
   productBadge: {
     backgroundColor: "#f3f4f6",
+    borderWidth: 1,
+    borderColor: "#e5e7eb",
     paddingHorizontal: 8,
-    paddingVertical: 3,
-    borderRadius: 9999,
+    paddingVertical: 2,
+    borderRadius: 0, // Sharp corners
   },
   productBadgeText: {
     fontSize: 11,
-    fontWeight: "700",
+    fontWeight: "500", // Clean weight
     color: "#4b5563",
   },
   websiteButton: {
@@ -327,12 +368,12 @@ const styles = StyleSheet.create({
   },
   websiteText: {
     fontSize: 11,
-    fontWeight: "800",
+    fontWeight: "500", // Clean weight
     color: BRAND_COLOR,
   },
   emptyCard: {
     backgroundColor: "#ffffff",
-    borderRadius: 20,
+    borderRadius: 0, // Sharp corners
     borderWidth: 1,
     borderColor: "#e5e7eb",
     paddingVertical: 40,
@@ -341,20 +382,22 @@ const styles = StyleSheet.create({
     marginTop: 8,
   },
   emptyTitle: {
-    fontSize: 16,
-    fontWeight: "800",
+    fontSize: 15,
+    fontWeight: "500", // Clean weight
     color: BRAND_DARK,
   },
   emptySubtitle: {
     fontSize: 12,
+    fontWeight: "400",
     color: "#6b7280",
     textAlign: "center",
     marginTop: 4,
     maxWidth: 260,
+    lineHeight: 18,
   },
   errorTitle: {
-    fontSize: 16,
-    fontWeight: "700",
+    fontSize: 15,
+    fontWeight: "500",
     color: "#1f2937",
     marginBottom: 16,
   },
@@ -365,11 +408,12 @@ const styles = StyleSheet.create({
     backgroundColor: BRAND_COLOR,
     paddingHorizontal: 18,
     paddingVertical: 10,
-    borderRadius: 9999,
+    borderRadius: 0, // Sharp corners design language
   },
   backButtonText: {
-    fontSize: 13,
-    fontWeight: "700",
+    fontSize: 12,
+    fontWeight: "500", // Clean weight
     color: "#ffffff",
+    letterSpacing: 0.2,
   },
 });

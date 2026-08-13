@@ -11,19 +11,22 @@ export default function CartEmpty() {
 
   return (
     <View style={styles.card}>
+      {/* Icon Frame - Sharp Borders */}
       <View style={styles.iconWrapper}>
-        <ShoppingCart size={48} color="#9ca3af" />
+        <ShoppingCart size={32} color="#9ca3af" />
       </View>
 
+      {/* Typography - Clean & Unbolded */}
       <Text style={styles.title}>Your cart is empty</Text>
 
       <Text style={styles.subtitle}>
-        Start shopping and add your favorite products.
+        Start shopping and explore our collections to add your favorite items.
       </Text>
 
+      {/* Button - Sharp Corners */}
       <TouchableOpacity
         style={styles.button}
-        activeOpacity={0.8}
+        activeOpacity={0.85}
         onPress={() => router.push("/")}
       >
         <Text style={styles.buttonText}>Continue Shopping</Text>
@@ -35,52 +38,54 @@ export default function CartEmpty() {
 const styles = StyleSheet.create({
   card: {
     backgroundColor: "#ffffff",
-    borderRadius: 20,
+    borderRadius: 0, // Sharp corners design language
     borderWidth: 1,
-    borderColor: "rgba(229, 231, 235, 0.8)",
-    paddingVertical: 48,
+    borderColor: "#e5e7eb",
+    paddingVertical: 40,
     paddingHorizontal: 24,
     alignItems: "center",
     justifyContent: "center",
   },
   iconWrapper: {
-    width: 80,
-    height: 80,
-    borderRadius: 40,
-    backgroundColor: "#f3f4f6",
+    width: 64,
+    height: 64,
+    borderRadius: 0, // Sharp corners
+    backgroundColor: "#f9fafb",
+    borderWidth: 1,
+    borderColor: "#e5e7eb",
     justifyContent: "center",
     alignItems: "center",
     marginBottom: 16,
   },
   title: {
-    fontSize: 20,
-    fontWeight: "800",
+    fontSize: 18,
+    fontWeight: "500", // Non-bold clean header weight
     color: BRAND_DARK,
     textAlign: "center",
+    letterSpacing: 0.2,
   },
   subtitle: {
-    fontSize: 14,
-    fontWeight: "500",
+    fontSize: 13,
+    fontWeight: "400",
     color: "#6b7280",
     textAlign: "center",
-    marginTop: 8,
-    maxWidth: 240,
+    marginTop: 6,
+    lineHeight: 18,
+    maxWidth: 260,
   },
   button: {
-    marginTop: 24,
+    marginTop: 20,
     backgroundColor: BRAND,
-    paddingHorizontal: 24,
+    paddingHorizontal: 20,
     paddingVertical: 12,
-    borderRadius: 9999,
-    shadowColor: BRAND,
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.15,
-    shadowRadius: 4,
-    elevation: 2,
+    borderRadius: 0, // Sharp corners
+    alignItems: "center",
+    justifyContent: "center",
   },
   buttonText: {
     color: "#ffffff",
-    fontSize: 14,
-    fontWeight: "700",
+    fontSize: 13,
+    fontWeight: "500", // Clean regular weight
+    letterSpacing: 0.3,
   },
 });

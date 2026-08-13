@@ -33,6 +33,7 @@ export default function FeaturedProducts({ products = [] }: Props) {
 
   return (
     <View style={styles.sectionContainer}>
+      {/* Header Section */}
       <View style={styles.header}>
         <View style={styles.textGroup}>
           <Text style={styles.title}>Featured Products</Text>
@@ -50,6 +51,7 @@ export default function FeaturedProducts({ products = [] }: Props) {
         </TouchableOpacity>
       </View>
 
+      {/* Product Grid */}
       <FlatList
         data={featuredColorProducts}
         keyExtractor={(item) => item.id}
@@ -63,25 +65,34 @@ export default function FeaturedProducts({ products = [] }: Props) {
           </View>
         )}
       />
+
+      {/* Full-width "All Products" Button at the Bottom */}
+      <TouchableOpacity
+        style={styles.allProductsBtn}
+        activeOpacity={0.85}
+        onPress={() => router.push("/products" as never)}
+      >
+        <Text style={styles.allProductsBtnText}>All Products</Text>
+      </TouchableOpacity>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
   sectionContainer: {
-    paddingVertical: 32,
+    paddingVertical: 24,
     paddingHorizontal: 16,
-    backgroundColor: "#fafafa",
+    backgroundColor: "#ffffff",
     borderTopWidth: 1,
     borderBottomWidth: 1,
-    borderColor: "#f3f4f6",
+    borderColor: "#e5e7eb",
   },
 
   header: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "flex-start",
-    marginBottom: 24,
+    marginBottom: 20,
     gap: 12,
   },
 
@@ -90,16 +101,17 @@ const styles = StyleSheet.create({
   },
 
   title: {
-    fontSize: 22,
-    fontWeight: "900",
+    fontSize: 18,
+    fontWeight: "500", // Non-bold clean header weight
     color: "#111827",
-    letterSpacing: -0.5,
+    letterSpacing: 0.2,
   },
 
   subtitle: {
     marginTop: 4,
     color: "#6b7280",
-    fontSize: 13,
+    fontSize: 12,
+    fontWeight: "400",
     lineHeight: 18,
   },
 
@@ -108,19 +120,20 @@ const styles = StyleSheet.create({
     borderColor: "#e5e7eb",
     paddingHorizontal: 14,
     paddingVertical: 8,
-    borderRadius: 20,
+    borderRadius: 0, // Sharp corners
     backgroundColor: "#ffffff",
     alignSelf: "flex-start",
   },
 
   viewAllText: {
     color: "#111827",
-    fontWeight: "700",
+    fontWeight: "500", // Non-bold clean button weight
     fontSize: 12,
+    letterSpacing: 0.2,
   },
 
   listContent: {
-    gap: 16, // Vertical gap between rows
+    gap: 12, // Vertical gap between rows
   },
 
   columnWrapper: {
@@ -129,5 +142,24 @@ const styles = StyleSheet.create({
 
   cardWrapper: {
     width: "48%", // Prevents items from stretching/squeezing unevenly
+  },
+
+  allProductsBtn: {
+    width: "100%",
+    height: 46,
+    backgroundColor: "#ffffff",
+    borderWidth: 1,
+    borderColor: "#111827",
+    borderRadius: 0, // Sharp corners
+    justifyContent: "center",
+    alignItems: "center",
+    marginTop: 20,
+  },
+
+  allProductsBtnText: {
+    color: "#111827",
+    fontSize: 13,
+    fontWeight: "500", // Unbolded clean weight
+    letterSpacing: 0.3,
   },
 });

@@ -6,7 +6,9 @@ import {
   Pressable,
   StyleSheet,
   Alert,
+  Share,
 } from "react-native";
+import * as Linking from "expo-linking";
 import { useRouter, Href } from "expo-router";
 import {
   User,
@@ -27,13 +29,21 @@ import {
   ChevronRight,
 } from "lucide-react-native";
 
-import { LanguageSwitcher } from "@/components/LanguageSwitcher";
 import { CurrencySwitcher } from "@/components/CurrencySwitcher";
 import { createClient } from "@/lib/auth/client";
 
 const supabase = createClient();
 
 const BRAND_LIGHT = "#008744";
+const PLAY_STORE_URL =
+  "https://play.google.com/store/apps/details?id=com.africasuk.app";
+
+// Type definition for optional action callbacks
+type MenuItem = [
+  string,
+  React.ComponentType<any>,
+  ((() => void) | undefined)?
+];
 
 export default function MenuScreen() {
   const router = useRouter();
@@ -74,6 +84,22 @@ export default function MenuScreen() {
     } catch {
       Alert.alert("Error", "Failed to sign out.");
     }
+  };
+
+  const handleShareApp = async () => {
+    try {
+      await Share.share({
+        message: `Shop with confidence on AfricaSuk 🛍️\n\nDownload the app:\n${PLAY_STORE_URL}`,
+      });
+    } catch (error) {
+      console.error("Share error:", error);
+    }
+  };
+
+  const handleRateApp = () => {
+    Linking.openURL(PLAY_STORE_URL).catch((err) =>
+      console.error("Failed to open store link:", err)
+    );
   };
 
   return (
@@ -130,7 +156,6 @@ export default function MenuScreen() {
           <ChevronRight size={18} color="#9ca3af" />
         </Pressable>
 
-        {/* Requested Products Link under Cart */}
         <Pressable
           style={styles.row}
           onPress={() => router.push("/requests" as Href)}
@@ -148,7 +173,7 @@ export default function MenuScreen() {
         <Text style={styles.sectionTitle}>Preferences</Text>
 
         <View style={styles.row}>
-          <LanguageSwitcher />
+          <Text style={styles.comingSoon}>Language — Coming Soon</Text>
         </View>
 
         <View style={styles.row}>
@@ -168,13 +193,33 @@ export default function MenuScreen() {
       <MenuSection
         title="Support"
         items={[
-          ["Become a Seller", Store],
-          ["Help Center", CircleHelp],
-          ["Privacy Policy", Shield],
-          ["Terms & Conditions", FileText],
-          ["About AfricaSuk", Info],
-          ["Share App", Share2],
-          ["Rate App", Star],
+          [
+            "Become a Seller",
+            Store,
+            () => Linking.openURL("https://www.africasuk.com/sell"),
+          ],
+          [
+            "Help Center",
+            CircleHelp,
+            () => Linking.openURL("https://www.africasuk.com/help"),
+          ],
+          [
+            "Privacy Policy",
+            Shield,
+            () => Linking.openURL("https://www.africasuk.com/privacy"),
+          ],
+          [
+            "Terms & Conditions",
+            FileText,
+            () => Linking.openURL("https://www.africasuk.com/terms"),
+          ],
+          [
+            "About AfricaSuk",
+            Info,
+            () => Linking.openURL("https://www.africasuk.com/about"),
+          ],
+          ["Share App", Share2, handleShareApp],
+          ["Rate App", Star, handleRateApp],
         ]}
       />
 
@@ -214,14 +259,14 @@ function MenuSection({
   items,
 }: {
   title: string;
-  items: [string, any][];
+  items: MenuItem[];
 }) {
   return (
     <View style={styles.section}>
       <Text style={styles.sectionTitle}>{title}</Text>
 
-      {items.map(([label, Icon]) => (
-        <Pressable key={label} style={styles.row}>
+      {items.map(([label, Icon, onPress]) => (
+        <Pressable key={label} style={styles.row} onPress={onPress}>
           <View style={styles.left}>
             <Icon size={20} color={BRAND_LIGHT} />
             <Text style={styles.rowText}>{label}</Text>
@@ -238,7 +283,7 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: "#f8fafc",
-    paddingTop: 60,
+    paddingTop: 30,
   },
 
   content: {
@@ -250,9 +295,9 @@ const styles = StyleSheet.create({
   section: {
     marginBottom: 20,
     backgroundColor: "#ffffff",
-    borderRadius: 18,
+    borderRadius: 0, // Sharp corners
     borderWidth: 1,
-    borderColor: "rgba(229, 231, 235, 0.8)",
+    borderColor: "#e5e7eb",
     overflow: "hidden",
   },
 
@@ -260,8 +305,8 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingTop: 16,
     paddingBottom: 8,
-    fontSize: 12,
-    fontWeight: "800",
+    fontSize: 11,
+    fontWeight: "500", // Non-bold clean header weight
     color: "#6b7280",
     textTransform: "uppercase",
     letterSpacing: 0.5,
@@ -284,8 +329,8 @@ const styles = StyleSheet.create({
 
   rowText: {
     marginLeft: 14,
-    fontSize: 15,
-    fontWeight: "600",
+    fontSize: 14,
+    fontWeight: "500", // Non-bold clean text weight
     color: "#111827",
   },
 
@@ -294,16 +339,16 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     backgroundColor: "#ffffff",
-    borderRadius: 18,
+    borderRadius: 0, // Sharp corners
     padding: 16,
     borderWidth: 1,
-    borderColor: "rgba(229, 231, 235, 0.8)",
+    borderColor: "#e5e7eb",
   },
 
   logoutText: {
     marginLeft: 10,
-    fontSize: 15,
-    fontWeight: "800",
+    fontSize: 14,
+    fontWeight: "500", // Non-bold text weight
     color: "#dc2626",
   },
 
@@ -312,6 +357,12 @@ const styles = StyleSheet.create({
     marginTop: 20,
     color: "#9ca3af",
     fontSize: 12,
-    fontWeight: "600",
+    fontWeight: "400",
+  },
+
+  comingSoon: {
+    color: "#888",
+    fontSize: 14,
+    fontWeight: "400",
   },
 });

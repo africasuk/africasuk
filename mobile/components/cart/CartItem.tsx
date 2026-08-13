@@ -1,5 +1,6 @@
 import React from "react";
-import { View, Text, StyleSheet, Image, TouchableOpacity } from "react-native";
+import { View, Text, StyleSheet, TouchableOpacity } from "react-native";
+import { Image } from "expo-image";
 import { useRouter } from "expo-router";
 import { Minus, Plus, Trash2 } from "lucide-react-native";
 
@@ -38,12 +39,13 @@ export default function CartItem({ item }: Props) {
 
   return (
     <View style={styles.card}>
-      {/* Product Image */}
+      {/* Product Image Frame - Sharp Corners */}
       <TouchableOpacity activeOpacity={0.8} onPress={handleNavigate}>
         <Image
           source={{ uri: item.image }}
           style={styles.image}
-          resizeMode="cover"
+          contentFit="cover"
+          transition={200}
         />
       </TouchableOpacity>
 
@@ -75,14 +77,14 @@ export default function CartItem({ item }: Props) {
 
         {/* Footer: Stepper & Price/Remove */}
         <View style={styles.footer}>
-          {/* Quantity Stepper */}
+          {/* Quantity Stepper - Sharp Corners */}
           <View style={styles.stepperContainer}>
             <TouchableOpacity
               style={styles.stepperButton}
               activeOpacity={0.7}
               onPress={decrease}
             >
-              <Minus size={14} color="#374151" />
+              <Minus size={12} color="#374151" />
             </TouchableOpacity>
 
             <Text style={styles.quantityText}>{item.quantity}</Text>
@@ -97,7 +99,7 @@ export default function CartItem({ item }: Props) {
               disabled={isAtMaxStock}
             >
               <Plus
-                size={14}
+                size={12}
                 color={isAtMaxStock ? "#d1d5db" : "#374151"}
               />
             </TouchableOpacity>
@@ -105,16 +107,17 @@ export default function CartItem({ item }: Props) {
 
           {/* Price & Remove Button */}
           <View style={styles.priceAndRemoveContainer}>
-            <Text style={styles.priceText}>
-              <Price price={item.price * item.quantity} />
-            </Text>
+            <Price
+              price={item.price * item.quantity}
+              style={styles.priceText}
+            />
 
             <TouchableOpacity
               style={styles.removeButton}
               activeOpacity={0.7}
               onPress={() => removeItem(item.variantId)}
             >
-              <Trash2 size={13} color="#ef4444" />
+              <Trash2 size={12} color="#ef4444" />
               <Text style={styles.removeText}>Remove</Text>
             </TouchableOpacity>
           </View>
@@ -129,48 +132,50 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     gap: 12,
     backgroundColor: "#ffffff",
-    borderRadius: 16,
+    borderRadius: 0, // Sharp corners design language
     borderWidth: 1,
-    borderColor: "rgba(229, 231, 235, 0.8)",
+    borderColor: "#e5e7eb",
     padding: 12,
   },
   image: {
     width: 88,
     height: 88,
-    borderRadius: 12,
-    backgroundColor: "#f3f4f6",
+    borderRadius: 0, // Sharp corners
+    backgroundColor: "#f9fafb",
+    borderWidth: 1,
+    borderColor: "#e5e7eb",
   },
   content: {
     flex: 1,
     justifyContent: "space-between",
   },
   title: {
-    fontSize: 14,
-    fontWeight: "700",
+    fontSize: 13,
+    fontWeight: "500", // Non-bold clean weight
     color: BRAND_DARK,
     lineHeight: 18,
   },
   optionsContainer: {
-    marginTop: 6,
+    marginTop: 4,
     gap: 2,
   },
   optionRow: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 6,
+    gap: 4,
   },
   optionName: {
-    fontSize: 12,
-    fontWeight: "600",
+    fontSize: 11,
+    fontWeight: "400",
     color: "#6b7280",
   },
   optionValue: {
-    fontSize: 12,
-    fontWeight: "700",
+    fontSize: 11,
+    fontWeight: "500", // Clean regular weight
     color: BRAND_DARK,
   },
   footer: {
-    marginTop: 12,
+    marginTop: 10,
     flexDirection: "row",
     alignItems: "flex-end",
     justifyContent: "space-between",
@@ -180,12 +185,12 @@ const styles = StyleSheet.create({
     alignItems: "center",
     borderWidth: 1,
     borderColor: "#e5e7eb",
-    borderRadius: 8,
+    borderRadius: 0, // Sharp corners
     backgroundColor: "#f9fafb",
   },
   stepperButton: {
     paddingHorizontal: 8,
-    paddingVertical: 6,
+    paddingVertical: 5,
     justifyContent: "center",
     alignItems: "center",
   },
@@ -193,10 +198,10 @@ const styles = StyleSheet.create({
     opacity: 0.5,
   },
   quantityText: {
-    width: 28,
+    width: 26,
     textAlign: "center",
-    fontSize: 13,
-    fontWeight: "700",
+    fontSize: 12,
+    fontWeight: "500", // Clean weight
     color: BRAND_DARK,
   },
   priceAndRemoveContainer: {
@@ -204,8 +209,8 @@ const styles = StyleSheet.create({
     gap: 4,
   },
   priceText: {
-    fontSize: 15,
-    fontWeight: "800",
+    fontSize: 14,
+    fontWeight: "500", // Clean regular weight
     color: BRAND_DARK,
   },
   removeButton: {
@@ -215,8 +220,8 @@ const styles = StyleSheet.create({
     paddingVertical: 2,
   },
   removeText: {
-    fontSize: 12,
-    fontWeight: "600",
+    fontSize: 11,
+    fontWeight: "400", // Clean weight
     color: "#ef4444",
   },
 });

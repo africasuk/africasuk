@@ -15,7 +15,11 @@ import { createClient } from "@/lib/auth/client";
 // Components
 import SearchProductList from "@/components/search/SearchProductList";
 import SearchEmptyState from "@/components/search/SearchEmptyState";
+
 import AppHeader from "@/components/layout/AppHeader";
+import { SearchBar } from "react-native-screens";
+
+const BRAND = "#004d26";
 
 export default function SearchScreen() {
   const params = useLocalSearchParams<{ q?: string }>();
@@ -33,25 +37,25 @@ export default function SearchScreen() {
     try {
       setLoading(true);
 
-    const supabase = createClient();
+      const supabase = createClient();
 
-const { data, error } = await supabase
-  .from("products")
-  .select(`
-    *,
-    brand:brands(*),
-    category:categories(*),
-    colors:product_colors(
-      *,
-      images:product_images(*),
-      variants:product_variants(*)
-    )
-  `)
-  .or(`name.ilike.%${searchTerm}%,description.ilike.%${searchTerm}%`);
+      const { data, error } = await supabase
+        .from("products")
+        .select(`
+          *,
+          brand:brands(*),
+          category:categories(*),
+          colors:product_colors(
+            *,
+            images:product_images(*),
+            variants:product_variants(*)
+          )
+        `)
+        .or(`name.ilike.%${searchTerm}%,description.ilike.%${searchTerm}%`);
 
-    if (error) throw error;
+      if (error) throw error;
 
-    setProducts((data as ProductWithDetails[]) ?? []);
+      setProducts((data as ProductWithDetails[]) ?? []);
     } catch (error) {
       console.error("Search error:", error);
       setProducts([]);
@@ -64,46 +68,55 @@ const { data, error } = await supabase
     fetchSearchResults(query);
   }, [query, fetchSearchResults]);
 
-return (
-  <SafeAreaView style={styles.safeArea}>
-    <Stack.Screen options={{ headerShown: false }} />
+  return (
+    <SafeAreaView style={styles.safeArea}>
+      <Stack.Screen options={{ headerShown: false }} />
 
-   <AppHeader
+      <AppHeader
         showBack
         title="Search"
         showCart
       />
 
-    <View style={styles.container}>
-      {/* Header */}
-      <View style={styles.header}>
-        <Text style={styles.title}>
-          {query ? `Search results for "${query}"` : "Search products"}
-        </Text>
-
-        <Text style={styles.subtitle}>
-          Showing matching items across all colors and variants
-        </Text>
-      </View>
-
-      {/* Content */}
-      {loading ? (
-        <View style={styles.centerContainer}>
-          <ActivityIndicator size="large" color="#004d26" />
+      <View style={styles.container}>
+        {/* Search Bar Input Container */}
+        <View style={styles.searchBarWrapper}>
+          <SearchBar
+            placeholder={query || "Search products, categories..."}
+            autoFocus={false}
+          />
         </View>
-      ) : products.length === 0 ? (
-        <SearchEmptyState query={query} />
-      ) : (
-        <SearchProductList products={products} />
-      )}
-    </View>
-  </SafeAreaView>
-);
+
+        {/* Header Title Meta */}
+        <View style={styles.header}>
+          <Text style={styles.title}>
+            {query ? `Search results for "${query}"` : "Search products"}
+          </Text>
+
+          <Text style={styles.subtitle}>
+            Showing matching items across all colors and variants
+          </Text>
+        </View>
+
+        {/* Content Section */}
+        {loading ? (
+          <View style={styles.centerContainer}>
+            <ActivityIndicator size="large" color={BRAND} />
+          </View>
+        ) : products.length === 0 ? (
+          <SearchEmptyState query={query} />
+        ) : (
+          <SearchProductList products={products} />
+        )}
+      </View>
+    </SafeAreaView>
+  );
 }
 
 type Styles = {
   safeArea: ViewStyle;
   container: ViewStyle;
+  searchBarWrapper: ViewStyle;
   header: ViewStyle;
   title: TextStyle;
   subtitle: TextStyle;
@@ -113,24 +126,29 @@ type Styles = {
 const styles = StyleSheet.create<Styles>({
   safeArea: {
     flex: 1,
-    backgroundColor: "#F9FAFB",
+    backgroundColor: "#ffffff",
   },
   container: {
     flex: 1,
     paddingHorizontal: 16,
     paddingTop: 12,
   },
+  searchBarWrapper: {
+    marginBottom: 16,
+  },
   header: {
     marginBottom: 16,
   },
   title: {
-    fontSize: 20,
-    fontWeight: "700",
+    fontSize: 18,
+    fontWeight: "500", // Non-bold clean header weight
     color: "#111827",
+    letterSpacing: 0.2,
   },
   subtitle: {
     fontSize: 12,
-    color: "#6B7280",
+    fontWeight: "400",
+    color: "#6b7280",
     marginTop: 2,
   },
   centerContainer: {
