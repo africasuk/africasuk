@@ -16,14 +16,14 @@ interface Props {
 export function ProductCard({ product }: Props) {
   const [isLoading, setIsLoading] = useState(false);
 
-  // Determine selected color or default to first color option
+  // Determine selected color or default to the first color option
   const color =
     product.colors.find((c) => c.id === product.selectedColorId) ??
     product.colors[0];
 
   const image = color?.images?.[0]?.imageUrl ?? "/placeholder.png";
 
-  // Safely extract price from the active color's variants or fall back across colors
+  // Safely extract base price from active color or fallback variants
   const basePrice =
     color?.variants?.[0]?.price ??
     product.colors.flatMap((c) => c.variants ?? [])[0]?.price ??
@@ -36,35 +36,35 @@ export function ProductCard({ product }: Props) {
     <Link
       href={`/products/${product.slug}${color?.id ? `?color=${color.id}` : ""}`}
       onClick={() => setIsLoading(true)}
-      className={`group relative flex flex-col rounded-xl sm:rounded-2xl border border-gray-100/80 bg-white p-2.5 sm:p-3.5 transition-all duration-300 hover:border-[#002b15]/20 hover:shadow-xl hover:shadow-gray-900/5 ${
+      className={`group relative flex flex-col rounded-none border border-gray-200 bg-white p-2.5 sm:p-3 transition-colors duration-200 hover:border-gray-400 select-none antialiased shadow-none ${
         isLoading ? "pointer-events-none opacity-80" : ""
       }`}
     >
       {/* 1. Image Showcase Frame */}
-      <div className="relative h-36 sm:h-48 md:h-60 w-full overflow-hidden rounded-lg sm:rounded-xl bg-gray-50/80">
+      <div className="relative aspect-square w-full overflow-hidden rounded-none bg-gray-50 border border-gray-100">
         <Image
           src={image}
           alt={product.name}
           fill
           sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
-          className="object-cover transition-transform duration-500 ease-out group-hover:scale-105"
+          className="object-cover transition-transform duration-500 ease-out group-hover:scale-103"
         />
 
         {/* Loading Spinner Overlay */}
         {isLoading && (
-          <div className="absolute inset-0 z-10 flex items-center justify-center bg-black/20 backdrop-blur-[1px]">
-            <Loader2 className="h-6 w-6 sm:h-8 sm:w-8 animate-spin text-white drop-shadow-md" />
+          <div className="absolute inset-0 z-10 flex items-center justify-center bg-white/70 backdrop-blur-xs">
+            <Loader2 className="h-5 w-5 sm:h-6 sm:w-6 animate-spin text-[#004d26]" />
           </div>
         )}
 
-        {/* Color Swatch Preview Pill */}
+        {/* Minimal Color Swatches */}
         {product.colors.length > 1 && !isLoading && (
-          <div className="absolute bottom-2 left-2 flex items-center gap-1 rounded-full bg-white/90 backdrop-blur-xs px-2 py-1 shadow-xs border border-gray-100">
+          <div className="absolute bottom-1.5 left-1.5 flex items-center gap-1 rounded-none bg-white/95 px-1.5 py-0.5 border border-gray-200">
             {product.colors.slice(0, 4).map((c) => (
               <span
                 key={c.id}
-                className={`h-2 w-2 sm:h-2.5 sm:w-2.5 rounded-full border border-black/10 ${
-                  c.id === color?.id ? "ring-1 ring-[#002b15]" : ""
+                className={`h-2 w-2 sm:h-2.5 sm:w-2.5 rounded-none border border-black/10 ${
+                  c.id === color?.id ? "ring-1 ring-[#004d26]" : ""
                 }`}
                 style={{
                   backgroundColor: c.hexCode ?? c.name.toLowerCase(),
@@ -72,7 +72,7 @@ export function ProductCard({ product }: Props) {
               />
             ))}
             {product.colors.length > 4 && (
-              <span className="text-[9px] font-bold text-gray-400 pl-0.5">
+              <span className="text-[9px] font-semibold text-gray-500 pl-0.5">
                 +{product.colors.length - 4}
               </span>
             )}
@@ -80,16 +80,16 @@ export function ProductCard({ product }: Props) {
         )}
       </div>
 
-      {/* 2. Content & Metadata Section */}
-      <div className="flex flex-col justify-between grow pt-3 px-0.5 space-y-2">
+      {/* 2. Content & Metadata */}
+      <div className="flex flex-col justify-between grow pt-2.5 space-y-2">
         <div className="space-y-1">
           {product.brand?.name && (
-            <p className="text-[9px] sm:text-[10px] font-extrabold tracking-widest uppercase text-gray-400">
+            <p className="text-[9px] sm:text-[10px] font-semibold tracking-wider uppercase text-gray-400 truncate">
               {product.brand.name}
             </p>
           )}
 
-          <h3 className="text-xs sm:text-sm font-bold text-gray-900 group-hover:text-[#005c2e] transition-colors line-clamp-1">
+          <h3 className="text-xs sm:text-sm font-semibold text-gray-900 group-hover:text-[#004d26] transition-colors line-clamp-1">
             {product.name}
           </h3>
 
@@ -100,7 +100,7 @@ export function ProductCard({ product }: Props) {
                 <svg
                   key={index}
                   viewBox="0 0 20 20"
-                  className={`h-3 w-3 sm:h-3.5 sm:w-3.5 ${
+                  className={`h-2.5 w-2.5 sm:h-3 sm:w-3 ${
                     index < Math.round(averageRating)
                       ? "fill-amber-400 text-amber-400"
                       : "fill-gray-200 text-gray-200"
@@ -112,25 +112,25 @@ export function ProductCard({ product }: Props) {
             </div>
 
             {reviewCount > 0 ? (
-              <span className="text-[10px] sm:text-xs font-semibold text-gray-500">
+              <span className="text-[10px] font-medium text-gray-500">
                 {averageRating.toFixed(1)} ({reviewCount})
               </span>
             ) : (
-              <span className="text-[10px] sm:text-xs font-medium text-gray-400">
+              <span className="text-[10px] font-medium text-gray-400">
                 No reviews
               </span>
             )}
           </div>
         </div>
 
-        {/* 3. Price Display */}
-        <div className="pt-2 flex items-center justify-between border-t border-gray-100/60">
-          <div className="text-sm sm:text-base font-black text-[#002b15] tracking-tight">
+        {/* 3. Price Footer */}
+        <div className="pt-2 flex items-center justify-between border-t border-gray-100">
+          <div className="text-xs sm:text-sm font-bold text-[#004d26] tracking-tight">
             <Price price={Number(basePrice)} />
           </div>
 
-          <span className="hidden sm:inline-flex items-center text-[11px] font-extrabold text-[#005c2e] uppercase tracking-wider opacity-0 group-hover:opacity-100 transition-opacity">
-            {isLoading ? "Loading..." : "View Item →"}
+          <span className="hidden sm:inline-flex items-center text-[10px] font-semibold text-[#004d26] uppercase tracking-wider opacity-0 group-hover:opacity-100 transition-opacity">
+            {isLoading ? "Loading..." : "View →"}
           </span>
         </div>
       </div>

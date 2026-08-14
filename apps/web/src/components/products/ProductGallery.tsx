@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { createPortal } from "react-dom";
 import Image from "next/image";
+import { ChevronLeft, ChevronRight, X, Maximize2 } from "lucide-react";
 
 interface Props {
   images: {
@@ -14,17 +15,12 @@ interface Props {
 export function ProductGallery({ images }: Props) {
   const [selectedIndex, setSelectedIndex] = useState(0);
   const [isLightboxOpen, setIsLightboxOpen] = useState(false);
-  const [isMounted, setIsMounted] = useState(false);
 
   // Touch & Drag Sliding State
   const [touchStart, setTouchStart] = useState<number | null>(null);
   const [touchEnd, setTouchEnd] = useState<number | null>(null);
 
   const imagesCount = images?.length ?? 0;
-
-  useEffect(() => {
-    setIsMounted(true);
-  }, []);
 
   const handlePrev = useCallback(() => {
     setSelectedIndex((prev) => (prev === 0 ? imagesCount - 1 : prev - 1));
@@ -83,7 +79,7 @@ export function ProductGallery({ images }: Props) {
 
   if (!images || images.length === 0) {
     return (
-      <div className="relative h-96 w-full rounded-2xl bg-gray-50 flex items-center justify-center text-gray-400 text-sm font-normal">
+      <div className="relative h-96 w-full rounded-none bg-gray-50 border border-gray-200 flex items-center justify-center text-gray-400 text-xs font-normal select-none">
         No image available
       </div>
     );
@@ -98,11 +94,11 @@ export function ProductGallery({ images }: Props) {
   return (
     <>
       {/* 1. MAIN PRODUCT GALLERY DISPLAY */}
-      <div className="flex flex-col gap-5 items-center w-full">
+      <div className="flex flex-col gap-3 w-full select-none antialiased">
         {/* Main Display Container */}
         <div
           onClick={() => setIsLightboxOpen(true)}
-          className="relative w-full h-105 sm:h-120 lg:h-130 rounded-2xl bg-gray-50 overflow-hidden border border-gray-100 cursor-pointer group select-none"
+          className="relative w-full h-100 sm:h-120 lg:h-130 rounded-none bg-gray-50 overflow-hidden border border-gray-200 cursor-pointer group"
         >
           {/* Main Image */}
           <Image
@@ -111,105 +107,101 @@ export function ProductGallery({ images }: Props) {
             fill
             priority
             sizes="(max-width: 1024px) 100vw, 50vw"
-            className="object-cover transition-transform duration-300 group-hover:scale-105"
+            className="object-cover transition-transform duration-300 group-hover:scale-102"
           />
 
-          {/* Click to Zoom Overlay Indicator */}
-          <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors flex items-center justify-center">
-            <span className="opacity-0 group-hover:opacity-100 bg-[#002b15]/90 text-white text-xs font-medium px-4 py-2 rounded-full backdrop-blur-xs transition-all duration-200 shadow-md">
-              Click to view full screen
+          {/* Click to Zoom Indicator */}
+          <div className="absolute inset-0 bg-black/0 group-hover:bg-black/5 transition-colors flex items-center justify-center">
+            <span className="opacity-0 group-hover:opacity-100 bg-[#004d26]/90 text-white text-[11px] font-normal px-3 py-1.5 rounded-none transition-all duration-150 flex items-center gap-1.5 shadow-none">
+              <Maximize2 className="h-3 w-3 stroke-[1.5]" />
+              Click for full screen
             </span>
           </div>
 
           {/* Inline Navigation Arrows */}
           {images.length > 1 && (
             <div
-              className="absolute bottom-4 right-4 flex items-center gap-2 z-10"
+              className="absolute bottom-3 right-3 flex items-center gap-1 z-10"
               onClick={(e) => e.stopPropagation()}
             >
               <button
                 type="button"
                 onClick={handlePrev}
                 aria-label="Previous image"
-                className="w-9 h-9 rounded-full bg-white/90 backdrop-blur-xs border border-gray-200 text-gray-800 flex items-center justify-center shadow-xs hover:bg-[#002b15] hover:text-white hover:border-[#002b15] transition-all cursor-pointer"
+                className="w-8 h-8 rounded-none bg-white border border-gray-200 text-gray-700 flex items-center justify-center hover:bg-gray-50 hover:border-gray-400 hover:text-gray-900 transition-colors cursor-pointer shadow-none"
               >
-                &#8249;
+                <ChevronLeft className="h-4 w-4 stroke-[1.5]" />
               </button>
               <button
                 type="button"
                 onClick={handleNext}
                 aria-label="Next image"
-                className="w-9 h-9 rounded-full bg-[#002b15] text-white flex items-center justify-center shadow-xs hover:bg-[#002b15]/90 transition-all cursor-pointer"
+                className="w-8 h-8 rounded-none bg-[#004d26] text-white flex items-center justify-center hover:bg-[#00361a] transition-colors cursor-pointer shadow-none"
               >
-                &#8250;
+                <ChevronRight className="h-4 w-4 stroke-[1.5]" />
               </button>
             </div>
           )}
         </div>
 
-        {/* Thumbnail Bar */}
+        {/* Thumbnail Row */}
         {images.length > 1 && (
-          <div className="flex flex-col items-center gap-2 w-full">
-            <span className="text-xs font-medium text-gray-500 self-end mr-1">
-              Product views
-            </span>
-            <div className="flex gap-2.5 overflow-x-auto p-1 max-w-full no-scrollbar">
-              {images.map((image, index) => {
-                const thumbnailSrc =
-                  image.imageUrl && image.imageUrl.startsWith("http")
-                    ? image.imageUrl
-                    : "/placeholder.png";
+          <div className="flex gap-2 overflow-x-auto py-1 max-w-full no-scrollbar">
+            {images.map((image, index) => {
+              const thumbnailSrc =
+                image.imageUrl && image.imageUrl.startsWith("http")
+                  ? image.imageUrl
+                  : "/placeholder.png";
 
-                const isSelected = index === selectedIndex;
+              const isSelected = index === selectedIndex;
 
-                return (
-                  <button
-                    type="button"
-                    key={image.id}
-                    onClick={() => setSelectedIndex(index)}
-                    className={`relative h-16 w-16 min-w-16 rounded-xl overflow-hidden bg-gray-50 border-2 transition-all cursor-pointer ${
-                      isSelected
-                        ? "border-[#002b15] ring-2 ring-[#002b15]/20 shadow-xs"
-                        : "border-transparent opacity-60 hover:opacity-100 hover:border-gray-200"
-                    }`}
-                  >
-                    <Image
-                      src={thumbnailSrc}
-                      alt={`Thumbnail ${index + 1}`}
-                      fill
-                      sizes="64px"
-                      className="object-cover"
-                    />
-                  </button>
-                );
-              })}
-            </div>
+              return (
+                <button
+                  type="button"
+                  key={image.id}
+                  onClick={() => setSelectedIndex(index)}
+                  className={`relative h-16 w-16 min-w-16 rounded-none overflow-hidden bg-gray-50 border transition-colors cursor-pointer ${
+                    isSelected
+                      ? "border-[#004d26]"
+                      : "border-gray-200 opacity-60 hover:opacity-100 hover:border-gray-400"
+                  }`}
+                >
+                  <Image
+                    src={thumbnailSrc}
+                    alt={`Thumbnail ${index + 1}`}
+                    fill
+                    sizes="64px"
+                    className="object-cover"
+                  />
+                </button>
+              );
+            })}
           </div>
         )}
       </div>
 
-      {/* 2. FULL-SCREEN LIGHTBOX MODAL (PORTAL TO DOCUMENT BODY) */}
+      {/* 2. FULL-SCREEN LIGHTBOX MODAL */}
       {isLightboxOpen &&
-        isMounted &&
+        typeof document !== "undefined" &&
         createPortal(
-          <div className="fixed inset-0 z-9999 bg-black/95 backdrop-blur-md flex flex-col justify-between p-4 sm:p-6 select-none animate-in fade-in duration-200 overflow-hidden w-screen h-screen top-0 left-0">
+          <div className="fixed inset-0 z-9999 bg-black/95 flex flex-col justify-between p-4 sm:p-6 select-none animate-in fade-in duration-150 overflow-hidden w-screen h-screen top-0 left-0">
             {/* Top Bar: Counter & Close Button */}
-            <div className="w-full flex items-center justify-between z-10 sm:px-4">
-              <div className="text-xs font-medium text-white/90 bg-white/10 px-3.5 py-1.5 rounded-full backdrop-blur-md">
+            <div className="w-full flex items-center justify-between z-10">
+              <div className="text-[11px] font-normal text-white/80 bg-white/10 px-2.5 py-1 rounded-none border border-white/10">
                 {selectedIndex + 1} / {images.length}
               </div>
 
               <button
                 type="button"
                 onClick={() => setIsLightboxOpen(false)}
-                className="text-white/80 hover:text-white bg-white/10 hover:bg-white/20 h-10 w-10 rounded-full flex items-center justify-center text-xl transition-all cursor-pointer backdrop-blur-md"
-                aria-label="Close modal"
+                className="text-white/80 hover:text-white bg-white/10 hover:bg-white/20 h-8 w-8 rounded-none border border-white/10 flex items-center justify-center transition-colors cursor-pointer"
+                aria-label="Close full screen"
               >
-                ✕
+                <X className="h-4 w-4 stroke-[1.5]" />
               </button>
             </div>
 
-            {/* Main Center Image - Expanded Max Viewport Height */}
+            {/* Center Image */}
             <div
               className="relative w-full h-[82vh] sm:h-[86vh] max-w-7xl mx-auto flex items-center justify-center my-auto px-2 sm:px-12"
               onTouchStart={onTouchStart}
@@ -228,25 +220,25 @@ export function ProductGallery({ images }: Props) {
               </div>
             </div>
 
-            {/* Sliding Control Arrows */}
+            {/* Controls */}
             {images.length > 1 && (
               <>
                 <button
                   type="button"
                   onClick={handlePrev}
                   aria-label="Previous photo"
-                  className="fixed left-3 sm:left-8 top-1/2 -translate-y-1/2 z-20 h-11 w-11 sm:h-13 sm:w-13 rounded-full bg-black/60 border border-white/20 text-white flex items-center justify-center text-2xl hover:bg-[#002b15] hover:border-[#002b15] transition-all cursor-pointer backdrop-blur-md shadow-lg"
+                  className="fixed left-3 sm:left-6 top-1/2 -translate-y-1/2 z-20 h-10 w-10 rounded-none bg-black/70 border border-white/20 text-white flex items-center justify-center hover:bg-[#004d26] hover:border-[#004d26] transition-colors cursor-pointer"
                 >
-                  &#8249;
+                  <ChevronLeft className="h-5 w-5 stroke-[1.5]" />
                 </button>
 
                 <button
                   type="button"
                   onClick={handleNext}
                   aria-label="Next photo"
-                  className="fixed right-3 sm:right-8 top-1/2 -translate-y-1/2 z-20 h-11 w-11 sm:h-13 sm:w-13 rounded-full bg-black/60 border border-white/20 text-white flex items-center justify-center text-2xl hover:bg-[#002b15] hover:border-[#002b15] transition-all cursor-pointer backdrop-blur-md shadow-lg"
+                  className="fixed right-3 sm:right-6 top-1/2 -translate-y-1/2 z-20 h-10 w-10 rounded-none bg-black/70 border border-white/20 text-white flex items-center justify-center hover:bg-[#004d26] hover:border-[#004d26] transition-colors cursor-pointer"
                 >
-                  &#8250;
+                  <ChevronRight className="h-5 w-5 stroke-[1.5]" />
                 </button>
               </>
             )}

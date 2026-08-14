@@ -1,10 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import type {
-  ProductWithDetails,
-  Review,
-} from "@africasuk/types";
+import type { ProductWithDetails, Review } from "@africasuk/types";
 
 import { ProductGallery } from "./ProductGallery";
 import { ProductInfo } from "./ProductInfo";
@@ -12,6 +9,8 @@ import { VariantSelector } from "./VariantSelector";
 import { RelatedProducts } from "./RelatedProducts";
 import { Reviews } from "./Reviews";
 import SocialLinks from "@/components/layout/footer/SocialLinks";
+
+type ColorWithDetails = ProductWithDetails["colors"][number];
 
 interface Props {
   product: ProductWithDetails;
@@ -34,92 +33,59 @@ export function ProductDetails({
     reviewCount: 0,
   },
 }: Props) {
-  const [selectedColor, setSelectedColor] = useState(
+  const [selectedColor, setSelectedColor] = useState<ColorWithDetails>(
     product.colors.find((color) => color.id === selectedColorId) ??
       product.colors[0]
   );
 
   return (
-    <div className="max-w-7xl mx-auto p-6 sm:p-8 lg:p-12 bg-white/70 backdrop-blur-xs rounded-3xl border border-gray-100/80 shadow-xs select-none antialiased space-y-12">
-      {/* Main Grid Section: Details/Info Left, Product Gallery Right */}
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8 space-y-12 sm:space-y-16 select-none antialiased">
+      {/* Main Section: Gallery (Left) + Purchase & Info Pane (Right) */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-start">
-        
-        {/* Left Column: Product Details & Social Footer */}
-        <div className="lg:col-span-5 space-y-8 order-2 lg:order-1 flex flex-col justify-between h-full">
-          <ProductInfo product={product} />
-
-          {/* Social Links Placement */}
-          <div className="pt-6 border-t border-gray-100">
-            <SocialLinks />
-          </div>
-        </div>
-
-        {/* Right Column: Product Gallery */}
-        <div className="lg:col-span-7 order-1 lg:order-2 relative">
+        {/* Left Column: Gallery */}
+        <div className="lg:col-span-7">
           <ProductGallery
             images={
-              selectedColor?.images ??
-              product.colors.flatMap((c) => c.images ?? [])
+              selectedColor?.images && selectedColor.images.length > 0
+                ? selectedColor.images
+                : product.colors.flatMap((c) => c.images ?? [])
             }
           />
         </div>
-      </div>
 
-      {/* Options Bar: Color Selection & Variant Selector */}
-      <div className="pt-8 border-t border-gray-100 grid grid-cols-1 md:grid-cols-2 gap-8 items-center">
-        
-        {/* Color Palette Selector */}
-        <div className="space-y-3">
-          <span className="text-xs font-medium text-gray-500">
-            Select Color
-          </span>
-          <div className="flex flex-wrap gap-3">
-            {product.colors.map((color) => {
-              const isSelected = selectedColor?.id === color.id;
-              return (
-                <button
-                  key={color.id}
-                  type="button"
-                  onClick={() => setSelectedColor(color)}
-                  className={`rounded-full px-5 py-2.5 text-xs sm:text-sm font-medium transition-all duration-200 cursor-pointer active:scale-95 ${
-                    isSelected
-                      ? "bg-[#002b15] text-white shadow-xs ring-2 ring-[#005c2e]/20 ring-offset-2"
-                      : "bg-gray-50/80 text-gray-700 hover:bg-gray-100 hover:text-gray-900 border border-gray-200/60"
-                  }`}
-                >
-                  {color.name}
-                </button>
-              );
-            })}
+        {/* Right Column: Details, Variant Selector, Actions & Share */}
+        <div className="lg:col-span-5 space-y-6">
+          {/* Header & Product Information */}
+          <ProductInfo product={product} />
+
+          {/* Color, Size, Stock, Pricing & Add-to-Cart */}
+          <div className="pt-2">
+            <VariantSelector
+              product={product}
+              onColorChange={setSelectedColor}
+            />
+          </div>
+
+          {/* Social Links */}
+          <div className="pt-5 border-t border-gray-100">
+            <span className="text-[11px] uppercase tracking-wider text-gray-400 font-medium block mb-2.5">
+              Share this product
+            </span>
+            <SocialLinks />
           </div>
         </div>
-
-        {/* Variant / Size Selector */}
-        <div>
-          <VariantSelector
-            product={{
-              ...product,
-              colors: selectedColor ? [selectedColor] : [],
-            }}
-          />
-        </div>
       </div>
 
-      {/* Customer Reviews */}
-      <Reviews
-        reviews={reviews}
-        rating={rating}
-      />
+      {/* Customer Reviews Section */}
+      <Reviews reviews={reviews} rating={rating} />
 
-      {/* Bottom Section: Related Products */}
+      {/* Related Products Section */}
       {relatedProducts.length > 0 && (
-        <div className="pt-10 border-t border-gray-100">
-          <h3 className="text-xl font-semibold tracking-tight text-gray-900 mb-8">
+        <div className="pt-8 sm:pt-10 border-t border-gray-100 space-y-6">
+          <h3 className="text-sm sm:text-base font-semibold tracking-tight text-gray-900">
             Recommended for You
           </h3>
-          <RelatedProducts
-            products={relatedProducts}
-          />
+          <RelatedProducts products={relatedProducts} />
         </div>
       )}
     </div>

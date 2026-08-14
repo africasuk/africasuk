@@ -25,7 +25,6 @@ export function VariantSelector({ product, onColorChange }: Props) {
     product.colors[0]?.variants[0]
   );
 
-  // Helper to handle color updates and inform the parent gallery
   const updateSelectedColor = (color: ColorWithDetails) => {
     setSelectedColor(color);
     if (onColorChange) {
@@ -101,17 +100,17 @@ export function VariantSelector({ product, onColorChange }: Props) {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-5 select-none antialiased">
       {/* 1. COLOR SELECTION */}
-      <div className="space-y-2.5">
-        <div className="flex items-center justify-between text-xs font-semibold tracking-wider text-gray-500 uppercase">
-          <span>COLOR</span>
-          <span className="text-gray-900 font-bold capitalize">
+      <div className="space-y-2">
+        <div className="flex items-center justify-between text-xs text-gray-500 font-normal">
+          <span className="uppercase tracking-wider">Color</span>
+          <span className="text-gray-900 font-medium capitalize">
             {selectedColor.name}
           </span>
         </div>
 
-        <div className="flex flex-wrap gap-2.5">
+        <div className="flex flex-wrap gap-2">
           {product.colors.map((color) => {
             const isSelected = selectedColor.id === color.id;
 
@@ -126,21 +125,21 @@ export function VariantSelector({ product, onColorChange }: Props) {
                   );
                   setSelectedVariant(matchingVariant ?? color.variants[0]);
                 }}
-                className={`group relative flex items-center gap-2.5 rounded-full pl-1.5 pr-4 py-1.5 text-xs font-semibold transition-all duration-200 border cursor-pointer ${
+                className={`group relative flex items-center gap-2 rounded-none px-2.5 py-1.5 text-xs transition-colors duration-150 border cursor-pointer ${
                   isSelected
-                    ? "border-[#005c2e] bg-emerald-50/60 text-[#005c2e] ring-2 ring-[#005c2e]/20 ring-offset-1"
-                    : "border-gray-200 bg-white text-gray-600 hover:border-gray-300 hover:bg-gray-50"
+                    ? "border-[#004d26] bg-[#004d26]/5 text-[#004d26] font-medium"
+                    : "border-gray-200 bg-white text-gray-700 hover:border-gray-300 font-normal"
                 }`}
               >
-                {/* Clean, Framed Thumbnail Bubble */}
-                <div className="relative h-6 w-6 overflow-hidden rounded-full ring-1 ring-black/10 shrink-0 bg-gray-100">
+                {/* Sharp Swatch Thumbnail */}
+                <div className="relative h-4 w-4 rounded-none overflow-hidden border border-gray-200 shrink-0 bg-gray-50">
                   {color.images[0]?.imageUrl ? (
                     <Image
                       src={color.images[0].imageUrl}
                       alt={color.name}
                       fill
-                      sizes="24px"
-                      className="object-cover transition-transform duration-300 group-hover:scale-110"
+                      sizes="16px"
+                      className="object-cover"
                     />
                   ) : (
                     <div
@@ -159,13 +158,18 @@ export function VariantSelector({ product, onColorChange }: Props) {
         </div>
       </div>
 
-      {/* 2. SIZES */}
-      <div className="space-y-2.5">
-        <span className="text-xs font-semibold tracking-wider text-gray-500 uppercase block">
-          {allSizes[0]?.optionName || "SIZE"}
-        </span>
+      {/* 2. SIZE SELECTION */}
+      <div className="space-y-2">
+        <div className="flex items-center justify-between text-xs text-gray-500 font-normal">
+          <span className="uppercase tracking-wider">
+            {allSizes[0]?.optionName || "Size"}
+          </span>
+          <span className="text-gray-900 font-medium">
+            {selectedVariant.optionValue}
+          </span>
+        </div>
 
-        <div className="flex flex-wrap gap-2">
+        <div className="flex flex-wrap gap-1.5 sm:gap-2">
           {allSizes.map((size) => {
             const isSelected = selectedVariant.optionValue === size.value;
             const isAvailableInCurrentColor = selectedColor.variants.some(
@@ -177,12 +181,12 @@ export function VariantSelector({ product, onColorChange }: Props) {
                 key={size.value}
                 type="button"
                 onClick={() => handleSizeSelect(size.value)}
-                className={`min-w-10 h-9 px-3.5 flex items-center justify-center rounded-lg text-xs font-semibold transition-all border cursor-pointer ${
+                className={`min-w-9 h-8 sm:min-w-10 sm:h-9 px-2.5 sm:px-3 flex items-center justify-center rounded-none text-xs transition-colors border cursor-pointer ${
                   isSelected
-                    ? "border-transparent bg-linear-to-r from-[#002b15] to-[#005c2e] text-white shadow-2xs"
+                    ? "border-[#004d26] bg-[#004d26] text-white font-medium shadow-none"
                     : isAvailableInCurrentColor
-                    ? "border-gray-200 bg-white text-gray-700 hover:border-[#005c2e]/40 hover:text-[#005c2e]"
-                    : "border-gray-100 bg-gray-50 text-gray-400 hover:border-gray-300"
+                    ? "border-gray-200 bg-white text-gray-700 hover:border-gray-400 font-normal"
+                    : "border-dashed border-gray-200 bg-gray-50 text-gray-400 font-normal hover:border-gray-300"
                 }`}
               >
                 {size.value}
@@ -193,17 +197,17 @@ export function VariantSelector({ product, onColorChange }: Props) {
       </div>
 
       {/* 3. PRICE & STOCK DISPLAY */}
-      <div className="space-y-1 pt-1 border-t border-gray-100">
-        <div className="flex items-baseline gap-3">
-          <div className="text-2xl font-black text-[#005c2e] tracking-tight">
+      <div className="pt-2 border-t border-gray-100 space-y-1">
+        <div className="flex items-baseline gap-2.5">
+          <div className="text-lg sm:text-xl font-semibold text-[#004d26] tracking-tight">
             <Price price={Number(selectedVariant.price)} />
           </div>
 
           <span
-            className={`text-xs font-medium ${
+            className={`text-xs font-normal ${
               selectedVariant.stock > 0
-                ? "text-emerald-700 font-semibold"
-                : "text-red-500 font-semibold"
+                ? "text-[#004d26]"
+                : "text-red-500"
             }`}
           >
             {selectedVariant.stock > 0
@@ -214,7 +218,7 @@ export function VariantSelector({ product, onColorChange }: Props) {
       </div>
 
       {/* 4. ACTIONS */}
-      <div className="flex items-center gap-3 pt-2">
+      <div className="flex items-center gap-2 pt-1">
         <div className="grow">
           <AddToCartButton item={item} />
         </div>

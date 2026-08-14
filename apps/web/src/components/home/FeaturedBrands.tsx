@@ -3,11 +3,12 @@
 import { useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { ArrowUpRight, Loader2 } from "lucide-react";
+import { ArrowRight, ArrowUpRight, Loader2 } from "lucide-react";
 import type { Brand } from "@africasuk/types";
 
 import Container from "@/components/layout/Container";
 import { Card } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
 
 interface Props {
   brands: (Brand & {
@@ -21,43 +22,41 @@ export default function FeaturedBrands({ brands = [] }: Props) {
 
   if (brands.length === 0) return null;
 
-  // Display top brands (increased slice limit to seamlessly fill wide rows)
+  // Display top brands
   const displayBrands = brands.slice(0, 18);
 
   return (
-    <section className="py-12 sm:py-16 bg-white border-y border-gray-100 select-none">
-      {/* Container override for edge-to-edge layout on large screens */}
-      <Container className="max-w-none w-full px-4 sm:px-6 lg:px-12">
+    <section className="py-8 sm:py-12 bg-white antialiased select-none border-b border-gray-100">
+      <Container className="max-w-none w-full px-3 sm:px-6 lg:px-12">
         {/* Section Header */}
-        <div className="mb-8 sm:mb-10 flex items-end justify-between gap-4">
-          <div className="space-y-1">
-            <h2 className="text-2xl sm:text-3xl font-semibold tracking-tight text-gray-900">
+        <div className="mb-4 sm:mb-6 flex items-end justify-between gap-4">
+          <div>
+            <h2 className="text-lg sm:text-xl font-bold tracking-tight text-gray-900">
               Featured Brands
             </h2>
-            <p className="text-xs sm:text-sm text-gray-500">
-              Discover official collections from our trusted global partners.
+            <p className="text-xs text-gray-500 font-normal mt-0.5">
+              Official collections from verified global partners
             </p>
           </div>
 
           <Link
             href="/brands"
             onClick={() => setIsNavigatingAll(true)}
-            className={`group inline-flex items-center gap-1.5 text-xs sm:text-sm font-semibold text-[#005c2e] hover:text-[#002b15] transition-colors ${
-              isNavigatingAll || loadingSlug ? "pointer-events-none opacity-70" : ""
+            className={`hidden sm:inline-flex items-center gap-1 text-xs font-semibold text-[#004d26] hover:text-[#00361a] transition-colors ${
+              isNavigatingAll || loadingSlug ? "pointer-events-none opacity-60" : ""
             }`}
           >
-            <span>View All Brands</span>
+            <span>View all</span>
             {isNavigatingAll ? (
-              <Loader2 className="h-3.5 w-3.5 animate-spin" />
+              <Loader2 className="h-3 w-3 animate-spin" />
             ) : (
-              <ArrowUpRight className="h-4 w-4 transition-transform duration-200 group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
+              <ArrowUpRight className="h-3.5 w-3.5" />
             )}
           </Link>
         </div>
 
-        {/* --- Brand Grid --- */}
-        {/* Responsive auto-fit grid maintains ideal card dimensions while expanding across widescreen */}
-        <div className="grid grid-cols-2 gap-3 sm:gap-4 sm:grid-cols-[repeat(auto-fit,minmax(180px,1fr))]">
+        {/* Minimal Clean Grid */}
+        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-2 sm:gap-3">
           {displayBrands.map((brand) => {
             const isThisLoading = loadingSlug === brand.slug;
 
@@ -71,31 +70,31 @@ export default function FeaturedBrands({ brands = [] }: Props) {
                 }`}
               >
                 <Card
-                  className={`relative h-28 sm:h-32 w-full rounded-2xl border border-gray-100 bg-gray-50/50 p-4 flex flex-col items-center justify-center transition-all duration-300 hover:bg-white hover:border-[#005c2e]/30 hover:shadow-md ${
+                  className={`relative h-20 sm:h-24 md:h-28 w-full rounded-none border border-gray-200 bg-gray-50/60 p-3 flex flex-col items-center justify-center transition-colors duration-200 hover:bg-white hover:border-gray-400 shadow-none ${
                     isThisLoading ? "opacity-70" : ""
                   }`}
                 >
                   {/* Loading Spinner */}
                   {isThisLoading && (
-                    <div className="absolute inset-0 z-20 flex items-center justify-center rounded-2xl bg-white/70 backdrop-blur-[1px]">
-                      <Loader2 className="h-5 w-5 animate-spin text-[#005c2e]" />
+                    <div className="absolute inset-0 z-20 flex items-center justify-center rounded-none bg-white/80 backdrop-blur-xs">
+                      <Loader2 className="h-4 w-4 sm:h-5 sm:w-5 animate-spin text-[#004d26]" />
                     </div>
                   )}
 
                   {/* Brand Logo or Fallback Name */}
                   <div className="relative w-full h-full flex items-center justify-center">
                     {brand.logoUrl ? (
-                      <div className="relative w-full h-12 max-w-30 transition-transform duration-300 group-hover:scale-105">
+                      <div className="relative w-full h-8 sm:h-10 max-w-24 sm:max-w-28 transition-transform duration-300 group-hover:scale-103">
                         <Image
                           src={brand.logoUrl}
                           alt={brand.name}
                           fill
-                          sizes="(max-width: 640px) 40vw, 20vw"
+                          sizes="(max-width: 640px) 40vw, (max-width: 1024px) 25vw, 160px"
                           className="object-contain"
                         />
                       </div>
                     ) : (
-                      <span className="text-sm font-semibold text-gray-800 text-center line-clamp-1">
+                      <span className="text-xs sm:text-sm font-semibold text-gray-800 text-center line-clamp-1">
                         {brand.name}
                       </span>
                     )}
@@ -104,6 +103,28 @@ export default function FeaturedBrands({ brands = [] }: Props) {
               </Link>
             );
           })}
+        </div>
+
+        {/* Bottom All Brands Button */}
+        <div className="mt-6 sm:mt-8 flex justify-center">
+          <Button
+            asChild
+            variant="outline"
+            className="rounded-none border-gray-300 text-xs font-semibold text-gray-800 bg-white hover:bg-gray-50 hover:border-gray-400 cursor-pointer h-9 px-6 flex items-center justify-center gap-1.5 shadow-none transition-colors"
+          >
+            <Link
+              href="/brands"
+              onClick={() => setIsNavigatingAll(true)}
+              className={isNavigatingAll ? "pointer-events-none opacity-60" : ""}
+            >
+              <span>View All Brands</span>
+              {isNavigatingAll ? (
+                <Loader2 className="h-3.5 w-3.5 animate-spin ml-1" />
+              ) : (
+                <ArrowRight className="h-3.5 w-3.5 ml-1 transition-transform group-hover:translate-x-0.5" />
+              )}
+            </Link>
+          </Button>
         </div>
       </Container>
     </section>

@@ -3,7 +3,6 @@
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { ArrowRight } from "lucide-react";
-import { motion } from "framer-motion";
 
 interface GenderCardProps {
   title: string;
@@ -23,45 +22,44 @@ export default function GenderCard({
   const router = useRouter();
 
   return (
-    <motion.button
+    <button
       type="button"
-      whileHover={{ scale: 1.02 }}
-      whileTap={{ scale: 0.98 }}
-      onClick={() =>
-        router.push(`/search?q=${encodeURIComponent(query)}`)
-      }
-      className="group relative flex h-105 w-full cursor-pointer overflow-hidden rounded-3xl bg-neutral-100 text-left shadow-lg"
+      onClick={() => router.push(`/search?q=${encodeURIComponent(query)}`)}
+      className="group relative flex h-80 sm:h-96 md:h-105 w-full cursor-pointer overflow-hidden rounded-none border border-gray-200 bg-gray-100 text-left shadow-none transition-colors duration-200 select-none antialiased"
     >
+      {/* Background Image */}
       <Image
         src={image}
         alt={title}
         fill
         priority
-        className="object-cover transition-transform duration-700 group-hover:scale-110"
+        sizes="(max-width: 768px) 100vw, 50vw"
+        className="object-cover transition-transform duration-500 ease-out group-hover:scale-103"
       />
 
-      <div className="absolute inset-0 bg-linear-to-r from-black/70 via-black/20 to-transparent transition-opacity duration-300 group-hover:opacity-80" />
+      {/* Contrast Overlay */}
+      <div className="absolute inset-0 bg-linear-to-t sm:bg-linear-to-r from-black/75 via-black/35 to-transparent transition-opacity duration-300 group-hover:opacity-90" />
 
+      {/* Content Container */}
       <div
-        className={`relative z-10 flex h-full w-full flex-col justify-end p-8 ${
-          align === "right"
-            ? "items-end text-right"
-            : "items-start text-left"
+        className={`relative z-10 flex h-full w-full flex-col justify-end p-5 sm:p-7 md:p-8 ${
+          align === "right" ? "items-end text-right" : "items-start text-left"
         }`}
       >
-        <span className="mb-2 text-sm font-medium uppercase tracking-[0.25em] text-white/80">
+        <span className="mb-1.5 text-[11px] sm:text-xs font-normal uppercase tracking-widest text-white/80">
           {subtitle}
         </span>
 
-        <h3 className="text-4xl font-bold text-white md:text-5xl">
+        <h3 className="text-2xl sm:text-3xl md:text-4xl font-semibold tracking-tight text-white leading-tight">
           {title}
         </h3>
 
-        <div className="mt-6 inline-flex items-center gap-2 rounded-full bg-white px-5 py-3 text-sm font-semibold text-black transition-all duration-300 group-hover:gap-4">
-          Shop Now
-          <ArrowRight className="h-4 w-4" />
+        {/* Sharp Action Trigger */}
+        <div className="mt-4 sm:mt-5 inline-flex items-center gap-2 rounded-none bg-white px-3.5 sm:px-4 py-2 text-xs font-medium uppercase tracking-wider text-gray-900 transition-colors duration-150 group-hover:bg-[#004d26] group-hover:text-white shadow-none">
+          <span>Shop Now</span>
+          <ArrowRight className="h-3.5 w-3.5 stroke-[1.5] transition-transform duration-200 group-hover:translate-x-0.5" />
         </div>
       </div>
-    </motion.button>
+    </button>
   );
 }

@@ -4,7 +4,7 @@ import { Heart } from "lucide-react";
 import { useWishlist } from "@/store/wishlist";
 import type { WishlistItem } from "@africasuk/types";
 import { Button } from "@/components/ui/button";
-import { cn } from "lib/utils";
+import { cn } from "@/lib/utils";
 
 interface Props {
   item: WishlistItem;
@@ -27,17 +27,17 @@ export function WishlistButton({ item, className }: Props) {
       }}
       aria-label={active ? "Remove from wishlist" : "Add to wishlist"}
       className={cn(
-        "h-11 w-11 rounded-lg border border-gray-200 bg-white hover:border-[#002b15]/20 hover:bg-[#002b15]/5 active:scale-[0.98] transition-all duration-200 shrink-0",
-        active && "border-rose-200 bg-rose-50/50 hover:bg-rose-100/50",
+        "h-10 w-10 rounded-none border border-gray-200 bg-white hover:border-gray-400 hover:bg-gray-50 transition-colors duration-150 shrink-0 cursor-pointer shadow-none",
+        active && "border-rose-200 bg-rose-50/60 hover:border-rose-300 hover:bg-rose-50",
         className
       )}
     >
       <Heart
         className={cn(
-          "h-4 w-4 transition-colors duration-200",
+          "h-4 w-4 stroke-[1.5] transition-colors duration-150",
           active
             ? "fill-rose-500 text-rose-500"
-            : "text-gray-500 hover:text-[#002b15]"
+            : "text-gray-500 hover:text-gray-900"
         )}
       />
     </Button>

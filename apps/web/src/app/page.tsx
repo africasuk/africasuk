@@ -17,7 +17,6 @@ import FeaturedBrands from "@/components/home/FeaturedBrands";
 import FeaturedProducts from "@/components/home/FeaturedProducts";
 import Hero from "@/components/home/Hero";
 import Layout from "@/components/layout/Layout";
-import ScrollIndicator from "@/components/layout/ScrollIndicator";
 import { RequestProductSection } from "@/components/home/RequestProductSection";
 import GenderSection from "@/components/home/GenderSection";
 import { ButtonSection } from "@/components/home/ButtonSection";
@@ -94,7 +93,6 @@ export default async function HomePage() {
       
       <ContinueShopping />
 
-      <ScrollIndicator />
     </Layout>
   );
 }

@@ -17,7 +17,6 @@ import LoginModal from "@/components/auth/LoginModal";
 import { CurrencySwitcher } from "@/components/currency/CurrencySwitcher";
 import LogoutButton from "../topbar/LogoutButton";
 
-// Awaited unwraps the Promise returned by getDictionary
 type Dictionary = Awaited<ReturnType<typeof getDictionary>>;
 
 interface MainHeaderProps {
@@ -29,10 +28,8 @@ export default function MainHeader({ user, dictionary }: MainHeaderProps) {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isPinned, setIsPinned] = useState(false);
 
-  // Logic to handle "Smart Sticky" search bar on scroll
   useEffect(() => {
     const handleScroll = () => {
-      // Pin the search bar after scrolling past the main logo area (approx 70px)
       if (window.scrollY > 70) {
         setIsPinned(true);
       } else {
@@ -46,13 +43,12 @@ export default function MainHeader({ user, dictionary }: MainHeaderProps) {
 
   return (
     <>
-      {/* 1. Main Header (Branding & Account - Scrolls Away) */}
-      <header className="relative z-40 w-full bg-white antialiased select-none">
+      {/* 1. Main Header (Branding & Account) */}
+      <header className="relative z-40 w-full bg-white antialiased select-none border-b border-gray-100">
         <Container>
-          {/* Top Row: Logo & Action Icons */}
-          <div className="flex items-center justify-between gap-4 py-3.5">
+          <div className="flex items-center justify-between gap-4 py-3 sm:py-3.5">
             {/* Left: Brand Logo */}
-            <div className="flex items-center gap-3 shrink-0  invert-0">
+            <div className="flex items-center gap-3 shrink-0">
               <Logo />
             </div>
 
@@ -62,11 +58,11 @@ export default function MainHeader({ user, dictionary }: MainHeaderProps) {
               <div className="hidden lg:flex items-center gap-1">
                 {/* <LanguageSwitcher /> */}
                 <CurrencySwitcher />
-                <div className="h-8 w-px bg-gray-100 my-auto mx-2" />
+                <div className="h-6 w-px bg-gray-200 my-auto mx-2" />
               </div>
 
               {/* Personalization Navigation */}
-              <div className="hidden md:flex items-center gap-1 sm:gap-2">
+              <div className="hidden md:flex items-center gap-1 sm:gap-1.5">
                 <OrdersButton />
                 <WishlistButton />
               </div>
@@ -74,19 +70,19 @@ export default function MainHeader({ user, dictionary }: MainHeaderProps) {
               {/* Cart Trigger */}
               <CartButton />
 
-              <div className="h-8 w-px bg-gray-100 my-auto mx-2 hidden md:block" />
+              <div className="h-6 w-px bg-gray-200 my-auto mx-2 hidden md:block" />
 
               {/* User Identity Panel */}
-              <div className="hidden md:flex items-center gap-1 sm:gap-2">
+              <div className="hidden md:flex items-center gap-1">
                 {user ? (
                   <>
                     <Link
                       href="/profile"
-                      className="group flex flex-col items-center justify-center gap-1 rounded-lg px-2.5 py-1.5 text-gray-600 transition-all duration-200 hover:bg-gray-50 hover:text-[#002b15] active:scale-97"
+                      className="group flex flex-col items-center justify-center gap-0.5 rounded-none px-2.5 py-1.5 text-gray-600 transition-colors duration-150 hover:bg-gray-50 hover:text-[#004d26]"
                       aria-label="Account"
                     >
-                      <UserIcon className="h-4.5 w-4.5 transition-transform group-hover:scale-105 stroke-[2.2]" />
-                      <span className="text-[9px] font-black uppercase tracking-wider">
+                      <UserIcon className="h-4 w-4 stroke-[1.5]" />
+                      <span className="text-[10px] font-medium tracking-wide">
                         {dictionary.common.myAccount}
                       </span>
                     </Link>
@@ -94,9 +90,9 @@ export default function MainHeader({ user, dictionary }: MainHeaderProps) {
                   </>
                 ) : (
                   <LoginModal>
-                    <div className="group flex cursor-pointer flex-col items-center justify-center gap-1 rounded-lg px-2.5 py-1.5 text-gray-600 transition-all duration-200 hover:bg-gray-50 hover:text-[#002b15] active:scale-97">
-                      <UserIcon className="h-4.5 w-4.5 transition-transform group-hover:scale-105 stroke-[2.2]" />
-                      <span className="text-[9px] font-black uppercase tracking-wider">
+                    <div className="group flex cursor-pointer flex-col items-center justify-center gap-0.5 rounded-none px-2.5 py-1.5 text-gray-600 transition-colors duration-150 hover:bg-gray-50 hover:text-[#004d26]">
+                      <UserIcon className="h-4 w-4 stroke-[1.5]" />
+                      <span className="text-[10px] font-medium tracking-wide">
                         {dictionary.common.login}
                       </span>
                     </div>
@@ -108,35 +104,39 @@ export default function MainHeader({ user, dictionary }: MainHeaderProps) {
               <button
                 type="button"
                 onClick={() => setIsMobileMenuOpen(true)}
-                className="flex md:hidden items-center justify-center p-2 rounded-xl text-[#002b15] hover:bg-emerald-50/80 active:scale-95 transition-all duration-200 cursor-pointer"
+                className="flex md:hidden items-center justify-center p-2 rounded-none border border-gray-200 bg-white text-gray-700 hover:bg-gray-50 transition-colors cursor-pointer"
                 aria-label="Open menu"
               >
-                <Menu className="h-5.5 w-5.5 stroke-[2.2]" />
+                <Menu className="h-4.5 w-4.5 stroke-[1.5]" />
               </button>
             </div>
           </div>
         </Container>
       </header>
 
-      {/* 2. Sticky Search Architecture (Becomes ultra-compact on scroll) */}
+      {/* 2. Sticky Search Bar */}
       <div
-        className={`sticky top-0 z-40 w-full transition-all duration-300 ease-in-out antialiased border-b
-          ${isPinned 
-            ? "bg-white/95 backdrop-blur-md shadow-md py-2 border-gray-100" 
-            : "bg-white pb-4 pt-1 border-transparent"
-          }`}
+        className={`sticky top-0 z-40 w-full transition-all duration-200 ease-in-out antialiased border-b select-none ${
+          isPinned
+            ? "bg-white/95 backdrop-blur-md shadow-none py-2 border-gray-200"
+            : "bg-white pb-3 pt-1 border-transparent"
+        }`}
       >
         <Container>
-          <div className="w-full flex justify-center transition-all duration-300 ease-in-out">
+          <div className="w-full flex justify-center transition-all duration-200 ease-in-out">
             <div
-              className={`w-full transition-all duration-300 ease-in-out flex items-center
-                ${isPinned ? "max-w-xl gap-3" : "max-w-2xl gap-0"}`}
+              className={`w-full transition-all duration-200 ease-in-out flex items-center ${
+                isPinned ? "max-w-xl gap-2.5" : "max-w-2xl gap-0"
+              }`}
             >
-              {/* Mini Logo appearing only when pinned to maintain branding */}
-              <div className={`transition-all duration-300 ease-in-out overflow-hidden shrink-0
-                ${isPinned ? "w-8 opacity-100" : "w-0 opacity-0"}`}>
-                <Link href="/" className="brightness-0 invert-0">
-                   <Search className="h-6 w-6 text-[#002b15]"/>
+              {/* Mini Icon Link appearing when pinned */}
+              <div
+                className={`transition-all duration-200 ease-in-out overflow-hidden shrink-0 ${
+                  isPinned ? "w-6 opacity-100" : "w-0 opacity-0"
+                }`}
+              >
+                <Link href="/" aria-label="Home search">
+                  <Search className="h-4.5 w-4.5 text-[#004d26] stroke-[1.5]" />
                 </Link>
               </div>
 
@@ -148,52 +148,53 @@ export default function MainHeader({ user, dictionary }: MainHeaderProps) {
         </Container>
       </div>
 
-      {/* Slide-Out Mobile Drawer Sheet */}
+      {/* 3. Slide-Out Mobile Drawer */}
       {isMobileMenuOpen && (
         <div className="fixed inset-0 z-50 md:hidden flex justify-end select-none antialiased">
           {/* Backdrop */}
           <div
-            className="fixed inset-0 bg-black/60 backdrop-blur-xs transition-opacity duration-300 animate-in fade-in"
+            className="fixed inset-0 bg-black/40 backdrop-blur-xs transition-opacity duration-200 animate-in fade-in"
             onClick={() => setIsMobileMenuOpen(false)}
           />
 
-          {/* Drawer Frame - Fully Branded Design */}
-          <div className="relative w-80 max-w-[85vw] h-full bg-white shadow-2xl flex flex-col transition-transform duration-300 z-10 animate-in slide-in-from-right overflow-hidden border-l border-emerald-900/20">
-            {/* Branded Drawer Header with Embedded <Logo /> */}
-            <div className="flex items-center justify-between px-4 py-3.5 bg-linear-to-r from-[#002b15] via-[#004220] to-[#005c2e] text-white shrink-0 shadow-md">
+          {/* Drawer Frame */}
+          <div className="relative w-80 max-w-[85vw] h-full bg-white shadow-none flex flex-col transition-transform duration-200 z-10 animate-in slide-in-from-right overflow-hidden border-l border-gray-200 rounded-none">
+            {/* Drawer Header */}
+            <div className="flex items-center justify-between px-4 py-3 bg-[#004d26] text-white shrink-0">
               <div className="brightness-0 invert scale-90 origin-left">
                 <Logo />
               </div>
               <button
                 type="button"
                 onClick={() => setIsMobileMenuOpen(false)}
-                className="p-1.5 rounded-full bg-white/10 text-white/90 hover:text-white hover:bg-white/20 transition-colors cursor-pointer"
+                className="p-1 rounded-none text-white/80 hover:text-white hover:bg-white/10 transition-colors cursor-pointer"
+                aria-label="Close menu"
               >
-                <X className="h-4.5 w-4.5 stroke-[2.5]" />
+                <X className="h-4 w-4 stroke-[1.5]" />
               </button>
             </div>
 
-            {/* Main Category & Nav Items */}
+            {/* Navigation & Preferences */}
             <div className="flex flex-col flex-1 overflow-y-auto divide-y divide-gray-100">
-              {/* Regional Preferences Section (Top Placement) */}
-              <div className="p-4 bg-emerald-50/50 border-b border-emerald-100/70 space-y-3">
-                <span className="block text-[9px] font-black uppercase tracking-widest text-[#005c2e]">
+              {/* Regional Preferences */}
+              <div className="p-4 bg-gray-50/70 border-b border-gray-100 space-y-2.5">
+                <span className="block text-[10px] font-medium uppercase tracking-wider text-gray-500">
                   Regional Preferences
                 </span>
 
-                <div className="space-y-2.5 px-0.5">
+                <div className="space-y-2">
                   <div className="flex items-center justify-between gap-4 text-xs">
-                    <span className="flex items-center gap-2 font-bold text-[#002b15]">
-                      <Globe className="h-4 w-4 text-[#005c2e] shrink-0" /> Language
+                    <span className="flex items-center gap-2 font-normal text-gray-700">
+                      <Globe className="h-3.5 w-3.5 text-gray-500 shrink-0 stroke-[1.5]" /> Language
                     </span>
                     {/* <div className="scale-90 origin-right select-auto">
                       <LanguageSwitcher />
                     </div> */}
                   </div>
 
-                  <div className="flex items-center justify-between gap-4 text-xs pt-2 border-t border-emerald-100/80">
-                    <span className="flex items-center gap-2 font-bold text-[#002b15]">
-                      <DollarSign className="h-4 w-4 text-[#005c2e] shrink-0" /> Currency
+                  <div className="flex items-center justify-between gap-4 text-xs pt-1.5 border-t border-gray-200/60">
+                    <span className="flex items-center gap-2 font-normal text-gray-700">
+                      <DollarSign className="h-3.5 w-3.5 text-gray-500 shrink-0 stroke-[1.5]" /> Currency
                     </span>
                     <div className="scale-90 origin-right select-auto">
                       <CurrencySwitcher />
@@ -203,9 +204,9 @@ export default function MainHeader({ user, dictionary }: MainHeaderProps) {
               </div>
 
               {/* Account Hub */}
-              <div className="p-5 space-y-3">
-                <span className="block text-[9px] font-black uppercase tracking-widest text-gray-400">
-                  Account Hub
+              <div className="p-4 space-y-2">
+                <span className="block text-[10px] font-medium uppercase tracking-wider text-gray-400">
+                  Account
                 </span>
 
                 {user ? (
@@ -213,60 +214,58 @@ export default function MainHeader({ user, dictionary }: MainHeaderProps) {
                     <Link
                       href="/profile"
                       onClick={() => setIsMobileMenuOpen(false)}
-                      className="flex items-center gap-3.5 w-full px-3 py-2.5 rounded-xl text-gray-700 hover:bg-emerald-50/80 hover:text-[#002b15] transition-colors font-black text-xs uppercase tracking-wider group"
+                      className="flex items-center gap-3 w-full px-2.5 py-2 text-gray-700 hover:bg-gray-50 hover:text-[#004d26] transition-colors text-xs font-normal"
                     >
-                      <UserIcon className="h-4 w-4 text-gray-400 group-hover:text-[#005c2e] transition-colors shrink-0 stroke-[2.2]" />
+                      <UserIcon className="h-3.5 w-3.5 text-gray-400 shrink-0 stroke-[1.5]" />
                       <span>{dictionary.common.myAccount}</span>
                     </Link>
 
-                    <div className="px-3 py-1">
+                    <div className="px-2.5 py-1">
                       <LogoutButton />
                     </div>
                   </div>
                 ) : (
                   <LoginModal>
-                    <div className="group flex cursor-pointer flex-col items-center justify-center gap-1 rounded-lg px-2.5 py-1.5 text-neutral-600 transition-all duration-200 hover:bg-neutral-50 hover:text-[#004d26]">
-                      <UserIcon className="h-4.5 w-4.5 transition-transform group-hover:scale-105" />
-                      <span className="text-[9px] font-black uppercase tracking-wider">
-                        {dictionary.common.login}
-                      </span>
+                    <div className="flex items-center gap-3 w-full px-2.5 py-2 text-gray-700 hover:bg-gray-50 hover:text-[#004d26] transition-colors text-xs font-normal cursor-pointer">
+                      <UserIcon className="h-3.5 w-3.5 text-gray-400 shrink-0 stroke-[1.5]" />
+                      <span>{dictionary.common.login}</span>
                     </div>
                   </LoginModal>
                 )}
               </div>
 
               {/* Shop Actions */}
-              <div className="p-5 space-y-3">
-                <span className="block text-[9px] font-black uppercase tracking-widest text-gray-400">
-                  Shop Actions
+              <div className="p-4 space-y-2">
+                <span className="block text-[10px] font-medium uppercase tracking-wider text-gray-400">
+                  Shopping
                 </span>
 
                 <div className="space-y-1">
                   <Link
                     href="/account/orders"
                     onClick={() => setIsMobileMenuOpen(false)}
-                    className="flex items-center gap-3.5 w-full px-3 py-2.5 rounded-xl text-gray-700 hover:bg-emerald-50/80 hover:text-[#002b15] transition-colors font-black text-xs uppercase tracking-wider group"
+                    className="flex items-center gap-3 w-full px-2.5 py-2 text-gray-700 hover:bg-gray-50 hover:text-[#004d26] transition-colors text-xs font-normal"
                   >
-                    <ShoppingBag className="h-4 w-4 text-gray-400 group-hover:text-[#005c2e] transition-colors shrink-0 stroke-[2.2]" />
+                    <ShoppingBag className="h-3.5 w-3.5 text-gray-400 shrink-0 stroke-[1.5]" />
                     <span>Track Orders</span>
                   </Link>
 
                   <Link
                     href="/wishlist"
                     onClick={() => setIsMobileMenuOpen(false)}
-                    className="flex items-center gap-3.5 w-full px-3 py-2.5 rounded-xl text-gray-700 hover:bg-emerald-50/80 hover:text-[#002b15] transition-colors font-black text-xs uppercase tracking-wider group"
+                    className="flex items-center gap-3 w-full px-2.5 py-2 text-gray-700 hover:bg-gray-50 hover:text-[#004d26] transition-colors text-xs font-normal"
                   >
-                    <Heart className="h-4 w-4 text-gray-400 group-hover:text-[#005c2e] transition-colors shrink-0 stroke-[2.2]" />
+                    <Heart className="h-3.5 w-3.5 text-gray-400 shrink-0 stroke-[1.5]" />
                     <span>My Wishlist</span>
                   </Link>
                 </div>
               </div>
 
               {/* Brand Footer Stamp */}
-              <div className="p-5 mt-auto bg-linear-to-b from-gray-50/50 to-emerald-50/30">
-                <div className="flex items-center gap-2 text-[#005c2e]">
-                  <ShieldCheck className="h-4 w-4 shrink-0" />
-                  <span className="text-[10px] font-black uppercase tracking-widest">
+              <div className="p-4 mt-auto border-t border-gray-100 bg-gray-50/50">
+                <div className="flex items-center gap-2 text-[#004d26]">
+                  <ShieldCheck className="h-3.5 w-3.5 shrink-0 stroke-[1.5]" />
+                  <span className="text-[10px] font-medium uppercase tracking-wider text-gray-600">
                     AfricaSuk Verified Commerce
                   </span>
                 </div>

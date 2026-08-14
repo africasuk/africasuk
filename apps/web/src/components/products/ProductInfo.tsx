@@ -38,25 +38,35 @@ export function ProductInfo({ product }: Props) {
   };
 
   return (
-    <div className="space-y-3.5 select-none antialiased">
-      {/* Category / Sub-header & Action Controls Row */}
+    <div className="space-y-2.5 select-none antialiased">
+      {/* Category / Brand & Action Controls Row */}
       <div className="flex items-center justify-between gap-4">
-        <div className="flex items-center gap-1.5 text-xs font-medium text-gray-500">
-          {product.category && <span>{product.category.name}</span>}
-          {product.brand && product.category && <span>•</span>}
-          {product.brand && <span>{product.brand.name}</span>}
+        <div className="flex items-center gap-1.5 text-xs text-gray-500 font-normal">
+          {product.category && (
+            <span className="hover:text-gray-800 transition-colors">
+              {product.category.name}
+            </span>
+          )}
+          {product.brand && product.category && (
+            <span className="text-gray-300">•</span>
+          )}
+          {product.brand && (
+            <span className="font-medium text-gray-700">
+              {product.brand.name}
+            </span>
+          )}
         </div>
 
-        {/* Share & Copy Action Buttons */}
+        {/* Share & Copy Action Triggers */}
         <div className="flex items-center gap-1.5 shrink-0">
           {/* Web Share Trigger */}
           <button
             type="button"
             onClick={handleNativeShare}
-            className="group flex items-center gap-1.5 rounded-full border border-gray-200 bg-white px-3 py-1 text-xs font-medium text-gray-600 shadow-2xs transition-all duration-200 hover:border-[#005c2e]/40 hover:bg-gray-50 hover:text-[#002b15] active:scale-95 cursor-pointer"
+            className="flex h-7 items-center gap-1.5 rounded-none border border-gray-200 bg-white px-2 sm:px-2.5 text-[11px] font-normal text-gray-600 shadow-none transition-colors duration-150 hover:border-gray-400 hover:bg-gray-50 hover:text-gray-900 cursor-pointer"
             aria-label="Share product"
           >
-            <Share2 className="h-3.5 w-3.5 text-gray-400 group-hover:text-[#002b15] transition-colors" />
+            <Share2 className="h-3 w-3 text-gray-400 stroke-[1.5]" />
             <span className="hidden sm:inline">Share</span>
           </button>
 
@@ -64,21 +74,21 @@ export function ProductInfo({ product }: Props) {
           <button
             type="button"
             onClick={handleCopyLink}
-            className={`group flex items-center gap-1.5 rounded-full border px-3 py-1 text-xs font-medium shadow-2xs transition-all duration-200 active:scale-95 cursor-pointer ${
+            className={`flex h-7 items-center gap-1.5 rounded-none border px-2 sm:px-2.5 text-[11px] font-normal shadow-none transition-colors duration-150 cursor-pointer ${
               copied
-                ? "border-transparent bg-[#002b15] text-white"
-                : "border-gray-200 bg-white text-gray-600 hover:border-[#005c2e]/40 hover:bg-gray-50 hover:text-[#002b15]"
+                ? "border-[#004d26] bg-[#004d26] text-white"
+                : "border-gray-200 bg-white text-gray-600 hover:border-gray-400 hover:bg-gray-50 hover:text-gray-900"
             }`}
             aria-label="Copy product link"
           >
             {copied ? (
               <>
-                <Check className="h-3.5 w-3.5 text-white" />
+                <Check className="h-3 w-3 text-white stroke-2" />
                 <span>Copied</span>
               </>
             ) : (
               <>
-                <Copy className="h-3.5 w-3.5 text-gray-400 group-hover:text-[#002b15] transition-colors" />
+                <Copy className="h-3 w-3 text-gray-400 stroke-[1.5]" />
                 <span className="hidden sm:inline">Copy link</span>
               </>
             )}
@@ -87,13 +97,13 @@ export function ProductInfo({ product }: Props) {
       </div>
 
       {/* Product Title */}
-      <h1 className="text-2xl md:text-3xl font-semibold text-gray-900 tracking-tight leading-snug">
+      <h1 className="text-xl sm:text-2xl font-semibold tracking-tight text-gray-900 leading-snug">
         {product.name}
       </h1>
 
       {/* Description */}
       {product.description && (
-        <p className="text-xs md:text-sm text-gray-500 leading-relaxed max-w-md font-normal">
+        <p className="text-xs sm:text-sm text-gray-500 font-normal leading-relaxed max-w-prose">
           {product.description}
         </p>
       )}

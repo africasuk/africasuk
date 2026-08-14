@@ -3,15 +3,14 @@
 import { useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { ArrowUpRight, Loader2 } from "lucide-react";
+import { ArrowRight, ArrowUpRight, Loader2 } from "lucide-react";
 
 import type { Category } from "@africasuk/types";
-
 import Container from "@/components/layout/Container";
-import { Card } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
 
 interface Props {
-  categories: (Category & { description?: string })[];
+  categories: Category[];
 }
 
 export default function Categories({ categories = [] }: Props) {
@@ -20,112 +19,143 @@ export default function Categories({ categories = [] }: Props) {
 
   if (categories.length === 0) return null;
 
-  // Show 6 categories for the bento layout
   const visibleCategories = categories.slice(0, 6);
 
-  // Dynamic Bento Grid Spans for 6 Items
+  // Asymmetrical Bento Layout Classes
   const getBentoClasses = (index: number) => {
     switch (index) {
       case 0:
-        return "col-span-2 md:col-span-1 md:row-span-2 h-64 md:h-auto"; // Tall Card
+        // Large Featured Card (2x2 on desktop)
+        return "col-span-2 md:col-span-2 md:row-span-2 h-52 sm:h-64 md:h-full min-h-[220px] md:min-h-[340px]";
       case 1:
-        return "col-span-2 md:col-span-2 md:row-span-1 h-52 md:h-auto"; // Wide Card
+        // Wide Card
+        return "col-span-1 md:col-span-2 h-36 sm:h-44 md:h-40";
       case 2:
-        return "col-span-1 md:col-span-1 md:row-span-1 h-48 md:h-auto";
+        // Compact Square Card
+        return "col-span-1 md:col-span-1 h-36 sm:h-44 md:h-40";
       case 3:
-        return "col-span-1 md:col-span-1 md:row-span-1 h-48 md:h-auto";
+        // Compact Square Card
+        return "col-span-1 md:col-span-1 h-36 sm:h-44 md:h-40";
       case 4:
-        return "col-span-2 md:col-span-2 md:row-span-1 h-52 md:h-auto"; // Wide Card
+        // Wide Card
+        return "col-span-1 md:col-span-2 h-36 sm:h-44 md:h-44";
       case 5:
-        return "col-span-2 md:col-span-1 md:row-span-1 h-48 md:h-auto";
+        // Wide Card (Full-width on mobile to close the row cleanly)
+        return "col-span-2 md:col-span-2 h-36 sm:h-44 md:h-44";
       default:
-        return "col-span-1 md:col-span-1 h-48 md:h-auto";
+        return "col-span-1 h-36 md:h-40";
     }
   };
 
   return (
-    <section className="py-12 sm:py-16 bg-white antialiased select-none border-y border-gray-100">
+    <section className="py-8 sm:py-12 bg-white antialiased select-none border-b border-gray-100">
       <Container>
-        {/* Section Header */}
-        <div className="mb-8 flex items-end justify-between gap-4 select-none">
-          <div className="space-y-1">
-            <h2 className="text-2xl sm:text-3xl font-semibold tracking-tight text-gray-900">
+        {/* Header */}
+        <div className="mb-4 sm:mb-6 flex items-end justify-between">
+          <div>
+            <h2 className="text-lg sm:text-xl font-bold tracking-tight text-gray-900">
               Shop by Category
             </h2>
-            <p className="text-xs sm:text-sm text-gray-500 font-normal max-w-md">
-              Discover curated departments and find exactly what you need.
+            <p className="text-xs text-gray-500 font-normal mt-0.5">
+              Explore departments
             </p>
           </div>
 
           <Link
             href="/categories"
             onClick={() => setIsNavigatingAll(true)}
-            className={`group inline-flex items-center gap-1.5 text-xs sm:text-sm font-semibold text-[#005c2e] hover:text-[#002b15] transition-colors shrink-0 ${
-              isNavigatingAll || loadingSlug ? "pointer-events-none opacity-70" : ""
+            className={`hidden sm:inline-flex items-center gap-1 text-xs font-semibold text-[#004d26] hover:text-[#00361a] transition-colors ${
+              isNavigatingAll || loadingSlug ? "pointer-events-none opacity-60" : ""
             }`}
           >
-            <span>View All Categories</span>
+            <span>View all</span>
             {isNavigatingAll ? (
-              <Loader2 className="h-3.5 w-3.5 animate-spin" />
+              <Loader2 className="h-3 w-3 animate-spin" />
             ) : (
-              <ArrowUpRight className="h-4 w-4 transition-transform duration-200 group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
+              <ArrowUpRight className="h-3.5 w-3.5" />
             )}
           </Link>
         </div>
 
-        {/* Dynamic Bento Grid Layout (Uses auto-rows so all 3 rows render cleanly) */}
-        <div className="grid grid-cols-2 md:grid-cols-3 auto-rows-50 sm:auto-rows-60 md:auto-rows-65 gap-3 sm:gap-5">
+        {/* Dynamic Bento Grid with Varied Card Sizes */}
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-2.5 sm:gap-3.5">
           {visibleCategories.map((category, index) => {
             const isThisLoading = loadingSlug === category.slug;
+            const isPrimary = index === 0;
 
             return (
               <Link
                 key={category.id}
                 href={`/categories/${category.slug}`}
                 onClick={() => setLoadingSlug(category.slug)}
-                className={`group relative block w-full transition-all duration-300 ${getBentoClasses(
+                className={`group relative block w-full overflow-hidden bg-gray-50 border border-gray-200 transition-colors hover:border-gray-400 ${getBentoClasses(
                   index
                 )} ${loadingSlug || isNavigatingAll ? "pointer-events-none" : ""}`}
               >
-                <Card className="relative w-full h-full bg-gray-100 rounded-none border border-gray-100 shadow-xs hover:shadow-md transition-all duration-300 overflow-hidden select-none">
-                  {/* CARD LOADING OVERLAY */}
-                  {isThisLoading && (
-                    <div className="absolute inset-0 z-30 flex items-center justify-center bg-black/20 backdrop-blur-[1px]">
-                      <Loader2 className="h-6 w-6 animate-spin text-white drop-shadow-md" />
-                    </div>
-                  )}
-
-                  {/* Full-bleed background image */}
-                  {category.imageUrl ? (
-                    <Image
-                      src={category.imageUrl}
-                      alt={category.name}
-                      fill
-                      sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 450px"
-                      className="object-cover transition-transform duration-500 ease-out group-hover:scale-105"
-                    />
-                  ) : (
-                    <div className="absolute inset-0 bg-gray-100" />
-                  )}
-
-                  {/* Elegant bottom gradient overlay */}
-                  <div className="absolute inset-x-0 bottom-0 h-2/3 bg-linear-to-t from-black/80 via-black/30 to-transparent transition-opacity duration-300 group-hover:opacity-90" />
-
-                  {/* Bottom-aligned Typography Overlay */}
-                  <div className="absolute bottom-0 left-0 w-full p-4 sm:p-5 z-10 flex flex-col justify-end space-y-1">
-                    <h3 className="text-base sm:text-lg md:text-xl font-bold tracking-tight text-white transition-colors line-clamp-1">
-                      {category.name}
-                    </h3>
-
-                    <p className="text-xs text-gray-200 font-normal line-clamp-2 max-w-sm opacity-90">
-                      {category.description ||
-                        `Explore our collection in ${category.name.toLowerCase()}.`}
-                    </p>
+                {/* Loading State */}
+                {isThisLoading && (
+                  <div className="absolute inset-0 z-20 flex items-center justify-center bg-black/20 backdrop-blur-xs">
+                    <Loader2 className="h-5 w-5 animate-spin text-white" />
                   </div>
-                </Card>
+                )}
+
+                {/* Category Image */}
+                {category.imageUrl ? (
+                  <Image
+                    src={category.imageUrl}
+                    alt={category.name}
+                    fill
+                    sizes={
+                      isPrimary
+                        ? "(max-width: 768px) 100vw, 50vw"
+                        : "(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 300px"
+                    }
+                    className="object-cover transition-transform duration-500 ease-out group-hover:scale-103"
+                  />
+                ) : (
+                  <div className="w-full h-full bg-gray-100" />
+                )}
+
+                {/* Clean Legibility Gradient */}
+                <div className="absolute inset-0 bg-linear-to-t from-black/75 via-black/10 to-transparent" />
+
+                {/* Minimal Label */}
+                <div className="absolute bottom-0 inset-x-0 p-2.5 sm:p-3.5 z-10">
+                  <span
+                    className={`block font-semibold text-white truncate ${
+                      isPrimary
+                        ? "text-sm sm:text-base md:text-lg"
+                        : "text-[11px] sm:text-xs md:text-sm"
+                    }`}
+                  >
+                    {category.name}
+                  </span>
+                </div>
               </Link>
             );
           })}
+        </div>
+
+        {/* Bottom All Categories Button */}
+        <div className="mt-6 sm:mt-8 flex justify-center">
+          <Button
+            asChild
+            variant="outline"
+            className="rounded-none border-gray-300 text-xs font-semibold text-gray-800 bg-white hover:bg-gray-50 hover:border-gray-400 cursor-pointer h-9 px-6 flex items-center justify-center gap-1.5 shadow-none transition-colors"
+          >
+            <Link
+              href="/categories"
+              onClick={() => setIsNavigatingAll(true)}
+              className={isNavigatingAll ? "pointer-events-none opacity-60" : ""}
+            >
+              <span>View All Categories</span>
+              {isNavigatingAll ? (
+                <Loader2 className="h-3.5 w-3.5 animate-spin ml-1" />
+              ) : (
+                <ArrowRight className="h-3.5 w-3.5 ml-1 transition-transform group-hover:translate-x-0.5" />
+              )}
+            </Link>
+          </Button>
         </div>
       </Container>
     </section>

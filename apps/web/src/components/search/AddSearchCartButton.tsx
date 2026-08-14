@@ -10,9 +10,7 @@ interface Props {
   item: CartItem;
 }
 
-export default function AddSearchCartButton({
-  item,
-}: Props) {
+export default function AddSearchCartButton({ item }: Props) {
   const addItem = useCart((state) => state.addItem);
   const cartItems = useCart((state) => state.items);
 
@@ -35,15 +33,15 @@ export default function AddSearchCartButton({
           addItem(item);
         }
       }}
-      className="relative rounded-full bg-[#004d26] text-white hover:bg-[#003b1d] dark:bg-[#004d26] dark:hover:bg-[#003b1d] font-medium text-xs sm:text-sm px-3 sm:px-4 h-8 sm:h-9 transition-all active:scale-95 shadow-xs"
+      className="relative rounded-none bg-[#004d26] text-white hover:bg-[#00361a] disabled:bg-gray-100 disabled:text-gray-400 font-medium text-xs px-2.5 sm:px-3.5 h-8 transition-colors shadow-none cursor-pointer disabled:cursor-not-allowed flex items-center justify-center gap-1.5"
     >
-      <ShoppingBag className="w-3.5 h-3.5 sm:w-4 sm:h-4 mr-1.5 shrink-0" />
+      <ShoppingBag className="w-3.5 h-3.5 shrink-0" />
       <span>{isOutOfStock ? "Out of Stock" : "Add"}</span>
 
       {quantity > 0 && (
         <Badge
           variant="secondary"
-          className="ml-1.5 h-5 min-w-5 rounded-full bg-white/20 px-1.5 text-[10px] font-bold text-white border-0 justify-center"
+          className="ml-1 h-4 min-w-4 rounded-none bg-white/20 px-1 text-[10px] font-medium text-white border-0 justify-center leading-none"
         >
           {quantity}
         </Badge>

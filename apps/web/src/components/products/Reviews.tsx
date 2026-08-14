@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { Check } from "lucide-react";
 import type { Review } from "@africasuk/types";
 
 interface ReviewsProps {
@@ -14,7 +15,7 @@ interface ReviewsProps {
 function StarIcon({ filled }: { filled: boolean }) {
   return (
     <svg
-      className={`w-4 h-4 shrink-0 ${
+      className={`h-3 w-3 sm:h-3.5 sm:w-3.5 shrink-0 ${
         filled ? "text-amber-400 fill-amber-400" : "text-gray-200 fill-gray-200"
       }`}
       viewBox="0 0 20 20"
@@ -29,25 +30,24 @@ export function Reviews({ reviews, rating }: ReviewsProps) {
   const [showAll, setShowAll] = useState(false);
   const formattedRating = Number(rating.averageRating || 0).toFixed(1);
 
-  // Show 3 reviews initially, or all if toggled
   const INITIAL_COUNT = 3;
   const displayedReviews = showAll ? reviews : reviews.slice(0, INITIAL_COUNT);
   const hasMoreReviews = reviews.length > INITIAL_COUNT;
 
   return (
-    <section className="mt-16 pt-12 border-t border-gray-200/80">
-      <div className="flex flex-col lg:flex-row lg:items-start gap-8 lg:gap-12">
-        {/* Left Column: Summary Card */}
-        <div className="lg:w-1/3 bg-white p-6 rounded-2xl border border-gray-100 shadow-xs space-y-4">
-          <h3 className="text-lg font-bold text-gray-900 tracking-tight">
+    <section className="mt-12 pt-8 border-t border-gray-100 select-none antialiased">
+      <div className="flex flex-col lg:flex-row lg:items-start gap-6 lg:gap-10">
+        {/* Left Column: Summary Box */}
+        <div className="lg:w-1/3 bg-white p-4 sm:p-5 rounded-none border border-gray-200 shadow-none space-y-3 shrink-0">
+          <h3 className="text-xs sm:text-sm font-semibold text-gray-900 tracking-tight">
             Customer Reviews
           </h3>
 
           <div className="flex items-baseline gap-3 flex-wrap">
-            <span className="text-4xl font-extrabold text-gray-900 tracking-tight">
+            <span className="text-2xl sm:text-3xl font-bold text-gray-900 tracking-tight">
               {formattedRating}
             </span>
-            <div className="space-y-1">
+            <div className="space-y-0.5">
               <div className="flex items-center gap-0.5">
                 {Array.from({ length: 5 }).map((_, index) => (
                   <StarIcon
@@ -56,7 +56,7 @@ export function Reviews({ reviews, rating }: ReviewsProps) {
                   />
                 ))}
               </div>
-              <p className="text-xs font-medium text-gray-500">
+              <p className="text-[11px] sm:text-xs text-gray-500 font-normal">
                 Based on {rating.reviewCount}{" "}
                 {rating.reviewCount === 1 ? "review" : "reviews"}
               </p>
@@ -67,21 +67,21 @@ export function Reviews({ reviews, rating }: ReviewsProps) {
         {/* Right Column: Reviews List */}
         <div className="lg:w-2/3 flex-1 min-w-0">
           {reviews.length === 0 ? (
-            <div className="p-8 text-center bg-white rounded-2xl border border-gray-100/80">
-              <p className="text-sm font-medium text-gray-500">
+            <div className="p-6 sm:p-8 text-center bg-gray-50/50 rounded-none border border-dashed border-gray-200">
+              <p className="text-xs text-gray-500 font-normal">
                 No reviews yet. Be the first to share your thoughts!
               </p>
             </div>
           ) : (
-            <div className="space-y-6">
+            <div className="space-y-4">
               <div className="divide-y divide-gray-100">
                 {displayedReviews.map((review) => (
                   <article
                     key={review.id}
-                    className="py-6 first:pt-0 last:pb-0 space-y-2.5 wrap-break-word"
+                    className="py-4 first:pt-0 last:pb-0 space-y-1.5 wrap-break-word"
                   >
-                    {/* Rating Stars & Date Header */}
-                    <div className="flex items-center justify-between gap-4 flex-wrap">
+                    {/* Header: Rating & Date */}
+                    <div className="flex items-center justify-between gap-2">
                       <div className="flex items-center gap-0.5">
                         {Array.from({ length: 5 }).map((_, index) => (
                           <StarIcon
@@ -93,7 +93,7 @@ export function Reviews({ reviews, rating }: ReviewsProps) {
 
                       <time
                         dateTime={review.createdAt}
-                        className="text-xs text-gray-400 font-medium"
+                        className="text-[11px] text-gray-400 font-normal"
                       >
                         {new Date(review.createdAt)
                           .toISOString()
@@ -102,56 +102,44 @@ export function Reviews({ reviews, rating }: ReviewsProps) {
                     </div>
 
                     {/* Reviewer Name */}
-                    <p className="text-sm font-bold text-gray-900 wrap-break-word">
+                    <p className="text-xs sm:text-sm font-medium text-gray-900">
                       {(review as { reviewerName?: string }).reviewerName ?? "Verified Buyer"}
                     </p>
 
                     {/* Review Title */}
                     {review.title && (
-                      <h4 className="font-semibold text-gray-900 text-base leading-snug wrap-break-word">
+                      <h4 className="font-medium text-xs sm:text-sm text-gray-900 leading-snug">
                         {review.title}
                       </h4>
                     )}
 
                     {/* Review Body */}
                     {review.comment && (
-                      <p className="text-sm leading-relaxed text-gray-600 whitespace-pre-line wrap-break-word">
+                      <p className="text-xs sm:text-sm leading-relaxed text-gray-600 font-normal whitespace-pre-line">
                         {review.comment}
                       </p>
                     )}
 
-                    {/* Review Metadata */}
-                    <div className="pt-1 flex items-center gap-3 flex-wrap">
-                      {review.verifiedPurchase && (
-                        <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200/60">
-                          <svg
-                            className="w-3 h-3 shrink-0"
-                            fill="none"
-                            viewBox="0 0 24 24"
-                            stroke="currentColor"
-                            strokeWidth={2.5}
-                          >
-                            <path
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                              d="M5 13l4 4L19 7"
-                            />
-                          </svg>
+                    {/* Verified Purchase Badge */}
+                    {review.verifiedPurchase && (
+                      <div className="pt-1">
+                        <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-none text-[10px] font-medium bg-[#004d26]/5 text-[#004d26] border border-[#004d26]/20">
+                          <Check className="w-2.5 h-2.5 stroke-[2.5]" />
                           Verified Purchase
                         </span>
-                      )}
-                    </div>
+                      </div>
+                    )}
                   </article>
                 ))}
               </div>
 
-              {/* View All / View Less Button */}
+              {/* View Toggle */}
               {hasMoreReviews && (
-                <div className="pt-4 text-center">
+                <div className="pt-2">
                   <button
                     type="button"
                     onClick={() => setShowAll(!showAll)}
-                    className="inline-flex items-center gap-2 px-6 py-2.5 rounded-full text-xs font-bold uppercase tracking-wider text-gray-800 bg-gray-100 hover:bg-gray-200 transition-colors cursor-pointer"
+                    className="w-full sm:w-auto px-4 h-8 border border-gray-300 bg-white hover:bg-gray-50 hover:border-gray-400 rounded-none text-xs font-medium text-gray-800 uppercase tracking-wider transition-colors cursor-pointer shadow-none"
                   >
                     {showAll
                       ? "Show Less"

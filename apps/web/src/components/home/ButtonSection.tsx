@@ -1,59 +1,114 @@
 "use client";
 
 import Link from "next/link";
-import { ShoppingBag, LayoutGrid, ArrowUpRight } from "lucide-react";
+import { ArrowRight, ArrowUpRight } from "lucide-react";
 
 export function ButtonSection() {
   return (
-    <section className="py-12 sm:py-20 select-none antialiased">
-      {/* Full-Width Container */}
-      <div className="max-w-none w-full px-4 sm:px-6 lg:px-12">
-        <div className="relative overflow-hidden rounded-3xl bg-[#001f10] border border-emerald-900/40 p-8 sm:p-14 lg:p-20 shadow-2xl">
+    <section className="py-8 sm:py-12 lg:py-16 2xl:py-20 select-none antialiased">
+      {/* Responsive Container: Fluid on Wide & Ultra-Wide Displays */}
+      <div className="max-w-7xl 2xl:max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8 2xl:px-12">
+        {/* Editorial Frame with Thin Hairline Border */}
+        <div className="border border-gray-200 bg-white shadow-none">
           
-          {/* Ambient Radial Lighting */}
-          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 h-96 w-full max-w-2xl rounded-full bg-emerald-500/15 blur-[120px] pointer-events-none" />
 
-          <div className="relative z-10 flex flex-col items-center text-center max-w-3xl mx-auto space-y-6">
-            
-            {/* Headline */}
-            <h2 className="text-3xl sm:text-4xl lg:text-5xl font-medium tracking-tight text-white/95 leading-tight">
-              Ready to find what you&apos;re looking for?
-            </h2>
+          {/* Main Grid: 7 Cols Left / 5 Cols Right */}
+          <div className="grid grid-cols-1 lg:grid-cols-12 divide-y lg:divide-y-0 lg:divide-x divide-gray-200">
+            {/* Left Hero Pane: Low-Opacity Soft Gradient */}
+            <div className="lg:col-span-7 p-6 sm:p-10 lg:p-12 2xl:p-16 flex flex-col justify-between space-y-8 bg-linear-to-br from-emerald-50/70 via-stone-50/40 to-white text-gray-900">
+              <div className="space-y-4 max-w-2xl">
+               
 
-            {/* Subtitle */}
-            <p className="text-sm sm:text-base text-emerald-100/70 font-normal max-w-xl leading-relaxed">
-              Explore our curated store catalog or browse by department to find exactly what fits your style.
-            </p>
+                <h2 className="text-2xl sm:text-3xl lg:text-4xl 2xl:text-5xl font-light tracking-tight leading-[1.15] text-gray-950">
+                  Exceptional craftsmanship.{" "}
+                  <span className="font-semibold text-[#004d26]">
+                    Curated without compromise.
+                  </span>
+                </h2>
 
-            {/* Interactive Tactile Buttons */}
-            <div className="pt-4 flex flex-col sm:flex-row items-center justify-center gap-4 w-full sm:w-auto">
-              
-              {/* Primary: Start Shopping */}
-              <div className="relative w-full sm:w-auto group">
-                {/* Soft Glowing Aura on Hover */}
-                <div className="absolute -inset-0.5 rounded-full bg-linear-to-r from-emerald-400 to-emerald-200 opacity-40 blur-md transition duration-500 group-hover:opacity-100 group-hover:blur-lg" />
-                
-                <Link
-                  href="/products"
-                  className="relative inline-flex items-center justify-center gap-2.5 w-full sm:w-auto px-8 py-4 rounded-full bg-white text-[#002b15] font-semibold text-sm cursor-pointer transition-all duration-200 ease-out hover:-translate-y-0.5 active:translate-y-0.5 active:scale-95 shadow-md hover:shadow-xl hover:shadow-emerald-500/10"
-                >
-                  <ShoppingBag className="w-4 h-4 text-[#002b15] transition-transform duration-300 group-hover:scale-110" />
-                  <span>Start Shopping</span>
-                  <ArrowUpRight className="w-4 h-4 opacity-70 transition-transform duration-300 group-hover:translate-x-1 group-hover:-translate-y-1" />
-                </Link>
+                <p className="text-xs sm:text-sm lg:text-base text-gray-600 font-normal leading-relaxed max-w-xl">
+                  Every garment and textile is certified for origin and artisanal quality.
+                  Shop with complete confidence from our vetted continent-wide designers.
+                </p>
               </div>
 
-              {/* Secondary: All Categories */}
-              <Link
-                href="/categories"
-                className="group relative inline-flex items-center justify-center gap-2.5 w-full sm:w-auto px-8 py-4 rounded-full bg-white/5 hover:bg-white/10 active:bg-white/15 text-white border border-white/15 hover:border-emerald-400/50 backdrop-blur-md text-sm font-medium cursor-pointer transition-all duration-200 ease-out hover:-translate-y-0.5 active:translate-y-0.5 active:scale-95 shadow-xs hover:shadow-lg hover:shadow-black/20"
-              >
-                <LayoutGrid className="w-4 h-4 text-emerald-400 transition-transform duration-300 group-hover:rotate-12 group-hover:scale-110" />
-                <span>All Categories</span>
-              </Link>
-
+              {/* Action Trigger */}
+              <div className="pt-2">
+                <Link
+                  href="/products"
+                  className="group inline-flex items-center justify-between gap-6 px-6 py-3.5 bg-[#004d26] text-white hover:bg-[#00361a] text-xs font-medium uppercase tracking-widest transition-colors duration-150 rounded-none shadow-none w-full sm:w-auto"
+                >
+                  <span>Explore Full Catalog</span>
+                  <ArrowRight className="h-4 w-4 stroke-[1.5] transition-transform duration-200 group-hover:translate-x-1" />
+                </Link>
+              </div>
             </div>
 
+            {/* Right Pathways Pane */}
+            <div className="lg:col-span-5 flex flex-col divide-y divide-gray-200 bg-white">
+              {/* 01 Departments */}
+              <Link
+                href="/categories"
+                className="group flex-1 p-6 sm:p-7 2xl:p-8 flex flex-col justify-between hover:bg-emerald-50/30 transition-colors duration-150"
+              >
+                <div className="flex items-center justify-between">
+                  <span className="text-[10px] font-mono tracking-wider uppercase text-gray-400">
+                    01 &bull; Departments
+                  </span>
+                  <ArrowUpRight className="h-4 w-4 text-gray-400 group-hover:text-[#004d26] group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-all stroke-[1.5]" />
+                </div>
+                <div className="mt-4 space-y-0.5">
+                  <h3 className="text-sm sm:text-base font-medium text-gray-900 group-hover:text-[#004d26] transition-colors">
+                    Browse All Categories
+                  </h3>
+                  <p className="text-xs text-gray-500 font-normal">
+                    Apparel, accessories, textiles, and contemporary lifestyle goods.
+                  </p>
+                </div>
+              </Link>
+
+              {/* 02 Women */}
+              <Link
+                href="/search?q=women"
+                className="group flex-1 p-6 sm:p-7 2xl:p-8 flex flex-col justify-between hover:bg-emerald-50/30 transition-colors duration-150"
+              >
+                <div className="flex items-center justify-between">
+                  <span className="text-[10px] font-mono tracking-wider uppercase text-gray-400">
+                    02 &bull; Women
+                  </span>
+                  <ArrowUpRight className="h-4 w-4 text-gray-400 group-hover:text-[#004d26] group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-all stroke-[1.5]" />
+                </div>
+                <div className="mt-4 space-y-0.5">
+                  <h3 className="text-sm sm:text-base font-medium text-gray-900 group-hover:text-[#004d26] transition-colors">
+                    Women&apos;s Collection
+                  </h3>
+                  <p className="text-xs text-gray-500 font-normal">
+                    Modern silhouettes, structured tailoring, and artisanal dresses.
+                  </p>
+                </div>
+              </Link>
+
+              {/* 03 Men */}
+              <Link
+                href="/search?q=men"
+                className="group flex-1 p-6 sm:p-7 2xl:p-8 flex flex-col justify-between hover:bg-emerald-50/30 transition-colors duration-150"
+              >
+                <div className="flex items-center justify-between">
+                  <span className="text-[10px] font-mono tracking-wider uppercase text-gray-400">
+                    03 &bull; Men
+                  </span>
+                  <ArrowUpRight className="h-4 w-4 text-gray-400 group-hover:text-[#004d26] group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-all stroke-[1.5]" />
+                </div>
+                <div className="mt-4 space-y-0.5">
+                  <h3 className="text-sm sm:text-base font-medium text-gray-900 group-hover:text-[#004d26] transition-colors">
+                    Men&apos;s Collection
+                  </h3>
+                  <p className="text-xs text-gray-500 font-normal">
+                    Tailored garments, tunics, casual wear, and footwear.
+                  </p>
+                </div>
+              </Link>
+            </div>
           </div>
         </div>
       </div>
