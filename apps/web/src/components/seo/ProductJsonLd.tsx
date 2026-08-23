@@ -27,14 +27,14 @@ export function ProductJsonLd({
     color.images.map((image) => image.imageUrl)
   );
 
+  const productUrl = `https://www.africasuk.com/products/${product.slug}`;
+
   const jsonLd = {
     "@context": "https://schema.org",
-
     "@type": "Product",
 
-    "@id": `https://africasuk.com/products/${product.slug}`,
-
-    url: `https://africasuk.com/products/${product.slug}`,
+    "@id": productUrl,
+    url: productUrl,
 
     name: product.name,
 
@@ -44,20 +44,18 @@ export function ProductJsonLd({
 
     image: images,
 
-    aggregateRating:
-      rating.reviewCount > 0
-        ? {
-            "@type": "AggregateRating",
-            ratingValue: rating.averageRating,
-            reviewCount: rating.reviewCount,
-            bestRating: 5,
-            worstRating: 1,
-          }
-        : undefined,
+    ...(rating.reviewCount > 0 && {
+      aggregateRating: {
+        "@type": "AggregateRating",
+        ratingValue: rating.averageRating,
+        reviewCount: rating.reviewCount,
+        bestRating: 5,
+        worstRating: 1,
+      },
+    }),
 
-    review:
-  reviews.length > 0
-    ? reviews.map((review) => ({
+    ...(reviews.length > 0 && {
+      review: reviews.map((review) => ({
         "@type": "Review",
 
         reviewRating: {
@@ -81,33 +79,40 @@ export function ProductJsonLd({
         },
 
         datePublished: review.createdAt,
-      }))
-    : undefined,
+      })),
+    }),
 
-    sku: firstVariant?.sku ?? undefined,
+    ...(firstVariant?.sku && {
+      sku: firstVariant.sku,
+    }),
 
-    brand: product.brand
-      ? {
-          "@type": "Brand",
-          name: product.brand.name,
-        }
-      : undefined,
+    ...(product.brand && {
+      brand: {
+        "@type": "Brand",
+        name: product.brand.name,
+      },
+    }),
 
-    category: product.category?.name,
+    ...(product.category?.name && {
+      category: product.category.name,
+    }),
 
-    color: firstColor?.name,
+    ...(firstColor?.name && {
+      color: firstColor.name,
+    }),
 
     offers: product.colors.flatMap((color) =>
       color.variants.map((variant) => ({
         "@type": "Offer",
 
-        url: `https://africasuk.com/products/${product.slug}`,
+        url: productUrl,
 
         priceCurrency: "USD",
-
         price: variant.price,
 
-        sku: variant.sku ?? undefined,
+        ...(variant.sku && {
+          sku: variant.sku,
+        }),
 
         availability:
           variant.stock > 0
@@ -122,22 +127,17 @@ export function ProductJsonLd({
         seller: {
           "@type": "Organization",
           name: "AfricaSuk",
-          url: "https://africasuk.com",
+          url: "https://www.africasuk.com",
         },
 
         hasMerchantReturnPolicy: {
           "@type": "MerchantReturnPolicy",
-
           applicableCountry: "SS",
-
           returnPolicyCategory:
             "https://schema.org/MerchantReturnFiniteReturnWindow",
-
           merchantReturnDays: 7,
-
           returnMethod:
             "https://schema.org/ReturnByMail",
-
           returnFees:
             "https://schema.org/FreeReturn",
         },
@@ -147,7 +147,6 @@ export function ProductJsonLd({
 
           shippingDestination: {
             "@type": "DefinedRegion",
-
             addressCountry: "SS",
           },
 
@@ -178,15 +177,11 @@ export function ProductJsonLd({
 
         acceptedPaymentMethod: [
           ...(product.allowCod
-            ? [
-                "https://schema.org/Cash",
-              ]
+            ? ["https://schema.org/Cash"]
             : []),
 
           ...(product.allowOnlinePayment
-            ? [
-                "https://schema.org/PaymentCard",
-              ]
+            ? ["https://schema.org/PaymentCard"]
             : []),
         ],
       }))

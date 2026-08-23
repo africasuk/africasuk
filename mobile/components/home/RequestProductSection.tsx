@@ -1,57 +1,127 @@
-import React from "react";
+import React, { useEffect, useRef } from "react";
 import {
   View,
   Text,
   StyleSheet,
   Pressable,
+  Animated,
+  Easing,
 } from "react-native";
-import { Video, ResizeMode } from "expo-av";
 import { useRouter, Href } from "expo-router";
 import { LinearGradient } from "expo-linear-gradient";
-import { Camera, Search } from "lucide-react-native";
+import { Camera, Sparkles } from "lucide-react-native";
 
 export default function RequestProductSection() {
   const router = useRouter();
 
+  const pulse = useRef(new Animated.Value(0)).current;
+  const float = useRef(new Animated.Value(0)).current;
+
+  useEffect(() => {
+    Animated.loop(
+      Animated.sequence([
+        Animated.timing(pulse, {
+          toValue: 1,
+          duration: 2500,
+          easing: Easing.inOut(Easing.ease),
+          useNativeDriver: true,
+        }),
+        Animated.timing(pulse, {
+          toValue: 0,
+          duration: 2500,
+          easing: Easing.inOut(Easing.ease),
+          useNativeDriver: true,
+        }),
+      ])
+    ).start();
+
+    Animated.loop(
+      Animated.sequence([
+        Animated.timing(float, {
+          toValue: 1,
+          duration: 3500,
+          easing: Easing.inOut(Easing.ease),
+          useNativeDriver: true,
+        }),
+        Animated.timing(float, {
+          toValue: 0,
+          duration: 3500,
+          easing: Easing.inOut(Easing.ease),
+          useNativeDriver: true,
+        }),
+      ])
+    ).start();
+  }, [pulse, float]);
+
+  const scale = pulse.interpolate({
+    inputRange: [0, 1],
+    outputRange: [1, 1.15],
+  });
+
+  const opacity = pulse.interpolate({
+    inputRange: [0, 1],
+    outputRange: [0.12, 0.25],
+  });
+
+  const translateY = float.interpolate({
+    inputRange: [0, 1],
+    outputRange: [0, -18],
+  });
+
   return (
     <View style={styles.container}>
-      {/* Background Video */}
-      <Video
-        source={{
-          uri: "https://gzfhrrnvstoeoaxdsbxc.supabase.co/storage/v1/object/public/videos/Video%20Project%2012.mp4",
-        }}
-        style={styles.videoBackground}
-        resizeMode={ResizeMode.COVER}
-        shouldPlay
-        isLooping
-        isMuted
-        useNativeControls={false}
-      />
 
-      {/* Video Overlays for Contrast & Depth (Colors Retained) */}
-      <View style={styles.flatOverlay} />
+      {/* Animated background */}
       <LinearGradient
-        colors={[
-          "rgba(0, 0, 0, 0.8)",
-          "rgba(0, 0, 0, 0.2)",
-          "rgba(0, 0, 0, 0.6)",
-        ]}
-        locations={[0, 0.5, 1]}
-        style={styles.gradientOverlay}
+        colors={["#001a0d", "#00351c", "#005c32", "#002414"]}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 1, y: 1 }}
+        style={StyleSheet.absoluteFill}
       />
 
-      {/* Hero Content Container */}
+      {/* Animated glow */}
+      <Animated.View
+        style={[
+          styles.glow,
+          {
+            transform: [{ scale }],
+            opacity,
+          },
+        ]}
+      />
+
+      <Animated.View
+        style={[
+          styles.glowSmall,
+          {
+            transform: [{ translateY }],
+          },
+        ]}
+      />
+
+      {/* Decorative circles */}
+      <View style={styles.circleOne} />
+      <View style={styles.circleTwo} />
+      <View style={styles.circleThree} />
+
+      {/* Content */}
       <View style={styles.contentContainer}>
-        {/* Sourcing Glass Badge - Retained Colors + Sharp Borders */}
-       <View style={styles.badgeContainer}>
-          <Search size={12} color="#6ee7b7" />
+
+        {/* Badge */}
+        <View style={styles.badgeContainer}>
+          <Sparkles size={13} color="#6ee7b7" />
+
           <View style={styles.badgeInner}>
-            <Text style={styles.badgeText}>CAN&apos;T FIND IT?</Text>
+            <Text style={styles.badgeText}>
+              CAN&apos;T FIND IT?
+            </Text>
           </View>
         </View>
 
         {/* Headline */}
-        <Text style={styles.headline}>Can&apos;t Find What You Need?</Text>
+        <Text style={styles.headline}>
+          Can&apos;t Find What You Need?
+        </Text>
 
         {/* Subtitle */}
         <Text style={styles.subtitle}>
@@ -59,7 +129,7 @@ export default function RequestProductSection() {
           locate and list it for you.
         </Text>
 
-        {/* CTA Gradient Button - Retained Original Colors + Sharp Borders */}
+        {/* CTA */}
         <Pressable
           onPress={() => router.push("/request-product" as Href)}
           style={({ pressed }) => [
@@ -73,8 +143,11 @@ export default function RequestProductSection() {
             end={{ x: 1, y: 0.5 }}
             style={styles.buttonGradient}
           >
-            <Camera size={16} color="#6ee7b7" strokeWidth={2} />
-            <Text style={styles.buttonText}>Request Custom Product</Text>
+            <Camera size={17} color="#6ee7b7" strokeWidth={2.2} />
+
+            <Text style={styles.buttonText}>
+              Request Custom Product
+            </Text>
           </LinearGradient>
         </Pressable>
       </View>
@@ -92,26 +165,64 @@ const styles = StyleSheet.create({
     overflow: "hidden",
     borderTopWidth: 1,
     borderBottomWidth: 1,
-    borderColor: "rgba(39, 39, 42, 0.6)", // border-zinc-800/60
+    borderColor: "rgba(39, 39, 42, 0.6)",
   },
 
-  /* Video Layer */
-  videoBackground: {
-    ...StyleSheet.absoluteFillObject,
-    width: "100%",
-    height: "100%",
+  /* Animated background glow */
+  glow: {
+    position: "absolute",
+    width: 320,
+    height: 320,
+    borderRadius: 160,
+    backgroundColor: "#10b981",
+    top: -120,
+    right: -80,
   },
 
-  /* Overlays for readability (Retained) */
-  flatOverlay: {
-    ...StyleSheet.absoluteFillObject,
-    backgroundColor: "rgba(0, 0, 0, 0.35)",
-  },
-  gradientOverlay: {
-    ...StyleSheet.absoluteFillObject,
+  glowSmall: {
+    position: "absolute",
+    width: 220,
+    height: 220,
+    borderRadius: 110,
+    backgroundColor: "#34d399",
+    bottom: -100,
+    left: -70,
+    opacity: 0.12,
   },
 
-  /* Content Alignment */
+  circleOne: {
+    position: "absolute",
+    width: 180,
+    height: 180,
+    borderRadius: 90,
+    borderWidth: 1,
+    borderColor: "rgba(110,231,183,0.12)",
+    top: 20,
+    left: -80,
+  },
+
+  circleTwo: {
+    position: "absolute",
+    width: 280,
+    height: 280,
+    borderRadius: 140,
+    borderWidth: 1,
+    borderColor: "rgba(110,231,183,0.08)",
+    bottom: -180,
+    right: -100,
+  },
+
+  circleThree: {
+    position: "absolute",
+    width: 100,
+    height: 100,
+    borderRadius: 50,
+    borderWidth: 1,
+    borderColor: "rgba(255,255,255,0.08)",
+    top: 40,
+    right: 20,
+  },
+
   contentContainer: {
     zIndex: 10,
     width: "100%",
@@ -120,69 +231,61 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
 
-  /* Badge Styles (Original Colors + Sharp Corners) */
   badgeContainer: {
     flexDirection: "row",
     alignItems: "center",
     gap: 6,
-    backgroundColor: "rgba(0, 0, 0, 0.5)",
+    backgroundColor: "rgba(0,0,0,0.35)",
     borderWidth: 1,
-    borderColor: "rgba(255, 255, 255, 0.2)",
-    borderRadius: 0, // Sharp corners
+    borderColor: "rgba(255,255,255,0.18)",
     paddingHorizontal: 10,
-    paddingVertical: 4,
+    paddingVertical: 5,
   },
+
   badgeInner: {
-    backgroundColor: "rgba(255, 255, 255, 0.1)",
-    borderRadius: 0, // Sharp corners
+    backgroundColor: "rgba(255,255,255,0.08)",
     paddingHorizontal: 8,
     paddingVertical: 2,
   },
+
   badgeText: {
     color: "#ffffff",
     fontSize: 10,
-    fontWeight: "500", // Unbolded clean weight
+    fontWeight: "500",
     letterSpacing: 0.8,
   },
 
-  /* Headline */
   headline: {
     marginTop: 14,
     fontSize: 22,
-    fontWeight: "500", // Unbolded clean weight
+    fontWeight: "600",
     color: "#ffffff",
     textAlign: "center",
     lineHeight: 28,
-    letterSpacing: 0.2,
-    textShadowColor: "rgba(0, 0, 0, 0.85)",
+    textShadowColor: "rgba(0,0,0,0.85)",
     textShadowOffset: { width: 0, height: 2 },
     textShadowRadius: 8,
   },
 
-  /* Subtitle */
   subtitle: {
     marginTop: 8,
     fontSize: 13,
     fontWeight: "400",
-    color: "#f4f4f5", // text-zinc-100
+    color: "#f4f4f5",
     textAlign: "center",
     lineHeight: 18,
     paddingHorizontal: 10,
-    textShadowColor: "rgba(0, 0, 0, 0.85)",
-    textShadowOffset: { width: 0, height: 1 },
-    textShadowRadius: 6,
   },
 
-  /* CTA Button Styles (Original Colors + Sharp Corners) */
   buttonWrapper: {
     marginTop: 20,
     width: "100%",
     maxWidth: 280,
-    borderRadius: 0, // Sharp corners
     overflow: "hidden",
     borderWidth: 1,
-    borderColor: "rgba(52, 211, 153, 0.4)", // border-emerald-400/40
+    borderColor: "rgba(52,211,153,0.4)",
   },
+
   buttonGradient: {
     height: 46,
     width: "100%",
@@ -192,13 +295,16 @@ const styles = StyleSheet.create({
     gap: 8,
     paddingHorizontal: 20,
   },
+
   buttonText: {
     color: "#ffffff",
     fontSize: 13,
-    fontWeight: "500", // Unbolded clean weight
+    fontWeight: "500",
     letterSpacing: 0.3,
   },
+
   buttonPressed: {
     opacity: 0.9,
+    transform: [{ scale: 0.98 }],
   },
 });
