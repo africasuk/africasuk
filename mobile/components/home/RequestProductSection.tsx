@@ -6,30 +6,34 @@ import {
   Pressable,
   Animated,
   Easing,
+  Dimensions,
 } from "react-native";
 import { useRouter, Href } from "expo-router";
 import { LinearGradient } from "expo-linear-gradient";
-import { Camera, Sparkles } from "lucide-react-native";
+import { Camera, Sparkles, ArrowRight } from "lucide-react-native";
+
+const { width } = Dimensions.get("window");
 
 export default function RequestProductSection() {
   const router = useRouter();
 
-  const pulse = useRef(new Animated.Value(0)).current;
+  // Subtle ambient animations (slower, smoother)
+  const breath = useRef(new Animated.Value(0)).current;
   const float = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
     Animated.loop(
       Animated.sequence([
-        Animated.timing(pulse, {
+        Animated.timing(breath, {
           toValue: 1,
-          duration: 2500,
-          easing: Easing.inOut(Easing.ease),
+          duration: 6000,
+          easing: Easing.inOut(Easing.sin),
           useNativeDriver: true,
         }),
-        Animated.timing(pulse, {
+        Animated.timing(breath, {
           toValue: 0,
-          duration: 2500,
-          easing: Easing.inOut(Easing.ease),
+          duration: 6000,
+          easing: Easing.inOut(Easing.sin),
           useNativeDriver: true,
         }),
       ])
@@ -39,97 +43,85 @@ export default function RequestProductSection() {
       Animated.sequence([
         Animated.timing(float, {
           toValue: 1,
-          duration: 3500,
-          easing: Easing.inOut(Easing.ease),
+          duration: 4000,
+          easing: Easing.inOut(Easing.sin),
           useNativeDriver: true,
         }),
         Animated.timing(float, {
           toValue: 0,
-          duration: 3500,
-          easing: Easing.inOut(Easing.ease),
+          duration: 4000,
+          easing: Easing.inOut(Easing.sin),
           useNativeDriver: true,
         }),
       ])
     ).start();
-  }, [pulse, float]);
+  }, [breath, float]);
 
-  const scale = pulse.interpolate({
+  const glowOpacity = breath.interpolate({
     inputRange: [0, 1],
-    outputRange: [1, 1.15],
+    outputRange: [0.15, 0.35],
   });
 
-  const opacity = pulse.interpolate({
+  const glowScale = breath.interpolate({
     inputRange: [0, 1],
-    outputRange: [0.12, 0.25],
+    outputRange: [1, 1.1],
   });
 
-  const translateY = float.interpolate({
+  const cardTranslateY = float.interpolate({
     inputRange: [0, 1],
-    outputRange: [0, -18],
+    outputRange: [0, -6],
   });
 
   return (
     <View style={styles.container}>
+      {/* Deep dark background */}
+      <View style={StyleSheet.absoluteFill}>
+        <View style={styles.bgDark} />
+      </View>
 
-      {/* Animated background */}
-      <LinearGradient
-        colors={["#001a0d", "#00351c", "#005c32", "#002414"]}
-        start={{ x: 0, y: 0 }}
-        end={{ x: 1, y: 1 }}
-        style={StyleSheet.absoluteFill}
-      />
-
-      {/* Animated glow */}
+      {/* Ambient background glows */}
       <Animated.View
         style={[
-          styles.glow,
-          {
-            transform: [{ scale }],
-            opacity,
-          },
+          styles.ambientGlow,
+          styles.glowTopRight,
+          { opacity: glowOpacity, transform: [{ scale: glowScale }] },
+        ]}
+      />
+      <Animated.View
+        style={[
+          styles.ambientGlow,
+          styles.glowBottomLeft,
+          { opacity: glowOpacity, transform: [{ scale: glowScale }] },
         ]}
       />
 
+      {/* Floating Glass Card */}
       <Animated.View
         style={[
-          styles.glowSmall,
-          {
-            transform: [{ translateY }],
-          },
+          styles.glassCard,
+          { transform: [{ translateY: cardTranslateY }] },
         ]}
-      />
+      >
+        <LinearGradient
+          colors={["rgba(255,255,255,0.06)", "rgba(255,255,255,0.01)"]}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 1 }}
+          style={StyleSheet.absoluteFill}
+        />
 
-      {/* Decorative circles */}
-      <View style={styles.circleOne} />
-      <View style={styles.circleTwo} />
-      <View style={styles.circleThree} />
-
-      {/* Content */}
-      <View style={styles.contentContainer}>
-
-        {/* Badge */}
-        <View style={styles.badgeContainer}>
-          <Sparkles size={13} color="#6ee7b7" />
-
-          <View style={styles.badgeInner}>
-            <Text style={styles.badgeText}>
-              CAN&apos;T FIND IT?
-            </Text>
-          </View>
+        {/* Premium Pill Badge */}
+        <View style={styles.badge}>
+          <Sparkles size={12} color="#34d399" />
+          <Text style={styles.badgeText}>CAN&apos;T FIND IT?</Text>
         </View>
 
-        {/* Headline */}
-        <Text style={styles.headline}>
-          Can&apos;t Find What You Need?
-        </Text>
-
-        {/* Subtitle */}
+        <Text style={styles.title}>Let us source it for you.</Text>
+        
         <Text style={styles.subtitle}>
-          Snap a photo or share a description. Our sourcing specialists will
-          locate and list it for you.
+          Upload a photo or drop a brief description. Our procurement experts 
+          will locate exactly what you need.
         </Text>
 
-        {/* CTA */}
         <Pressable
           onPress={() => router.push("/request-product" as Href)}
           style={({ pressed }) => [
@@ -138,173 +130,136 @@ export default function RequestProductSection() {
           ]}
         >
           <LinearGradient
-            colors={["#002b15", "#065f46", "#10b981"]}
-            start={{ x: 0, y: 0.5 }}
-            end={{ x: 1, y: 0.5 }}
-            style={styles.buttonGradient}
+            colors={["#059669", "#10b981"]}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 0 }}
+            style={styles.button}
           >
-            <Camera size={17} color="#6ee7b7" strokeWidth={2.2} />
-
-            <Text style={styles.buttonText}>
-              Request Custom Product
-            </Text>
+            <Camera size={18} color="#ffffff" strokeWidth={2.5} />
+            <Text style={styles.buttonText}>Request Custom Product</Text>
+            <View style={styles.buttonIconSpacer} />
+            <ArrowRight size={16} color="#ffffff" style={styles.buttonArrow} />
           </LinearGradient>
         </Pressable>
-      </View>
+      </Animated.View>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
-    position: "relative",
     width: "100%",
-    height: 360,
-    justifyContent: "center",
-    alignItems: "center",
-    overflow: "hidden",
-    borderTopWidth: 1,
-    borderBottomWidth: 1,
-    borderColor: "rgba(39, 39, 42, 0.6)",
-  },
-
-  /* Animated background glow */
-  glow: {
-    position: "absolute",
-    width: 320,
-    height: 320,
-    borderRadius: 160,
-    backgroundColor: "#10b981",
-    top: -120,
-    right: -80,
-  },
-
-  glowSmall: {
-    position: "absolute",
-    width: 220,
-    height: 220,
-    borderRadius: 110,
-    backgroundColor: "#34d399",
-    bottom: -100,
-    left: -70,
-    opacity: 0.12,
-  },
-
-  circleOne: {
-    position: "absolute",
-    width: 180,
-    height: 180,
-    borderRadius: 90,
-    borderWidth: 1,
-    borderColor: "rgba(110,231,183,0.12)",
-    top: 20,
-    left: -80,
-  },
-
-  circleTwo: {
-    position: "absolute",
-    width: 280,
-    height: 280,
-    borderRadius: 140,
-    borderWidth: 1,
-    borderColor: "rgba(110,231,183,0.08)",
-    bottom: -180,
-    right: -100,
-  },
-
-  circleThree: {
-    position: "absolute",
-    width: 100,
-    height: 100,
-    borderRadius: 50,
-    borderWidth: 1,
-    borderColor: "rgba(255,255,255,0.08)",
-    top: 40,
-    right: 20,
-  },
-
-  contentContainer: {
-    zIndex: 10,
-    width: "100%",
-    maxWidth: 440,
+    paddingVertical: 40,
     paddingHorizontal: 20,
     alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "#09090b", // Deep zinc background
   },
-
-  badgeContainer: {
+  bgDark: {
+    flex: 1,
+    backgroundColor: "#09090b",
+  },
+  ambientGlow: {
+    position: "absolute",
+    width: width * 0.8,
+    height: width * 0.8,
+    borderRadius: width * 0.4,
+    backgroundColor: "#10b981",
+    filter: [{ blur: 60 }], // Works on newer React Native versions, fallback to opacity below
+  },
+  glowTopRight: {
+    top: -width * 0.2,
+    right: -width * 0.2,
+    backgroundColor: "#059669",
+  },
+  glowBottomLeft: {
+    bottom: -width * 0.2,
+    left: -width * 0.2,
+    backgroundColor: "#0ea5e9",
+  },
+  glassCard: {
+    width: "100%",
+    maxWidth: 400,
+    borderRadius: 24,
+    backgroundColor: "rgba(24, 24, 27, 0.65)", // Glass effect base
+    borderWidth: 1,
+    borderColor: "rgba(255, 255, 255, 0.08)",
+    padding: 28,
+    alignItems: "center",
+    overflow: "hidden",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 10 },
+    shadowOpacity: 0.3,
+    shadowRadius: 20,
+    elevation: 10,
+  },
+  badge: {
     flexDirection: "row",
     alignItems: "center",
     gap: 6,
-    backgroundColor: "rgba(0,0,0,0.35)",
+    paddingVertical: 6,
+    paddingHorizontal: 14,
+    borderRadius: 999,
+    backgroundColor: "rgba(16, 185, 129, 0.12)",
     borderWidth: 1,
-    borderColor: "rgba(255,255,255,0.18)",
-    paddingHorizontal: 10,
-    paddingVertical: 5,
+    borderColor: "rgba(16, 185, 129, 0.25)",
+    marginBottom: 20,
   },
-
-  badgeInner: {
-    backgroundColor: "rgba(255,255,255,0.08)",
-    paddingHorizontal: 8,
-    paddingVertical: 2,
-  },
-
   badgeText: {
-    color: "#ffffff",
-    fontSize: 10,
-    fontWeight: "500",
-    letterSpacing: 0.8,
+    color: "#34d399",
+    fontSize: 11,
+    fontWeight: "700",
+    letterSpacing: 1.2,
   },
-
-  headline: {
-    marginTop: 14,
-    fontSize: 22,
-    fontWeight: "600",
+  title: {
+    fontSize: 26,
+    fontWeight: "800",
     color: "#ffffff",
     textAlign: "center",
-    lineHeight: 28,
-    textShadowColor: "rgba(0,0,0,0.85)",
-    textShadowOffset: { width: 0, height: 2 },
-    textShadowRadius: 8,
+    letterSpacing: -0.5,
+    marginBottom: 12,
   },
-
   subtitle: {
-    marginTop: 8,
-    fontSize: 13,
+    fontSize: 15,
     fontWeight: "400",
-    color: "#f4f4f5",
+    color: "#a1a1aa",
     textAlign: "center",
-    lineHeight: 18,
-    paddingHorizontal: 10,
+    lineHeight: 22,
+    marginBottom: 32,
+    paddingHorizontal: 8,
   },
-
   buttonWrapper: {
-    marginTop: 20,
     width: "100%",
-    maxWidth: 280,
-    overflow: "hidden",
-    borderWidth: 1,
-    borderColor: "rgba(52,211,153,0.4)",
+    shadowColor: "#10b981",
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.25,
+    shadowRadius: 16,
+    elevation: 8,
   },
-
-  buttonGradient: {
-    height: 46,
+  button: {
     width: "100%",
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
-    gap: 8,
-    paddingHorizontal: 20,
+    paddingVertical: 16,
+    borderRadius: 999,
+    gap: 10,
   },
-
   buttonText: {
     color: "#ffffff",
-    fontSize: 13,
-    fontWeight: "500",
+    fontSize: 15,
+    fontWeight: "600",
     letterSpacing: 0.3,
   },
-
+  buttonIconSpacer: {
+    flex: 1,
+    maxWidth: 8,
+  },
+  buttonArrow: {
+    opacity: 0.8,
+  },
   buttonPressed: {
+    transform: [{ scale: 0.97 }],
     opacity: 0.9,
-    transform: [{ scale: 0.98 }],
   },
 });

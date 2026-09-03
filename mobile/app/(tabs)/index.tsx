@@ -6,7 +6,6 @@ import Animated, {
   useSharedValue,
 } from "react-native-reanimated";
 
-import LoadingText from "@/components/shared/LoadingText";
 import { createClient } from "@/lib/auth/client";
 
 import Hero from "@/components/home/Hero";
@@ -16,7 +15,7 @@ import FeaturedBrands from "@/components/home/FeaturedBrands";
 import ContinueShopping from "@/components/home/ContinueShopping";
 import RequestProductSection from "@/components/home/RequestProductSection";
 import HomeHeader from "@/components/home/HomeHeader";
-import Logo from "@/components/layout/header/Logo";
+import LoadingScreen from "@/components/shared/LoadingScreen";
 
 export default function HomeScreen() {
   const [categories, setCategories] = useState<any[]>([]);
@@ -175,20 +174,7 @@ export default function HomeScreen() {
   }, []);
 
   if (loading) {
-    return (
-      <SafeAreaView
-        edges={["top"]}
-        style={{
-          flex: 1,
-          backgroundColor: "#fff",
-          justifyContent: "center",
-          alignItems: "center",
-        }}
-      >
-        <Logo />
-        <LoadingText />
-      </SafeAreaView>
-    );
+      return <LoadingScreen />;
   }
 
   return (

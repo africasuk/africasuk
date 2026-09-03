@@ -1,0 +1,17 @@
+[
+  {
+    "relation": [
+      "delegate_permission/common.handle_all_urls",
+      "delegate_permission/common.get_login_creds"
+    ],
+    "target": {
+      "namespace": "android_app",
+      "package_name": "com.africasuk.app",
+      "sha256_cert_fingerprints": [
+        "D3:54:17:37:8B:BD:FF:1D:95:5D:36:4F:80:27:46:D3:82:C2:1E:A1:89:A1:83:72:F6:3D:51:88:1D:31:81:04",
+        "98:8A:B4:2B:18:6B:23:AF:A1:B5:8F:18:DB:71:A5:D4:E7:ED:BA:3C:0A:67:95:75:AB:2C:B6:B1:CA:B5:3F:41",
+        "78:81:57:C8:71:B3:D0:DC:1B:C7:87:6E:F1:64:5F:28:8C:99:92:0D:D0:8B:71:9B:E0:E5:EE:FB:03:02:3D:A7"
+      ]
+    }
+  }
+]
