@@ -8,6 +8,7 @@
     "scheme": "africasuk",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
+
     "ios": {
       "bundleIdentifier": "com.africasuk.app",
       "supportsTablet": true,
@@ -16,6 +17,7 @@
         "ITSAppUsesNonExemptEncryption": false
       }
     },
+
     "android": {
       "package": "com.africasuk.app",
       "versionCode": 14,
@@ -23,12 +25,30 @@
         "foregroundImage": "./assets/images/android-icon-foreground.png",
         "backgroundColor": "#024F25",
         "monochromeImage": "./assets/images/android-icon-monochrome.png"
-      }
+      },
+      "intentFilters": [
+        {
+          "action": "VIEW",
+          "autoVerify": true,
+          "data": [
+            {
+              "scheme": "https",
+              "host": "www.africasuk.com"
+            }
+          ],
+          "category": [
+            "BROWSABLE",
+            "DEFAULT"
+          ]
+        }
+      ]
     },
+
     "web": {
       "output": "static",
       "favicon": "./assets/images/favicon.png"
     },
+
     "plugins": [
       "expo-router",
       [
@@ -50,10 +70,12 @@
       ],
       "@react-native-google-signin/google-signin"
     ],
+
     "experiments": {
       "typedRoutes": true,
       "reactCompiler": true
     },
+
     "extra": {
       "router": {},
       "eas": {
