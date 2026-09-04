@@ -21,7 +21,6 @@ export default function robots(): MetadataRoute.Robots {
           "/account/",
           "/orders/",
           "/wishlist/",
-          "/_next/",
         ],
       },
       {
@@ -53,10 +52,7 @@ export default function robots(): MetadataRoute.Robots {
         ],
       },
     ],
-
     sitemap: "https://africasuk.com/sitemap.xml",
-
-    // Remove the protocol from host
     host: "africasuk.com",
   };
 }
