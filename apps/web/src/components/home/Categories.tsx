@@ -21,32 +21,6 @@ export default function Categories({ categories = [] }: Props) {
 
   const visibleCategories = categories.slice(0, 6);
 
-  // Asymmetrical Bento Layout Classes
-  const getBentoClasses = (index: number) => {
-    switch (index) {
-      case 0:
-        // Large Featured Card (2x2 on desktop)
-        return "col-span-2 md:col-span-2 md:row-span-2 h-52 sm:h-64 md:h-full min-h-[220px] md:min-h-[340px]";
-      case 1:
-        // Wide Card
-        return "col-span-1 md:col-span-2 h-36 sm:h-44 md:h-40";
-      case 2:
-        // Compact Square Card
-        return "col-span-1 md:col-span-1 h-36 sm:h-44 md:h-40";
-      case 3:
-        // Compact Square Card
-        return "col-span-1 md:col-span-1 h-36 sm:h-44 md:h-40";
-      case 4:
-        // Wide Card
-        return "col-span-1 md:col-span-2 h-36 sm:h-44 md:h-44";
-      case 5:
-        // Wide Card (Full-width on mobile to close the row cleanly)
-        return "col-span-2 md:col-span-2 h-36 sm:h-44 md:h-44";
-      default:
-        return "col-span-1 h-36 md:h-40";
-    }
-  };
-
   return (
     <section className="py-8 sm:py-12 bg-white antialiased select-none border-b border-gray-100">
       <Container>
@@ -77,8 +51,8 @@ export default function Categories({ categories = [] }: Props) {
           </Link>
         </div>
 
-        {/* Dynamic Bento Grid with Varied Card Sizes */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-2.5 sm:gap-3.5">
+        {/* Pinterest-style 1:1 Aspect Ratio Showcase Grid */}
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 sm:gap-4">
           {visibleCategories.map((category, index) => {
             const isThisLoading = loadingSlug === category.slug;
             const isPrimary = index === 0;
@@ -88,9 +62,9 @@ export default function Categories({ categories = [] }: Props) {
                 key={category.id}
                 href={`/categories/${category.slug}`}
                 onClick={() => setLoadingSlug(category.slug)}
-                className={`group relative block w-full overflow-hidden bg-gray-50 border border-gray-200 transition-colors hover:border-gray-400 ${getBentoClasses(
-                  index
-                )} ${loadingSlug || isNavigatingAll ? "pointer-events-none" : ""}`}
+                className={`group relative flex flex-col w-full overflow-hidden bg-gray-50 rounded-2xl border border-gray-100 shadow-xs transition-all duration-300 hover:shadow-md hover:border-gray-200 ${
+                  loadingSlug || isNavigatingAll ? "pointer-events-none" : ""
+                }`}
               >
                 {/* Loading State */}
                 {isThisLoading && (
@@ -99,35 +73,29 @@ export default function Categories({ categories = [] }: Props) {
                   </div>
                 )}
 
-                {/* Category Image */}
-                {category.imageUrl ? (
-                  <Image
-                    src={category.imageUrl}
-                    alt={category.name}
-                    fill
-                    sizes={
-                      isPrimary
-                        ? "(max-width: 768px) 100vw, 50vw"
-                        : "(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 300px"
-                    }
-                    className="object-cover transition-transform duration-500 ease-out group-hover:scale-103"
-                  />
-                ) : (
-                  <div className="w-full h-full bg-gray-100" />
-                )}
+                {/* 1:1 Square Image Container */}
+                <div className="relative w-full aspect-square overflow-hidden bg-gray-100">
+                  {category.imageUrl ? (
+                    <Image
+                      src={category.imageUrl}
+                      alt={category.name}
+                      fill
+                      quality={80}
+                      priority={isPrimary}
+                      sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 16vw"
+                      className="object-cover transition-transform duration-500 ease-out group-hover:scale-105"
+                    />
+                  ) : (
+                    <div className="w-full h-full bg-gray-100" />
+                  )}
 
-                {/* Clean Legibility Gradient */}
-                <div className="absolute inset-0 bg-linear-to-t from-black/75 via-black/10 to-transparent" />
+                  {/* Subtle hover overlay for Pinterest visual depth */}
+                  <div className="absolute inset-0 bg-black/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                </div>
 
-                {/* Minimal Label */}
-                <div className="absolute bottom-0 inset-x-0 p-2.5 sm:p-3.5 z-10">
-                  <span
-                    className={`block font-semibold text-white truncate ${
-                      isPrimary
-                        ? "text-sm sm:text-base md:text-lg"
-                        : "text-[11px] sm:text-xs md:text-sm"
-                    }`}
-                  >
+                {/* Clean Label Below 1:1 Image */}
+                <div className="p-3 text-center bg-white">
+                  <span className="block font-medium text-gray-900 text-xs sm:text-sm truncate group-hover:text-[#004d26] transition-colors">
                     {category.name}
                   </span>
                 </div>
@@ -141,7 +109,7 @@ export default function Categories({ categories = [] }: Props) {
           <Button
             asChild
             variant="outline"
-            className="rounded-none border-gray-300 text-xs font-semibold text-gray-800 bg-white hover:bg-gray-50 hover:border-gray-400 cursor-pointer h-9 px-6 flex items-center justify-center gap-1.5 shadow-none transition-colors"
+            className="rounded-full border-gray-300 text-xs font-semibold text-gray-800 bg-white hover:bg-gray-50 hover:border-gray-400 cursor-pointer h-9 px-6 flex items-center justify-center gap-1.5 shadow-none transition-colors"
           >
             <Link
               href="/categories"

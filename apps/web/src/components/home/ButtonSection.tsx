@@ -4,112 +4,92 @@ import Link from "next/link";
 import { ArrowRight, ArrowUpRight } from "lucide-react";
 
 export function ButtonSection() {
+  const pathways = [
+    {
+      index: "01",
+      title: "All Categories",
+      description: "Clothes, accessories, and home goods.",
+      href: "/categories",
+    },
+    {
+      index: "02",
+      title: "Women",
+      description: "Dresses, tops, and everyday wear.",
+      href: "/search?q=women",
+    },
+    {
+      index: "03",
+      title: "Men",
+      description: "Shirts, pants, shoes, and classics.",
+      href: "/search?q=men",
+    },
+  ];
+
   return (
-    <section className="py-8 sm:py-12 lg:py-16 2xl:py-20 select-none antialiased">
-      {/* Responsive Container: Fluid on Wide & Ultra-Wide Displays */}
-      <div className="max-w-7xl 2xl:max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8 2xl:px-12">
-        {/* Editorial Frame with Thin Hairline Border */}
-        <div className="border border-gray-200 bg-white shadow-none">
+    <section className="w-full py-12 sm:py-20 bg-white select-none antialiased border-b border-gray-100">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 lg:gap-16 items-start">
           
+          {/* Left Editorial Text Column */}
+          <div className="lg:col-span-6 xl:col-span-7 flex flex-col justify-between space-y-6 sm:space-y-8">
+            <div className="space-y-3 max-w-xl">
+              <span className="text-[11px] font-semibold uppercase tracking-[0.2em] text-[#008744]">
+                100% Authentic
+              </span>
 
-          {/* Main Grid: 7 Cols Left / 5 Cols Right */}
-          <div className="grid grid-cols-1 lg:grid-cols-12 divide-y lg:divide-y-0 lg:divide-x divide-gray-200">
-            {/* Left Hero Pane: Low-Opacity Soft Gradient */}
-            <div className="lg:col-span-7 p-6 sm:p-10 lg:p-12 2xl:p-16 flex flex-col justify-between space-y-8 bg-linear-to-br from-emerald-50/70 via-stone-50/40 to-white text-gray-900">
-              <div className="space-y-4 max-w-2xl">
-               
+              <h2 className="text-3xl sm:text-5xl font-bold tracking-tight text-gray-950 leading-tight">
+                Quality you trust,{" "}
+                <span className="text-[#008744]">made to last.</span>
+              </h2>
 
-                <h2 className="text-2xl sm:text-3xl lg:text-4xl 2xl:text-5xl font-light tracking-tight leading-[1.15] text-gray-950">
-                  Exceptional craftsmanship.{" "}
-                  <span className="font-semibold text-[#004d26]">
-                    Curated without compromise.
-                  </span>
-                </h2>
-
-                <p className="text-xs sm:text-sm lg:text-base text-gray-600 font-normal leading-relaxed max-w-xl">
-                  Every garment and textile is certified for origin and artisanal quality.
-                  Shop with complete confidence from our vetted continent-wide designers.
-                </p>
-              </div>
-
-              {/* Action Trigger */}
-              <div className="pt-2">
-                <Link
-                  href="/products"
-                  className="group inline-flex items-center justify-between gap-6 px-6 py-3.5 bg-[#004d26] text-white hover:bg-[#00361a] text-xs font-medium uppercase tracking-widest transition-colors duration-150 rounded-none shadow-none w-full sm:w-auto"
-                >
-                  <span>Explore Full Catalog</span>
-                  <ArrowRight className="h-4 w-4 stroke-[1.5] transition-transform duration-200 group-hover:translate-x-1" />
-                </Link>
-              </div>
+              <p className="text-sm sm:text-base text-gray-600 font-normal leading-relaxed">
+                Every item is carefully checked for genuine quality. Shop with confidence from top designers across Africa.
+              </p>
             </div>
 
-            {/* Right Pathways Pane */}
-            <div className="lg:col-span-5 flex flex-col divide-y divide-gray-200 bg-white">
-              {/* 01 Departments */}
+            {/* Clean, Visible Primary Button */}
+            <div className="pt-2">
               <Link
-                href="/categories"
-                className="group flex-1 p-6 sm:p-7 2xl:p-8 flex flex-col justify-between hover:bg-emerald-50/30 transition-colors duration-150"
+                href="/products"
+                className="inline-flex items-center justify-center gap-2 bg-gray-900 hover:bg-[#008744] text-white text-xs sm:text-sm font-semibold px-6 py-3 rounded-full transition-colors active:scale-[0.98] w-full sm:w-auto"
               >
-                <div className="flex items-center justify-between">
-                  <span className="text-[10px] font-mono tracking-wider uppercase text-gray-400">
-                    01 &bull; Departments
-                  </span>
-                  <ArrowUpRight className="h-4 w-4 text-gray-400 group-hover:text-[#004d26] group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-all stroke-[1.5]" />
-                </div>
-                <div className="mt-4 space-y-0.5">
-                  <h3 className="text-sm sm:text-base font-medium text-gray-900 group-hover:text-[#004d26] transition-colors">
-                    Browse All Categories
-                  </h3>
-                  <p className="text-xs text-gray-500 font-normal">
-                    Apparel, accessories, textiles, and contemporary lifestyle goods.
-                  </p>
-                </div>
-              </Link>
-
-              {/* 02 Women */}
-              <Link
-                href="/search?q=women"
-                className="group flex-1 p-6 sm:p-7 2xl:p-8 flex flex-col justify-between hover:bg-emerald-50/30 transition-colors duration-150"
-              >
-                <div className="flex items-center justify-between">
-                  <span className="text-[10px] font-mono tracking-wider uppercase text-gray-400">
-                    02 &bull; Women
-                  </span>
-                  <ArrowUpRight className="h-4 w-4 text-gray-400 group-hover:text-[#004d26] group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-all stroke-[1.5]" />
-                </div>
-                <div className="mt-4 space-y-0.5">
-                  <h3 className="text-sm sm:text-base font-medium text-gray-900 group-hover:text-[#004d26] transition-colors">
-                    Women&apos;s Collection
-                  </h3>
-                  <p className="text-xs text-gray-500 font-normal">
-                    Modern silhouettes, structured tailoring, and artisanal dresses.
-                  </p>
-                </div>
-              </Link>
-
-              {/* 03 Men */}
-              <Link
-                href="/search?q=men"
-                className="group flex-1 p-6 sm:p-7 2xl:p-8 flex flex-col justify-between hover:bg-emerald-50/30 transition-colors duration-150"
-              >
-                <div className="flex items-center justify-between">
-                  <span className="text-[10px] font-mono tracking-wider uppercase text-gray-400">
-                    03 &bull; Men
-                  </span>
-                  <ArrowUpRight className="h-4 w-4 text-gray-400 group-hover:text-[#004d26] group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-all stroke-[1.5]" />
-                </div>
-                <div className="mt-4 space-y-0.5">
-                  <h3 className="text-sm sm:text-base font-medium text-gray-900 group-hover:text-[#004d26] transition-colors">
-                    Men&apos;s Collection
-                  </h3>
-                  <p className="text-xs text-gray-500 font-normal">
-                    Tailored garments, tunics, casual wear, and footwear.
-                  </p>
-                </div>
+                <span>Shop All</span>
+                <ArrowRight className="w-4 h-4 transition-transform group-hover:translate-x-0.5" />
               </Link>
             </div>
           </div>
+
+          {/* Right Pathway Rows */}
+          <div className="lg:col-span-6 xl:col-span-5 flex flex-col divide-y divide-gray-100">
+            {pathways.map((item) => (
+              <div
+                key={item.index}
+                className="py-5 first:pt-0 last:pb-0 flex items-center justify-between gap-4"
+              >
+                <div className="space-y-0.5 pr-2">
+                  <span className="text-[11px] font-mono text-gray-400">
+                    {item.index}
+                  </span>
+                  <h3 className="text-base font-semibold text-gray-900">
+                    {item.title}
+                  </h3>
+                  <p className="text-xs sm:text-sm text-gray-500 font-normal">
+                    {item.description}
+                  </p>
+                </div>
+
+                {/* Minimal Pill Button */}
+                <Link
+                  href={item.href}
+                  className="shrink-0 inline-flex items-center gap-1 text-xs font-semibold text-gray-800 hover:text-[#008744] border border-gray-300 hover:border-[#008744] rounded-full px-3.5 py-1.5 transition-colors active:scale-95"
+                >
+                  <span>View</span>
+                  <ArrowUpRight className="h-3.5 w-3.5 stroke-2" />
+                </Link>
+              </div>
+            ))}
+          </div>
+
         </div>
       </div>
     </section>

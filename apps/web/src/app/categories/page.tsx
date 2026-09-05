@@ -1,17 +1,14 @@
 import Image from "next/image";
 import Link from "next/link";
-import { ArrowUpRight } from "lucide-react";
+import { ArrowRight } from "lucide-react";
 
 import { CategoryRepository } from "@africasuk/database";
 import { createClient } from "@/lib/auth/server";
 
 import Layout from "@/components/layout/Layout";
-import Container from "@/components/layout/Container";
-import { Card, CardContent } from "@/components/ui/card";
 
 export default async function CategoriesPage() {
   const supabase = await createClient();
-
   const categoryRepository = new CategoryRepository(supabase);
 
   // Guard against potential undefined/null return from database
@@ -19,15 +16,14 @@ export default async function CategoriesPage() {
 
   return (
     <Layout>
-      <section className="py-12 sm:py-16 bg-white select-none antialiased border-b border-gray-100">
-        <Container className="max-w-none w-full px-4 sm:px-6 lg:px-12">
-          {/* Page Header */}
-          <div className="mb-10 sm:mb-12 border-b border-gray-100 pb-8 space-y-1.5">
-            <h1 className="text-3xl sm:text-4xl font-semibold tracking-tight text-gray-950">
+      <section className="w-full py-8 sm:py-12 bg-white select-none antialiased border-b border-gray-100">
+        <div className="w-full px-4 sm:px-6 lg:px-10 xl:px-12">
+          {/* Header */}
+          <div className="mb-8 border-b border-gray-100 pb-6 space-y-1">
+            <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-gray-950">
               Product Departments
             </h1>
-
-            <p className="text-sm sm:text-base text-gray-600 font-normal max-w-2xl">
+            <p className="text-xs sm:text-sm text-gray-500 font-normal max-w-2xl">
               Browse our curated selection of verified premium brands across all
               product categories.
             </p>
@@ -35,7 +31,7 @@ export default async function CategoriesPage() {
 
           {/* Empty State Fallback */}
           {categories.length === 0 ? (
-            <div className="flex flex-col items-center justify-center rounded-none border border-dashed border-gray-200 bg-gray-50/50 py-20 text-center">
+            <div className="flex flex-col items-center justify-center rounded-3xl border border-dashed border-gray-200 bg-gray-50/50 py-20 text-center">
               <p className="text-base font-semibold text-gray-800">
                 No categories found
               </p>
@@ -45,50 +41,69 @@ export default async function CategoriesPage() {
               </p>
             </div>
           ) : (
-            /* Widescreen Fluid Grid with Square Corners */
-            <div className="grid grid-cols-2 gap-3 sm:gap-5 sm:grid-cols-[repeat(auto-fit,minmax(200px,1fr))] lg:gap-6">
-              {categories.map((category) => (
-                <Link
-                  key={category.id}
-                  href={`/categories/${category.slug}`}
-                  className="group relative block w-full"
-                >
-                  <Card className="relative h-44 sm:h-48 w-full rounded-none  bg-gray-50/50 shadow-xs hover:bg-white hover:border-[#005c2e]/20 hover:shadow-lg transition-all duration-300 overflow-hidden select-none">
-                    {/* Full-bleed background image */}
-                    {category.imageUrl ? (
-                      <Image
-                        src={category.imageUrl}
-                        alt={category.name}
-                        fill
-                        sizes="(max-width: 640px) 50vw, (max-width: 1024px) 25vw, 300px"
-                        className="object-cover transition-transform duration-500 ease-out group-hover:scale-105"
-                      />
-                    ) : (
-                      <div className="absolute inset-0 bg-gray-100 flex items-center justify-center text-gray-400 font-medium text-xs">
-                        No Image
+            /* 
+              Pinterest Multi-Column Masonry:
+              - Items pack tightly from top to bottom and left to right.
+              - No empty vertical rows or dead gaps.
+              - Supports varied heights/aspects naturally.
+            */
+            <div className="columns-2 sm:columns-3 md:columns-4 lg:columns-5 xl:columns-6 2xl:columns-7 gap-5 sm:gap-6 [column-fill:balance]">
+              {categories.map((category, index) => {
+                // Pinterest variety: alternating standard 1:1, slightly taller 4:5, and compact 1:1
+                const aspectRatios = [
+                  "aspect-square",      // 1:1
+                  "aspect-[4/5]",       // Slightly taller feature
+                  "aspect-square",      // 1:1
+                  "aspect-[3/4]",       // Editorial tall
+                  "aspect-square",      // 1:1
+                ];
+                const currentAspect = aspectRatios[index % aspectRatios.length];
+
+                return (
+                  <div
+                    key={category.id}
+                    className="break-inside-avoid mb-6 w-full"
+                  >
+                    <Link
+                      href={`/categories/${category.slug}`}
+                      className="group flex flex-col items-center text-center w-full focus:outline-none transition-transform duration-300 hover:-translate-y-1"
+                    >
+                      {/* Image Card */}
+                      <div
+                        className={`relative w-full ${currentAspect} rounded-3xl overflow-hidden bg-gray-50 border border-gray-100 shadow-xs transition-shadow duration-300 group-hover:shadow-md`}
+                      >
+                        {category.imageUrl ? (
+                          <Image
+                            src={category.imageUrl}
+                            alt={category.name}
+                            fill
+                            sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 20vw"
+                            className="object-cover transition-transform duration-500 ease-out group-hover:scale-105"
+                          />
+                        ) : (
+                          <div className="w-full h-full bg-gray-100 flex items-center justify-center text-gray-400 font-medium text-xs">
+                            No Image
+                          </div>
+                        )}
                       </div>
-                    )}
 
-                    {/* Bottom gradient overlay */}
-                    <div className="absolute inset-x-0 bottom-0 h-2/3 bg-linear-to-t from-black/85 via-black/40 to-transparent transition-opacity duration-300 group-hover:opacity-90" />
-
-                    {/* Content Overlay */}
-                    <CardContent className="relative z-10 flex h-full flex-col justify-end p-5 space-y-1">
-                      <h2 className="text-base sm:text-lg font-semibold tracking-tight text-white line-clamp-1">
-                        {category.name}
-                      </h2>
-
-                      <div className="flex items-center gap-1.5 text-white/90">
-                        <p className="text-xs font-normal">Explore products</p>
-                        <ArrowUpRight className="h-3.5 w-3.5 transition-transform duration-200 group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
+                      {/* Details Below Card */}
+                      <div className="mt-2.5 flex flex-col items-center px-1 w-full">
+                        <h2 className="text-xs sm:text-sm font-semibold text-gray-900 tracking-tight line-clamp-1 group-hover:text-[#008744] transition-colors">
+                          {category.name}
+                        </h2>
+                        <div className="flex items-center gap-1 text-[11px] font-medium text-gray-500 group-hover:text-[#008744] transition-colors mt-0.5">
+                          <span>Explore</span>
+                          <ArrowRight className="h-3 w-3 transition-transform duration-200 group-hover:translate-x-0.5" />
+                        </div>
                       </div>
-                    </CardContent>
-                  </Card>
-                </Link>
-              ))}
+                    </Link>
+                  </div>
+                );
+              })}
             </div>
           )}
-        </Container>
+        </div>
       </section>
     </Layout>
   );

@@ -1,22 +1,18 @@
 import { notFound } from "next/navigation";
 import Image from "next/image";
+import type { Metadata } from "next";
 
 import {
   CategoryRepository,
   ProductRepository,
 } from "@africasuk/database";
-
 import { ProductQueryService } from "@africasuk/api";
 import { createClient } from "@/lib/auth/server";
 
 import Layout from "@/components/layout/Layout";
 import Container from "@/components/layout/Container";
 import CategoryProducts from "@/components/products/CategoryProducts";
-
-
-import type { Metadata } from "next";
 import { CategoryJsonLd } from "@/components/seo/CategoryJsonLd";
-
 
 interface Props {
   params: Promise<{
@@ -24,15 +20,10 @@ interface Props {
   }>;
 }
 
-export async function generateMetadata({
-  params,
-}: Props): Promise<Metadata> {
+export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { slug } = await params;
-
   const supabase = await createClient();
-
   const categoryRepository = new CategoryRepository(supabase);
-
   const category = await categoryRepository.getBySlug(slug);
 
   if (!category) {
@@ -42,16 +33,13 @@ export async function generateMetadata({
   }
 
   const url = `https://africasuk.com/categories/${category.slug}`;
-
   const description =
     category.description ??
     `Browse ${category.name} products on AfricaSuk.`;
 
   return {
     title: `${category.name} | AfricaSuk`,
-
     description,
-
     keywords: [
       category.name,
       "AfricaSuk",
@@ -59,43 +47,33 @@ export async function generateMetadata({
       "Online Shopping",
       "Marketplace",
     ],
-
     alternates: {
       canonical: url,
     },
-
     openGraph: {
       title: `${category.name} | AfricaSuk`,
       description,
       url,
       type: "website",
-      images: category.imageUrl
-        ? [
-            {
-              url: category.imageUrl,
-            },
-          ]
-        : [],
+      images: category.imageUrl ? [{ url: category.imageUrl }] : [],
     },
-
     twitter: {
       card: "summary_large_image",
       title: `${category.name} | AfricaSuk`,
       description,
-      images: category.imageUrl
-        ? [category.imageUrl]
-        : [],
+      images: category.imageUrl ? [category.imageUrl] : [],
     },
   };
 }
+
 export default async function CategoryPage({ params }: Props) {
   const { slug } = await params;
   const supabase = await createClient();
 
   const categoryRepository = new CategoryRepository(supabase);
-const productService = new ProductQueryService(
-  new ProductRepository(supabase)
-);
+  const productService = new ProductQueryService(
+    new ProductRepository(supabase)
+  );
 
   const category = await categoryRepository.getBySlug(slug);
 
@@ -107,83 +85,71 @@ const productService = new ProductQueryService(
     (product) => product.categoryId === category.id
   );
 
-const totalItemsCount = products.reduce(
-  (total, product) =>
-    total +
-    product.colors.reduce(
-      (
-        sum: number,
-        color: {
-          variants: unknown[];
-        }
-      ) => sum + color.variants.length,
-      0
-    ),
-  0
-);
+  const totalItemsCount = products.reduce(
+    (total, product) =>
+      total +
+      product.colors.reduce(
+        (sum: number, color: { variants: unknown[] }) =>
+          sum + color.variants.length,
+        0
+      ),
+    0
+  );
 
   return (
     <Layout>
-<CategoryJsonLd category={category} />
+      <CategoryJsonLd category={category} />
 
-
-      <section className="py-8 lg:py-12 bg-[#f4f4f4] min-h-screen antialiased selection:bg-[#004d26]/10">
-        <Container>
-          {/* Centered Max-Width Wrapper */}
-          <div className="max-w-7xl mx-auto space-y-8">
+      <section className="w-full bg-white py-8 sm:py-12 select-none antialiased border-b border-gray-100">
+        <Container className="max-w-7xl w-full px-4 sm:px-6 lg:px-8">
+          <div className="space-y-10 sm:space-y-12">
             
-            {/* Compact, Highly Responsive Category Header Card */}
-            <div className="flex flex-row items-center gap-4 sm:gap-6 bg-white border border-neutral-200/60 rounded-2xl p-4 sm:p-5 select-none shadow-xs">
+            {/* Minimalist 1:1 Pinterest Category Header (No Card Frames, No Shadows) */}
+            <div className="flex flex-col sm:flex-row items-center sm:items-start gap-5 sm:gap-7 border-b border-gray-100 pb-8 text-center sm:text-left">
               
-              {/* Responsive, Clean Image Showcase Container */}
-              <div className="relative flex h-20 w-20 sm:h-24 sm:w-24 shrink-0 items-center justify-center rounded-xl border border-neutral-200/50 bg-white p-2">
+              {/* 1:1 Clean Image Frame */}
+              <div className="relative aspect-square w-24 sm:w-28 shrink-0 rounded-3xl overflow-hidden bg-gray-50 border border-gray-100">
                 {category.imageUrl ? (
-                  <div className="relative w-full h-full">
-                    <Image
-                      src={category.imageUrl}
-                      alt={category.name}
-                      fill
-                      sizes="(max-width: 640px) 64px, 80px"
-                      className="object-contain"
-                      priority
-                    />
-                  </div>
+                  <Image
+                    src={category.imageUrl}
+                    alt={category.name}
+                    fill
+                    priority
+                    sizes="(max-width: 640px) 96px, 112px"
+                    className="object-cover"
+                  />
                 ) : (
-                  <span className="text-2xl sm:text-3xl font-black text-[#004d26]">
+                  <div className="w-full h-full flex items-center justify-center font-bold text-xl text-[#008744]">
                     {category.name.charAt(0).toUpperCase()}
-                  </span>
+                  </div>
                 )}
               </div>
 
-              {/* Compact Typography & Details */}
-              <div className="flex-1 min-w-0">
-                <h1 className="text-xl sm:text-2xl md:text-3xl font-black tracking-tight text-neutral-900 truncate">
+              {/* Title & Metadata Underneath/Beside */}
+              <div className="flex flex-col justify-center max-w-2xl space-y-1.5 pt-1">
+                <div className="flex items-center justify-center sm:justify-start gap-2">
+                  <span className="text-[11px] font-semibold uppercase tracking-[0.2em] text-[#008744]">
+                    Department
+                  </span>
+                  <span className="text-gray-300">•</span>
+                  <span className="text-xs font-medium text-gray-500">
+                    {totalItemsCount} {totalItemsCount === 1 ? "Item" : "Items"}
+                  </span>
+                </div>
+
+                <h1 className="text-2xl sm:text-4xl font-bold tracking-tight text-gray-950">
                   {category.name}
                 </h1>
 
-                {/* Safe Description Check with Elegant Fallback */}
-                <p className="mt-1 text-xs sm:text-sm text-neutral-500 leading-normal sm:leading-relaxed font-medium line-clamp-2 sm:line-clamp-3">
-                  {category.description || 
-                    `Explore our handpicked collection of premium products in ${category.name.toLowerCase()}.`}
+                <p className="text-xs sm:text-sm text-gray-500 font-normal leading-relaxed">
+                  {category.description ||
+                    `Browse our authentic collection of verified items in ${category.name.toLowerCase()}.`}
                 </p>
-
-                <div className="mt-2.5 flex flex-wrap items-center gap-x-3 gap-y-1.5">
-                  <span className="inline-flex items-center rounded-full bg-neutral-100 px-2.5 py-0.5 text-[10px] sm:text-xs font-bold text-neutral-600">
-                    {totalItemsCount} {totalItemsCount === 1 ? "Item" : "Items"} Available
-                  </span>
-                </div>
               </div>
             </div>
 
-            {/* Marketplace Catalog Grid Container */}
-            <div className="bg-white rounded-3xl border border-neutral-200/60 p-6 sm:p-8 shadow-xs">
-              <div className="mb-6 select-none flex items-center justify-between border-b border-neutral-100 pb-4">
-                <h2 className="text-xs font-bold uppercase tracking-wider text-[#004d26]">
-                  Curated Catalog Matrix
-                </h2>
-                <div className="h-1 w-12 bg-[#004d26] rounded-full" />
-              </div>
-
+            {/* Seamless Catalog View (No Heavy Card Containers) */}
+            <div className="w-full">
               <CategoryProducts products={products} />
             </div>
 

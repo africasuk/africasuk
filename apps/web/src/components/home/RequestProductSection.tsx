@@ -1,92 +1,91 @@
 "use client";
 
 import Link from "next/link";
-import { Camera, Sparkles } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { Camera, ArrowRight } from "lucide-react";
+import Logo from "@/components/layout/Logo";
 
 export function RequestProductSection() {
   return (
-    <section className="relative overflow-hidden min-h-screen flex items-center justify-center border-y border-zinc-800/60 py-12 bg-[#021a0d]">
-      {/* Animated Background */}
-      <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute -top-40 -left-40 h-125 w-125 rounded-full bg-emerald-500/20 blur-3xl animate-pulse" />
-
-        <div
-          className="absolute -bottom-40 -right-40 h-125 w-125 rounded-full bg-green-400/15 blur-3xl animate-pulse"
-          style={{ animationDelay: "1s" }}
-        />
-
-        <div
-          className="absolute top-1/3 left-1/2 h-72 w-72 -translate-x-1/2 rounded-full bg-emerald-700/10 blur-3xl animate-pulse"
-          style={{ animationDelay: "2s" }}
-        />
-
-        {/* Floating circles */}
-        <div className="absolute top-[20%] left-[15%] h-3 w-3 rounded-full bg-emerald-400/60 animate-bounce" />
-        <div
-          className="absolute top-[65%] left-[25%] h-2 w-2 rounded-full bg-green-300/50 animate-bounce"
-          style={{ animationDelay: "0.7s" }}
-        />
-        <div
-          className="absolute top-[30%] right-[20%] h-3 w-3 rounded-full bg-emerald-300/50 animate-bounce"
-          style={{ animationDelay: "1.2s" }}
-        />
-        <div
-          className="absolute bottom-[20%] right-[30%] h-2 w-2 rounded-full bg-green-400/50 animate-bounce"
-          style={{ animationDelay: "1.8s" }}
-        />
-
-        {/* Grid */}
-        <div
-          className="absolute inset-0 opacity-[0.06]"
-          style={{
-            backgroundImage:
-              "linear-gradient(rgba(255,255,255,0.5) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.5) 1px, transparent 1px)",
-            backgroundSize: "50px 50px",
-          }}
-        />
+    <section className="relative w-full overflow-hidden bg-[#fafafa] text-gray-900 border-y border-gray-100 py-16 sm:py-24 lg:py-32 select-none antialiased">
+      {/* Background Grid */}
+      <div className="pointer-events-none absolute inset-0 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="grid h-full grid-cols-4 sm:grid-cols-6 lg:grid-cols-12 border-x border-gray-200/50">
+          <div className="hidden lg:block border-r border-gray-200/50" />
+          <div className="hidden lg:block border-r border-gray-200/50" />
+          <div className="hidden lg:block border-r border-gray-200/50" />
+          <div className="hidden sm:block border-r border-gray-200/50" />
+          <div className="hidden sm:block border-r border-gray-200/50" />
+          <div className="border-r border-gray-200/50" />
+          <div className="border-r border-gray-200/50" />
+          <div className="hidden sm:block border-r border-gray-200/50" />
+          <div className="hidden lg:block border-r border-gray-200/50" />
+          <div className="hidden lg:block border-r border-gray-200/50" />
+          <div className="hidden lg:block border-r border-gray-200/50" />
+        </div>
       </div>
 
-      {/* Overlay */}
-      <div className="absolute inset-0 bg-linear-to-t from-black/70 via-black/20 to-black/60" />
+      <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-8 items-center">
 
-      {/* Content */}
-      <div className="relative z-10 container mx-auto max-w-4xl px-4 sm:px-6 lg:px-8 text-center">
-        {/* Badge */}
-        <div className="inline-flex items-center gap-2 rounded-full border border-white/20 bg-black/40 px-3.5 py-1.5 text-xs font-semibold uppercase tracking-widest text-emerald-300 backdrop-blur-md shadow-md">
-          <Sparkles className="h-3.5 w-3.5 text-emerald-400" />
+          {/* Left Content */}
+          <div className="lg:col-span-7 flex flex-col justify-center">
+            <span className="text-[11px] sm:text-xs font-semibold uppercase tracking-[0.2em] text-[#008744] mb-3">
+              Can&apos;t Find What You Need?
+            </span>
 
-          <span className="inline-flex rounded-full bg-white/10 px-4 py-1 text-xs font-bold uppercase tracking-widest text-white">
-            Can&apos;t find it?
-          </span>
-        </div>
+            <h2 className="text-3xl sm:text-5xl lg:text-6xl font-extrabold tracking-tight text-gray-950 leading-[1.08]">
+              Can&apos;t find it?
+              <br className="hidden sm:inline" />
+              <span className="text-[#008744]"> Just ask us.</span>
+            </h2>
 
-        {/* Headline */}
-        <h2 className="mt-6 text-3xl sm:text-5xl lg:text-7xl font-extrabold tracking-tight text-white leading-tight">
-          Can&apos;t Find What You Need?
-        </h2>
+            <div className="mt-8 sm:mt-10 grid grid-cols-1 sm:grid-cols-12 gap-6 items-center">
 
-        {/* Subtitle */}
-        <p className="mx-auto mt-4 max-w-md sm:max-w-xl text-sm sm:text-base lg:text-xl text-zinc-100 font-medium leading-relaxed">
-          Snap a photo or share a description. Our sourcing specialists will
-          locate and list it for you.
-        </p>
+              {/* CTA */}
+              <div className="sm:col-span-5 flex items-center">
+                <Link
+                  href="/request-product"
+                  className="group inline-flex items-center gap-3 bg-gray-950 hover:bg-[#008744] text-white px-6 py-3.5 rounded-full text-xs sm:text-sm font-semibold tracking-wide transition-all duration-300 hover:shadow-lg hover:shadow-[#008744]/20 active:scale-95"
+                >
+                  <Camera className="w-4 h-4 text-white/80 group-hover:text-white" />
 
-        {/* CTA */}
-        <div className="mt-8 sm:mt-10 flex justify-center">
-          <Button
-            asChild
-            size="lg"
-            className="h-12 sm:h-14 px-7 sm:px-9 rounded-full bg-linear-to-r from-[#002b15] via-emerald-800 to-emerald-500 hover:from-[#003d1e] hover:to-emerald-400 text-white font-semibold text-sm sm:text-base tracking-wide border border-emerald-400/40 shadow-2xl shadow-black/90 transition-all duration-300 hover:scale-[1.02] active:scale-[0.98] w-full sm:w-auto"
-          >
-            <Link
-              href="/request-product"
-              className="flex items-center justify-center gap-2.5 sm:gap-3"
-            >
-              <Camera className="h-4 w-4 sm:h-5 sm:w-5 stroke-[2.2] text-emerald-300" />
-              <span>Request Custom Product</span>
-            </Link>
-          </Button>
+                  <span>Request a Product</span>
+
+                  <div className="w-5 h-5 rounded-full bg-white/20 flex items-center justify-center transition-transform duration-300 group-hover:translate-x-0.5">
+                    <ArrowRight className="w-3 h-3 text-white" />
+                  </div>
+                </Link>
+              </div>
+
+              {/* Description */}
+              <div className="sm:col-span-7">
+                <p className="text-xs sm:text-sm text-gray-600 leading-relaxed max-w-sm">
+                  Take a photo of the product or send us a link. We&apos;ll
+                  help you find it and arrange the purchase for you.
+                </p>
+              </div>
+            </div>
+          </div>
+
+          {/* Right Logo */}
+          <div className="lg:col-span-5 flex items-center justify-center relative py-6">
+            <div className="relative w-full flex items-center justify-center">
+
+              {/* Logo */}
+              <div className="scale-[1.8] sm:scale-[2.3] lg:scale-[2.6] transition-transform duration-500 hover:scale-[2.7]">
+                <Logo />
+              </div>
+
+              {/* Index Indicator */}
+              <div className="absolute right-0 top-1/2 -translate-y-1/2 flex flex-col items-center gap-1.5 text-[10px] text-gray-400 font-mono tracking-widest">
+                <span>01</span>
+                <span className="h-10 w-px bg-gray-300" />
+                <span>02</span>
+              </div>
+
+            </div>
+          </div>
+
         </div>
       </div>
     </section>

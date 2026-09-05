@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { ArrowRight } from "lucide-react";
 
 import { useCart } from "@/store/cart";
 
@@ -18,8 +19,8 @@ export default function ContinueShopping() {
   }
 
   return (
-    <section className="bg-gray-50/70 py-10 lg:py-14 antialiased selection:bg-[#004d26]/10 border-b border-gray-100 select-none">
-      <Container>
+    <section className="w-full bg-white py-10 sm:py-14 antialiased selection:bg-[#008744]/10 border-b border-gray-100 select-none">
+      <Container className="max-w-none w-full px-4 sm:px-6 lg:px-12">
         <div className="max-w-7xl mx-auto space-y-6 sm:space-y-8">
           
           <SectionHeader
@@ -31,7 +32,7 @@ export default function ContinueShopping() {
               <Button
                 asChild
                 variant="outline"
-                className="rounded-none border-gray-300 text-xs font-semibold text-gray-800 bg-white shadow-none hover:bg-gray-100 hover:border-gray-400 cursor-pointer h-9 px-4 flex items-center justify-center"
+                className="rounded-full border-gray-200 text-xs font-semibold text-gray-700 bg-white hover:bg-gray-50 hover:border-gray-300 hover:text-[#008744] cursor-pointer h-9 px-5 shadow-xs transition-all active:scale-95"
               >
                 <Link href="/cart">
                   View Cart
@@ -40,8 +41,8 @@ export default function ContinueShopping() {
             }
           />
 
-          {/* Responsive Item Grid */}
-          <div className="grid grid-cols-2 md:grid-cols-[repeat(auto-fill,minmax(230px,1fr))] gap-3 sm:gap-5 w-full justify-center">
+          {/* Pinterest-Style Responsive Grid */}
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4 sm:gap-6 w-full items-start">
             {items.map((item) => (
               <ContinueShoppingCard
                 key={item.variantId}
@@ -51,14 +52,15 @@ export default function ContinueShopping() {
           </div>
 
           {/* Checkout Action Button */}
-          <div className="mt-8 flex justify-center">
+          <div className="mt-8 sm:mt-10 flex justify-center">
             <Button
               asChild
               size="lg"
-              className="rounded-none bg-[#004d26] px-8 text-xs sm:text-sm font-semibold tracking-wide text-white shadow-none transition-colors duration-200 hover:bg-[#00361a] active:scale-[0.99] cursor-pointer h-10 sm:h-11 flex items-center justify-center"
+              className="rounded-full bg-[#008744] hover:bg-[#006e37] px-8 text-xs sm:text-sm font-semibold tracking-wide text-white shadow-xs transition-all duration-200 active:scale-[0.98] cursor-pointer h-11 flex items-center justify-center gap-2"
             >
               <Link href="/checkout">
-                Continue to Checkout
+                <span>Continue to Checkout</span>
+                <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
               </Link>
             </Button>
           </div>
