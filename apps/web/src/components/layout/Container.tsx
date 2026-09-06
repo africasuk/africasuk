@@ -4,10 +4,8 @@ import { cn } from "lib/utils";
 
 interface ContainerProps {
   children: ReactNode;
-
   className?: string;
-
-  size?: "sm" | "md" | "lg" | "xl" | "full";
+  size?: "sm" | "md" | "lg" | "xl" | "2xl" | "full";
 }
 
 const sizes = {
@@ -15,6 +13,7 @@ const sizes = {
   md: "max-w-6xl",
   lg: "max-w-7xl",
   xl: "max-w-screen-2xl",
+  "2xl": "max-w-[1700px]",
   full: "max-w-full",
 };
 
@@ -26,7 +25,7 @@ export default function Container({
   return (
     <div
       className={cn(
-        "mx-auto w-full px-4 sm:px-6 lg:px-8 xl:px-10",
+        "mx-auto w-full px-4 sm:px-6 lg:px-8 xl:px-12",
         sizes[size],
         className
       )}

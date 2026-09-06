@@ -54,8 +54,8 @@ export default function FeaturedBrands({ brands = [] }: Props) {
           </Link>
         </div>
 
-        {/* Pinterest-Style Brand Circular/Soft Tiles */}
-        <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-8 xl:grid-cols-9 gap-4 sm:gap-6">
+        {/* Tight Pinterest Brand Tiles */}
+        <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-8 xl:grid-cols-9 gap-3 sm:gap-4">
           {displayBrands.map((brand) => {
             const isThisLoading = loadingSlug === brand.slug;
 
@@ -68,25 +68,27 @@ export default function FeaturedBrands({ brands = [] }: Props) {
                   loadingSlug || isNavigatingAll ? "pointer-events-none" : ""
                 }`}
               >
-                {/* 1:1 Pinterest Brand Logo Disc */}
-                <div className="relative aspect-square w-full rounded-3xl sm:rounded-[2rem] bg-gray-50/80 border border-gray-100/80 p-4 sm:p-5 flex items-center justify-center transition-all duration-300 group-hover:bg-white group-hover:border-gray-200 group-hover:shadow-md">
+                {/* 1:1 Clean Image Frame with Rounded Inner Image */}
+                <div className="relative aspect-square w-full rounded-2xl bg-white border border-gray-100 p-1.5 sm:p-2 flex items-center justify-center transition-all duration-300 group-hover:border-gray-300 group-hover:shadow-xs">
                   {/* Loading Spinner Overlay */}
                   {isThisLoading && (
-                    <div className="absolute inset-0 z-20 flex items-center justify-center rounded-3xl sm:rounded-[2rem] bg-white/80 backdrop-blur-xs">
+                    <div className="absolute inset-0 z-20 flex items-center justify-center rounded-2xl bg-white/80 backdrop-blur-xs">
                       <Loader2 className="h-5 w-5 animate-spin text-[#008744]" />
                     </div>
                   )}
 
-                  {/* High-Resolution Crisp Logo Presentation */}
+                  {/* Rounded Sharp Logo Presentation */}
                   {brand.logoUrl ? (
-                    <div className="relative w-full h-full">
+                    <div className="relative w-full h-full overflow-hidden rounded-xl">
                       <Image
                         src={brand.logoUrl}
                         alt={brand.name}
                         fill
-                        sizes="(max-width: 640px) 30vw, (max-width: 1024px) 15vw, 120px"
-                        quality={90}
-                        className="object-contain transition-transform duration-500 group-hover:scale-105"
+                        sizes="(max-width: 640px) 33vw, (max-width: 1024px) 15vw, 160px"
+                        className="object-contain rounded-xl transition-transform duration-300 group-hover:scale-105"
+                        style={{
+                          imageRendering: "-webkit-optimize-contrast",
+                        }}
                       />
                     </div>
                   ) : (
@@ -96,8 +98,8 @@ export default function FeaturedBrands({ brands = [] }: Props) {
                   )}
                 </div>
 
-                {/* Clean Name Underneath Card */}
-                <span className="mt-2 text-xs font-semibold text-gray-700 tracking-tight line-clamp-1 w-full group-hover:text-[#008744] transition-colors">
+                {/* Brand Name Underneath */}
+                <span className="mt-1.5 text-[11px] sm:text-xs font-semibold text-gray-700 tracking-tight line-clamp-1 w-full group-hover:text-[#008744] transition-colors">
                   {brand.name}
                 </span>
               </Link>

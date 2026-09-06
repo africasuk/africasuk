@@ -100,21 +100,23 @@ export default async function BrandPage({ params }: Props) {
         <Container className="max-w-7xl w-full px-4 sm:px-6 lg:px-8">
           <div className="space-y-10 sm:space-y-12">
             
-            {/* Minimalist 1:1 Pinterest Brand Header (No Card Enclosures, No Shadows) */}
+            {/* Minimalist 1:1 Pinterest Brand Header */}
             <div className="flex flex-col sm:flex-row items-center sm:items-start gap-5 sm:gap-7 border-b border-gray-100 pb-8 text-center sm:text-left">
               
-              {/* 1:1 Image Frame */}
-              <div className="relative aspect-square w-24 sm:w-28 shrink-0 rounded-3xl bg-gray-50/80 border border-gray-100 p-4 flex items-center justify-center">
+              {/* Tight 1:1 Image Frame with Rounded Inner Container */}
+              <div className="relative aspect-square w-24 sm:w-28 shrink-0 rounded-2xl bg-white border border-gray-100 p-2 sm:p-2.5 flex items-center justify-center">
                 {brand.logoUrl ? (
-                  <div className="relative w-full h-full">
+                  <div className="relative w-full h-full overflow-hidden rounded-xl">
                     <Image
                       src={brand.logoUrl}
                       alt={brand.name}
                       fill
                       priority
-                      quality={90}
-                      sizes="(max-width: 640px) 96px, 112px"
-                      className="object-contain"
+                      sizes="(max-width: 640px) 112px, 160px"
+                      className="object-contain rounded-xl"
+                      style={{
+                        imageRendering: "-webkit-optimize-contrast",
+                      }}
                     />
                   </div>
                 ) : (
@@ -164,7 +166,7 @@ export default async function BrandPage({ params }: Props) {
 
             {/* Products Layout */}
             {products.length === 0 ? (
-              <div className="rounded-3xl border border-dashed border-gray-200 bg-gray-50/50 py-16 text-center select-none">
+              <div className="rounded-2xl border border-dashed border-gray-200 bg-gray-50/50 py-16 text-center select-none">
                 <h2 className="text-base font-semibold text-gray-800">
                   No products found
                 </h2>

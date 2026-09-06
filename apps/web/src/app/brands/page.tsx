@@ -37,7 +37,7 @@ export default async function BrandsPage() {
 
           {/* Brands Content */}
           {brands.length === 0 ? (
-            <div className="rounded-3xl border border-dashed border-gray-200 bg-gray-50/50 py-16 sm:py-24 text-center select-none">
+            <div className="rounded-2xl border border-dashed border-gray-200 bg-gray-50/50 py-16 sm:py-24 text-center select-none">
               <h2 className="text-base sm:text-lg font-semibold text-gray-800">
                 No Brands Found
               </h2>
@@ -46,25 +46,27 @@ export default async function BrandsPage() {
               </p>
             </div>
           ) : (
-            /* Pinterest-Style 1:1 Clean Brand Grid */
-            <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-8 xl:grid-cols-9 2xl:grid-cols-10 gap-4 sm:gap-6">
+            /* Tight 1:1 Pinterest Brand Grid */
+            <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-8 xl:grid-cols-10 2xl:grid-cols-12 gap-3 sm:gap-4">
               {brands.map((brand) => (
                 <Link
                   key={brand.id}
                   href={`/brands/${brand.slug}`}
                   className="group flex flex-col items-center text-center w-full focus:outline-none transition-transform duration-300 hover:-translate-y-1"
                 >
-                  {/* 1:1 Soft-Curved Image Container (No Shadows, Clean Borders) */}
-                  <div className="relative aspect-square w-full rounded-3xl bg-gray-50/80 border border-gray-100/80 p-4 sm:p-5 flex items-center justify-center transition-all duration-300 group-hover:bg-white group-hover:border-gray-200">
+                  {/* Tight 1:1 Image Frame */}
+                  <div className="relative aspect-square w-full rounded-2xl bg-white border border-gray-100 p-1.5 sm:p-2 flex items-center justify-center transition-all duration-300 group-hover:border-gray-300 group-hover:shadow-xs">
                     {brand.logoUrl ? (
                       <div className="relative w-full h-full">
                         <Image
                           src={brand.logoUrl}
                           alt={brand.name}
                           fill
-                          sizes="(max-width: 640px) 30vw, (max-width: 1024px) 15vw, 120px"
-                          quality={90}
-                          className="object-contain transition-transform duration-500 group-hover:scale-105"
+                          sizes="(max-width: 640px) 33vw, (max-width: 1024px) 15vw, 160px"
+                          className="object-contain transition-transform duration-300 group-hover:scale-105"
+                          style={{
+                            imageRendering: "-webkit-optimize-contrast",
+                          }}
                         />
                       </div>
                     ) : (
@@ -75,7 +77,7 @@ export default async function BrandsPage() {
                   </div>
 
                   {/* Brand Name Below Card */}
-                  <span className="mt-2 text-xs font-semibold text-gray-700 tracking-tight line-clamp-1 w-full group-hover:text-[#008744] transition-colors">
+                  <span className="mt-1.5 text-[11px] sm:text-xs font-semibold text-gray-700 tracking-tight line-clamp-1 w-full group-hover:text-[#008744] transition-colors">
                     {brand.name}
                   </span>
                 </Link>
