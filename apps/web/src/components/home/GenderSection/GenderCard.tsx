@@ -38,7 +38,7 @@ export default function GenderCard({
       {/* Top Right: Pinterest-style Floating Action Button */}
       <div className="relative z-10 flex w-full justify-end">
         <div className="flex h-10 w-10 sm:h-11 sm:w-11 items-center justify-center rounded-full bg-white/90 shadow-md backdrop-blur-md transition-all duration-300 group-hover:bg-[#004d26] group-hover:text-white group-hover:scale-110">
-          <ArrowUpRight className="h-5 w-5 stroke-[2] text-neutral-800 transition-transform duration-300 group-hover:text-white group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
+          <ArrowUpRight className="h-5 w-5 stroke-2 text-neutral-800 transition-transform duration-300 group-hover:text-white group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
         </div>
       </div>
     </button>

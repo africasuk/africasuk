@@ -5,7 +5,7 @@ import GenderCard from "./GenderCard";
 export default function GenderSection() {
   return (
     <section className="w-full py-8 sm:py-12 lg:py-14 select-none antialiased">
-      <div className="mx-auto w-full max-w-[1440px] px-4 sm:px-6 lg:px-8">
+      <div className="mx-auto w-full max-w-360 px-4 sm:px-6 lg:px-8">
         {/* Header */}
         <div className="mb-6 sm:mb-8 text-center space-y-1.5">
           <span className="text-xs font-semibold uppercase tracking-widest text-[#004d26]">
