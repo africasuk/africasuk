@@ -2,22 +2,18 @@
 
 import Image from "next/image";
 import { useRouter } from "next/navigation";
-import { ArrowRight } from "lucide-react";
+import { ArrowUpRight } from "lucide-react";
 
 interface GenderCardProps {
   title: string;
-  subtitle: string;
   image: string;
   query: string;
-  align?: "left" | "right";
 }
 
 export default function GenderCard({
   title,
-  subtitle,
   image,
   query,
-  align = "left",
 }: GenderCardProps) {
   const router = useRouter();
 
@@ -25,42 +21,24 @@ export default function GenderCard({
     <button
       type="button"
       onClick={() => router.push(`/search?q=${encodeURIComponent(query)}`)}
-      className="group relative flex h-80 sm:h-96 md:h-105 w-full cursor-pointer overflow-hidden rounded-none border border-gray-200 bg-gray-100 text-left shadow-none transition-colors duration-200 select-none antialiased"
+      /* aspect-4/3 matches the 1024x768 image dimensions exactly */
+      className="group relative flex aspect-4/3 w-full cursor-pointer flex-col justify-between overflow-hidden rounded-2xl bg-[#a3a3a3] p-4 sm:p-5 lg:p-6 text-left transition-all duration-300 hover:shadow-xl select-none antialiased"
     >
-      {/* Background Image */}
+      {/* Background Graphic - 100% visible, zero pixels cut off */}
       <Image
         src={image}
         alt={title}
         fill
         priority
-        quality={75}
-        sizes="(max-width: 768px) 100vw, 50vw"
-        className="object-cover transition-transform duration-500 ease-out group-hover:scale-103"
+        quality={100}
+        sizes="(max-width: 1024px) 100vw, 50vw"
+        className="object-cover object-center transition-transform duration-700 ease-out group-hover:scale-[1.02]"
       />
 
-      {/* Contrast Overlay */}
-      <div className="absolute inset-0 bg-linear-to-t sm:bg-linear-to-r from-black/75 via-black/35 to-transparent transition-opacity duration-300 group-hover:opacity-90" />
-
-      {/* Content Container */}
-      <div
-        className={`relative z-10 flex h-full w-full flex-col justify-end p-5 sm:p-7 md:p-8 ${
-          align === "right"
-            ? "items-end text-right"
-            : "items-start text-left"
-        }`}
-      >
-        <span className="mb-1.5 text-[11px] sm:text-xs font-normal uppercase tracking-widest text-white/80">
-          {subtitle}
-        </span>
-
-        <h3 className="text-2xl sm:text-3xl md:text-4xl font-semibold tracking-tight text-white leading-tight">
-          {title}
-        </h3>
-
-        {/* Action Trigger */}
-        <div className="mt-4 sm:mt-5 inline-flex items-center gap-2 rounded-none bg-white px-3.5 sm:px-4 py-2 text-xs font-medium uppercase tracking-wider text-gray-900 transition-colors duration-150 group-hover:bg-[#004d26] group-hover:text-white shadow-none">
-          <span>Shop Now</span>
-          <ArrowRight className="h-3.5 w-3.5 stroke-[1.5] transition-transform duration-200 group-hover:translate-x-0.5" />
+      {/* Top Right: Pinterest-style Floating Action Button */}
+      <div className="relative z-10 flex w-full justify-end">
+        <div className="flex h-10 w-10 sm:h-11 sm:w-11 items-center justify-center rounded-full bg-white/90 shadow-md backdrop-blur-md transition-all duration-300 group-hover:bg-[#004d26] group-hover:text-white group-hover:scale-110">
+          <ArrowUpRight className="h-5 w-5 stroke-[2] text-neutral-800 transition-transform duration-300 group-hover:text-white group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
         </div>
       </div>
     </button>
