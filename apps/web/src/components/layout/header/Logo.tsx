@@ -32,7 +32,7 @@ export default function Logo() {
       {/* Visual Icon (Logo Image) */}
       <div className="relative h-9.5 w-9.5 shrink-0 transition-transform duration-500 group-hover:rotate-6">
         <Image
-          src="/logo.png"
+          src="/Newlogo.png"
           // Defaulting to brandName ensures structural robustness if alt key is missing
           alt={dictionary.common.logoAlt || dictionary.common.brandName}
           fill

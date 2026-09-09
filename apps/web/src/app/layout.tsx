@@ -8,44 +8,37 @@ import {
   type Locale,
 } from "@africasuk/i18n";
 
-import {
-  ExchangeRateRepository,
-} from "@africasuk/database";
-
-import {
-  ExchangeRateService,
-} from "@africasuk/api";
+import { ExchangeRateRepository } from "@africasuk/database";
+import { ExchangeRateService } from "@africasuk/api";
 
 import { createServerSupabaseClient } from "@/lib/supabase/server";
-
 import { LanguageProvider } from "@/components/providers/LanguageProvider";
 
-
 import { Toaster } from "@/components/ui/sonner";
-
 import "./globals.css";
+
 import { CurrencyProvider } from "providers/CurrencyProvider";
 import { ExchangeRateProvider } from "providers/ExchangeRateProvider";
 
 export const metadata: Metadata = {
   metadataBase: new URL("https://africasuk.com"),
 
-  applicationName: "AfricaSuk",
+  applicationName: "Africa Suk",
 
   title: {
-    default:
-      "AfricaSuk | South Sudan's Trusted Online Marketplace",
-    template: "%s | AfricaSuk",
+    default: "Africa Suk | South Sudan's Online Marketplace",
+    template: "%s | Africa Suk",
   },
 
   description:
-    "AfricaSuk is South Sudan's trusted online marketplace. Shop electronics, smartphones, fashion, groceries, beauty, home appliances, automotive products, and more with secure payments and reliable delivery. Shop South Sudan with confidence.",
+    "Africa Suk is South Sudan's online marketplace. Shop electronics, smartphones, fashion, groceries, beauty, home, automotive products, and everyday essentials. Shop with Confidence.",
 
   keywords: [
+    "Africa Suk",
     "AfricaSuk",
     "South Sudan",
-    "Juba",
     "South Sudan marketplace",
+    "South Sudan online marketplace",
     "Online shopping South Sudan",
     "Ecommerce South Sudan",
     "Buy online South Sudan",
@@ -62,25 +55,21 @@ export const metadata: Metadata = {
     "Laptops South Sudan",
     "Accessories South Sudan",
     "Online store South Sudan",
-    "African marketplace",
-    "Africa ecommerce",
-    "Shopping Africa",
   ],
 
   authors: [
     {
-      name: "AfricaSuk",
+      name: "Africa Suk",
       url: "https://africasuk.com",
     },
   ],
 
-  creator: "AfricaSuk",
-
-  publisher: "AfricaSuk",
+  creator: "Africa Suk",
+  publisher: "Africa Suk",
 
   category: "Shopping",
 
-  classification: "South Sudan E-Commerce Marketplace",
+  classification: "South Sudan Online Marketplace",
 
   alternates: {
     canonical: "https://africasuk.com",
@@ -90,6 +79,7 @@ export const metadata: Metadata = {
     index: true,
     follow: true,
     nocache: false,
+
     googleBot: {
       index: true,
       follow: true,
@@ -102,7 +92,9 @@ export const metadata: Metadata = {
 
   icons: {
     icon: [
-      { url: "/favicon.ico" },
+      {
+        url: "/favicon.ico",
+      },
       {
         url: "/icon.png",
         type: "image/png",
@@ -132,44 +124,45 @@ export const metadata: Metadata = {
 
   manifest: "/manifest.webmanifest",
 
-openGraph: {
-  type: "website",
-  locale: "en_US",
-  url: "https://africasuk.com",
-  siteName: "AfricaSuk",
+  openGraph: {
+    type: "website",
+    locale: "en_US",
+    url: "https://africasuk.com",
+    siteName: "Africa Suk",
 
-  title: "AfricaSuk | South Sudan's Trusted Online Marketplace",
+    title: "Africa Suk | South Sudan's Online Marketplace",
 
-  description:
-    "Shop electronics, fashion, groceries, beauty, home appliances, smartphones, laptops, automotive products, and more from trusted sellers across South Sudan.",
+    description:
+      "Shop electronics, fashion, groceries, beauty, home, automotive products, smartphones, laptops, and everyday essentials on Africa Suk — South Sudan's online marketplace.",
 
-  images: [
-    {
-      url: "https://res.cloudinary.com/kwlkw1ta/image/upload/v1784891001/AfricaSuk_e-commerce_marketplace__202607241900_q5aayq.jpg",
-      width: 1200,
-      height: 630,
-      alt: "AfricaSuk | South Sudan's Trusted Online Marketplace",
-    },
-  ],
-},
-twitter: {
-  card: "summary_large_image",
+    images: [
+      {
+        url: "https://res.cloudinary.com/kwlkw1ta/image/upload/v1784891001/AfricaSuk_e-commerce_marketplace__202607241900_q5aayq.jpg",
+        width: 1200,
+        height: 630,
+        alt: "Africa Suk | South Sudan's Online Marketplace",
+      },
+    ],
+  },
 
-  title: "AfricaSuk | South Sudan's Trusted Online Marketplace",
+  twitter: {
+    card: "summary_large_image",
 
-  description:
-    "Discover South Sudan's trusted online marketplace for electronics, fashion, groceries, beauty, home, automotive, and more.",
+    title: "Africa Suk | South Sudan's Online Marketplace",
 
-  creator: "@AfricaSuk",
+    description:
+      "Discover Africa Suk, South Sudan's online marketplace for electronics, fashion, groceries, beauty, home, automotive products, and more. Shop with Confidence.",
 
-  images: [
-    "https://res.cloudinary.com/kwlkw1ta/image/upload/v1784891001/AfricaSuk_e-commerce_marketplace__202607241900_q5aayq.jpg",
-  ],
-},
+    creator: "@AfricaSuk",
+
+    images: [
+      "https://res.cloudinary.com/kwlkw1ta/image/upload/v1784891001/AfricaSuk_e-commerce_marketplace__202607241900_q5aayq.jpg",
+    ],
+  },
 
   appleWebApp: {
     capable: true,
-    title: "AfricaSuk",
+    title: "Africa Suk",
     statusBarStyle: "default",
   },
 
@@ -183,67 +176,55 @@ twitter: {
     google: process.env.GOOGLE_SITE_VERIFICATION,
   },
 };
+
 export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  const cookieStore =
-    await cookies();
+  const cookieStore = await cookies();
 
   const locale =
-    (cookieStore.get("locale")
-      ?.value as Locale) ??
-    defaultLocale;
+    (cookieStore.get("locale")?.value as Locale) ?? defaultLocale;
 
   const currency =
-    cookieStore.get("currency")
-      ?.value === "SSP"
-      ? "SSP"
-      : "USD";
+    cookieStore.get("currency")?.value === "SSP" ? "SSP" : "USD";
 
-  const dir =
-    getDirection(locale);
+  const dir = getDirection(locale);
 
-  const dictionary =
-    getDictionary(locale);
+  const dictionary = getDictionary(locale);
 
-  const supabase =
-    await createServerSupabaseClient();
+  const supabase = await createServerSupabaseClient();
 
-  const exchangeRateService =
-    new ExchangeRateService(
-      new ExchangeRateRepository(
-        supabase,
-      ),
-    );
+  const exchangeRateService = new ExchangeRateService(
+    new ExchangeRateRepository(supabase)
+  );
 
-  const currentRate =
-    await exchangeRateService.getCurrent();
-return (
-  <html lang={locale} dir={dir}>
-    <body>
-      
-      <LanguageProvider
-        locale={locale}
-        dictionary={dictionary}
-      >
-        <CurrencyProvider initialCurrency={currency}>
-          <ExchangeRateProvider
-            initialRate={currentRate?.rate ?? 1}
-          >
-            {children}
+  const currentRate = await exchangeRateService.getCurrent();
 
-            <Toaster
-              richColors
-              position="top-right"
-              closeButton
-              duration={4000}
-            />
-          </ExchangeRateProvider>
-        </CurrencyProvider>
-      </LanguageProvider>
-    </body>
-  </html>
-);
+  return (
+    <html lang={locale} dir={dir}>
+      <body>
+        <LanguageProvider
+          locale={locale}
+          dictionary={dictionary}
+        >
+          <CurrencyProvider initialCurrency={currency}>
+            <ExchangeRateProvider
+              initialRate={currentRate?.rate ?? 1}
+            >
+              {children}
+
+              <Toaster
+                richColors
+                position="top-right"
+                closeButton
+                duration={4000}
+              />
+            </ExchangeRateProvider>
+          </CurrencyProvider>
+        </LanguageProvider>
+      </body>
+    </html>
+  );
 }

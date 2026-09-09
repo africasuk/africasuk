@@ -56,7 +56,7 @@ export default function Logo({ size = "default" }: LogoProps) {
         className={`relative ${current.box} shrink-0 transition-transform duration-500 group-hover:rotate-6`}
       >
         <Image
-          src="/greenLogo.png"
+          src="/homelogo.png"
           alt={dictionary.common.logoAlt || dictionary.common.brandName}
           fill
           quality={100}

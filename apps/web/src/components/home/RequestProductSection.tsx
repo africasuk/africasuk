@@ -6,23 +6,8 @@ import Logo from "@/components/layout/Logo";
 
 export function RequestProductSection() {
   return (
-    <section className="relative w-full overflow-hidden bg-[#fafafa] text-gray-900 border-y border-gray-100 py-16 sm:py-24 lg:py-32 select-none antialiased">
-      {/* Background Grid */}
-      <div className="pointer-events-none absolute inset-0 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="grid h-full grid-cols-4 sm:grid-cols-6 lg:grid-cols-12 border-x border-gray-200/50">
-          <div className="hidden lg:block border-r border-gray-200/50" />
-          <div className="hidden lg:block border-r border-gray-200/50" />
-          <div className="hidden lg:block border-r border-gray-200/50" />
-          <div className="hidden sm:block border-r border-gray-200/50" />
-          <div className="hidden sm:block border-r border-gray-200/50" />
-          <div className="border-r border-gray-200/50" />
-          <div className="border-r border-gray-200/50" />
-          <div className="hidden sm:block border-r border-gray-200/50" />
-          <div className="hidden lg:block border-r border-gray-200/50" />
-          <div className="hidden lg:block border-r border-gray-200/50" />
-          <div className="hidden lg:block border-r border-gray-200/50" />
-        </div>
-      </div>
+    <section className="relative w-full overflow-hidden  text-gray-900  0 py-16 sm:py-24 lg:py-32 select-none antialiased">
+
 
       <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-8 items-center">

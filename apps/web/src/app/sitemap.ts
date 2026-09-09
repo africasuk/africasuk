@@ -6,13 +6,9 @@ import {
   ProductRepository,
 } from "@africasuk/database";
 
-import {
-  ProductQueryService,
-} from "@africasuk/api";
+import { ProductQueryService } from "@africasuk/api";
 
-import {
-  createServerSupabaseClient,
-} from "@/lib/supabase/server";
+import { createServerSupabaseClient } from "@/lib/supabase/server";
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const db = await createServerSupabaseClient();
@@ -22,15 +18,13 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   );
 
   const categoryRepository = new CategoryRepository(db);
-
   const brandRepository = new BrandRepository(db);
 
-  const [products, categories, brands] =
-    await Promise.all([
-      productService.getAll(),
-      categoryRepository.getAll(),
-      brandRepository.getAll(),
-    ]);
+  const [products, categories, brands] = await Promise.all([
+    productService.getAll(),
+    categoryRepository.getAll(),
+    brandRepository.getAll(),
+  ]);
 
   const baseUrl = "https://africasuk.com";
 
@@ -41,21 +35,18 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       changeFrequency: "daily",
       priority: 1,
     },
-
     {
       url: `${baseUrl}/products`,
       lastModified: new Date(),
       changeFrequency: "daily",
       priority: 0.9,
     },
-
     {
       url: `${baseUrl}/categories`,
       lastModified: new Date(),
       changeFrequency: "weekly",
       priority: 0.8,
     },
-
     {
       url: `${baseUrl}/brands`,
       lastModified: new Date(),
