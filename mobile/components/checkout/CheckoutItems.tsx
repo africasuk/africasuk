@@ -2,20 +2,15 @@ import React from "react";
 import {
   View,
   Text,
-  Image,
   StyleSheet,
   Pressable,
 } from "react-native";
+import { Image } from "expo-image";
 import { router } from "expo-router";
-import { LinearGradient } from "expo-linear-gradient";
 import { ShoppingBag, ArrowRight } from "lucide-react-native";
 
 import { Price } from "@/components/currency/Price";
 import { useCart } from "@/store/cart";
-
-const BRAND_LIGHT = "#008744";
-const BRAND_DARK = "#002b15";
-const LIGHT_GREEN = "#ecfdf5";
 
 export default function CheckoutItems() {
   const items = useCart((state) => state.items);
@@ -24,28 +19,23 @@ export default function CheckoutItems() {
     return (
       <View style={styles.emptyContainer}>
         <View style={styles.emptyIconCircle}>
-          <ShoppingBag size={28} color={BRAND_LIGHT} />
+          <ShoppingBag size={24} color="#71717a" strokeWidth={1.75} />
         </View>
 
         <Text style={styles.emptyTitle}>Your cart is empty</Text>
-
         <Text style={styles.emptySubtitle}>
-          Add products before proceeding to checkout.
+          Add items to your cart before proceeding to checkout.
         </Text>
 
         <Pressable
-          onPress={() => router.replace("/")}
-          style={styles.emptyButtonWrapper}
+          onPress={() => router.replace("/products" as never)}
+          style={({ pressed }) => [
+            styles.emptyButton,
+            pressed && styles.emptyButtonPressed,
+          ]}
         >
-          <LinearGradient
-            colors={[BRAND_LIGHT, BRAND_DARK]}
-            start={{ x: 0, y: 0 }}
-            end={{ x: 1, y: 1 }}
-            style={styles.emptyButton}
-          >
-            <Text style={styles.shoppingLink}>Continue Shopping</Text>
-            <ArrowRight size={16} color="#ffffff" />
-          </LinearGradient>
+          <Text style={styles.emptyButtonText}>Start Shopping</Text>
+          <ArrowRight size={14} color="#ffffff" strokeWidth={2} />
         </Pressable>
       </View>
     );
@@ -53,39 +43,71 @@ export default function CheckoutItems() {
 
   return (
     <View style={styles.container}>
-      {items.map((item, index) => (
-        <View
-          key={item.variantId}
-          style={[
-            styles.item,
-            index !== items.length - 1 && styles.itemBorder,
-          ]}
-        >
-          <View style={styles.imageWrapper}>
-            <Image
-              source={{
-                uri: item.image,
-              }}
-              style={styles.image}
-              resizeMode="cover"
-            />
-          </View>
+      <View style={styles.header}>
+        <Text style={styles.sectionTitle}>Order Items</Text>
+        <Text style={styles.itemCountText}>
+          {items.length} {items.length === 1 ? "item" : "items"}
+        </Text>
+      </View>
 
-          <View style={styles.content}>
-            <View style={styles.left}>
+      <View style={styles.cardList}>
+        {items.map((item, index) => (
+          <View
+            key={item.variantId}
+            style={[
+              styles.item,
+              index !== items.length - 1 && styles.itemBorder,
+            ]}
+          >
+            {/* 1:1 Pixel-locked Image */}
+            <View style={styles.imageWrapper}>
+              <Image
+                source={{ uri: item.image }}
+                style={styles.image}
+                contentFit="cover"
+                transition={150}
+                cachePolicy="memory-disk"
+              />
+            </View>
+
+            {/* Product Details */}
+            <View style={styles.content}>
+              {/* Top Row: Price (Always Visible at Top) & Total */}
+              <View style={styles.topRow}>
+                <View style={styles.priceRow}>
+                  <Price
+                    price={item.price * item.quantity}
+                    style={styles.totalPrice}
+                  />
+                  {item.quantity > 1 && (
+                    <Text style={styles.unitPriceText}>
+                      (<Price price={item.price} style={styles.unitPrice} /> ea)
+                    </Text>
+                  )}
+                </View>
+
+                <View style={styles.qtyBadge}>
+                  <Text style={styles.qtyText}>Qty: {item.quantity}</Text>
+                </View>
+              </View>
+
+              {/* Product Name */}
               <Text numberOfLines={2} style={styles.name}>
                 {item.name}
               </Text>
 
-              {item.options.length > 0 && (
+              {/* Variant Badges */}
+              {item.options && item.options.length > 0 && (
                 <View style={styles.options}>
                   {item.options.map((option) => (
                     <View
                       key={`${option.optionName}-${option.value}`}
                       style={styles.optionBadge}
                     >
-                      <Text style={styles.optionText}>
-                        <Text style={styles.optionLabel}>{option.optionName}: </Text>
+                      <Text style={styles.optionText} numberOfLines={1}>
+                        <Text style={styles.optionLabel}>
+                          {option.optionName}:{" "}
+                        </Text>
                         {option.value}
                       </Text>
                     </View>
@@ -93,56 +115,67 @@ export default function CheckoutItems() {
                 </View>
               )}
             </View>
-
-            <View style={styles.right}>
-              <View style={styles.qtyBadge}>
-                <Text style={styles.quantity}>Qty: {item.quantity}</Text>
-              </View>
-
-              <View style={styles.price}>
-                <Price price={item.price * item.quantity} />
-              </View>
-            </View>
           </View>
-        </View>
-      ))}
+        ))}
+      </View>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
+    gap: 8,
+  },
+
+  header: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    paddingHorizontal: 2,
+  },
+
+  sectionTitle: {
+    fontSize: 13,
+    fontWeight: "700",
+    color: "#18181b",
+    textTransform: "uppercase",
+    letterSpacing: 0.6,
+  },
+
+  itemCountText: {
+    fontSize: 12,
+    fontWeight: "500",
+    color: "#71717a",
+  },
+
+  cardList: {
     backgroundColor: "#ffffff",
-    borderRadius: 20,
+    borderRadius: 14,
     borderWidth: 1,
-    borderColor: "rgba(229, 231, 235, 0.8)",
+    borderColor: "#f0f0f0",
     overflow: "hidden",
-    shadowColor: "#000000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.03,
-    shadowRadius: 8,
-    elevation: 2,
   },
 
   item: {
     flexDirection: "row",
-    padding: 16,
-    alignItems: "center",
+    padding: 12,
+    gap: 12,
+    alignItems: "flex-start",
   },
 
   itemBorder: {
     borderBottomWidth: 1,
-    borderBottomColor: "#f3f4f6",
+    borderBottomColor: "#f4f4f5",
   },
 
   imageWrapper: {
-    width: 88,
-    height: 88,
-    borderRadius: 14,
-    borderWidth: 1,
-    borderColor: "#e5e7eb",
+    width: 72,
+    height: 72,
+    borderRadius: 10,
     overflow: "hidden",
-    backgroundColor: "#f9fafb",
+    backgroundColor: "#f4f4f5",
+    borderWidth: 1,
+    borderColor: "#f0f0f0",
   },
 
   image: {
@@ -152,129 +185,148 @@ const styles = StyleSheet.create({
 
   content: {
     flex: 1,
-    marginLeft: 14,
+    gap: 4,
+  },
+
+  topRow: {
     flexDirection: "row",
     justifyContent: "space-between",
+    alignItems: "center",
   },
 
-  left: {
-    flex: 1,
-    paddingRight: 10,
-    justifyContent: "center",
+  priceRow: {
+    flexDirection: "row",
+    alignItems: "baseline",
+    gap: 4,
   },
 
-  right: {
-    alignItems: "flex-end",
-    justifyContent: "space-between",
-    paddingVertical: 2,
+  totalPrice: {
+    fontSize: 15,
+    fontWeight: "700",
+    color: "#18181b",
+    letterSpacing: -0.3,
+  },
+
+  unitPriceText: {
+    fontSize: 11,
+    color: "#71717a",
+    fontWeight: "400",
+  },
+
+  unitPrice: {
+    fontSize: 11,
+    color: "#71717a",
+  },
+
+  qtyBadge: {
+    backgroundColor: "#f4f4f5",
+    paddingHorizontal: 7,
+    paddingVertical: 2.5,
+    borderRadius: 6,
+    borderWidth: 1,
+    borderColor: "#e4e4e7",
+  },
+
+  qtyText: {
+    fontSize: 11,
+    fontWeight: "600",
+    color: "#3f3f46",
   },
 
   name: {
-    fontSize: 15,
-    fontWeight: "800",
-    color: BRAND_DARK,
-    lineHeight: 20,
+    fontSize: 13,
+    fontWeight: "600",
+    color: "#27272a",
+    lineHeight: 18,
+    letterSpacing: -0.1,
   },
 
   options: {
     flexDirection: "row",
     flexWrap: "wrap",
-    marginTop: 8,
+    gap: 4,
+    marginTop: 2,
   },
 
   optionBadge: {
-    backgroundColor: LIGHT_GREEN,
-    borderRadius: 8,
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    marginRight: 6,
-    marginBottom: 4,
+    backgroundColor: "#f4f4f5",
+    borderRadius: 6,
+    paddingHorizontal: 6,
+    paddingVertical: 2,
     borderWidth: 1,
-    borderColor: "#a7f3d0",
+    borderColor: "#e4e4e7",
   },
 
   optionLabel: {
-    color: "#059669",
-    fontWeight: "700",
+    color: "#71717a",
+    fontWeight: "500",
   },
 
   optionText: {
-    fontSize: 11,
-    color: BRAND_DARK,
-    fontWeight: "800",
+    fontSize: 10,
+    color: "#27272a",
+    fontWeight: "600",
   },
 
-  qtyBadge: {
-    backgroundColor: "#f3f4f6",
-    paddingHorizontal: 8,
-    paddingVertical: 3,
-    borderRadius: 6,
-  },
-
-  quantity: {
-    fontSize: 12,
-    fontWeight: "800",
-    color: "#374151",
-  },
-
-  price: {
-    marginTop: 10,
-  },
-
+  /* Empty State */
   emptyContainer: {
     backgroundColor: "#ffffff",
-    borderRadius: 20,
+    borderRadius: 14,
     borderWidth: 1,
-    borderColor: "#e5e7eb",
-    paddingVertical: 40,
+    borderColor: "#f0f0f0",
+    paddingVertical: 32,
     paddingHorizontal: 20,
     alignItems: "center",
   },
 
   emptyIconCircle: {
-    width: 60,
-    height: 60,
-    borderRadius: 30,
-    backgroundColor: LIGHT_GREEN,
+    width: 52,
+    height: 52,
+    borderRadius: 26,
+    backgroundColor: "#f4f4f5",
+    borderWidth: 1,
+    borderColor: "#e4e4e7",
     justifyContent: "center",
     alignItems: "center",
-    marginBottom: 16,
+    marginBottom: 12,
   },
 
   emptyTitle: {
-    fontSize: 20,
-    fontWeight: "900",
-    color: BRAND_DARK,
+    fontSize: 17,
+    fontWeight: "700",
+    color: "#18181b",
     letterSpacing: -0.3,
   },
 
   emptySubtitle: {
-    marginTop: 6,
-    fontSize: 13,
-    color: "#6b7280",
+    marginTop: 4,
+    fontSize: 12,
+    color: "#71717a",
     textAlign: "center",
-  },
-
-  emptyButtonWrapper: {
-    marginTop: 20,
-    borderRadius: 14,
-    overflow: "hidden",
-    width: "100%",
-    maxWidth: 240,
+    lineHeight: 18,
   },
 
   emptyButton: {
-    paddingVertical: 12,
-    paddingHorizontal: 20,
+    marginTop: 16,
+    height: 40,
+    paddingHorizontal: 16,
+    borderRadius: 8,
+    backgroundColor: "#18181b",
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
-    gap: 8,
+    gap: 6,
   },
 
-  shoppingLink: {
-    fontSize: 14,
-    fontWeight: "800",
+  emptyButtonPressed: {
+    opacity: 0.85,
+    transform: [{ scale: 0.985 }],
+  },
+
+  emptyButtonText: {
+    fontSize: 12,
+    fontWeight: "600",
     color: "#ffffff",
+    letterSpacing: -0.1,
   },
 });

@@ -1,8 +1,8 @@
 import React from "react";
-import { View, Text, StyleSheet, TouchableOpacity } from "react-native";
+import { View, Text, StyleSheet, Pressable } from "react-native";
 import { Image } from "expo-image";
 import { useRouter } from "expo-router";
-import { Trash2, ShoppingCart, ArrowRight } from "lucide-react-native";
+import { Trash2, ShoppingBag, ArrowRight } from "lucide-react-native";
 import type { WishlistItem as WishlistItemType } from "@africasuk/types";
 
 import { useWishlist } from "@/store/wishlist";
@@ -13,16 +13,13 @@ interface Props {
   item: WishlistItemType;
 }
 
-const BRAND_DARK = "#002b15";
-const BRAND_GREEN = "#005c2e";
-
 export default function WishlistItem({ item }: Props) {
   const router = useRouter();
   const removeItem = useWishlist((state) => state.removeItem);
   const addItem = useCart((state) => state.addItem);
 
   const handleNavigate = () => {
-    router.push(`/products/${item.slug}`);
+    router.push(`/products/${item.slug}` as const);
   };
 
   const handleAddToCart = () => {
@@ -34,67 +31,79 @@ export default function WishlistItem({ item }: Props) {
 
   return (
     <View style={styles.card}>
-      {/* Product Image - Sharp Corners */}
-      <TouchableOpacity
-        activeOpacity={0.85}
+      {/* 1:1 Aspect Frame */}
+      <Pressable
         onPress={handleNavigate}
-        style={styles.imageWrapper}
+        style={({ pressed }) => [
+          styles.imageWrapper,
+          pressed && styles.pressedState,
+        ]}
       >
         <Image
           source={{ uri: item.image }}
           style={styles.image}
           contentFit="cover"
-          transition={200}
+          transition={150}
+          cachePolicy="memory-disk"
         />
-      </TouchableOpacity>
+      </Pressable>
 
       {/* Item Details & Actions */}
       <View style={styles.content}>
-        <View style={styles.headerRow}>
-          <TouchableOpacity
-            activeOpacity={0.7}
-            onPress={handleNavigate}
-            style={styles.titleContainer}
-          >
-            <Text style={styles.title} numberOfLines={1}>
-              {item.name}
-            </Text>
-          </TouchableOpacity>
+        <View style={styles.topSection}>
+          <View style={styles.headerRow}>
+            <Pressable
+              onPress={handleNavigate}
+              style={({ pressed }) => [
+                styles.titleContainer,
+                pressed && styles.pressedState,
+              ]}
+            >
+              <Text style={styles.title} numberOfLines={1}>
+                {item.name}
+              </Text>
+            </Pressable>
 
-          {/* Quick Remove Button */}
-          <TouchableOpacity
-            activeOpacity={0.6}
-            onPress={() => removeItem(item.variantId)}
-            style={styles.removeButton}
-            hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-          >
-            <Trash2 size={15} color="#9ca3af" />
-          </TouchableOpacity>
-        </View>
+            {/* Trash Button */}
+            <Pressable
+              onPress={() => removeItem(item.variantId)}
+              style={({ pressed }) => [
+                styles.removeButton,
+                pressed && styles.pressedState,
+              ]}
+              hitSlop={8}
+            >
+              <Trash2 size={15} color="#71717a" strokeWidth={1.75} />
+            </Pressable>
+          </View>
 
-        <View style={styles.priceContainer}>
+          {/* Pricing */}
           <Price price={item.price} style={styles.priceText} />
         </View>
 
-        {/* Action Buttons - Sharp Corners */}
+        {/* Bottom Actions */}
         <View style={styles.actionsRow}>
-          <TouchableOpacity
-            activeOpacity={0.85}
+          <Pressable
             onPress={handleAddToCart}
-            style={styles.cartButton}
+            style={({ pressed }) => [
+              styles.cartButton,
+              pressed && styles.cartButtonPressed,
+            ]}
           >
-            <ShoppingCart size={13} color="#ffffff" />
-            <Text style={styles.cartButtonText}>Add to Cart</Text>
-          </TouchableOpacity>
+            <ShoppingBag size={13} color="#ffffff" strokeWidth={2} />
+            <Text style={styles.cartButtonText}>Move to Cart</Text>
+          </Pressable>
 
-          <TouchableOpacity
-            activeOpacity={0.85}
+          <Pressable
             onPress={handleNavigate}
-            style={styles.viewButton}
+            style={({ pressed }) => [
+              styles.viewButton,
+              pressed && styles.viewButtonPressed,
+            ]}
           >
             <Text style={styles.viewButtonText}>View</Text>
-            <ArrowRight size={13} color="#6b7280" />
-          </TouchableOpacity>
+            <ArrowRight size={13} color="#18181b" strokeWidth={2} />
+          </Pressable>
         </View>
       </View>
     </View>
@@ -105,54 +114,71 @@ const styles = StyleSheet.create({
   card: {
     flexDirection: "row",
     gap: 12,
-    borderRadius: 0, // Sharp corners design language
+    borderRadius: 14,
     borderWidth: 1,
-    borderColor: "#e5e7eb",
+    borderColor: "#f0f0f0",
     backgroundColor: "#ffffff",
     padding: 12,
   },
+
   imageWrapper: {
     width: 80,
     height: 80,
-    borderRadius: 0, // Sharp corners
+    borderRadius: 10,
     overflow: "hidden",
-    backgroundColor: "#f9fafb",
+    backgroundColor: "#f4f4f5",
     borderWidth: 1,
-    borderColor: "#e5e7eb",
+    borderColor: "#f0f0f0",
   },
+
   image: {
     width: "100%",
     height: "100%",
   },
+
   content: {
     flex: 1,
     justifyContent: "space-between",
   },
+
+  topSection: {
+    gap: 4,
+  },
+
   headerRow: {
     flexDirection: "row",
     alignItems: "flex-start",
     justifyContent: "space-between",
     gap: 8,
   },
+
   titleContainer: {
     flex: 1,
   },
+
   title: {
     fontSize: 13,
-    fontWeight: "500", // Non-bold clean header weight
-    color: BRAND_DARK,
+    fontWeight: "600",
+    color: "#18181b",
+    letterSpacing: -0.1,
   },
+
   removeButton: {
-    padding: 2,
+    width: 26,
+    height: 26,
+    borderRadius: 6,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "#f4f4f5",
   },
-  priceContainer: {
-    marginTop: 2,
-  },
+
   priceText: {
-    fontSize: 13,
-    fontWeight: "500", // Clean regular weight
-    color: BRAND_GREEN,
+    fontSize: 14,
+    fontWeight: "700",
+    color: "#18181b",
+    letterSpacing: -0.2,
   },
+
   actionsRow: {
     flexDirection: "row",
     alignItems: "center",
@@ -160,38 +186,55 @@ const styles = StyleSheet.create({
     marginTop: 8,
     paddingTop: 8,
     borderTopWidth: 1,
-    borderTopColor: "#f3f4f6",
+    borderTopColor: "#f4f4f5",
   },
+
   cartButton: {
     flexDirection: "row",
     alignItems: "center",
     gap: 6,
-    backgroundColor: BRAND_GREEN,
-    paddingHorizontal: 10,
-    paddingVertical: 6,
-    borderRadius: 0, // Sharp corners
+    backgroundColor: "#18181b",
+    paddingHorizontal: 12,
+    height: 32,
+    borderRadius: 8,
   },
+
+  cartButtonPressed: {
+    opacity: 0.88,
+    transform: [{ scale: 0.985 }],
+  },
+
   cartButtonText: {
-    fontSize: 11,
-    fontWeight: "500", // Clean regular weight
+    fontSize: 12,
+    fontWeight: "600",
     color: "#ffffff",
-    letterSpacing: 0.2,
+    letterSpacing: -0.1,
   },
+
   viewButton: {
     flexDirection: "row",
     alignItems: "center",
     gap: 4,
-    backgroundColor: "#ffffff",
+    backgroundColor: "#f4f4f5",
     borderWidth: 1,
-    borderColor: "#e5e7eb",
-    paddingHorizontal: 10,
-    paddingVertical: 6,
-    borderRadius: 0, // Sharp corners
+    borderColor: "#e4e4e7",
+    paddingHorizontal: 12,
+    height: 32,
+    borderRadius: 8,
   },
+
+  viewButtonPressed: {
+    backgroundColor: "#e4e4e7",
+  },
+
   viewButtonText: {
-    fontSize: 11,
-    fontWeight: "500", // Clean regular weight
-    color: BRAND_DARK,
-    letterSpacing: 0.2,
+    fontSize: 12,
+    fontWeight: "600",
+    color: "#18181b",
+    letterSpacing: -0.1,
+  },
+
+  pressedState: {
+    opacity: 0.8,
   },
 });

@@ -4,7 +4,7 @@ import {
   View,
   Text,
   TextInput,
-  TouchableOpacity,
+  Pressable,
   StyleSheet,
   ActivityIndicator,
   Alert,
@@ -13,13 +13,11 @@ import {
   TouchableWithoutFeedback,
   Keyboard,
 } from "react-native";
-import { Save, X } from "lucide-react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { Check, X } from "lucide-react-native";
 
 import type { Profile } from "@africasuk/types";
 import { createClient } from "@/lib/auth/client";
-
-const BRAND = "#005c2e";
-const BRAND_DARK = "#002b15";
 
 interface Props {
   visible: boolean;
@@ -34,13 +32,13 @@ export default function EditProfileModal({
   onClose,
   onSuccess,
 }: Props) {
+  const insets = useSafeAreaInsets();
   const supabase = createClient();
 
   const [loading, setLoading] = useState(false);
   const [fullName, setFullName] = useState(profile.fullName ?? "");
   const [phone, setPhone] = useState(profile.phone ?? "");
 
-  // Sync form state whenever the modal opens or profile changes
   useEffect(() => {
     if (visible) {
       setFullName(profile.fullName ?? "");
@@ -82,15 +80,14 @@ export default function EditProfileModal({
         })
         .eq("user_id", user.id);
 
-      if (error) {
-        throw error;
-      }
+      if (error) throw error;
+
       await Promise.resolve(onSuccess?.());
       onClose();
     } catch (error) {
-      console.error(error);
+      console.error("Profile update error:", error);
       Alert.alert(
-        "Error",
+        "Update Failed",
         error instanceof Error ? error.message : "Failed to update profile."
       );
     } finally {
@@ -98,37 +95,45 @@ export default function EditProfileModal({
     }
   }
 
+  const bottomInset = insets.bottom > 0 ? insets.bottom : 16;
+
   return (
     <Modal
       visible={visible}
-      animationType="slide"
+      animationType="fade"
       transparent
+      statusBarTranslucent
       onRequestClose={onClose}
     >
       <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
         <View style={styles.overlay}>
+          <Pressable style={styles.backdrop} onPress={onClose} />
+
           <KeyboardAvoidingView
-            behavior={Platform.OS === "ios" ? "padding" : "height"}
+            behavior={Platform.OS === "ios" ? "padding" : undefined}
             style={styles.keyboardView}
           >
-            <View style={styles.container}>
+            <View style={[styles.sheet, { paddingBottom: bottomInset + 12 }]}>
               {/* Header */}
               <View style={styles.header}>
-                <View>
+                <View style={styles.headerTextGroup}>
                   <Text style={styles.title}>Edit Profile</Text>
                   <Text style={styles.subtitle}>
-                    Update your personal information.
+                    Update your public identity and contact details
                   </Text>
                 </View>
-                <TouchableOpacity
-                  style={styles.closeButton}
+
+                <Pressable
+                  style={({ pressed }) => [
+                    styles.closeButton,
+                    pressed && styles.closeButtonPressed,
+                  ]}
                   onPress={onClose}
                   disabled={loading}
-                  activeOpacity={0.7}
-                  hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                  hitSlop={8}
                 >
-                  <X size={18} color="#6b7280" />
-                </TouchableOpacity>
+                  <X size={15} color="#71717a" strokeWidth={2} />
+                </Pressable>
               </View>
 
               {/* Form Body */}
@@ -139,9 +144,10 @@ export default function EditProfileModal({
                     style={styles.input}
                     value={fullName}
                     onChangeText={setFullName}
-                    placeholder="Enter full name"
-                    placeholderTextColor="#9ca3af"
+                    placeholder="Enter your full name"
+                    placeholderTextColor="#a1a1aa"
                     editable={!loading}
+                    autoCapitalize="words"
                   />
                 </View>
 
@@ -152,7 +158,7 @@ export default function EditProfileModal({
                     value={phone}
                     onChangeText={setPhone}
                     placeholder="+211912345678"
-                    placeholderTextColor="#9ca3af"
+                    placeholderTextColor="#a1a1aa"
                     keyboardType="phone-pad"
                     editable={!loading}
                   />
@@ -160,30 +166,35 @@ export default function EditProfileModal({
 
                 {/* Actions */}
                 <View style={styles.actions}>
-                  <TouchableOpacity
-                    style={styles.cancelButton}
+                  <Pressable
+                    style={({ pressed }) => [
+                      styles.cancelButton,
+                      pressed && styles.cancelButtonPressed,
+                    ]}
                     onPress={onClose}
                     disabled={loading}
-                    activeOpacity={0.7}
                   >
                     <Text style={styles.cancelText}>Cancel</Text>
-                  </TouchableOpacity>
+                  </Pressable>
 
-                  <TouchableOpacity
-                    style={[styles.saveButton, loading && styles.disabledButton]}
+                  <Pressable
+                    style={({ pressed }) => [
+                      styles.saveButton,
+                      loading && styles.disabledButton,
+                      pressed && !loading && styles.saveButtonPressed,
+                    ]}
                     onPress={save}
                     disabled={loading}
-                    activeOpacity={0.85}
                   >
                     {loading ? (
                       <ActivityIndicator size="small" color="#ffffff" />
                     ) : (
                       <>
-                        <Save size={14} color="#ffffff" style={styles.saveIcon} />
+                        <Check size={14} color="#ffffff" strokeWidth={2.2} />
                         <Text style={styles.saveText}>Save Changes</Text>
                       </>
                     )}
-                  </TouchableOpacity>
+                  </Pressable>
                 </View>
               </View>
             </View>
@@ -200,99 +211,146 @@ const styles = StyleSheet.create({
     backgroundColor: "rgba(0, 0, 0, 0.4)",
     justifyContent: "flex-end",
   },
+
+  backdrop: {
+    ...StyleSheet.absoluteFillObject,
+  },
+
   keyboardView: {
     width: "100%",
   },
-  container: {
+
+  sheet: {
     backgroundColor: "#ffffff",
-    borderTopLeftRadius: 0, // Sharp corners design language
-    borderTopRightRadius: 0, // Sharp corners design language
-    borderTopWidth: 1,
-    borderColor: "#e5e7eb",
-    padding: 20,
+    borderTopLeftRadius: 18,
+    borderTopRightRadius: 18,
+    borderWidth: 1,
+    borderBottomWidth: 0,
+    borderColor: "#e4e4e7",
+    paddingHorizontal: 16,
+    paddingTop: 16,
     gap: 16,
   },
+
   header: {
     flexDirection: "row",
     justifyContent: "space-between",
-    alignItems: "flex-start",
+    alignItems: "center",
+    paddingBottom: 14,
+    borderBottomWidth: 1,
+    borderBottomColor: "#f4f4f5",
   },
+
+  headerTextGroup: {
+    flex: 1,
+    gap: 2,
+    paddingRight: 10,
+  },
+
   title: {
     fontSize: 16,
-    fontWeight: "500", // Non-bold clean header weight
-    color: BRAND_DARK,
-    letterSpacing: 0.2,
+    fontWeight: "700",
+    color: "#18181b",
+    letterSpacing: -0.3,
   },
+
   subtitle: {
     fontSize: 12,
-    fontWeight: "400", // Clean regular weight
-    color: "#6b7280",
-    marginTop: 2,
+    color: "#71717a",
   },
+
   closeButton: {
-    padding: 4,
+    width: 30,
+    height: 30,
+    borderRadius: 8,
+    backgroundColor: "#f4f4f5",
+    alignItems: "center",
+    justifyContent: "center",
   },
+
+  closeButtonPressed: {
+    backgroundColor: "#e4e4e7",
+  },
+
   form: {
     gap: 14,
   },
+
   field: {
     gap: 6,
   },
+
   label: {
     fontSize: 12,
-    fontWeight: "500", // Clean weight
-    color: "#374151",
+    fontWeight: "600",
+    color: "#27272a",
   },
+
   input: {
-    backgroundColor: "#f9fafb",
-    borderWidth: 1,
-    borderColor: "#e5e7eb",
-    borderRadius: 0, // Sharp corners
-    paddingHorizontal: 14,
+    backgroundColor: "#ffffff",
+    borderWidth: 1.5,
+    borderColor: "#e4e4e7",
+    borderRadius: 10,
+    paddingHorizontal: 12,
     paddingVertical: 10,
     fontSize: 13,
-    fontWeight: "400",
-    color: BRAND_DARK,
+    fontWeight: "500",
+    color: "#18181b",
   },
+
   actions: {
     flexDirection: "row",
     justifyContent: "flex-end",
     alignItems: "center",
-    gap: 10,
+    gap: 8,
     marginTop: 6,
   },
+
   cancelButton: {
-    paddingVertical: 10,
-    paddingHorizontal: 16,
-    borderRadius: 0, // Sharp corners
+    height: 40,
+    paddingHorizontal: 14,
+    borderRadius: 8,
     borderWidth: 1,
-    borderColor: "#e5e7eb",
+    borderColor: "#e4e4e7",
     backgroundColor: "#ffffff",
+    alignItems: "center",
+    justifyContent: "center",
   },
+
+  cancelButtonPressed: {
+    backgroundColor: "#f4f4f5",
+  },
+
   cancelText: {
     fontSize: 12,
-    fontWeight: "500", // Clean regular weight
-    color: "#4b5563",
+    fontWeight: "600",
+    color: "#71717a",
   },
+
   saveButton: {
     flexDirection: "row",
     alignItems: "center",
-    backgroundColor: BRAND,
-    paddingVertical: 10,
-    paddingHorizontal: 18,
-    borderRadius: 0, // Sharp corners
+    justifyContent: "center",
+    gap: 6,
+    backgroundColor: "#18181b",
+    height: 40,
+    paddingHorizontal: 16,
+    borderRadius: 8,
   },
+
+  saveButtonPressed: {
+    opacity: 0.88,
+    transform: [{ scale: 0.985 }],
+  },
+
   disabledButton: {
-    backgroundColor: "#e5e7eb",
-    opacity: 0.8,
+    opacity: 0.45,
   },
-  saveIcon: {
-    marginRight: 6,
-  },
+
   saveText: {
     fontSize: 12,
-    fontWeight: "500", // Clean regular weight
+    fontWeight: "600",
     color: "#ffffff",
-    letterSpacing: 0.2,
+    letterSpacing: -0.1,
   },
 });

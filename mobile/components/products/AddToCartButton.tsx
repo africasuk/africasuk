@@ -1,15 +1,12 @@
 import React from "react";
 import { View, Text, Pressable, StyleSheet } from "react-native";
 import { useRouter, Href } from "expo-router";
-import { ShoppingBag, Zap } from "lucide-react-native";
+import { ShoppingBag, ArrowRight } from "lucide-react-native";
 
 import { createClient } from "@/lib/auth/client";
 
 import { useCart } from "../../store/cart";
 import type { CartItem } from "../../types/cart";
-
-const BRAND = "#005c2e";
-const BRAND_DARK = "#002b15";
 
 interface Props {
   item: CartItem;
@@ -41,37 +38,39 @@ export function AddToCartButton({ item }: Props) {
 
   return (
     <View style={styles.container}>
-      {/* Primary Add To Cart Button */}
+      {/* Primary Clean Solid CTA */}
       <Pressable
         onPress={() => addItem(item)}
         disabled={isOutOfStock}
         style={({ pressed }) => [
-          styles.addToCartBtn,
+          styles.primaryBtn,
           isOutOfStock && styles.disabledBtn,
-          pressed && !isOutOfStock && styles.pressedBtn,
+          pressed && !isOutOfStock && styles.pressedState,
         ]}
       >
-        <ShoppingBag size={16} color="#ffffff" />
-        <Text style={styles.addToCartText}>Add to Cart</Text>
+        <ShoppingBag size={15} color="#ffffff" strokeWidth={1.8} />
+        <Text style={styles.primaryBtnText}>
+          {isOutOfStock ? "Sold Out" : "Add to Cart"}
+        </Text>
         {quantity > 0 && (
-          <View style={styles.inlineCount}>
-            <Text style={styles.inlineCountText}>{quantity}</Text>
+          <View style={styles.counterBadge}>
+            <Text style={styles.counterBadgeText}>{quantity}</Text>
           </View>
         )}
       </Pressable>
 
-      {/* Secondary Buy Now Button */}
+      {/* Secondary Neutral Pill */}
       <Pressable
         onPress={handleBuyNow}
         disabled={isOutOfStock}
         style={({ pressed }) => [
-          styles.buyNowBtn,
+          styles.secondaryBtn,
           isOutOfStock && styles.disabledBtn,
-          pressed && !isOutOfStock && styles.buyNowPressedBtn,
+          pressed && !isOutOfStock && styles.pressedState,
         ]}
       >
-        <Zap size={15} color={BRAND_DARK} />
-        <Text style={styles.buyNowText}>Buy Now</Text>
+        <Text style={styles.secondaryBtnText}>Buy Now</Text>
+        <ArrowRight size={14} color="#18181b" strokeWidth={1.8} />
       </Pressable>
     </View>
   );
@@ -81,64 +80,73 @@ const styles = StyleSheet.create({
   container: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 10,
+    gap: 8,
     width: "100%",
   },
-  addToCartBtn: {
-    flex: 1.2,
-    height: 48,
-    backgroundColor: BRAND,
-    borderRadius: 0, // Sharp corners design language
+
+  primaryBtn: {
+    flex: 1.3,
+    height: 46,
+    backgroundColor: "#18181b",
+    borderRadius: 23,
     paddingHorizontal: 16,
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
-    gap: 8,
+    gap: 7,
   },
-  addToCartText: {
+
+  primaryBtnText: {
     color: "#ffffff",
     fontSize: 13,
-    fontWeight: "500", // Clean regular weight
-    letterSpacing: 0.2,
+    fontWeight: "600",
+    letterSpacing: -0.1,
   },
-  inlineCount: {
-    backgroundColor: "rgba(255, 255, 255, 0.2)",
-    paddingHorizontal: 6,
-    paddingVertical: 2,
-    borderRadius: 0,
-    marginLeft: 2,
+
+  counterBadge: {
+    backgroundColor: "rgba(255, 255, 255, 0.16)",
+    minWidth: 18,
+    height: 18,
+    borderRadius: 9,
+    paddingHorizontal: 5,
+    alignItems: "center",
+    justifyContent: "center",
+    marginLeft: 1,
   },
-  inlineCountText: {
+
+  counterBadgeText: {
     color: "#ffffff",
-    fontSize: 11,
-    fontWeight: "500",
+    fontSize: 10,
+    fontWeight: "600",
   },
-  buyNowBtn: {
+
+  secondaryBtn: {
     flex: 0.9,
-    height: 48,
-    paddingHorizontal: 16,
-    borderRadius: 0, // Sharp corners
+    height: 46,
+    paddingHorizontal: 14,
+    borderRadius: 23,
+    backgroundColor: "#f4f4f5",
     borderWidth: 1,
-    borderColor: "#e5e7eb",
-    backgroundColor: "#ffffff",
+    borderColor: "#e4e4e7",
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
-    gap: 6,
+    gap: 5,
   },
-  buyNowText: {
-    color: BRAND_DARK,
+
+  secondaryBtnText: {
+    color: "#18181b",
     fontSize: 13,
-    fontWeight: "500", // Clean regular weight
-    letterSpacing: 0.2,
+    fontWeight: "600",
+    letterSpacing: -0.1,
   },
+
   disabledBtn: {
-    opacity: 0.45,
+    opacity: 0.35,
   },
-  pressedBtn: {
-    opacity: 0.85,
-  },
-  buyNowPressedBtn: {
-    backgroundColor: "#f9fafb",
+
+  pressedState: {
+    opacity: 0.82,
+    transform: [{ scale: 0.985 }],
   },
 });

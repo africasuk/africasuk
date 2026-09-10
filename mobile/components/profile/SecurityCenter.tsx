@@ -44,7 +44,7 @@ export default function SecurityCenter({ devices }: Props) {
       } else {
         Alert.alert("Error", "Unable to open password reset link.");
       }
-    } catch (err) {
+    } catch {
       Alert.alert("Error", "Could not launch web page.");
     }
   };

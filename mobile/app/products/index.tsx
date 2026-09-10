@@ -6,7 +6,9 @@ import {
   ActivityIndicator,
   StyleSheet,
   RefreshControl,
+  TouchableOpacity,
 } from "react-native";
+import { Stack, useRouter } from "expo-router";
 
 import type { ProductWithDetails } from "@africasuk/types";
 
@@ -15,20 +17,20 @@ import { ProductRepository } from "@/repositories/ProductRepository";
 import { ProductQueryService } from "@/services/ProductQueryService";
 import { supabase } from "@/lib/supabase/client";
 
+const BRAND_COLOR = "#005c2e";
+
 export default function ProductsPage() {
+  const router = useRouter();
+
   const [products, setProducts] = useState<ProductWithDetails[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
 
   const service = useMemo(
-    () =>
-      new ProductQueryService(
-        new ProductRepository(supabase)
-      ),
+    () => new ProductQueryService(new ProductRepository(supabase)),
     []
   );
 
-  // FIXED: Wrapped fetchProducts in useCallback
   const fetchProducts = useCallback(async () => {
     try {
       const data = await service.getAll();
@@ -41,7 +43,6 @@ export default function ProductsPage() {
     }
   }, [service]);
 
-  // FIXED: Added fetchProducts to the dependency array
   useEffect(() => {
     fetchProducts();
   }, [fetchProducts]);
@@ -51,71 +52,96 @@ export default function ProductsPage() {
     fetchProducts();
   };
 
-  const colorProducts = (products ?? []).flatMap((product) =>
-    (product.colors ?? []).map((color) => ({
-      ...product,
-      id: `${product.id}-${color.id}`,
-      name: `${product.name} - ${color.name}`,
-      selectedColorId: color.id,
-      colors: [color],
-    }))
-  );
+  const colorProducts = useMemo(() => {
+    return (products ?? []).flatMap((product) => {
+      const colors = product.colors ?? [];
+      if (colors.length === 0) return [product];
+
+      return colors.map((color) => ({
+        ...product,
+        id: `${product.id}-${color.id}`,
+        name: `${product.name} - ${color.name}`,
+        selectedColorId: color.id,
+        colors: [color],
+      }));
+    });
+  }, [products]);
 
   if (loading && !refreshing) {
     return (
       <View style={styles.centerContainer}>
-        <ActivityIndicator
-          size="large"
-          color="#005c2e"
-        />
+        <ActivityIndicator size="large" color={BRAND_COLOR} />
       </View>
     );
   }
 
   return (
     <View style={styles.container}>
+      <Stack.Screen
+        options={{
+          title: "Products",
+          headerTitleStyle: {
+            fontWeight: "700",
+            color: "#111827",
+          },
+          headerShadowVisible: false,
+          headerStyle: { backgroundColor: "#ffffff" },
+        }}
+      />
+
       <FlatList
+        key="products-grid-2-col"
         data={colorProducts}
         keyExtractor={(item) => item.id}
         numColumns={2}
         columnWrapperStyle={styles.columnWrapper}
         contentContainerStyle={styles.listContent}
+        showsVerticalScrollIndicator={false}
+        initialNumToRender={8}
+        maxToRenderPerBatch={8}
+        windowSize={7}
+        removeClippedSubviews={true}
         refreshControl={
           <RefreshControl
             refreshing={refreshing}
             onRefresh={onRefresh}
-            tintColor="#005c2e"
+            colors={[BRAND_COLOR]}
+            tintColor={BRAND_COLOR}
           />
         }
         ListHeaderComponent={
           <View style={styles.header}>
-            <Text style={styles.badge}>
-              CURATED COLLECTION
-            </Text>
+            <Text style={styles.badge}>Curated Collection</Text>
 
             <View style={styles.titleRow}>
-              <Text style={styles.title}>
-                All Products
-              </Text>
+              <Text style={styles.title}>All Products</Text>
 
               <Text style={styles.itemCount}>
                 {colorProducts.length}{" "}
-                {colorProducts.length === 1
-                  ? "Item"
-                  : "Items"}
+                {colorProducts.length === 1 ? "Item" : "Items"}
               </Text>
             </View>
           </View>
         }
+        ListFooterComponent={
+          colorProducts.length > 0 ? (
+            <View style={styles.footerContainer}>
+              <TouchableOpacity
+                style={styles.requestBtn}
+                activeOpacity={0.85}
+                onPress={() => router.push("/requests" as never)}
+              >
+                <Text style={styles.requestBtnText}>Can&apos;t Find a Product? Request It</Text>
+              </TouchableOpacity>
+            </View>
+          ) : null
+        }
         ListEmptyComponent={
           <View style={styles.emptyContainer}>
-            <Text style={styles.emptyTitle}>
-              No products found
-            </Text>
+            <Text style={styles.emptyTitle}>No products found</Text>
 
             <Text style={styles.emptySubtitle}>
-              Check back later for new inventory
-              additions.
+              Check back later for new inventory additions.
             </Text>
           </View>
         }
@@ -142,48 +168,75 @@ const styles = StyleSheet.create({
     backgroundColor: "#ffffff",
   },
   listContent: {
-    paddingHorizontal: 16,
-    paddingTop: 16,
-    paddingBottom: 32,
-    gap: 16,
+    paddingHorizontal: 8,
+    paddingTop: 12,
+    paddingBottom: 40,
   },
   header: {
-    marginBottom: 20,
+    paddingHorizontal: 4,
+    marginBottom: 12,
     paddingBottom: 12,
     borderBottomWidth: 1,
     borderBottomColor: "#f3f4f6",
   },
   badge: {
-    fontSize: 10,
-    fontWeight: "800",
-    color: "#002b15",
-    letterSpacing: 1.2,
+    fontSize: 11,
+    fontWeight: "700",
+    color: BRAND_COLOR,
+    letterSpacing: 1,
     textTransform: "uppercase",
     marginBottom: 4,
   },
   titleRow: {
     flexDirection: "row",
     justifyContent: "space-between",
-    alignItems: "flex-end",
+    alignItems: "baseline",
   },
   title: {
-    fontSize: 26,
-    fontWeight: "900",
+    fontSize: 24,
+    fontWeight: "800",
     color: "#111827",
-    letterSpacing: -0.5,
+    letterSpacing: -0.4,
   },
   itemCount: {
-    fontSize: 11,
-    fontWeight: "700",
+    fontSize: 12,
+    fontWeight: "600",
     color: "#9ca3af",
     textTransform: "uppercase",
-    letterSpacing: 0.8,
   },
   columnWrapper: {
     justifyContent: "space-between",
+    marginBottom: 6,
   },
   cardWrapper: {
-    width: "48%",
+    width: "49%",
+  },
+  footerContainer: {
+    marginTop: 18,
+    paddingHorizontal: 4,
+    paddingBottom: 20,
+    width: "100%",
+  },
+  requestBtn: {
+    width: "100%",
+    height: 48,
+    borderRadius: 24,
+    backgroundColor: "#ffffff",
+    borderWidth: 1.5,
+    borderColor: BRAND_COLOR,
+    alignItems: "center",
+    justifyContent: "center",
+    shadowColor: BRAND_COLOR,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.08,
+    shadowRadius: 4,
+    elevation: 1,
+  },
+  requestBtnText: {
+    fontSize: 14,
+    fontWeight: "700",
+    color: BRAND_COLOR,
+    letterSpacing: -0.2,
   },
   emptyContainer: {
     paddingVertical: 60,
@@ -194,6 +247,7 @@ const styles = StyleSheet.create({
     borderColor: "#e5e7eb",
     borderStyle: "dashed",
     backgroundColor: "#fafafa",
+    marginTop: 20,
   },
   emptyTitle: {
     fontSize: 16,

@@ -1,91 +1,103 @@
 import React from "react";
-import { View, Text, StyleSheet, TouchableOpacity } from "react-native";
+import { View, Text, StyleSheet, Pressable } from "react-native";
 import { useRouter } from "expo-router";
-import { Heart, ShoppingBag } from "lucide-react-native";
-
-const BRAND_COLOR = "#005c2e";
-const BRAND_DARK = "#002b15";
+import { Heart, ArrowRight } from "lucide-react-native";
 
 export default function WishlistEmpty() {
   const router = useRouter();
 
   return (
-    <View style={styles.container}>
-      {/* Icon Frame - Sharp Borders */}
-      <View style={styles.iconCircle}>
-        <Heart size={28} color="#9ca3af" />
+    <View style={styles.card}>
+      {/* Icon Frame */}
+      <View style={styles.iconWrapper}>
+        <Heart size={24} color="#71717a" strokeWidth={1.75} />
       </View>
 
-      {/* Typography - Clean & Unbolded */}
+      {/* Typography */}
       <Text style={styles.title}>Your wishlist is empty</Text>
       <Text style={styles.subtitle}>
-        Save products you love for later.
+        Save styles and pieces you love to keep track of them in one place.
       </Text>
 
-      {/* Button - Sharp Corners */}
-      <TouchableOpacity
-        style={styles.button}
-        activeOpacity={0.85}
-        onPress={() => router.push("/(tabs)")}
+      {/* CTA Button */}
+      <Pressable
+        style={({ pressed }) => [
+          styles.button,
+          pressed && styles.buttonPressed,
+        ]}
+        onPress={() => router.push("/products" as never)}
       >
-        <ShoppingBag size={16} color="#ffffff" />
-        <Text style={styles.buttonText}>Continue Shopping</Text>
-      </TouchableOpacity>
+        <Text style={styles.buttonText}>Explore Collections</Text>
+        <ArrowRight size={14} color="#ffffff" strokeWidth={2} />
+      </Pressable>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
+  card: {
+    backgroundColor: "#ffffff",
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: "#f0f0f0",
+    paddingVertical: 44,
+    paddingHorizontal: 24,
     alignItems: "center",
     justifyContent: "center",
-    borderRadius: 0, // Sharp corners design language
-    borderWidth: 1,
-    borderColor: "#e5e7eb",
-    backgroundColor: "#ffffff",
-    paddingVertical: 48,
-    paddingHorizontal: 20,
     marginTop: 8,
   },
-  iconCircle: {
-    width: 64,
-    height: 64,
-    borderRadius: 0, // Sharp corners
-    backgroundColor: "#f9fafb",
+
+  iconWrapper: {
+    width: 52,
+    height: 52,
+    borderRadius: 14,
+    backgroundColor: "#f4f4f5",
     borderWidth: 1,
-    borderColor: "#e5e7eb",
-    alignItems: "center",
+    borderColor: "#e4e4e7",
     justifyContent: "center",
+    alignItems: "center",
     marginBottom: 16,
   },
+
   title: {
     fontSize: 18,
-    fontWeight: "500", // Non-bold clean header weight
-    color: BRAND_DARK,
+    fontWeight: "700",
+    color: "#18181b",
+    letterSpacing: -0.3,
     textAlign: "center",
-    letterSpacing: 0.2,
   },
+
   subtitle: {
     fontSize: 13,
     fontWeight: "400",
-    color: "#6b7280",
-    marginTop: 4,
+    color: "#71717a",
     textAlign: "center",
+    marginTop: 6,
+    lineHeight: 19,
+    maxWidth: 260,
   },
+
   button: {
+    marginTop: 20,
+    height: 44,
+    paddingHorizontal: 20,
+    borderRadius: 12,
+    backgroundColor: "#18181b",
     flexDirection: "row",
     alignItems: "center",
+    justifyContent: "center",
     gap: 8,
-    backgroundColor: BRAND_COLOR,
-    paddingHorizontal: 20,
-    paddingVertical: 12,
-    borderRadius: 0, // Sharp corners
-    marginTop: 20,
   },
+
+  buttonPressed: {
+    opacity: 0.88,
+    transform: [{ scale: 0.985 }],
+  },
+
   buttonText: {
-    fontSize: 13,
-    fontWeight: "500", // Clean regular weight
     color: "#ffffff",
-    letterSpacing: 0.2,
+    fontSize: 13,
+    fontWeight: "600",
+    letterSpacing: -0.1,
   },
 });

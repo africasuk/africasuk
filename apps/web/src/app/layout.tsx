@@ -19,6 +19,7 @@ import "./globals.css";
 
 import { CurrencyProvider } from "providers/CurrencyProvider";
 import { ExchangeRateProvider } from "providers/ExchangeRateProvider";
+import AppOpenPrompt from "@/components/AppOpenPrompt";
 
 export const metadata: Metadata = {
   metadataBase: new URL("https://africasuk.com"),
@@ -202,29 +203,31 @@ export default async function RootLayout({
 
   const currentRate = await exchangeRateService.getCurrent();
 
-  return (
-    <html lang={locale} dir={dir}>
-      <body>
-        <LanguageProvider
-          locale={locale}
-          dictionary={dictionary}
-        >
-          <CurrencyProvider initialCurrency={currency}>
-            <ExchangeRateProvider
-              initialRate={currentRate?.rate ?? 1}
-            >
-              {children}
+return (
+  <html lang={locale} dir={dir}>
+    <body>
+      <LanguageProvider
+        locale={locale}
+        dictionary={dictionary}
+      >
+        <CurrencyProvider initialCurrency={currency}>
+          <ExchangeRateProvider
+            initialRate={currentRate?.rate ?? 1}
+          >
+            <AppOpenPrompt />
 
-              <Toaster
-                richColors
-                position="top-right"
-                closeButton
-                duration={4000}
-              />
-            </ExchangeRateProvider>
-          </CurrencyProvider>
-        </LanguageProvider>
-      </body>
-    </html>
-  );
+            {children}
+
+            <Toaster
+              richColors
+              position="top-right"
+              closeButton
+              duration={4000}
+            />
+          </ExchangeRateProvider>
+        </CurrencyProvider>
+      </LanguageProvider>
+    </body>
+  </html>
+);
 }

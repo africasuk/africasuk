@@ -2,7 +2,7 @@
   "expo": {
     "name": "Africa Suk",
     "slug": "africa-suk",
-    "version": "1.0.2",
+    "version": "1.0.3",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
     "scheme": "africasuk",
@@ -20,12 +20,14 @@
 
     "android": {
       "package": "com.africasuk.app",
-      "versionCode": 14,
+      "versionCode": 20,
+
       "adaptiveIcon": {
         "foregroundImage": "./assets/images/android-icon-foreground.png",
-        "backgroundColor": "#024F25",
+        "backgroundColor": "#FFFFFF",
         "monochromeImage": "./assets/images/android-icon-monochrome.png"
       },
+
       "intentFilters": [
         {
           "action": "VIEW",
@@ -57,14 +59,16 @@
           "image": "./assets/images/splash-icon.png",
           "imageWidth": 120,
           "resizeMode": "contain",
-          "backgroundColor": "#024F25",
+          "backgroundColor": "#FFFFFF",
+
           "dark": {
             "image": "./assets/images/splash-icon.png",
-            "backgroundColor": "#024F25"
+            "backgroundColor": "#FFFFFF"
           },
+
           "android": {
             "image": "./assets/images/splash-icon.png",
-            "backgroundColor": "#024F25"
+            "backgroundColor": "#FFFFFF"
           }
         }
       ],

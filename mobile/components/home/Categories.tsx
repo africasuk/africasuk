@@ -1,7 +1,8 @@
 // mobile/components/home/Categories.tsx
 
-import { View, Text, Image, TouchableOpacity, StyleSheet } from "react-native";
+import { View, Text, Image, TouchableOpacity, StyleSheet, Pressable } from "react-native";
 import { router } from "expo-router";
+import { ArrowRight } from "lucide-react-native";
 import type { Category } from "@africasuk/types";
 
 interface Props {
@@ -68,13 +69,16 @@ export default function Categories({ categories = [] }: Props) {
       </View>
 
       {/* All Categories Button */}
-      <TouchableOpacity
-        style={styles.allCategoriesBtn}
-        activeOpacity={0.85}
+      <Pressable
+        style={({ pressed }) => [
+          styles.allCategoriesBtn,
+          pressed && styles.allCategoriesBtnPressed,
+        ]}
         onPress={() => router.push("/(tabs)/categories" as never)}
       >
-        <Text style={styles.allCategoriesBtnText}>All Categories</Text>
-      </TouchableOpacity>
+        <Text style={styles.allCategoriesBtnText}>Explore All Categories</Text>
+        <ArrowRight size={14} color="#18181b" strokeWidth={2} />
+      </Pressable>
     </View>
   );
 }
@@ -169,20 +173,28 @@ const styles = StyleSheet.create({
 
   allCategoriesBtn: {
     width: "100%",
-    height: 46,
-    backgroundColor: "#ffffff",
+    height: 44,
+    backgroundColor: "#f4f4f5",
     borderWidth: 1,
-    borderColor: "#111827",
-    borderRadius: 0, // No rounded corners
+    borderColor: "#e4e4e7",
+    borderRadius: 12,
+    flexDirection: "row",
     justifyContent: "center",
     alignItems: "center",
+    gap: 6,
     marginTop: 10,
   },
 
+  allCategoriesBtnPressed: {
+    backgroundColor: "#e4e4e7",
+    opacity: 0.85,
+    transform: [{ scale: 0.99 }],
+  },
+
   allCategoriesBtnText: {
-    color: "#111827",
+    color: "#18181b",
     fontSize: 13,
-    fontWeight: "500", // Unbolded, clean
-    letterSpacing: 0.3,
+    fontWeight: "600",
+    letterSpacing: -0.1,
   },
 });

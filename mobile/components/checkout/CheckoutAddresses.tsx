@@ -27,28 +27,21 @@ export default function CheckoutAddresses({
     if (!selectedAddress && initialAddresses.length > 0) {
       setSelectedAddress(
         initialAddresses.find((address) => address.isDefault) ??
-          initialAddresses[0],
+          initialAddresses[0]
       );
     }
   }, [initialAddresses, selectedAddress, setSelectedAddress]);
 
   const isEmpty = initialAddresses.length === 0;
+
   return (
     <>
       <View style={styles.container}>
-        {/* Header Section */}
+        {/* Section Header */}
         <View style={styles.header}>
-          <View style={styles.headerLeft}>
-            <View style={styles.stepBadge}>
-              <Text style={styles.stepText}>02</Text>
-            </View>
-
-            <View>
-              <Text style={styles.title}>Delivery Address</Text>
-              <Text style={styles.subtitle}>
-                Choose where your order will be delivered.
-              </Text>
-            </View>
+          <View>
+            <Text style={styles.sectionTitle}>Delivery Address</Text>
+            <Text style={styles.helperText}>Select or add destination</Text>
           </View>
 
           <AddAddressDialog onSuccess={onRefresh} />
@@ -57,70 +50,85 @@ export default function CheckoutAddresses({
         {/* Empty State vs Address List */}
         {isEmpty ? (
           <View style={styles.emptyState}>
-            <MapPin size={36} color="#d1d5db" />
+            <View style={styles.emptyIconCircle}>
+              <MapPin size={22} color="#71717a" strokeWidth={1.75} />
+            </View>
             <Text style={styles.emptyTitle}>No saved addresses</Text>
             <Text style={styles.emptyDescription}>
-              Add your first delivery address to continue checkout.
+              Add your delivery address to proceed with your order.
             </Text>
-            <View style={{ marginTop: 20 }}>
-              <AddAddressDialog />
+            <View style={styles.emptyActionWrapper}>
+              <AddAddressDialog onSuccess={onRefresh} />
             </View>
           </View>
         ) : (
-          initialAddresses.map((address) => {
-            const isSelected = selectedAddress?.id === address.id;
+          <View style={styles.addressList}>
+            {initialAddresses.map((address) => {
+              const isSelected = selectedAddress?.id === address.id;
 
-            return (
-              <View
-                key={address.id}
-                style={[
-                  styles.addressCard,
-                  isSelected && styles.selectedCard,
-                ]}
-              >
-                <Pressable onPress={() => setSelectedAddress(address)}>
-                  <View style={styles.addressHeader}>
-                    <View style={styles.addressInfo}>
+              return (
+                <Pressable
+                  key={address.id}
+                  onPress={() => setSelectedAddress(address)}
+                  style={({ pressed }) => [
+                    styles.addressCard,
+                    isSelected && styles.selectedCard,
+                    pressed && styles.pressedState,
+                  ]}
+                >
+                  {/* Card Header */}
+                  <View style={styles.cardTopRow}>
+                    <View style={styles.labelGroup}>
+                      {/* Custom Radio Button */}
+                      <View
+                        style={[
+                          styles.radioOuter,
+                          isSelected && styles.radioOuterSelected,
+                        ]}
+                      >
+                        {isSelected && <View style={styles.radioInner} />}
+                      </View>
+
                       <Text style={styles.addressLabel}>{address.label}</Text>
 
-                     {address.isDefault && (
+                      {address.isDefault && (
                         <View style={styles.defaultBadge}>
-                          <Text style={styles.defaultText}>✓ DEFAULT</Text>
+                          <Text style={styles.defaultBadgeText}>DEFAULT</Text>
                         </View>
                       )}
                     </View>
 
                     <AddressActions
-                    id={address.id}
-                    isDefault={address.isDefault}
-                    onRefresh={onRefresh}
-                    onEdit={() => {
-                      setEditingAddress(address);
-                      setEditOpen(true);
-                    }}
-                  />
+                      id={address.id}
+                      isDefault={address.isDefault}
+                      onRefresh={onRefresh}
+                      onEdit={() => {
+                        setEditingAddress(address);
+                        setEditOpen(true);
+                      }}
+                    />
                   </View>
 
+                  {/* Address Details */}
                   <View style={styles.addressBody}>
                     <Text style={styles.recipient}>
                       {address.recipientName}
                     </Text>
-                    <Text style={styles.addressText}>{address.street}</Text>
-                    <Text style={styles.addressText}>
-                      {address.city}, {address.country}
+                    <Text style={styles.addressLine}>
+                      {address.street}
+                      {address.building ? `, ${address.building}` : ""}
+                      {address.apartment ? `, Apt ${address.apartment}` : ""}
                     </Text>
-                    <Text style={styles.phone}>{address.phone}</Text>
+                    <Text style={styles.addressLine}>
+                      {address.city}
+                      {address.state ? `, ${address.state}` : ""}, {address.country}
+                    </Text>
+                    <Text style={styles.phoneText}>{address.phone}</Text>
                   </View>
-
-                  {address.isDefault && (
-                    <View style={styles.defaultBadge}>
-                      <Text style={styles.defaultText}>✓ DEFAULT</Text>
-                    </View>
-                  )}
                 </Pressable>
-              </View>
-            );
-          })
+              );
+            })}
+          </View>
         )}
       </View>
 
@@ -136,135 +144,176 @@ export default function CheckoutAddresses({
 
 const styles = StyleSheet.create({
   container: {
-    backgroundColor: "#fff",
-    borderRadius: 16,
-    borderWidth: 1,
-    borderColor: "#e5e7eb",
-    padding: 16,
+    gap: 8,
   },
+
   header: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
-    marginBottom: 16,
-    paddingBottom: 12,
-    borderBottomWidth: 1,
-    borderBottomColor: "#f3f4f6",
+    paddingHorizontal: 2,
   },
-  headerLeft: {
-    flexDirection: "row",
-    alignItems: "center",
-    flex: 1,
-  },
-  stepBadge: {
-    backgroundColor: "#ecfdf5",
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 6,
-    marginRight: 10,
-  },
-  stepText: {
-    color: "#004d26",
-    fontWeight: "800",
-    fontSize: 12,
-  },
-  title: {
-    fontSize: 15,
-    fontWeight: "800",
-    color: "#111827",
-  },
-  subtitle: {
-    marginTop: 2,
-    fontSize: 12,
-    color: "#6b7280",
-  },
-  emptyState: {
-    alignItems: "center",
-    justifyContent: "center",
-    paddingVertical: 24,
-  },
-  emptyTitle: {
-    fontSize: 16,
-    fontWeight: "700",
-    color: "#111827",
-    marginTop: 12,
-  },
-  emptyDescription: {
+
+  sectionTitle: {
     fontSize: 13,
-    color: "#6b7280",
-    textAlign: "center",
-    marginTop: 4,
+    fontWeight: "700",
+    color: "#18181b",
+    textTransform: "uppercase",
+    letterSpacing: 0.6,
   },
+
+  helperText: {
+    fontSize: 12,
+    fontWeight: "500",
+    color: "#71717a",
+  },
+
+  addressList: {
+    gap: 8,
+  },
+
   addressCard: {
-    borderWidth: 1,
-    borderColor: "#e5e7eb",
-    borderRadius: 14,
-    padding: 16,
-    marginBottom: 12,
-    backgroundColor: "#fff",
+    borderWidth: 1.5,
+    borderColor: "#e4e4e7",
+    borderRadius: 12,
+    padding: 14,
+    backgroundColor: "#ffffff",
+    gap: 8,
   },
+
   selectedCard: {
-    borderColor: "#004d26",
-    backgroundColor: "rgba(0,77,38,0.05)",
+    borderColor: "#18181b",
+    backgroundColor: "#fafafa",
   },
-  addressHeader: {
+
+  cardTopRow: {
     flexDirection: "row",
     justifyContent: "space-between",
-    alignItems: "flex-start",
-    marginBottom: 12,
+    alignItems: "center",
   },
-  addressInfo: {
+
+  labelGroup: {
     flexDirection: "row",
     alignItems: "center",
-    flexWrap: "wrap",
+    gap: 8,
     flex: 1,
   },
-  addressLabel: {
-    fontSize: 15,
-    fontWeight: "700",
-    color: "#111827",
-    marginRight: 8,
-  },
-defaultBadge: {
-  marginLeft: 8,
-  backgroundColor: "#004d26",
-  borderRadius: 999,
-  paddingHorizontal: 10,
-  paddingVertical: 4,
-},
 
-defaultText: {
-  color: "#ffffff",
-  fontSize: 10,
-  fontWeight: "800",
-  letterSpacing: 0.6,
-},
-  addressBody: {
-    gap: 4,
+  radioOuter: {
+    width: 18,
+    height: 18,
+    borderRadius: 9,
+    borderWidth: 1.5,
+    borderColor: "#d4d4d8",
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "#ffffff",
   },
-  recipient: {
+
+  radioOuterSelected: {
+    borderColor: "#18181b",
+  },
+
+  radioInner: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: "#18181b",
+  },
+
+  addressLabel: {
     fontSize: 14,
     fontWeight: "700",
-    color: "#111827",
+    color: "#18181b",
+    letterSpacing: -0.2,
   },
-  addressText: {
+
+  defaultBadge: {
+    backgroundColor: "#f4f4f5",
+    borderRadius: 6,
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderWidth: 1,
+    borderColor: "#e4e4e7",
+  },
+
+  defaultBadgeText: {
+    color: "#52525b",
+    fontSize: 9,
+    fontWeight: "700",
+    letterSpacing: 0.5,
+  },
+
+  addressBody: {
+    paddingLeft: 26,
+    gap: 2,
+  },
+
+  recipient: {
     fontSize: 13,
-    color: "#4b5563",
+    fontWeight: "600",
+    color: "#27272a",
+    letterSpacing: -0.1,
   },
-  phone: {
-    marginTop: 6,
+
+  addressLine: {
     fontSize: 12,
-    color: "#9ca3af",
+    color: "#71717a",
+    lineHeight: 17,
   },
-  checkIcon: {
-    position: "absolute",
-    right: 12,
-    bottom: 12,
-    width: 20,
-    height: 20,
-    borderRadius: 10,
-    backgroundColor: "#004d26",
+
+  phoneText: {
+    marginTop: 2,
+    fontSize: 12,
+    fontWeight: "500",
+    color: "#71717a",
+  },
+
+  /* Empty State */
+  emptyState: {
+    backgroundColor: "#ffffff",
+    borderRadius: 14,
+    borderWidth: 1,
+    borderColor: "#f0f0f0",
+    paddingVertical: 28,
+    paddingHorizontal: 20,
+    alignItems: "center",
+  },
+
+  emptyIconCircle: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    backgroundColor: "#f4f4f5",
+    borderWidth: 1,
+    borderColor: "#e4e4e7",
     justifyContent: "center",
     alignItems: "center",
+    marginBottom: 10,
+  },
+
+  emptyTitle: {
+    fontSize: 15,
+    fontWeight: "700",
+    color: "#18181b",
+    letterSpacing: -0.2,
+  },
+
+  emptyDescription: {
+    marginTop: 4,
+    fontSize: 12,
+    color: "#71717a",
+    textAlign: "center",
+    lineHeight: 17,
+    maxWidth: 260,
+  },
+
+  emptyActionWrapper: {
+    marginTop: 14,
+  },
+
+  pressedState: {
+    opacity: 0.85,
+    transform: [{ scale: 0.995 }],
   },
 });

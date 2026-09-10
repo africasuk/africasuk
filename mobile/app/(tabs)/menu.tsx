@@ -10,10 +10,11 @@ import {
 } from "react-native";
 import * as Linking from "expo-linking";
 import { useRouter, Href } from "expo-router";
+import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
 import {
   User,
   Heart,
-  ShoppingCart,
+  ShoppingBag,
   FilePlus2,
   Package,
   Bell,
@@ -33,20 +34,13 @@ import { CurrencySwitcher } from "@/components/CurrencySwitcher";
 import { createClient } from "@/lib/auth/client";
 
 const supabase = createClient();
-
-const BRAND_LIGHT = "#008744";
 const PLAY_STORE_URL =
   "https://play.google.com/store/apps/details?id=com.africasuk.app";
 
-// Type definition for optional action callbacks
-type MenuItem = [
-  string,
-  React.ComponentType<any>,
-  ((() => void) | undefined)?
-];
 
 export default function MenuScreen() {
   const router = useRouter();
+  const insets = useSafeAreaInsets();
   const [isLoggedIn, setIsLoggedIn] = useState(false);
 
   useEffect(() => {
@@ -80,7 +74,6 @@ export default function MenuScreen() {
 
       setIsLoggedIn(false);
       router.replace("/");
-      Alert.alert("Success", "You have been signed out.");
     } catch {
       Alert.alert("Error", "Failed to sign out.");
     }
@@ -102,267 +95,343 @@ export default function MenuScreen() {
     );
   };
 
+  const bottomInset = insets.bottom > 0 ? insets.bottom : 16;
+
   return (
-    <ScrollView
-      style={styles.container}
-      contentContainerStyle={styles.content}
-      showsVerticalScrollIndicator={false}
-    >
-      {/* My Account */}
-      <View style={styles.section}>
-        <Text style={styles.sectionTitle}>My Account</Text>
-
-        <Pressable
-          style={styles.row}
-          onPress={() => router.push("/profile" as Href)}
-        >
-          <View style={styles.left}>
-            <User size={20} color={BRAND_LIGHT} />
-            <Text style={styles.rowText}>Account Detail</Text>
-          </View>
-          <ChevronRight size={18} color="#9ca3af" />
-        </Pressable>
-
-        <Pressable
-          style={styles.row}
-          onPress={() => router.push("/(tabs)/orders" as Href)}
-        >
-          <View style={styles.left}>
-            <Package size={20} color={BRAND_LIGHT} />
-            <Text style={styles.rowText}>Orders</Text>
-          </View>
-          <ChevronRight size={18} color="#9ca3af" />
-        </Pressable>
-
-        <Pressable
-          style={styles.row}
-          onPress={() => router.push("/wishlist" as Href)}
-        >
-          <View style={styles.left}>
-            <Heart size={20} color={BRAND_LIGHT} />
-            <Text style={styles.rowText}>Wishlist</Text>
-          </View>
-          <ChevronRight size={18} color="#9ca3af" />
-        </Pressable>
-
-        <Pressable
-          style={styles.row}
-          onPress={() => router.push("/cart" as Href)}
-        >
-          <View style={styles.left}>
-            <ShoppingCart size={20} color={BRAND_LIGHT} />
-            <Text style={styles.rowText}>Cart</Text>
-          </View>
-          <ChevronRight size={18} color="#9ca3af" />
-        </Pressable>
-
-        <Pressable
-          style={styles.row}
-          onPress={() => router.push("/requests" as Href)}
-        >
-          <View style={styles.left}>
-            <FilePlus2 size={20} color={BRAND_LIGHT} />
-            <Text style={styles.rowText}>Requested Products</Text>
-          </View>
-          <ChevronRight size={18} color="#9ca3af" />
-        </Pressable>
-      </View>
-
-      {/* Preferences */}
-      <View style={styles.section}>
-        <Text style={styles.sectionTitle}>Preferences</Text>
-
-        <View style={styles.row}>
-          <Text style={styles.comingSoon}>Language — Coming Soon</Text>
-        </View>
-
-        <View style={styles.row}>
-          <CurrencySwitcher />
-        </View>
-
-        <Pressable style={styles.row}>
-          <View style={styles.left}>
-            <Bell size={20} color={BRAND_LIGHT} />
-            <Text style={styles.rowText}>Notifications</Text>
-          </View>
-          <ChevronRight size={18} color="#9ca3af" />
-        </Pressable>
-      </View>
-
-      {/* Support */}
-      <MenuSection
-        title="Support"
-        items={[
-          [
-            "Become a Seller",
-            Store,
-            () => Linking.openURL("https://www.africasuk.com/sell"),
-          ],
-          [
-            "Help Center",
-            CircleHelp,
-            () => Linking.openURL("https://www.africasuk.com/help"),
-          ],
-          [
-            "Privacy Policy",
-            Shield,
-            () => Linking.openURL("https://www.africasuk.com/privacy"),
-          ],
-          [
-            "Terms & Conditions",
-            FileText,
-            () => Linking.openURL("https://www.africasuk.com/terms"),
-          ],
-          [
-            "About AfricaSuk",
-            Info,
-            () => Linking.openURL("https://www.africasuk.com/about"),
-          ],
-          ["Share App", Share2, handleShareApp],
-          ["Rate App", Star, handleRateApp],
+    <SafeAreaView style={styles.container} edges={["top", "left", "right"]}>
+      <ScrollView
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={[
+          styles.content,
+          { paddingBottom: bottomInset + 32 },
         ]}
-      />
-
-      {/* Logout / Login Action */}
-      <Pressable
-        style={styles.logoutButton}
-        onPress={() => {
-          if (isLoggedIn) {
-            handleLogout();
-          } else {
-            router.push("/auth/login" as Href);
-          }
-        }}
       >
-        {isLoggedIn ? (
-          <>
-            <LogOut size={20} color="#dc2626" />
-            <Text style={styles.logoutText}>Logout</Text>
-          </>
-        ) : (
-          <>
-            <LogIn size={20} color={BRAND_LIGHT} />
-            <Text style={[styles.logoutText, { color: BRAND_LIGHT }]}>
-              Login
-            </Text>
-          </>
-        )}
-      </Pressable>
+        {/* Top Header */}
+        <View style={styles.header}>
+          <Text style={styles.title}>Menu & Settings</Text>
+          <Text style={styles.subtitle}>
+            Manage your account preferences, orders, and support
+          </Text>
+        </View>
 
-      <Text style={styles.version}>AfricaSuk v1.0.0</Text>
-    </ScrollView>
+        {/* My Account */}
+        <View style={styles.sectionGroup}>
+          <Text style={styles.sectionTitle}>My Account</Text>
+          <View style={styles.sectionCard}>
+            <MenuRow
+              icon={User}
+              label="Account Details"
+              onPress={() => router.push("/profile" as Href)}
+            />
+            <MenuRow
+              icon={Package}
+              label="Orders"
+              onPress={() => router.push("/(tabs)/orders" as Href)}
+            />
+            <MenuRow
+              icon={Heart}
+              label="Wishlist"
+              onPress={() => router.push("/wishlist" as Href)}
+            />
+            <MenuRow
+              icon={ShoppingBag}
+              label="Cart"
+              onPress={() => router.push("/cart" as Href)}
+            />
+            <MenuRow
+              icon={FilePlus2}
+              label="Requested Products"
+              onPress={() => router.push("/requests" as Href)}
+              isLast
+            />
+          </View>
+        </View>
+
+        {/* Preferences */}
+        <View style={styles.sectionGroup}>
+          <Text style={styles.sectionTitle}>Preferences</Text>
+          <View style={styles.sectionCard}>
+            <View style={styles.row}>
+              <View style={styles.left}>
+                <View style={styles.iconTile}>
+                  <Info size={16} color="#71717a" strokeWidth={1.8} />
+                </View>
+                <Text style={styles.rowText}>Language</Text>
+              </View>
+              <View style={styles.badge}>
+                <Text style={styles.badgeText}>English</Text>
+              </View>
+            </View>
+
+            <View style={styles.row}>
+              <CurrencySwitcher />
+            </View>
+
+            <MenuRow
+              icon={Bell}
+              label="Notifications"
+              onPress={() => {}}
+              isLast
+            />
+          </View>
+        </View>
+
+        {/* Support */}
+        <View style={styles.sectionGroup}>
+          <Text style={styles.sectionTitle}>Support & Legal</Text>
+          <View style={styles.sectionCard}>
+            <MenuRow
+              icon={Store}
+              label="Become a Seller"
+              onPress={() => Linking.openURL("https://www.africasuk.com/sell")}
+            />
+            <MenuRow
+              icon={CircleHelp}
+              label="Help Center"
+              onPress={() => Linking.openURL("https://www.africasuk.com/help")}
+            />
+            <MenuRow
+              icon={Shield}
+              label="Privacy Policy"
+              onPress={() => Linking.openURL("https://www.africasuk.com/privacy")}
+            />
+            <MenuRow
+              icon={FileText}
+              label="Terms & Conditions"
+              onPress={() => Linking.openURL("https://www.africasuk.com/terms")}
+            />
+            <MenuRow
+              icon={Info}
+              label="About AfricaSuk"
+              onPress={() => Linking.openURL("https://www.africasuk.com/about")}
+            />
+            <MenuRow icon={Share2} label="Share App" onPress={handleShareApp} />
+            <MenuRow
+              icon={Star}
+              label="Rate App"
+              onPress={handleRateApp}
+              isLast
+            />
+          </View>
+        </View>
+
+        {/* Auth Action */}
+        <Pressable
+          style={({ pressed }) => [
+            styles.authButton,
+            isLoggedIn ? styles.logoutButton : styles.loginButton,
+            pressed && styles.buttonPressed,
+          ]}
+          onPress={() => {
+            if (isLoggedIn) {
+              handleLogout();
+            } else {
+              router.push("/auth/login" as Href);
+            }
+          }}
+        >
+          {isLoggedIn ? (
+            <>
+              <LogOut size={16} color="#dc2626" strokeWidth={2} />
+              <Text style={styles.logoutText}>Log Out</Text>
+            </>
+          ) : (
+            <>
+              <LogIn size={16} color="#ffffff" strokeWidth={2} />
+              <Text style={styles.loginText}>Sign In / Register</Text>
+            </>
+          )}
+        </Pressable>
+
+        <Text style={styles.version}>AfricaSuk v1.0.0</Text>
+      </ScrollView>
+    </SafeAreaView>
   );
 }
 
-function MenuSection({
-  title,
-  items,
+function MenuRow({
+  icon: Icon,
+  label,
+  onPress,
+  isLast = false,
 }: {
-  title: string;
-  items: MenuItem[];
+  icon: React.ComponentType<any>;
+  label: string;
+  onPress?: () => void;
+  isLast?: boolean;
 }) {
   return (
-    <View style={styles.section}>
-      <Text style={styles.sectionTitle}>{title}</Text>
-
-      {items.map(([label, Icon, onPress]) => (
-        <Pressable key={label} style={styles.row} onPress={onPress}>
-          <View style={styles.left}>
-            <Icon size={20} color={BRAND_LIGHT} />
-            <Text style={styles.rowText}>{label}</Text>
-          </View>
-
-          <ChevronRight size={18} color="#9ca3af" />
-        </Pressable>
-      ))}
-    </View>
+    <Pressable
+      style={({ pressed }) => [
+        styles.row,
+        isLast && styles.noBorder,
+        pressed && styles.rowPressed,
+      ]}
+      onPress={onPress}
+    >
+      <View style={styles.left}>
+        <View style={styles.iconTile}>
+          <Icon size={16} color="#18181b" strokeWidth={1.8} />
+        </View>
+        <Text style={styles.rowText}>{label}</Text>
+      </View>
+      <ChevronRight size={15} color="#a1a1aa" strokeWidth={2} />
+    </Pressable>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#f8fafc",
-    paddingTop: 30,
+    backgroundColor: "#ffffff",
   },
 
   content: {
-    padding: 16,
-    paddingTop: 45,
-    paddingBottom: 40,
+    paddingHorizontal: 16,
+    paddingTop: 12,
+    gap: 16,
   },
 
-  section: {
-    marginBottom: 20,
-    backgroundColor: "#ffffff",
-    borderRadius: 0, // Sharp corners
-    borderWidth: 1,
-    borderColor: "#e5e7eb",
-    overflow: "hidden",
+  header: {
+    gap: 2,
+    marginBottom: 4,
+  },
+
+  title: {
+    fontSize: 24,
+    fontWeight: "800",
+    color: "#18181b",
+    letterSpacing: -0.5,
+  },
+
+  subtitle: {
+    fontSize: 13,
+    color: "#71717a",
+    letterSpacing: -0.1,
+  },
+
+  sectionGroup: {
+    gap: 6,
   },
 
   sectionTitle: {
-    paddingHorizontal: 16,
-    paddingTop: 16,
-    paddingBottom: 8,
     fontSize: 11,
-    fontWeight: "500", // Non-bold clean header weight
-    color: "#6b7280",
+    fontWeight: "700",
+    color: "#71717a",
     textTransform: "uppercase",
-    letterSpacing: 0.5,
+    letterSpacing: 0.6,
+    paddingHorizontal: 2,
+  },
+
+  sectionCard: {
+    backgroundColor: "#ffffff",
+    borderRadius: 14,
+    borderWidth: 1,
+    borderColor: "#f0f0f0",
+    overflow: "hidden",
   },
 
   row: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
-    paddingHorizontal: 16,
-    paddingVertical: 14,
-    borderTopWidth: 1,
-    borderTopColor: "#f1f5f9",
+    paddingHorizontal: 14,
+    paddingVertical: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: "#f4f4f5",
+  },
+
+  rowPressed: {
+    backgroundColor: "#fafafa",
+  },
+
+  noBorder: {
+    borderBottomWidth: 0,
   },
 
   left: {
     flexDirection: "row",
     alignItems: "center",
+    gap: 12,
+  },
+
+  iconTile: {
+    width: 32,
+    height: 32,
+    borderRadius: 8,
+    backgroundColor: "#f4f4f5",
+    borderWidth: 1,
+    borderColor: "#e4e4e7",
+    justifyContent: "center",
+    alignItems: "center",
   },
 
   rowText: {
-    marginLeft: 14,
-    fontSize: 14,
-    fontWeight: "500", // Non-bold clean text weight
-    color: "#111827",
+    fontSize: 13,
+    fontWeight: "600",
+    color: "#18181b",
+    letterSpacing: -0.1,
   },
 
-  logoutButton: {
+  badge: {
+    backgroundColor: "#f4f4f5",
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 6,
+    borderWidth: 1,
+    borderColor: "#e4e4e7",
+  },
+
+  badgeText: {
+    fontSize: 11,
+    fontWeight: "600",
+    color: "#71717a",
+  },
+
+  authButton: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
+    gap: 8,
+    height: 44,
+    borderRadius: 10,
+    marginTop: 8,
+  },
+
+  loginButton: {
+    backgroundColor: "#18181b",
+  },
+
+  logoutButton: {
     backgroundColor: "#ffffff",
-    borderRadius: 0, // Sharp corners
-    padding: 16,
     borderWidth: 1,
-    borderColor: "#e5e7eb",
+    borderColor: "#fca5a5",
+  },
+
+  loginText: {
+    fontSize: 13,
+    fontWeight: "600",
+    color: "#ffffff",
+    letterSpacing: -0.1,
   },
 
   logoutText: {
-    marginLeft: 10,
-    fontSize: 14,
-    fontWeight: "500", // Non-bold text weight
+    fontSize: 13,
+    fontWeight: "600",
     color: "#dc2626",
+    letterSpacing: -0.1,
+  },
+
+  buttonPressed: {
+    opacity: 0.88,
+    transform: [{ scale: 0.985 }],
   },
 
   version: {
     textAlign: "center",
-    marginTop: 20,
-    color: "#9ca3af",
-    fontSize: 12,
-    fontWeight: "400",
-  },
-
-  comingSoon: {
-    color: "#888",
-    fontSize: 14,
-    fontWeight: "400",
+    color: "#a1a1aa",
+    fontSize: 11,
+    fontWeight: "500",
+    marginTop: 4,
   },
 });

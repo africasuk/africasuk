@@ -3,7 +3,7 @@ import {
   View,
   Text,
   TextInput,
-  TouchableOpacity,
+  Pressable,
   ScrollView,
   StyleSheet,
   ActivityIndicator,
@@ -13,15 +13,22 @@ import {
 } from "react-native";
 import { Image } from "expo-image";
 import * as ImagePicker from "expo-image-picker";
-import { UploadCloud, X, Camera, CheckCircle2, ListOrdered } from "lucide-react-native";
+import {
+  UploadCloud,
+  X,
+  Camera,
+  CheckCircle2,
+  ListOrdered,
+  ArrowRight,
+} from "lucide-react-native";
 import { useRouter } from "expo-router";
+import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { submitProductRequestMobile } from "@/services/productRequest";
 
-const BRAND_GREEN = "#004d26";
-
 export default function RequestProductScreen() {
   const router = useRouter();
+  const insets = useSafeAreaInsets();
 
   const [phone, setPhone] = useState("");
   const [description, setDescription] = useState("");
@@ -29,7 +36,6 @@ export default function RequestProductScreen() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
 
-  // Pick image from phone library
   const handlePickImage = async () => {
     const permissionResult =
       await ImagePicker.requestMediaLibraryPermissionsAsync();
@@ -53,7 +59,6 @@ export default function RequestProductScreen() {
     }
   };
 
-  // Submit request form
   const handleSubmit = async () => {
     if (!phone.trim()) {
       Alert.alert("Required Field", "Please enter your phone number.");
@@ -94,167 +99,198 @@ export default function RequestProductScreen() {
     setIsSuccess(false);
   };
 
-  const navigateToRequests = () => {
-    router.push("/requests" as const);
-  };
+  const bottomInset = insets.bottom > 0 ? insets.bottom : 16;
 
   return (
-    <View style={styles.container}>
+    <SafeAreaView style={styles.container} edges={["top", "left", "right"]}>
+      {/* Top Header Navigation */}
+      <View style={styles.topBar}>
+        <Text style={styles.topBarTitle}>Product Sourcing</Text>
+
+        <Pressable
+          style={({ pressed }) => [
+            styles.viewRequestsHeaderBtn,
+            pressed && styles.buttonPressed,
+          ]}
+          onPress={() => router.push("/requests")}
+          hitSlop={6}
+        >
+          <ListOrdered size={14} color="#18181b" strokeWidth={1.8} />
+          <Text style={styles.viewRequestsHeaderBtnText}>My Requests</Text>
+        </Pressable>
+      </View>
+
       <KeyboardAvoidingView
-        style={{ flex: 1 }}
+        style={styles.keyboardAvoid}
         behavior={Platform.OS === "ios" ? "padding" : undefined}
       >
         <ScrollView
-          contentContainerStyle={styles.scrollContent}
+          contentContainerStyle={[
+            styles.scrollContent,
+            { paddingBottom: bottomInset + 24 },
+          ]}
+          showsVerticalScrollIndicator={false}
           keyboardShouldPersistTaps="handled"
         >
-          {/* Top Bar Navigation to View Requests */}
-          <View style={styles.topNavigation}>
-            <TouchableOpacity
-              style={styles.viewRequestsHeaderBtn}
-              onPress={() => router.push("/requests")}
-              activeOpacity={0.8}
-            >
-              <ListOrdered size={16} color={BRAND_GREEN} />
-              <Text style={styles.viewRequestsHeaderBtnText}>
-                My Requests
+          <View style={styles.contentWrapper}>
+            {/* Header Description Card */}
+            <View style={styles.headerBox}>
+              <Text style={styles.title}>Request a Product</Text>
+              <Text style={styles.subtitle}>
+                Can&apos;t find what you&apos;re looking for? Share an image and product
+                specifications, and our procurement team will source it for you.
               </Text>
-            </TouchableOpacity>
-          </View>
-
-          {/* Header Banner */}
-          <View style={styles.headerBox}>
-            <Text style={styles.title}>REQUEST A PRODUCT</Text>
-            <Text style={styles.subtitle}>
-              Can&apos;t find the product you&apos;re looking for? Upload a photo and
-              tell us what you need—our team will try to source it.
-            </Text>
-          </View>
-
-          {isSuccess ? (
-            /* Success State */
-            <View style={styles.successCard}>
-              <CheckCircle2 size={48} color={BRAND_GREEN} />
-              <Text style={styles.successTitle}>Request Submitted!</Text>
-              <Text style={styles.successText}>
-                We&apos;ve received your request. Our team will review it and
-                contact you shortly at {phone}.
-              </Text>
-
-              {/* View My Requests Button */}
-              <TouchableOpacity
-                style={styles.primaryButton}
-                onPress={navigateToRequests}
-                activeOpacity={0.85}
-              >
-                <ListOrdered size={16} color="#ffffff" style={{ marginRight: 8 }} />
-                <Text style={styles.primaryButtonText}>View Requested Products</Text>
-              </TouchableOpacity>
-
-              {/* Home & Reset Options */}
-              <TouchableOpacity
-                style={styles.outlineButton}
-                onPress={() => router.replace("/")}
-                activeOpacity={0.85}
-              >
-                <Text style={styles.outlineButtonText}>Return to Home</Text>
-              </TouchableOpacity>
-
-              <TouchableOpacity
-                style={styles.secondaryButton}
-                onPress={handleReset}
-                activeOpacity={0.7}
-              >
-                <Text style={styles.secondaryButtonText}>Submit Another Request</Text>
-              </TouchableOpacity>
             </View>
-          ) : (
-            /* Request Form */
-            <View style={styles.formCard}>
-              {/* Image Picker Area */}
-              <Text style={styles.inputLabel}>Product Photo *</Text>
-              {image ? (
-                <View style={styles.imagePreviewContainer}>
-                  <Image
-                    source={{ uri: image.uri }}
-                    style={styles.imagePreview}
-                    contentFit="cover"
-                  />
-                  <TouchableOpacity
-                    style={styles.removeImageButton}
-                    onPress={() => setImage(null)}
-                    activeOpacity={0.8}
-                  >
-                    <X size={16} color="#ffffff" />
-                  </TouchableOpacity>
+
+            {isSuccess ? (
+              /* Success State */
+              <View style={styles.successCard}>
+                <View style={styles.successIconCircle}>
+                  <CheckCircle2 size={32} color="#15803d" strokeWidth={1.8} />
                 </View>
-              ) : (
-                <TouchableOpacity
-                  style={styles.dropzone}
-                  onPress={handlePickImage}
-                  activeOpacity={0.7}
+                <Text style={styles.successTitle}>Request Submitted</Text>
+                <Text style={styles.successText}>
+                  We have received your item request. Our team will review
+                  availability and reach out to you directly at {phone}.
+                </Text>
+
+                <View style={styles.successActions}>
+                  <Pressable
+                    style={({ pressed }) => [
+                      styles.primaryButton,
+                      pressed && styles.buttonPressed,
+                    ]}
+                    onPress={() => router.push("/requests")}
+                  >
+                    <ListOrdered size={14} color="#ffffff" strokeWidth={2} />
+                    <Text style={styles.primaryButtonText}>View My Requests</Text>
+                  </Pressable>
+
+                  <Pressable
+                    style={({ pressed }) => [
+                      styles.outlineButton,
+                      pressed && styles.outlineButtonPressed,
+                    ]}
+                    onPress={() => router.replace("/")}
+                  >
+                    <Text style={styles.outlineButtonText}>Return to Home</Text>
+                  </Pressable>
+
+                  <Pressable
+                    style={({ pressed }) => [
+                      styles.secondaryButton,
+                      pressed && styles.secondaryButtonPressed,
+                    ]}
+                    onPress={handleReset}
+                  >
+                    <Text style={styles.secondaryButtonText}>
+                      Submit Another Request
+                    </Text>
+                  </Pressable>
+                </View>
+              </View>
+            ) : (
+              /* Request Form Card */
+              <View style={styles.formCard}>
+                {/* Image Picker */}
+                <View style={styles.fieldGroup}>
+                  <Text style={styles.inputLabel}>Product Photo *</Text>
+                  {image ? (
+                    <View style={styles.imagePreviewContainer}>
+                      <Image
+                        source={{ uri: image.uri }}
+                        style={styles.imagePreview}
+                        contentFit="cover"
+                        transition={150}
+                      />
+                      <Pressable
+                        style={({ pressed }) => [
+                          styles.removeImageButton,
+                          pressed && styles.buttonPressed,
+                        ]}
+                        onPress={() => setImage(null)}
+                        hitSlop={6}
+                      >
+                        <X size={14} color="#ffffff" strokeWidth={2} />
+                      </Pressable>
+                    </View>
+                  ) : (
+                    <Pressable
+                      style={({ pressed }) => [
+                        styles.dropzone,
+                        pressed && styles.dropzonePressed,
+                      ]}
+                      onPress={handlePickImage}
+                    >
+                      <View style={styles.dropzoneIconCircle}>
+                        <Camera size={18} color="#18181b" strokeWidth={1.8} />
+                      </View>
+                      <Text style={styles.dropzoneText}>
+                        Upload or take a photo
+                      </Text>
+                      <Text style={styles.dropzoneSubtext}>
+                        PNG, JPG, or WEBP (up to 5MB)
+                      </Text>
+                    </Pressable>
+                  )}
+                </View>
+
+                {/* Phone Input */}
+                <View style={styles.fieldGroup}>
+                  <Text style={styles.inputLabel}>Contact Phone *</Text>
+                  <TextInput
+                    style={styles.input}
+                    placeholder="+211 912 345 678"
+                    placeholderTextColor="#a1a1aa"
+                    keyboardType="phone-pad"
+                    value={phone}
+                    onChangeText={setPhone}
+                    editable={!isSubmitting}
+                  />
+                </View>
+
+                {/* Description Input */}
+                <View style={styles.fieldGroup}>
+                  <Text style={styles.inputLabel}>Product Details *</Text>
+                  <TextInput
+                    style={[styles.input, styles.textArea]}
+                    placeholder="Describe item name, brand, preferred quantity, size, or specific features..."
+                    placeholderTextColor="#a1a1aa"
+                    multiline
+                    numberOfLines={4}
+                    textAlignVertical="top"
+                    value={description}
+                    onChangeText={setDescription}
+                    editable={!isSubmitting}
+                  />
+                </View>
+
+                {/* Submit Button */}
+                <Pressable
+                  style={({ pressed }) => [
+                    styles.primaryButton,
+                    isSubmitting && styles.buttonDisabled,
+                    pressed && !isSubmitting && styles.buttonPressed,
+                  ]}
+                  onPress={handleSubmit}
+                  disabled={isSubmitting}
                 >
-                  <View style={styles.dropzoneIconCircle}>
-                    <Camera size={20} color={BRAND_GREEN} />
-                  </View>
-                  <Text style={styles.dropzoneText}>
-                    Tap to upload or take a photo
-                  </Text>
-                  <Text style={styles.dropzoneSubtext}>
-                    JPG, PNG or WEBP (Max 5MB)
-                  </Text>
-                </TouchableOpacity>
-              )}
-
-              {/* Phone Input */}
-              <View style={styles.inputGroup}>
-                <Text style={styles.inputLabel}>Phone Number *</Text>
-                <TextInput
-                  style={styles.input}
-                  placeholder="+254 700 000 000"
-                  placeholderTextColor="#9ca3af"
-                  keyboardType="phone-pad"
-                  value={phone}
-                  onChangeText={setPhone}
-                />
+                  {isSubmitting ? (
+                    <ActivityIndicator color="#ffffff" size="small" />
+                  ) : (
+                    <>
+                      <UploadCloud size={15} color="#ffffff" strokeWidth={2} />
+                      <Text style={styles.primaryButtonText}>Submit Request</Text>
+                      <ArrowRight size={14} color="#ffffff" strokeWidth={2} />
+                    </>
+                  )}
+                </Pressable>
               </View>
-
-              {/* Description Input */}
-              <View style={styles.inputGroup}>
-                <Text style={styles.inputLabel}>Product Description *</Text>
-                <TextInput
-                  style={[styles.input, styles.textArea]}
-                  placeholder="Describe the item, brand, preferred size, or quantity..."
-                  placeholderTextColor="#9ca3af"
-                  multiline
-                  numberOfLines={4}
-                  textAlignVertical="top"
-                  value={description}
-                  onChangeText={setDescription}
-                />
-              </View>
-
-              {/* Submit Button */}
-              <TouchableOpacity
-                style={[styles.primaryButton, isSubmitting && styles.buttonDisabled]}
-                onPress={handleSubmit}
-                disabled={isSubmitting}
-                activeOpacity={0.85}
-              >
-                {isSubmitting ? (
-                  <ActivityIndicator color="#ffffff" size="small" />
-                ) : (
-                  <>
-                    <UploadCloud size={16} color="#ffffff" style={{ marginRight: 8 }} />
-                    <Text style={styles.primaryButtonText}>Submit Request</Text>
-                  </>
-                )}
-              </TouchableOpacity>
-            </View>
-          )}
+            )}
+          </View>
         </ScrollView>
       </KeyboardAvoidingView>
-    </View>
+    </SafeAreaView>
   );
 }
 
@@ -262,201 +298,295 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: "#ffffff",
-    paddingTop: 50,
   },
-  scrollContent: {
-    padding: 16,
-    paddingBottom: 40,
+
+  topBar: {
+    height: 48,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    paddingHorizontal: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: "#f4f4f5",
+    backgroundColor: "#ffffff",
   },
-  topNavigation: {
-    alignItems: "flex-end",
-    marginBottom: 12,
+
+  topBarTitle: {
+    fontSize: 15,
+    fontWeight: "700",
+    color: "#18181b",
+    letterSpacing: -0.2,
   },
+
   viewRequestsHeaderBtn: {
     flexDirection: "row",
     alignItems: "center",
-    backgroundColor: "#ecfdf5",
+    backgroundColor: "#f4f4f5",
     borderWidth: 1,
-    borderColor: "#a7f3d0",
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 0, // Sharp corners
+    borderColor: "#e4e4e7",
+    paddingHorizontal: 10,
+    height: 32,
+    borderRadius: 8,
     gap: 6,
   },
+
   viewRequestsHeaderBtnText: {
     fontSize: 12,
-    fontWeight: "500", // Clean regular weight
-    color: BRAND_GREEN,
+    fontWeight: "600",
+    color: "#18181b",
+    letterSpacing: -0.1,
   },
+
+  keyboardAvoid: {
+    flex: 1,
+  },
+
+  scrollContent: {
+    paddingHorizontal: 16,
+    paddingTop: 16,
+  },
+
+  contentWrapper: {
+    maxWidth: 560,
+    width: "100%",
+    alignSelf: "center",
+    gap: 16,
+  },
+
   headerBox: {
-    marginBottom: 20,
     alignItems: "center",
+    gap: 4,
+    paddingHorizontal: 8,
   },
+
   title: {
-    fontSize: 18,
-    fontWeight: "500", // Non-bold clean header
-    color: "#111827",
-    letterSpacing: 0.5,
-    marginBottom: 6,
+    fontSize: 20,
+    fontWeight: "700",
+    color: "#18181b",
+    letterSpacing: -0.4,
+    textAlign: "center",
   },
+
   subtitle: {
     fontSize: 12,
     fontWeight: "400",
-    color: "#6b7280",
+    color: "#71717a",
     textAlign: "center",
     lineHeight: 18,
-    paddingHorizontal: 12,
+    maxWidth: 340,
   },
+
   formCard: {
     backgroundColor: "#ffffff",
-    borderRadius: 0, // Sharp corners
-    padding: 18,
+    borderRadius: 16,
+    padding: 16,
     borderWidth: 1,
-    borderColor: "#e5e7eb",
+    borderColor: "#f0f0f0",
+    gap: 14,
   },
-  inputGroup: {
-    marginTop: 16,
+
+  fieldGroup: {
+    gap: 6,
   },
+
   inputLabel: {
     fontSize: 12,
-    fontWeight: "500", // Clean weight
-    color: "#374151",
-    marginBottom: 6,
+    fontWeight: "600",
+    color: "#27272a",
+    letterSpacing: -0.1,
   },
+
   input: {
-    backgroundColor: "#f9fafb",
+    backgroundColor: "#ffffff",
     borderWidth: 1,
-    borderColor: "#e5e7eb",
-    borderRadius: 0, // Sharp corners
-    paddingHorizontal: 14,
-    paddingVertical: 10,
-    fontSize: 13,
-    fontWeight: "400",
-    color: "#111827",
-  },
-  textArea: {
-    minHeight: 100,
-  },
-  dropzone: {
-    borderWidth: 1,
-    borderColor: "#d1d5db",
-    borderStyle: "dashed",
-    borderRadius: 0, // Sharp corners
-    backgroundColor: "#f9fafb",
-    padding: 24,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  dropzoneIconCircle: {
-    width: 44,
+    borderColor: "#e4e4e7",
+    borderRadius: 10,
+    paddingHorizontal: 13,
     height: 44,
-    borderRadius: 0, // Sharp square container
-    backgroundColor: "#ecfdf5",
-    borderWidth: 1,
-    borderColor: "#a7f3d0",
+    fontSize: 13,
+    color: "#18181b",
+  },
+
+  textArea: {
+    height: 104,
+    paddingTop: 12,
+    paddingBottom: 12,
+  },
+
+  dropzone: {
+    borderWidth: 1.5,
+    borderColor: "#d4d4d8",
+    borderStyle: "dashed",
+    borderRadius: 12,
+    backgroundColor: "#fafafa",
+    paddingVertical: 24,
+    paddingHorizontal: 16,
     alignItems: "center",
     justifyContent: "center",
-    marginBottom: 8,
+    gap: 4,
   },
+
+  dropzonePressed: {
+    backgroundColor: "#f4f4f5",
+  },
+
+  dropzoneIconCircle: {
+    width: 40,
+    height: 40,
+    borderRadius: 10,
+    backgroundColor: "#f4f4f5",
+    borderWidth: 1,
+    borderColor: "#e4e4e7",
+    alignItems: "center",
+    justifyContent: "center",
+    marginBottom: 4,
+  },
+
   dropzoneText: {
     fontSize: 13,
-    fontWeight: "500",
-    color: "#111827",
+    fontWeight: "600",
+    color: "#18181b",
+    letterSpacing: -0.1,
   },
+
   dropzoneSubtext: {
     fontSize: 11,
-    fontWeight: "400",
-    color: "#6b7280",
-    marginTop: 2,
+    color: "#71717a",
   },
+
   imagePreviewContainer: {
     position: "relative",
     width: "100%",
-    height: 200,
-    borderRadius: 0, // Sharp corners
+    height: 190,
+    borderRadius: 12,
     borderWidth: 1,
-    borderColor: "#e5e7eb",
+    borderColor: "#e4e4e7",
     overflow: "hidden",
+    backgroundColor: "#f4f4f5",
   },
+
   imagePreview: {
     width: "100%",
     height: "100%",
   },
+
   removeImageButton: {
     position: "absolute",
-    top: 10,
-    right: 10,
-    backgroundColor: "rgba(0,0,0,0.75)",
+    top: 8,
+    right: 8,
+    backgroundColor: "rgba(24, 24, 27, 0.85)",
     width: 28,
     height: 28,
-    borderRadius: 0, // Sharp corners
+    borderRadius: 7,
     alignItems: "center",
     justifyContent: "center",
   },
+
   primaryButton: {
-    backgroundColor: BRAND_GREEN,
-    borderRadius: 0, // Sharp corners
-    paddingVertical: 12,
-    paddingHorizontal: 16,
-    width: "100%",
+    backgroundColor: "#18181b",
+    height: 44,
+    borderRadius: 10,
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
-    marginTop: 20,
+    gap: 8,
+    marginTop: 4,
   },
+
   primaryButtonText: {
     color: "#ffffff",
     fontSize: 13,
-    fontWeight: "500", // Clean regular button weight
+    fontWeight: "600",
+    letterSpacing: -0.1,
   },
+
   outlineButton: {
-    backgroundColor: "transparent",
+    backgroundColor: "#ffffff",
     borderWidth: 1,
-    borderColor: "#e5e7eb",
-    borderRadius: 0, // Sharp corners
-    paddingVertical: 12,
-    width: "100%",
+    borderColor: "#e4e4e7",
+    height: 40,
+    borderRadius: 8,
     alignItems: "center",
-    marginTop: 10,
+    justifyContent: "center",
+    width: "100%",
   },
+
+  outlineButtonPressed: {
+    backgroundColor: "#f4f4f5",
+  },
+
   outlineButtonText: {
-    color: "#374151",
-    fontSize: 13,
-    fontWeight: "500",
+    color: "#18181b",
+    fontSize: 12,
+    fontWeight: "600",
+    letterSpacing: -0.1,
   },
-  buttonDisabled: {
+
+  secondaryButton: {
+    paddingVertical: 8,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+
+  secondaryButtonPressed: {
     opacity: 0.7,
   },
+
+  secondaryButtonText: {
+    color: "#71717a",
+    fontWeight: "600",
+    fontSize: 12,
+  },
+
+  buttonPressed: {
+    opacity: 0.88,
+    transform: [{ scale: 0.985 }],
+  },
+
+  buttonDisabled: {
+    opacity: 0.45,
+  },
+
   successCard: {
     backgroundColor: "#ffffff",
-    borderRadius: 0, // Sharp corners
+    borderRadius: 16,
     padding: 24,
     alignItems: "center",
     borderWidth: 1,
-    borderColor: "#e5e7eb",
+    borderColor: "#f0f0f0",
+    gap: 8,
   },
+
+  successIconCircle: {
+    width: 56,
+    height: 56,
+    borderRadius: 14,
+    backgroundColor: "#f0fdf4",
+    borderWidth: 1,
+    borderColor: "#dcfce7",
+    alignItems: "center",
+    justifyContent: "center",
+    marginBottom: 4,
+  },
+
   successTitle: {
     fontSize: 18,
-    fontWeight: "500", // Clean weight
-    color: "#111827",
-    marginTop: 12,
+    fontWeight: "700",
+    color: "#18181b",
+    letterSpacing: -0.3,
   },
+
   successText: {
     fontSize: 13,
-    fontWeight: "400",
-    color: "#4b5563",
+    color: "#71717a",
     textAlign: "center",
-    marginTop: 8,
-    marginBottom: 8,
     lineHeight: 18,
+    maxWidth: 300,
+    marginBottom: 10,
   },
-  secondaryButton: {
-    marginTop: 12,
-    paddingVertical: 10,
-  },
-  secondaryButtonText: {
-    color: BRAND_GREEN,
-    fontWeight: "500",
-    fontSize: 12,
+
+  successActions: {
+    width: "100%",
+    gap: 8,
   },
 });

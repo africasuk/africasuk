@@ -8,12 +8,11 @@ import {
   StyleSheet,
   ActivityIndicator,
   Alert,
-  ViewStyle,
-  TextStyle,
+  KeyboardAvoidingView,
+  Platform,
 } from "react-native";
-import { Save } from "lucide-react-native";
+import { User, Phone, Check } from "lucide-react-native";
 import { createClient } from "@/lib/auth/client";
-
 import type { Profile } from "@africasuk/types";
 
 interface CheckoutContactDialogProps {
@@ -32,8 +31,9 @@ export default function CheckoutContactDialog({
   const [loading, setLoading] = useState(false);
   const [fullName, setFullName] = useState(profile?.fullName ?? "");
   const [phone, setPhone] = useState(profile?.phone ?? "");
+  const [nameFocused, setNameFocused] = useState(false);
+  const [phoneFocused, setPhoneFocused] = useState(false);
 
-  // Sync state whenever the profile or dialog visibility changes
   useEffect(() => {
     if (open) {
       setFullName(profile?.fullName ?? "");
@@ -41,71 +41,65 @@ export default function CheckoutContactDialog({
     }
   }, [open, profile]);
 
-async function save() {
-  const name = fullName.trim();
-  const phoneNumber = phone.trim();
+  async function save() {
+    const name = fullName.trim();
+    const phoneNumber = phone.trim();
 
-  if (!name) {
-    Alert.alert("Full Name", "Please enter your full name.");
-    return;
-  }
-
-  if (!phoneNumber) {
-    Alert.alert("Phone Number", "Please enter your phone number.");
-    return;
-  }
-
-  const phoneRegex = /^\+?[0-9]{6,15}$/;
-
-  if (!phoneRegex.test(phoneNumber)) {
-    Alert.alert(
-      "Invalid Phone Number",
-      "Please enter a valid phone number."
-    );
-    return;
-  }
-
-  try {
-    setLoading(true);
-
-    const supabase = createClient();
-
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
-
-    if (!user) {
-      throw new Error("Please login again.");
+    if (!name) {
+      Alert.alert("Required Field", "Please enter your full name.");
+      return;
     }
 
-    const { error } = await (supabase as any)
-      .from("profiles")
-      .update({
-        full_name: name,
-        phone: phoneNumber,
-      })
-      .eq("user_id", user.id);
+    if (!phoneNumber) {
+      Alert.alert("Required Field", "Please enter your phone number.");
+      return;
+    }
 
-    if (error) throw error;
+    const phoneRegex = /^\+?[0-9]{7,15}$/;
+    if (!phoneRegex.test(phoneNumber.replace(/[\s-]/g, ""))) {
+      Alert.alert(
+        "Invalid Phone Number",
+        "Please provide a valid phone number with country code (e.g., +211...)."
+      );
+      return;
+    }
 
-    Alert.alert("Success", "Contact information updated.");
+    try {
+      setLoading(true);
+      const supabase = createClient();
 
-    await Promise.resolve(onSuccess?.());
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
 
-    onOpenChange(false);
-  } catch (error) {
-    console.error(error);
+      if (!user) {
+        throw new Error("Please log in to update contact details.");
+      }
 
-    Alert.alert(
-      "Update Failed",
-      error instanceof Error
-        ? error.message
-        : "Failed to update contact information."
-    );
-  } finally {
-    setLoading(false);
+      const { error } = await (supabase as any)
+        .from("profiles")
+        .update({
+          full_name: name,
+          phone: phoneNumber,
+        })
+        .eq("user_id", user.id);
+
+      if (error) throw error;
+
+      await Promise.resolve(onSuccess?.());
+      onOpenChange(false);
+    } catch (error) {
+      console.error("Profile update error:", error);
+      Alert.alert(
+        "Update Failed",
+        error instanceof Error
+          ? error.message
+          : "Failed to update contact details. Please try again."
+      );
+    } finally {
+      setLoading(false);
+    }
   }
-}
 
   function handleClose() {
     if (loading) return;
@@ -115,54 +109,87 @@ async function save() {
   return (
     <Modal
       visible={open}
-      animationType="slide"
+      animationType="fade"
       transparent
+      statusBarTranslucent
       onRequestClose={handleClose}
     >
-      <View style={styles.overlay}>
-        <View style={styles.modal}>
-          <Text style={styles.title}>
-            Complete Your Contact Information
-          </Text>
+      <KeyboardAvoidingView
+        style={styles.overlay}
+        behavior={Platform.OS === "ios" ? "padding" : undefined}
+      >
+        <Pressable style={StyleSheet.absoluteFill} onPress={handleClose} />
 
-          <Text style={styles.description}>
-            Before placing your order, please provide your full name and phone
-            number. This information is used for delivery and order updates.
-          </Text>
-
-          <View style={styles.formGroup}>
-            <Text style={styles.label}>Full Name</Text>
-            <TextInput
-              value={fullName}
-              editable={!loading}
-              placeholder="John Doe"
-              placeholderTextColor="#9ca3af"
-              onChangeText={setFullName}
-              style={styles.input}
-            />
+        <View style={styles.modalCard}>
+          {/* Header */}
+          <View style={styles.header}>
+            <Text style={styles.title}>Contact Details</Text>
+            <Text style={styles.description}>
+              Delivery riders and order dispatch will reach you through this
+              information.
+            </Text>
           </View>
 
-          <View style={styles.formGroup}>
-            <Text style={styles.label}>Phone Number</Text>
-            <TextInput
-              value={phone}
-              editable={!loading}
-              keyboardType="phone-pad"
-              placeholder="+211912345678"
-              placeholderTextColor="#9ca3af"
-              onChangeText={setPhone}
-              style={styles.input}
-            />
+          {/* Form Fields */}
+          <View style={styles.form}>
+            {/* Full Name */}
+            <View style={styles.field}>
+              <Text style={styles.label}>Full Name</Text>
+              <View
+                style={[
+                  styles.inputContainer,
+                  nameFocused && styles.inputFocused,
+                ]}
+              >
+                <User size={16} color="#71717a" strokeWidth={1.75} />
+                <TextInput
+                  value={fullName}
+                  editable={!loading}
+                  placeholder="e.g. George Kasmiro"
+                  placeholderTextColor="#a1a1aa"
+                  onChangeText={setFullName}
+                  onFocus={() => setNameFocused(true)}
+                  onBlur={() => setNameFocused(false)}
+                  style={styles.input}
+                  autoCapitalize="words"
+                />
+              </View>
+            </View>
+
+            {/* Phone Number */}
+            <View style={styles.field}>
+              <Text style={styles.label}>Phone Number</Text>
+              <View
+                style={[
+                  styles.inputContainer,
+                  phoneFocused && styles.inputFocused,
+                ]}
+              >
+                <Phone size={16} color="#71717a" strokeWidth={1.75} />
+                <TextInput
+                  value={phone}
+                  editable={!loading}
+                  keyboardType="phone-pad"
+                  placeholder="+211 912 345 678"
+                  placeholderTextColor="#a1a1aa"
+                  onChangeText={setPhone}
+                  onFocus={() => setPhoneFocused(true)}
+                  onBlur={() => setPhoneFocused(false)}
+                  style={styles.input}
+                />
+              </View>
+            </View>
           </View>
 
+          {/* Actions */}
           <View style={styles.actions}>
             <Pressable
               disabled={loading}
               onPress={handleClose}
-              style={[
-                styles.button,
+              style={({ pressed }) => [
                 styles.cancelButton,
-                loading && styles.disabledButton,
+                pressed && styles.cancelPressed,
+                loading && styles.disabledState,
               ]}
             >
               <Text style={styles.cancelText}>Cancel</Text>
@@ -171,127 +198,156 @@ async function save() {
             <Pressable
               disabled={loading}
               onPress={save}
-              style={[
-                styles.button,
+              style={({ pressed }) => [
                 styles.saveButton,
-                loading && styles.disabledButton,
+                pressed && styles.savePressed,
+                loading && styles.disabledState,
               ]}
             >
               {loading ? (
-                <View style={styles.loadingContainer}>
-                  <ActivityIndicator color="#ffffff" size="small" />
-                  <Text style={styles.saveText}>Saving...</Text>
-                </View>
+                <ActivityIndicator color="#ffffff" size="small" />
               ) : (
-                <View style={styles.loadingContainer}>
-                  <Save size={16} color="#ffffff" />
-                  <Text style={styles.saveText}>Save & Continue</Text>
-                </View>
+                <>
+                  <Text style={styles.saveText}>Save Details</Text>
+                  <Check size={14} color="#ffffff" strokeWidth={2.2} />
+                </>
               )}
             </Pressable>
           </View>
         </View>
-      </View>
+      </KeyboardAvoidingView>
     </Modal>
   );
 }
 
-type Styles = {
-  overlay: ViewStyle;
-  modal: ViewStyle;
-  title: TextStyle;
-  description: TextStyle;
-  formGroup: ViewStyle;
-  label: TextStyle;
-  input: TextStyle;
-  actions: ViewStyle;
-  button: ViewStyle;
-  disabledButton: ViewStyle;
-  cancelButton: ViewStyle;
-  cancelText: TextStyle;
-  saveButton: ViewStyle;
-  saveText: TextStyle;
-  loadingContainer: ViewStyle;
-};
-
-const styles = StyleSheet.create<Styles>({
+const styles = StyleSheet.create({
   overlay: {
     flex: 1,
     backgroundColor: "rgba(0, 0, 0, 0.45)",
     justifyContent: "center",
-    padding: 20,
+    alignItems: "center",
+    paddingHorizontal: 20,
   },
-  modal: {
+
+  modalCard: {
+    width: "100%",
+    maxWidth: 420,
     backgroundColor: "#ffffff",
-    borderRadius: 20,
+    borderRadius: 16,
     padding: 20,
-    gap: 16,
+    gap: 18,
+    borderWidth: 1,
+    borderColor: "#f0f0f0",
   },
+
+  header: {
+    gap: 4,
+  },
+
   title: {
     fontSize: 18,
     fontWeight: "700",
-    color: "#111827",
+    color: "#18181b",
+    letterSpacing: -0.4,
   },
+
   description: {
-    fontSize: 13,
-    color: "#6b7280",
+    fontSize: 12,
     lineHeight: 18,
+    color: "#71717a",
   },
-  formGroup: {
+
+  form: {
+    gap: 12,
+  },
+
+  field: {
     gap: 6,
   },
+
   label: {
-    fontSize: 13,
+    fontSize: 11,
     fontWeight: "600",
-    color: "#374151",
+    color: "#27272a",
+    textTransform: "uppercase",
+    letterSpacing: 0.5,
   },
-  input: {
+
+  inputContainer: {
+    flexDirection: "row",
+    alignItems: "center",
     height: 44,
-    borderWidth: 1,
-    borderColor: "#d1d5db",
+    backgroundColor: "#f4f4f5",
     borderRadius: 10,
     paddingHorizontal: 12,
-    fontSize: 14,
-    color: "#111827",
+    gap: 8,
+    borderWidth: 1.5,
+    borderColor: "transparent",
+  },
+
+  inputFocused: {
+    borderColor: "#18181b",
     backgroundColor: "#ffffff",
   },
+
+  input: {
+    flex: 1,
+    fontSize: 14,
+    color: "#18181b",
+    height: "100%",
+  },
+
   actions: {
     flexDirection: "row",
-    justifyContent: "flex-end",
-    gap: 10,
-    marginTop: 8,
-  },
-  button: {
-    paddingHorizontal: 16,
-    paddingVertical: 10,
-    borderRadius: 10,
     alignItems: "center",
-    justifyContent: "center",
+    justifyContent: "flex-end",
+    gap: 8,
+    paddingTop: 4,
   },
-  disabledButton: {
-    opacity: 0.5,
-  },
+
   cancelButton: {
-    borderWidth: 1,
-    borderColor: "#e5e7eb",
-    backgroundColor: "#ffffff",
+    height: 42,
+    paddingHorizontal: 16,
+    borderRadius: 8,
+    backgroundColor: "#f4f4f5",
+    justifyContent: "center",
+    alignItems: "center",
   },
+
+  cancelPressed: {
+    backgroundColor: "#e4e4e7",
+  },
+
   cancelText: {
     fontSize: 13,
     fontWeight: "600",
-    color: "#374151",
+    color: "#52525b",
   },
+
   saveButton: {
-    backgroundColor: "#004d26",
+    height: 42,
+    paddingHorizontal: 18,
+    borderRadius: 8,
+    backgroundColor: "#18181b",
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 6,
   },
+
+  savePressed: {
+    opacity: 0.85,
+    transform: [{ scale: 0.985 }],
+  },
+
   saveText: {
     fontSize: 13,
     fontWeight: "600",
     color: "#ffffff",
+    letterSpacing: -0.1,
   },
-  loadingContainer: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 6,
+
+  disabledState: {
+    opacity: 0.5,
   },
 });

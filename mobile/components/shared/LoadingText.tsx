@@ -21,9 +21,10 @@ export default function LoadingText() {
 
 const styles = StyleSheet.create({
   text: {
-    marginTop: 20,
+    marginTop: 14,
     fontSize: 16,
     fontWeight: "600",
-    color: "#004d26",
+    color: "#024F25",
+    letterSpacing: 1,
   },
 });

@@ -4,20 +4,19 @@ import {
   View,
   Text,
   StyleSheet,
-  TouchableOpacity,
+  Pressable,
   ActivityIndicator,
   Alert,
   ScrollView,
-  SafeAreaView,
+  KeyboardAvoidingView,
   Platform,
 } from "react-native";
 import * as Location from "expo-location";
-import { MapPin, PencilLine, X } from "lucide-react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { MapPin, PencilLine, X, ChevronRight } from "lucide-react-native";
 
+import { createClient } from "@/lib/auth/client";
 import ManualAddressForm from "./ManualAddressForm";
-
-const BRAND = "#005c2e";
-const BRAND_DARK = "#002b15";
 
 interface Props {
   visible: boolean;
@@ -30,8 +29,11 @@ export default function AddAddressModal({
   onClose,
   onSuccess,
 }: Props) {
+  const insets = useSafeAreaInsets();
   const [saving, setSaving] = useState(false);
   const [method, setMethod] = useState<"menu" | "manual">("menu");
+
+  const bottomInset = insets.bottom > 0 ? insets.bottom : 16;
 
   const resetAndClose = () => {
     if (saving) return;
@@ -58,7 +60,7 @@ export default function AddAddressModal({
       if (status !== "granted") {
         Alert.alert(
           "Permission Denied",
-          "Permission to access location was denied. Please enter your address manually."
+          "Permission to access location was denied. Please add your address details manually."
         );
         return;
       }
@@ -73,45 +75,55 @@ export default function AddAddressModal({
       });
 
       if (!geo) {
-        throw new Error("Unable to detect address details for your location.");
+        throw new Error("Unable to identify address details for this location.");
       }
 
-      // Save via native API endpoint or repository layer
-      const response = await fetch("/api/addresses", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          label: "Current Location",
+      const supabase = createClient();
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+
+      if (!user) {
+        throw new Error("Please log in to save addresses.");
+      }
+
+      // Query if user already has an address to set sensible default flag
+      const { count } = await supabase
+        .from("addresses")
+        .select("*", { count: "exact", head: true })
+        .eq("user_id", user.id);
+
+      const isFirst = (count ?? 0) === 0;
+
+      const { error: insertError } = await (supabase as any)
+        .from("addresses")
+        .insert({
+          user_id: user.id,
+          label: geo.name || geo.street || "Current Location",
           country: geo.country ?? "",
           state: geo.region ?? "",
           city: geo.city ?? geo.subregion ?? "",
           area: geo.district ?? "",
-          street: geo.street ?? "",
+          street: [geo.streetNumber, geo.street].filter(Boolean).join(" ") || geo.name || "",
           building: "",
           apartment: "",
           landmark: "",
-          postalCode: geo.postalCode ?? "",
+          postal_code: geo.postalCode ?? "",
           latitude: location.coords.latitude,
           longitude: location.coords.longitude,
-          isDefault: true,
-        }),
-      });
+          is_default: isFirst,
+        });
 
-      const result = await response.json();
+      if (insertError) throw insertError;
 
-      if (!response.ok) {
-        throw new Error(result.message ?? "Unable to save address.");
-      }
-
-      Alert.alert("Success", "Address added successfully.");
       await handleSuccess();
     } catch (error) {
       console.error("Location lookup error:", error);
       Alert.alert(
         "Location Error",
-        error instanceof Error ? error.message : "Unable to add address using current location."
+        error instanceof Error
+          ? error.message
+          : "Unable to detect your address. Please enter details manually."
       );
     } finally {
       setSaving(false);
@@ -121,93 +133,115 @@ export default function AddAddressModal({
   return (
     <Modal
       visible={visible}
-      animationType="slide"
-      transparent={true}
+      animationType="fade"
+      transparent
+      statusBarTranslucent
       onRequestClose={resetAndClose}
     >
-      <View style={styles.overlay}>
-        <SafeAreaView style={styles.safeArea}>
-          <View style={styles.sheetContainer}>
-            {/* Header */}
-            <View style={styles.header}>
-              <View>
-                <Text style={styles.title}>Add Delivery Address</Text>
-                <Text style={styles.subtitle}>
-                  Choose how you&apos;d like to add your delivery address.
-                </Text>
-              </View>
+      <KeyboardAvoidingView
+        style={styles.overlay}
+        behavior={Platform.OS === "ios" ? "padding" : undefined}
+      >
+        <Pressable style={styles.backdrop} onPress={resetAndClose} />
 
-              <TouchableOpacity
-                style={styles.closeButton}
-                onPress={resetAndClose}
-                disabled={saving}
-                activeOpacity={0.7}
-              >
-                <X size={20} color="#6b7280" />
-              </TouchableOpacity>
+        <View style={[styles.sheet, { paddingBottom: bottomInset + 8 }]}>
+          {/* Header */}
+          <View style={styles.header}>
+            <View style={styles.headerTextGroup}>
+              <Text style={styles.title}>
+                {method === "menu" ? "Add Delivery Address" : "New Address"}
+              </Text>
+              <Text style={styles.subtitle}>
+                {method === "menu"
+                  ? "Choose your preferred location entry method"
+                  : "Provide accurate destination coordinates & details"}
+              </Text>
             </View>
 
-            {/* Content */}
-            <ScrollView
-              contentContainerStyle={styles.scrollContent}
-              keyboardShouldPersistTaps="handled"
+            <Pressable
+              style={({ pressed }) => [
+                styles.closeButton,
+                pressed && styles.closeButtonPressed,
+              ]}
+              onPress={resetAndClose}
+              disabled={saving}
+              hitSlop={8}
             >
-              {method === "menu" && (
-                <View style={styles.menuContainer}>
-                  {/* Option 1: Current Location */}
-                  <TouchableOpacity
-                    style={styles.optionButton}
-                    onPress={() => {
-                      void handleCurrentLocation();
-                    }}
-                    disabled={saving}
-                    activeOpacity={0.8}
-                  >
-                    <View style={styles.iconCircle}>
-                      {saving ? (
-                        <ActivityIndicator size="small" color={BRAND} />
-                      ) : (
-                        <MapPin size={22} color={BRAND} />
-                      )}
-                    </View>
-                    <View style={styles.optionTextContainer}>
-                      <Text style={styles.optionTitle}>Use Current Location</Text>
-                      <Text style={styles.optionSubtitle}>
-                        Detect your location automatically.
-                      </Text>
-                    </View>
-                  </TouchableOpacity>
-
-                  {/* Option 2: Enter Manually */}
-                  <TouchableOpacity
-                    style={styles.optionButton}
-                    onPress={() => setMethod("manual")}
-                    disabled={saving}
-                    activeOpacity={0.8}
-                  >
-                    <View style={styles.iconCircle}>
-                      <PencilLine size={22} color={BRAND} />
-                    </View>
-                    <View style={styles.optionTextContainer}>
-                      <Text style={styles.optionTitle}>Enter Manually</Text>
-                      <Text style={styles.optionSubtitle}>
-                        Type your address details manually.
-                      </Text>
-                    </View>
-                  </TouchableOpacity>
-                </View>
-              )}
-
-              {method === "manual" && (
-                <ManualAddressForm
-                  onSuccess={handleSuccess}
-                  onCancel={() => setMethod("menu")}
-                />
-              )}
-            </ScrollView>
+              <X size={16} color="#71717a" strokeWidth={2} />
+            </Pressable>
           </View>
-        </SafeAreaView>
-      </View>
+
+          {/* Body Content */}
+          <ScrollView
+            showsVerticalScrollIndicator={false}
+            keyboardShouldPersistTaps="handled"
+            contentContainerStyle={styles.scrollContent}
+          >
+            {method === "menu" ? (
+              <View style={styles.menuContainer}>
+                {/* 1. GPS Auto-Detect */}
+                <Pressable
+                  style={({ pressed }) => [
+                    styles.optionCard,
+                    pressed && styles.optionCardPressed,
+                    saving && styles.optionDisabled,
+                  ]}
+                  onPress={() => {
+                    void handleCurrentLocation();
+                  }}
+                  disabled={saving}
+                >
+                  <View style={styles.iconCircle}>
+                    {saving ? (
+                      <ActivityIndicator size="small" color="#18181b" />
+                    ) : (
+                      <MapPin size={18} color="#18181b" strokeWidth={1.8} />
+                    )}
+                  </View>
+
+                  <View style={styles.optionContent}>
+                    <Text style={styles.optionTitle}>Use Current Location</Text>
+                    <Text style={styles.optionSubtitle}>
+                      Automatically detect street and city via device GPS
+                    </Text>
+                  </View>
+
+                  <ChevronRight size={16} color="#a1a1aa" strokeWidth={2} />
+                </Pressable>
+
+                {/* 2. Manual Form */}
+                <Pressable
+                  style={({ pressed }) => [
+                    styles.optionCard,
+                    pressed && styles.optionCardPressed,
+                    saving && styles.optionDisabled,
+                  ]}
+                  onPress={() => setMethod("manual")}
+                  disabled={saving}
+                >
+                  <View style={styles.iconCircle}>
+                    <PencilLine size={18} color="#18181b" strokeWidth={1.8} />
+                  </View>
+
+                  <View style={styles.optionContent}>
+                    <Text style={styles.optionTitle}>Enter Manually</Text>
+                    <Text style={styles.optionSubtitle}>
+                      Type specific street, building, and apartment numbers
+                    </Text>
+                  </View>
+
+                  <ChevronRight size={16} color="#a1a1aa" strokeWidth={2} />
+                </Pressable>
+              </View>
+            ) : (
+              <ManualAddressForm
+                onSuccess={handleSuccess}
+                onCancel={() => setMethod("menu")}
+              />
+            )}
+          </ScrollView>
+        </View>
+      </KeyboardAvoidingView>
     </Modal>
   );
 }
@@ -215,78 +249,121 @@ export default function AddAddressModal({
 const styles = StyleSheet.create({
   overlay: {
     flex: 1,
-    backgroundColor: "rgba(0,0,0,0.5)",
+    backgroundColor: "rgba(0, 0, 0, 0.4)",
     justifyContent: "flex-end",
   },
-  safeArea: {
-    maxHeight: "90%",
+
+  backdrop: {
+    ...StyleSheet.absoluteFillObject,
   },
-  sheetContainer: {
+
+  sheet: {
     backgroundColor: "#ffffff",
-    borderTopLeftRadius: 24,
-    borderTopRightRadius: 24,
-    paddingTop: 20,
-    paddingHorizontal: 20,
-    paddingBottom: Platform.OS === "ios" ? 10 : 20,
+    borderTopLeftRadius: 18,
+    borderTopRightRadius: 18,
+    maxHeight: "88%",
+    borderWidth: 1,
+    borderBottomWidth: 0,
+    borderColor: "#e4e4e7",
   },
+
   header: {
     flexDirection: "row",
-    alignItems: "flex-start",
+    alignItems: "center",
     justifyContent: "space-between",
-    paddingBottom: 16,
+    paddingHorizontal: 18,
+    paddingTop: 18,
+    paddingBottom: 14,
     borderBottomWidth: 1,
-    borderBottomColor: "#f3f4f6",
+    borderBottomColor: "#f4f4f5",
   },
+
+  headerTextGroup: {
+    flex: 1,
+    paddingRight: 12,
+    gap: 2,
+  },
+
   title: {
-    fontSize: 18,
-    fontWeight: "800",
-    color: BRAND_DARK,
+    fontSize: 16,
+    fontWeight: "700",
+    color: "#18181b",
+    letterSpacing: -0.3,
   },
+
   subtitle: {
     fontSize: 12,
-    color: "#6b7280",
-    marginTop: 2,
+    color: "#71717a",
+    letterSpacing: -0.1,
   },
+
   closeButton: {
-    padding: 6,
-    backgroundColor: "#f3f4f6",
-    borderRadius: 9999,
-  },
-  scrollContent: {
-    paddingVertical: 16,
-  },
-  menuContainer: {
-    gap: 12,
-  },
-  optionButton: {
-    flexDirection: "row",
-    alignItems: "center",
-    borderWidth: 1,
-    borderColor: "#e5e7eb",
-    borderRadius: 16,
-    padding: 16,
-    backgroundColor: "#f9fafb",
-  },
-  iconCircle: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
-    backgroundColor: "#e6f4ed",
+    width: 32,
+    height: 32,
+    borderRadius: 8,
+    backgroundColor: "#f4f4f5",
     alignItems: "center",
     justifyContent: "center",
-    marginRight: 14,
   },
-  optionTextContainer: {
+
+  closeButtonPressed: {
+    backgroundColor: "#e4e4e7",
+  },
+
+  scrollContent: {
+    padding: 16,
+  },
+
+  menuContainer: {
+    gap: 10,
+  },
+
+  optionCard: {
+    flexDirection: "row",
+    alignItems: "center",
+    padding: 14,
+    borderRadius: 12,
+    borderWidth: 1.5,
+    borderColor: "#e4e4e7",
+    backgroundColor: "#ffffff",
+    gap: 12,
+  },
+
+  optionCardPressed: {
+    backgroundColor: "#fafafa",
+    borderColor: "#18181b",
+  },
+
+  optionDisabled: {
+    opacity: 0.5,
+  },
+
+  iconCircle: {
+    width: 40,
+    height: 40,
+    borderRadius: 10,
+    backgroundColor: "#f4f4f5",
+    borderWidth: 1,
+    borderColor: "#e4e4e7",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+
+  optionContent: {
     flex: 1,
+    gap: 2,
   },
+
   optionTitle: {
     fontSize: 14,
-    fontWeight: "800",
-    color: BRAND_DARK,
+    fontWeight: "700",
+    color: "#18181b",
+    letterSpacing: -0.2,
   },
+
   optionSubtitle: {
     fontSize: 12,
-    color: "#6b7280",
-    marginTop: 2,
+    color: "#71717a",
+    lineHeight: 16,
   },
 });

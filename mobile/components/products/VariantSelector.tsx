@@ -1,6 +1,7 @@
 import { useState, useMemo, useEffect } from "react";
 import { View, Text, Pressable, StyleSheet } from "react-native";
 import { Image } from "expo-image";
+import { Ruler } from "lucide-react-native";
 import type { ProductWithDetails } from "@africasuk/types";
 
 import type { CartItem } from "../../types/cart";
@@ -10,9 +11,6 @@ import { WishlistButton } from "./WishlistButton";
 import { AddToCartButton } from "./AddToCartButton";
 
 type ColorWithDetails = ProductWithDetails["colors"][number];
-
-const BRAND_LIGHT = "#008744";
-const BRAND_DARK = "#002b15";
 
 interface Props {
   product: ProductWithDetails;
@@ -28,7 +26,6 @@ export function VariantSelector({ product, onColorChange }: Props) {
     product.colors[0]?.variants[0]
   );
 
-  // Sync internal state whenever the incoming product or colors prop updates
   useEffect(() => {
     if (product.colors && product.colors.length > 0) {
       const activeColor = product.colors[0];
@@ -43,7 +40,6 @@ export function VariantSelector({ product, onColorChange }: Props) {
     }
   }, [product]);
 
-  // Helper to handle color updates and inform parent gallery
   const updateSelectedColor = (color: ColorWithDetails) => {
     setSelectedColor(color);
     if (onColorChange) {
@@ -95,6 +91,8 @@ export function VariantSelector({ product, onColorChange }: Props) {
     }
   };
 
+  const isOutOfStock = selectedVariant.stock <= 0;
+
   const item: CartItem = {
     variantId: selectedVariant.id,
     productId: product.id,
@@ -120,59 +118,84 @@ export function VariantSelector({ product, onColorChange }: Props) {
 
   return (
     <View style={styles.container}>
-      {/* 1. COLOR SELECTION */}
+      {/* 1. TOP HEADER: PRICE & AVAILABILITY STATUS FIRST */}
+      <View style={styles.topPriceRow}>
+        <View style={styles.priceGroup}>
+          <Price
+            price={Number(selectedVariant.price)}
+            style={styles.priceValue}
+          />
+        </View>
+
+        <View
+          style={[
+            styles.stockTag,
+            isOutOfStock ? styles.outOfStockTag : styles.inStockTag,
+          ]}
+        >
+          <View
+            style={[
+              styles.stockDot,
+              isOutOfStock ? styles.outOfStockDot : styles.inStockDot,
+            ]}
+          />
+          <Text
+            style={[
+              styles.stockText,
+              isOutOfStock ? styles.outOfStockText : styles.inStockText,
+            ]}
+          >
+            {isOutOfStock ? "Out of Stock" : "In Stock"}
+          </Text>
+        </View>
+      </View>
+
+      <View style={styles.divider} />
+
+      {/* 2. COLOR PICKER: PURE 1:1 VISUAL TILES */}
       {product.colors.length > 1 && (
         <View style={styles.section}>
           <View style={styles.sectionHeader}>
-            <Text style={styles.sectionLabel}>COLOR</Text>
-            <Text style={styles.colorNameValue}>{selectedColor.name}</Text>
+            <Text style={styles.sectionTitle}>Color</Text>
+            <Text style={styles.selectedMetaText}>{selectedColor.name}</Text>
           </View>
 
-          <View style={styles.chipsContainer}>
+          <View style={styles.colorGrid}>
             {product.colors.map((color) => {
               const isSelected = selectedColor.id === color.id;
+              const colorImage = color.images?.[0]?.imageUrl;
 
               return (
                 <Pressable
                   key={color.id}
                   onPress={() => {
-                    updateSelectedColor(color);
-                    const matchingVariant = color.variants.find(
-                      (v) => v.optionValue === selectedVariant.optionValue
-                    );
-                    setSelectedVariant(matchingVariant ?? color.variants[0]);
-                  }}
+  updateSelectedColor(color);
+  setSelectedVariant(color.variants[0]);
+}}
                   style={({ pressed }) => [
-                    styles.colorChip,
-                    isSelected ? styles.selectedColorChip : styles.unselectedColorChip,
+                    styles.colorCard,
+                    isSelected ? styles.selectedColorCard : styles.unselectedColorCard,
                     pressed && styles.pressedState,
                   ]}
                 >
-                  <View style={styles.thumbnailBubble}>
-                    {color.images[0]?.imageUrl ? (
+                  <View style={styles.imageBox}>
+                    {colorImage ? (
                       <Image
-                        source={{ uri: color.images[0].imageUrl }}
-                        style={styles.chipThumbnail}
+                        source={{ uri: colorImage }}
+                        style={styles.cardImage}
                         contentFit="cover"
+                        transition={150}
+                        cachePolicy="memory-disk"
                       />
                     ) : (
                       <View
                         style={[
-                          styles.chipThumbnail,
-                          { backgroundColor: color.hexCode ?? "#e5e7eb" },
+                          styles.fallbackColor,
+                          { backgroundColor: color.hexCode ?? "#e4e4e7" },
                         ]}
                       />
                     )}
                   </View>
-
-                  <Text
-                    style={[
-                      styles.colorChipText,
-                      isSelected ? styles.selectedColorText : styles.unselectedColorText,
-                    ]}
-                  >
-                    {color.name}
-                  </Text>
                 </Pressable>
               );
             })}
@@ -180,17 +203,30 @@ export function VariantSelector({ product, onColorChange }: Props) {
         </View>
       )}
 
-      {/* 2. SIZES */}
+      {/* 3. SIZE SELECTOR WITH HELPER NOTICE */}
       {allSizes.length > 0 && (
         <View style={styles.section}>
-          <Text style={styles.sectionLabel}>
-            {allSizes[0]?.optionName || "SIZE"}
-          </Text>
+          <View style={styles.sectionHeader}>
+            <Text style={styles.sectionTitle}>
+              {allSizes[0]?.optionName || "Size"}
+            </Text>
+            <Text style={styles.selectedMetaText}>
+              Selected: <Text style={styles.boldText}>{selectedVariant.optionValue}</Text>
+            </Text>
+          </View>
 
-          <View style={styles.chipsContainer}>
+          {/* Clean Neutral Fit Guidance Notice */}
+          <View style={styles.sizeNoticeBox}>
+            <Ruler size={14} color="#52525b" strokeWidth={1.75} />
+            <Text style={styles.sizeNoticeText}>
+              Make sure to select your accurate size before checkout.
+            </Text>
+          </View>
+
+          <View style={styles.sizeRow}>
             {allSizes.map((size) => {
               const isSelected = selectedVariant.optionValue === size.value;
-              const isAvailableInCurrentColor = selectedColor.variants.some(
+              const isAvailable = selectedColor.variants.some(
                 (v) => v.optionValue === size.value
               );
 
@@ -199,21 +235,21 @@ export function VariantSelector({ product, onColorChange }: Props) {
                   key={size.value}
                   onPress={() => handleSizeSelect(size.value)}
                   style={({ pressed }) => [
-                    styles.sizeButton,
+                    styles.sizePill,
                     isSelected
-                      ? styles.selectedSizeButton
-                      : isAvailableInCurrentColor
-                      ? styles.availableSizeButton
-                      : styles.unavailableSizeButton,
+                      ? styles.selectedSizePill
+                      : isAvailable
+                      ? styles.availableSizePill
+                      : styles.unavailableSizePill,
                     pressed && styles.pressedState,
                   ]}
                 >
                   <Text
                     style={[
-                      styles.sizeButtonText,
+                      styles.sizeText,
                       isSelected
                         ? styles.selectedSizeText
-                        : isAvailableInCurrentColor
+                        : isAvailable
                         ? styles.availableSizeText
                         : styles.unavailableSizeText,
                     ]}
@@ -227,37 +263,9 @@ export function VariantSelector({ product, onColorChange }: Props) {
         </View>
       )}
 
-      {/* 3. PRICE & STOCK DISPLAY */}
-      <View style={styles.priceSection}>
-        <View style={styles.priceRow}>
-          <Price
-            price={Number(selectedVariant.price)}
-            style={styles.price}
-          />
-
-          <View
-            style={[
-              styles.stockBadgeWrapper,
-              selectedVariant.stock > 0 ? styles.inStockBg : styles.outOfStockBg,
-            ]}
-          >
-            <Text
-              style={[
-                styles.stockBadgeText,
-                selectedVariant.stock > 0 ? styles.inStockText : styles.outOfStockText,
-              ]}
-            >
-              {selectedVariant.stock > 0
-                ? `${selectedVariant.stock} in stock`
-                : "Out of stock"}
-            </Text>
-          </View>
-        </View>
-      </View>
-
-      {/* 4. ACTIONS */}
-      <View style={styles.actionsRow}>
-        <View style={styles.addToCartFlex}>
+      {/* 4. ACTIONS (ADD TO CART & WISHLIST) */}
+      <View style={styles.actionRow}>
+        <View style={styles.ctaWrapper}>
           <AddToCartButton item={item} />
         </View>
         <WishlistButton item={item} />
@@ -268,160 +276,235 @@ export function VariantSelector({ product, onColorChange }: Props) {
 
 const styles = StyleSheet.create({
   container: {
-    gap: 18,
+    gap: 16,
   },
+
+  /* Price & Stock Header */
+  topPriceRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+  },
+
+  priceGroup: {
+    justifyContent: "center",
+  },
+
+  priceValue: {
+    fontSize: 24,
+    fontWeight: "800",
+    color: "#18181b",
+    letterSpacing: -0.5,
+  },
+
+  stockTag: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    borderRadius: 8,
+    borderWidth: 1,
+  },
+
+  inStockTag: {
+    backgroundColor: "#f4f4f5",
+    borderColor: "#e4e4e7",
+  },
+
+  outOfStockTag: {
+    backgroundColor: "#fef2f2",
+    borderColor: "#fee2e2",
+  },
+
+  stockDot: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+  },
+
+  inStockDot: {
+    backgroundColor: "#16a34a",
+  },
+
+  outOfStockDot: {
+    backgroundColor: "#dc2626",
+  },
+
+  stockText: {
+    fontSize: 12,
+    fontWeight: "600",
+  },
+
+  inStockText: {
+    color: "#27272a",
+  },
+
+  outOfStockText: {
+    color: "#dc2626",
+  },
+
+  divider: {
+    height: 1,
+    backgroundColor: "#f4f4f5",
+  },
+
+  /* Section Styles */
   section: {
-    gap: 8,
+    gap: 10,
   },
+
   sectionHeader: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
   },
-  sectionLabel: {
-    fontSize: 11,
-    fontWeight: "500",
-    color: "#6b7280",
+
+  sectionTitle: {
+    fontSize: 13,
+    fontWeight: "700",
+    color: "#18181b",
     textTransform: "uppercase",
-    letterSpacing: 0.8,
+    letterSpacing: 0.6,
   },
-  colorNameValue: {
+
+  selectedMetaText: {
     fontSize: 12,
     fontWeight: "500",
-    color: BRAND_DARK,
-    textTransform: "capitalize",
+    color: "#71717a",
   },
-  chipsContainer: {
+
+  boldText: {
+    fontWeight: "700",
+    color: "#18181b",
+  },
+
+  /* Pure Visual 1:1 Color Grid */
+  colorGrid: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: 10,
+  },
+
+  colorCard: {
+    width: 60,
+    height: 60,
+    padding: 2,
+    borderRadius: 14,
+    borderWidth: 2,
+    backgroundColor: "#ffffff",
+  },
+
+  selectedColorCard: {
+    borderColor: "#18181b",
+  },
+
+  unselectedColorCard: {
+    borderColor: "#e4e4e7",
+  },
+
+  imageBox: {
+    width: "100%",
+    height: "100%",
+    borderRadius: 10,
+    backgroundColor: "#f4f4f5",
+    overflow: "hidden",
+  },
+
+  cardImage: {
+    width: "100%",
+    height: "100%",
+  },
+
+  fallbackColor: {
+    width: "100%",
+    height: "100%",
+  },
+
+  /* Sizing Notice & Pills */
+  sizeNoticeBox: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+    backgroundColor: "#f4f4f5",
+    paddingHorizontal: 12,
+    paddingVertical: 9,
+    borderRadius: 10,
+  },
+
+  sizeNoticeText: {
+    flex: 1,
+    fontSize: 12,
+    fontWeight: "500",
+    color: "#52525b",
+    lineHeight: 16,
+  },
+
+  sizeRow: {
     flexDirection: "row",
     flexWrap: "wrap",
     gap: 8,
   },
-  colorChip: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 8,
-    paddingLeft: 6,
-    paddingRight: 12,
-    paddingVertical: 6,
-    borderRadius: 0,
-    borderWidth: 1,
-  },
-  selectedColorChip: {
-    borderColor: BRAND_LIGHT,
-    backgroundColor: "#ecfdf5",
-  },
-  unselectedColorChip: {
-    borderColor: "#e5e7eb",
-    backgroundColor: "#ffffff",
-  },
-  thumbnailBubble: {
-    width: 22,
-    height: 22,
-    borderRadius: 0,
-    overflow: "hidden",
-    borderWidth: 1,
-    borderColor: "#e5e7eb",
-    backgroundColor: "#f3f4f6",
-  },
-  chipThumbnail: {
-    width: "100%",
-    height: "100%",
-  },
-  colorChipText: {
-    fontSize: 12,
-    fontWeight: "400",
-  },
-  selectedColorText: {
-    color: BRAND_DARK,
-    fontWeight: "500",
-  },
-  unselectedColorText: {
-    color: "#4b5563",
-  },
-  sizeButton: {
+
+  sizePill: {
     minWidth: 48,
-    height: 42,
+    height: 40,
     paddingHorizontal: 14,
+    borderRadius: 10,
+    borderWidth: 1.5,
     alignItems: "center",
     justifyContent: "center",
-    borderRadius: 0,
-    borderWidth: 1,
   },
-  selectedSizeButton: {
-    backgroundColor: BRAND_DARK,
-    borderColor: BRAND_DARK,
+
+  selectedSizePill: {
+    backgroundColor: "#18181b",
+    borderColor: "#18181b",
   },
-  availableSizeButton: {
+
+  availableSizePill: {
     backgroundColor: "#ffffff",
-    borderColor: "#e5e7eb",
+    borderColor: "#e4e4e7",
   },
-  unavailableSizeButton: {
-    backgroundColor: "#f9fafb",
-    borderColor: "#f3f4f6",
+
+  unavailableSizePill: {
+    backgroundColor: "#fafafa",
+    borderColor: "#f4f4f5",
+    opacity: 0.5,
   },
-  sizeButtonText: {
-    fontSize: 14,
+
+  sizeText: {
+    fontSize: 13,
     fontWeight: "600",
+    letterSpacing: -0.2,
   },
+
   selectedSizeText: {
     color: "#ffffff",
-    fontWeight: "700",
   },
+
   availableSizeText: {
-    color: "#111827",
+    color: "#18181b",
   },
+
   unavailableSizeText: {
-    color: "#9ca3af",
+    color: "#a1a1aa",
+    textDecorationLine: "line-through",
   },
-  priceSection: {
-    paddingTop: 14,
-    borderTopWidth: 1,
-    borderTopColor: "#f3f4f6",
-  },
-  priceRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-  },
-  price: {
-    fontSize: 20,
-    fontWeight: "700",
-    color: BRAND_DARK,
-  },
-  stockBadgeWrapper: {
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 0,
-    borderWidth: 1,
-  },
-  stockBadgeText: {
-    fontSize: 11,
-    fontWeight: "500",
-  },
-  inStockBg: {
-    backgroundColor: "#ecfdf5",
-    borderColor: "#a7f3d0",
-  },
-  inStockText: {
-    color: "#047857",
-  },
-  outOfStockBg: {
-    backgroundColor: "#fef2f2",
-    borderColor: "#fecaca",
-  },
-  outOfStockText: {
-    color: "#dc2626",
-  },
-  actionsRow: {
+
+  /* Bottom Actions */
+  actionRow: {
     flexDirection: "row",
     alignItems: "center",
     gap: 10,
-    paddingTop: 4,
+    paddingTop: 6,
   },
-  addToCartFlex: {
+
+  ctaWrapper: {
     flex: 1,
   },
+
   pressedState: {
-    opacity: 0.85,
+    opacity: 0.8,
+    transform: [{ scale: 0.98 }],
   },
 });

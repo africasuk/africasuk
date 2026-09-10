@@ -1,6 +1,7 @@
-import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import { StyleSheet, Text, Pressable, View } from "react-native";
 import { Image } from "expo-image";
-import { router } from "expo-router";
+import { useRouter } from "expo-router";
+import { ArrowRight } from "lucide-react-native";
 
 import type { Brand } from "@africasuk/types";
 
@@ -9,217 +10,204 @@ interface Props {
 }
 
 export default function FeaturedBrands({ brands = [] }: Props) {
+  const router = useRouter();
+
   if (!brands.length) return null;
 
   const visibleBrands = brands.slice(0, 6);
+
+  const handleNavigateAllBrands = () => {
+    try {
+      // Try push to brands route
+      router.push("/brands" as never);
+    } catch {
+      // Fallback in case route is nested inside (tabs)
+      try {
+        router.push("/(tabs)/brands" as never);
+      } catch (err) {
+        console.warn("Could not route to brands:", err);
+      }
+    }
+  };
+
+  const handleNavigateBrand = (slug: string) => {
+    router.push(`/brands/${slug}` as never);
+  };
 
   return (
     <View style={styles.container}>
       {/* Header */}
       <View style={styles.header}>
-        <View style={styles.textGroup}>
-          <Text style={styles.title}>Popular Brands</Text>
-          <Text style={styles.subtitle}>
-            Shop official collections from certified international global partners.
-          </Text>
-        </View>
-
-        <TouchableOpacity
-          style={styles.viewAllBtn}
-          onPress={() => router.push("/brands" as never)}
-          activeOpacity={0.7}
-        >
-          <Text style={styles.viewAllText}>View All</Text>
-        </TouchableOpacity>
+        <Text style={styles.title}>Featured Brands</Text>
+        <Text style={styles.subtitle}>
+          Verified collections from global partners
+        </Text>
       </View>
 
-      {/* Grid */}
+      {/* 3-Column Grid */}
       <View style={styles.grid}>
         {visibleBrands.map((brand) => (
-          <TouchableOpacity
+          <Pressable
             key={brand.id}
-            style={styles.card}
-            activeOpacity={0.85}
-            onPress={() =>
-              router.push(`/brands/${brand.slug}` as never)
-            }
+            style={({ pressed }) => [
+              styles.card,
+              pressed && styles.cardPressed,
+            ]}
+            onPress={() => handleNavigateBrand(brand.slug)}
           >
-            <View style={styles.cardInfo}>
-              <Text numberOfLines={1} style={styles.brandName}>
-                {brand.name}
-              </Text>
-
-              <Text numberOfLines={2} style={styles.description}>
-                {brand.description ??
-                  `Discover authentic products from the official ${brand.name} catalog.`}
-              </Text>
+            {/* Logo Frame */}
+            <View style={styles.imageContainer}>
+              {brand.logoUrl ? (
+                <Image
+                  source={{ uri: brand.logoUrl }}
+                  style={styles.logo}
+                  contentFit="contain"
+                  transition={200}
+                  cachePolicy="memory-disk"
+                />
+              ) : (
+                <View style={styles.placeholder}>
+                  <Text style={styles.placeholderText}>
+                    {brand.name.slice(0, 3).toUpperCase()}
+                  </Text>
+                </View>
+              )}
             </View>
 
-            {/* Logo / Avatar Frame - Sharp Corners */}
-            {brand.logoUrl ? (
-              <Image
-                source={{ uri: brand.logoUrl }}
-                style={styles.logo}
-                contentFit="contain"
-                transition={200}
-              />
-            ) : (
-              <View style={styles.placeholder}>
-                <Text style={styles.placeholderText}>
-                  {brand.name.charAt(0).toUpperCase()}
-                </Text>
-              </View>
-            )}
-          </TouchableOpacity>
+            {/* Brand Name */}
+            <Text numberOfLines={1} style={styles.brandName}>
+              {brand.name}
+            </Text>
+          </Pressable>
         ))}
       </View>
 
-      {/* Full-width "All Brands" Button at Bottom */}
-      <TouchableOpacity
-        style={styles.allBrandsBtn}
-        activeOpacity={0.85}
-        onPress={() => router.push("/brands" as never)}
+      {/* Bottom Explore Action */}
+      <Pressable
+        style={({ pressed }) => [
+          styles.allBrandsBtn,
+          pressed && styles.allBrandsBtnPressed,
+        ]}
+        onPress={handleNavigateAllBrands}
       >
-        <Text style={styles.allBrandsBtnText}>All Brands</Text>
-      </TouchableOpacity>
+        <Text style={styles.allBrandsBtnText}>Explore All Brands</Text>
+        <ArrowRight size={14} color="#18181b" strokeWidth={2} />
+      </Pressable>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
-    paddingVertical: 24,
+    paddingVertical: 18,
     paddingHorizontal: 16,
     backgroundColor: "#ffffff",
-    borderTopWidth: 1,
-    borderBottomWidth: 1,
-    borderColor: "#e5e7eb",
   },
 
   header: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "flex-start",
-    marginBottom: 20,
-    gap: 12,
-  },
-
-  textGroup: {
-    flex: 1,
+    marginBottom: 16,
+    gap: 2,
   },
 
   title: {
     fontSize: 18,
-    fontWeight: "500", // Non-bold clean header weight
-    color: "#111827",
-    letterSpacing: 0.2,
+    fontWeight: "700",
+    color: "#18181b",
+    letterSpacing: -0.3,
   },
 
   subtitle: {
-    marginTop: 4,
-    color: "#6b7280",
+    color: "#71717a",
     fontSize: 12,
     fontWeight: "400",
-    lineHeight: 18,
   },
 
-  viewAllBtn: {
-    borderWidth: 1,
-    borderColor: "#e5e7eb",
-    paddingHorizontal: 14,
-    paddingVertical: 8,
-    borderRadius: 0, // Sharp corners
-    backgroundColor: "#ffffff",
-    alignSelf: "flex-start",
-  },
-
-  viewAllText: {
-    color: "#111827",
-    fontWeight: "500", // Non-bold clean button weight
-    fontSize: 12,
-    letterSpacing: 0.2,
-  },
-
+  /* 3-Column Layout */
   grid: {
     flexDirection: "row",
     flexWrap: "wrap",
     justifyContent: "space-between",
+    rowGap: 12,
   },
 
   card: {
-    width: "48%",
-    backgroundColor: "#ffffff",
-    borderRadius: 0, // Sharp corners
-    padding: 14,
-    marginBottom: 12,
+    width: "31.5%",
+    alignItems: "center",
+  },
+
+  cardPressed: {
+    opacity: 0.75,
+    transform: [{ scale: 0.98 }],
+  },
+
+  imageContainer: {
+    width: "100%",
+    aspectRatio: 1,
+    borderRadius: 14,
+    backgroundColor: "#f4f4f5",
     borderWidth: 1,
-    borderColor: "#e5e7eb",
-    minHeight: 160,
-    justifyContent: "space-between",
-  },
-
-  cardInfo: {
-    flex: 1,
-  },
-
-  brandName: {
-    fontSize: 14,
-    fontWeight: "500", // Clean regular title weight
-    color: "#111827",
-  },
-
-  description: {
-    marginTop: 6,
-    fontSize: 11,
-    fontWeight: "400",
-    color: "#6b7280",
-    lineHeight: 16,
+    borderColor: "#f0f0f0",
+    overflow: "hidden",
+    alignItems: "center",
+    justifyContent: "center",
+    padding: 10,
   },
 
   logo: {
-    width: 48,
-    height: 48,
-    alignSelf: "flex-end",
-    backgroundColor: "#f9fafb",
-    borderWidth: 1,
-    borderColor: "#f3f4f6",
-    borderRadius: 0, // Sharp corners
+    width: "100%",
+    height: "100%",
   },
 
   placeholder: {
-    width: 48,
-    height: 48,
-    borderRadius: 0, // Sharp corners
-    backgroundColor: "#ecfdf5",
-    borderWidth: 1,
-    borderColor: "#a7f3d0",
+    width: "100%",
+    height: "100%",
+    borderRadius: 10,
+    backgroundColor: "#e4e4e7",
     justifyContent: "center",
     alignItems: "center",
-    alignSelf: "flex-end",
   },
 
   placeholderText: {
-    fontSize: 18,
-    fontWeight: "500", // Clean weight
-    color: "#005c2e",
+    fontSize: 12,
+    fontWeight: "700",
+    color: "#52525b",
+    letterSpacing: 0.5,
+  },
+
+  brandName: {
+    marginTop: 6,
+    fontSize: 12,
+    fontWeight: "600",
+    color: "#27272a",
+    textAlign: "center",
+    width: "100%",
+    letterSpacing: -0.1,
   },
 
   allBrandsBtn: {
     width: "100%",
-    height: 46,
-    backgroundColor: "#ffffff",
+    height: 44,
+    backgroundColor: "#f4f4f5",
     borderWidth: 1,
-    borderColor: "#111827",
-    borderRadius: 0, // Sharp corners
+    borderColor: "#e4e4e7",
+    borderRadius: 12,
+    flexDirection: "row",
     justifyContent: "center",
     alignItems: "center",
-    marginTop: 12,
+    gap: 6,
+    marginTop: 18,
+  },
+
+  allBrandsBtnPressed: {
+    backgroundColor: "#e4e4e7",
+    opacity: 0.85,
+    transform: [{ scale: 0.99 }],
   },
 
   allBrandsBtnText: {
-    color: "#111827",
+    color: "#18181b",
     fontSize: 13,
-    fontWeight: "500", // Unbolded clean weight
-    letterSpacing: 0.3,
+    fontWeight: "600",
+    letterSpacing: -0.1,
   },
 });

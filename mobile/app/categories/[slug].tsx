@@ -1,23 +1,24 @@
 import { useEffect, useState } from "react";
 import {
-  SafeAreaView,
   ScrollView,
   View,
   Text,
   StyleSheet,
   ActivityIndicator,
+  Pressable,
 } from "react-native";
-import { useLocalSearchParams } from "expo-router";
+import { useLocalSearchParams, useRouter } from "expo-router";
 import { Image } from "expo-image";
-import { Layers } from "lucide-react-native";
+import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
+import { LinearGradient } from "expo-linear-gradient";
+import { ArrowLeft, Layers } from "lucide-react-native";
 
 import { createClient } from "@/lib/auth/client";
 import FeaturedProducts from "@/components/home/FeaturedProducts";
 
-const BRAND_COLOR = "#004d26";
-const BRAND_DARK = "#111827";
-
 export default function CategoryScreen() {
+  const router = useRouter();
+  const insets = useSafeAreaInsets();
   const { slug } = useLocalSearchParams<{ slug: string }>();
 
   const [loading, setLoading] = useState(true);
@@ -26,6 +27,8 @@ export default function CategoryScreen() {
 
   useEffect(() => {
     if (!slug) return;
+
+    let isMounted = true;
 
     async function load() {
       setLoading(true);
@@ -38,16 +41,20 @@ export default function CategoryScreen() {
         .eq("slug", slug)
         .maybeSingle();
 
-      if (categoryError) throw categoryError;
+      if (categoryError) {
+        console.error("Failed to load category:", categoryError);
+      }
 
       if (!rawCategory) {
-        setCategory(null);
-        setProducts([]);
-        setLoading(false);
+        if (isMounted) {
+          setCategory(null);
+          setProducts([]);
+          setLoading(false);
+        }
         return;
       }
 
-      const category = {
+      const formattedCategory = {
         ...(rawCategory as any),
         imageUrl: (rawCategory as any).image_url,
         isActive: (rawCategory as any).is_active,
@@ -67,25 +74,22 @@ export default function CategoryScreen() {
             variants:product_variants(*)
           )
         `)
-        .eq("category_id", category.id)
-        .order("created_at", {
-          ascending: false,
-        });
+        .eq("category_id", formattedCategory.id)
+        .order("created_at", { ascending: false });
 
-      if (productsError) throw productsError;
+      if (productsError) {
+        console.error("Failed to load category products:", productsError);
+      }
 
       const formattedProducts = (rawProducts ?? []).map((product: any) => ({
         ...product,
-
         allowCod: product.allow_cod,
         allowOnlinePayment: product.allow_online_payment,
-
         categoryId: product.category_id,
         brandId: product.brand_id,
         isActive: product.is_active,
         createdAt: product.created_at,
         updatedAt: product.updated_at,
-
         category: product.category
           ? {
               ...product.category,
@@ -95,7 +99,6 @@ export default function CategoryScreen() {
               updatedAt: product.category.updated_at,
             }
           : null,
-
         brand: product.brand
           ? {
               ...product.brand,
@@ -105,15 +108,12 @@ export default function CategoryScreen() {
               updatedAt: product.brand.updated_at,
             }
           : null,
-
         colors: (product.colors ?? []).map((color: any) => ({
           ...color,
-
           productId: color.product_id,
           hexCode: color.hex_code,
           createdAt: color.created_at,
           updatedAt: color.updated_at,
-
           images: (color.images ?? []).map((image: any) => ({
             ...image,
             productColorId: image.product_color_id,
@@ -121,7 +121,6 @@ export default function CategoryScreen() {
             sortOrder: image.sort_order,
             createdAt: image.created_at,
           })),
-
           variants: (color.variants ?? []).map((variant: any) => ({
             ...variant,
             productColorId: variant.product_color_id,
@@ -136,94 +135,113 @@ export default function CategoryScreen() {
         })),
       }));
 
-      setCategory(category);
-      setProducts(formattedProducts ?? []);
-      setLoading(false);
+      if (isMounted) {
+        setCategory(formattedCategory);
+        setProducts(formattedProducts ?? []);
+        setLoading(false);
+      }
     }
 
     load().catch((error) => {
       console.error(error);
-      setLoading(false);
+      if (isMounted) setLoading(false);
     });
+
+    return () => {
+      isMounted = false;
+    };
   }, [slug]);
 
   if (loading) {
     return (
-      <SafeAreaView style={styles.center}>
-        <ActivityIndicator size="large" color={BRAND_COLOR} />
-      </SafeAreaView>
+      <View style={styles.center}>
+        <ActivityIndicator size="small" color="#18181b" />
+      </View>
     );
   }
 
   if (!category) {
     return (
-      <SafeAreaView style={styles.center}>
+      <SafeAreaView style={styles.center} edges={["top", "bottom"]}>
         <Text style={styles.notFound}>Category not found.</Text>
       </SafeAreaView>
     );
   }
 
-  const totalItemsCount = products.reduce(
-    (total, product) =>
-      total +
-      product.colors.reduce(
-        (sum: number, color: any) => sum + color.variants.length,
-        0
-      ),
-    0
-  );
+  const bottomInset = insets.bottom > 0 ? insets.bottom : 16;
 
   return (
-    <SafeAreaView style={styles.container}>
+    <SafeAreaView style={styles.container} edges={["top", "left", "right"]}>
+      {/* Editorial Navigation Top Bar */}
+      <View style={styles.topBar}>
+        <Pressable
+          style={({ pressed }) => [
+            styles.backButton,
+            pressed && styles.backButtonPressed,
+          ]}
+          onPress={() => router.back()}
+          hitSlop={8}
+        >
+          <ArrowLeft size={18} color="#18181b" strokeWidth={2} />
+        </Pressable>
+
+        <Text style={styles.topBarTitle} numberOfLines={1}>
+          {category.name}
+        </Text>
+
+        <View style={styles.countPill}>
+          <Text style={styles.countPillText}>
+            {products.length} {products.length === 1 ? "item" : "items"}
+          </Text>
+        </View>
+      </View>
+
       <ScrollView
         showsVerticalScrollIndicator={false}
-        contentContainerStyle={styles.content}
+        contentContainerStyle={[
+          styles.content,
+          { paddingBottom: bottomInset + 32 },
+        ]}
       >
-        {/* Clean Hero Header Card with Sharp Borders */}
-        <View style={styles.headerCard}>
-          {/* Background Image Watermark */}
-          {category.imageUrl && (
-            <Image
-              source={{ uri: category.imageUrl }}
-              style={styles.watermarkImage}
-              contentFit="contain"
+        {/* Full-bleed Hero Card with Overlay Title & Subtitle Below */}
+        <View style={styles.heroCard}>
+          <View style={styles.imageWrapper}>
+            {category.imageUrl ? (
+              <Image
+                source={{ uri: category.imageUrl }}
+                style={styles.heroImage}
+                contentFit="cover"
+                transition={200}
+                cachePolicy="memory-disk"
+              />
+            ) : (
+              <View style={styles.fallbackContainer}>
+                <Layers size={48} color="#71717a" strokeWidth={1.5} />
+              </View>
+            )}
+
+            {/* Scrim Gradient for Readability */}
+            <LinearGradient
+              colors={["rgba(0,0,0,0.05)", "rgba(0,0,0,0.72)"]}
+              style={styles.imageOverlay}
             />
-          )}
 
-          <View style={styles.headerTopRow}>
-            {/* Category Avatar Box - Sharp Borders */}
-            <View style={styles.imageBox}>
-              {category.imageUrl ? (
-                <Image
-                  source={{ uri: category.imageUrl }}
-                  style={styles.image}
-                  contentFit="contain"
-                  transition={200}
-                />
-              ) : (
-                <View style={styles.letterAvatar}>
-                  <Text style={styles.letterText}>
-                    {category.name.charAt(0).toUpperCase()}
-                  </Text>
-                </View>
-              )}
-            </View>
-
-            {/* Item Count Badge - Sharp Borders */}
-            <View style={styles.badge}>
-              <Text style={styles.badgeText}>
-                {totalItemsCount} {totalItemsCount === 1 ? "Item" : "Items"}
+            {/* Badge & Title on Image */}
+            <View style={styles.overlayContent}>
+              <View style={styles.categoryBadge}>
+                <Text style={styles.categoryBadgeText}>COLLECTION</Text>
+              </View>
+              <Text style={styles.heroTitle} numberOfLines={2}>
+                {category.name}
               </Text>
             </View>
           </View>
 
-          {/* Category Details */}
-          <View style={styles.info}>
-            <Text style={styles.title}>{category.name}</Text>
-
-            <Text numberOfLines={3} style={styles.description}>
+          {/* Description Below Image */}
+          <View style={styles.descriptionSection}>
+            <Text style={styles.descriptionText}>
               {category.description ??
-                `Explore our handpicked collection of premium products in ${category.name.toLowerCase()}.`}
+                `Explore our handpicked curation of verified pieces in ${category.name.toLowerCase()}.`}
             </Text>
           </View>
         </View>
@@ -239,9 +257,12 @@ export default function CategoryScreen() {
           <FeaturedProducts products={products} />
         ) : (
           <View style={styles.emptyContainer}>
-            <Layers size={36} color="#9ca3af" style={{ marginBottom: 8 }} />
+            <View style={styles.emptyIconCircle}>
+              <Layers size={22} color="#71717a" strokeWidth={1.75} />
+            </View>
+            <Text style={styles.emptyTitle}>No products available</Text>
             <Text style={styles.emptyText}>
-              No products available in this category yet.
+              We are currently sourcing new pieces for this category.
             </Text>
           </View>
         )}
@@ -253,138 +274,208 @@ export default function CategoryScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#f4f4f4",
-    paddingTop: 50,
+    backgroundColor: "#ffffff",
   },
-  content: {
-    padding: 16,
-    paddingBottom: 40,
-  },
+
   center: {
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
-    backgroundColor: "#f4f4f4",
-  },
-  notFound: {
-    fontSize: 15,
-    fontWeight: "400",
-    color: BRAND_DARK,
-  },
-  headerCard: {
     backgroundColor: "#ffffff",
-    borderRadius: 0, // Sharp corners
-    padding: 18,
-    marginBottom: 20,
+  },
+
+  notFound: {
+    fontSize: 14,
+    fontWeight: "500",
+    color: "#71717a",
+  },
+
+  topBar: {
+    height: 48,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    paddingHorizontal: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: "#f4f4f5",
+    backgroundColor: "#ffffff",
+  },
+
+  backButton: {
+    width: 34,
+    height: 34,
+    borderRadius: 10,
+    backgroundColor: "#f4f4f5",
     borderWidth: 1,
-    borderColor: "#e5e7eb",
-    position: "relative",
+    borderColor: "#e4e4e7",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+
+  backButtonPressed: {
+    backgroundColor: "#e4e4e7",
+  },
+
+  topBarTitle: {
+    flex: 1,
+    fontSize: 15,
+    fontWeight: "700",
+    color: "#18181b",
+    letterSpacing: -0.2,
+    marginHorizontal: 12,
+  },
+
+  countPill: {
+    backgroundColor: "#f4f4f5",
+    borderWidth: 1,
+    borderColor: "#e4e4e7",
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 6,
+  },
+
+  countPillText: {
+    fontSize: 11,
+    fontWeight: "600",
+    color: "#71717a",
+  },
+
+  content: {
+    padding: 16,
+    gap: 16,
+  },
+
+  heroCard: {
+    backgroundColor: "#ffffff",
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: "#f0f0f0",
     overflow: "hidden",
   },
-  watermarkImage: {
+
+  imageWrapper: {
+    position: "relative",
+    width: "100%",
+    height: 190,
+    backgroundColor: "#f4f4f5",
+  },
+
+  heroImage: {
+    width: "100%",
+    height: "100%",
+  },
+
+  fallbackContainer: {
+    flex: 1,
+    backgroundColor: "#f4f4f5",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+
+  imageOverlay: {
+    ...StyleSheet.absoluteFillObject,
+  },
+
+  overlayContent: {
     position: "absolute",
-    right: -20,
-    bottom: -20,
-    width: 170,
-    height: 170,
-    opacity: 0.12,
+    bottom: 14,
+    left: 14,
+    right: 14,
+    gap: 6,
   },
-  headerTopRow: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "flex-start",
-    marginBottom: 14,
-    zIndex: 1,
-  },
-  imageBox: {
-    width: 64,
-    height: 64,
-    borderRadius: 0, // Sharp corners
-    backgroundColor: "#f9fafb",
+
+  categoryBadge: {
+    alignSelf: "flex-start",
+    backgroundColor: "rgba(255, 255, 255, 0.2)",
     borderWidth: 1,
-    borderColor: "#e5e7eb",
-    padding: 6,
-    justifyContent: "center",
-    alignItems: "center",
+    borderColor: "rgba(255, 255, 255, 0.35)",
+    paddingHorizontal: 8,
+    paddingVertical: 2.5,
+    borderRadius: 5,
   },
-  image: {
-    width: "100%",
-    height: "100%",
+
+  categoryBadgeText: {
+    color: "#ffffff",
+    fontSize: 10,
+    fontWeight: "700",
+    letterSpacing: 0.6,
   },
-  letterAvatar: {
-    width: "100%",
-    height: "100%",
-    borderRadius: 0,
-    backgroundColor: "rgba(0, 77, 38, 0.08)",
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  letterText: {
+
+  heroTitle: {
     fontSize: 22,
-    fontWeight: "500", // Non-bold
-    color: BRAND_COLOR,
+    fontWeight: "800",
+    color: "#ffffff",
+    letterSpacing: -0.5,
   },
-  badge: {
-    backgroundColor: "#f3f4f6",
-    borderWidth: 1,
-    borderColor: "#e5e7eb",
-    paddingHorizontal: 12,
-    paddingVertical: 5,
-    borderRadius: 0, // Sharp corners
+
+  descriptionSection: {
+    paddingHorizontal: 16,
+    paddingVertical: 14,
+    backgroundColor: "#fafafa",
+    borderTopWidth: 1,
+    borderTopColor: "#f4f4f5",
   },
-  badgeText: {
-    fontWeight: "400", // Non-bold regular
-    color: "#374151",
-    fontSize: 12,
-  },
-  info: {
-    zIndex: 1,
-  },
-  title: {
-    fontSize: 22,
-    fontWeight: "500", // Non-bold clean header weight
-    color: BRAND_DARK,
-    letterSpacing: 0.2,
-  },
-  description: {
-    marginTop: 6,
-    color: "#6b7280",
+
+  descriptionText: {
     fontSize: 13,
     lineHeight: 19,
     fontWeight: "400",
+    color: "#71717a",
   },
+
   sectionHeaderRow: {
     flexDirection: "row",
     alignItems: "center",
-    marginBottom: 14,
-    paddingHorizontal: 2,
+    gap: 12,
   },
+
   gridHeaderTitle: {
     fontSize: 12,
-    fontWeight: "500", // Non-bold text
-    color: "#374151",
+    fontWeight: "700",
+    color: "#18181b",
     textTransform: "uppercase",
-    letterSpacing: 0.8,
-    marginRight: 10,
+    letterSpacing: 0.6,
   },
+
   dividerLine: {
     flex: 1,
     height: 1,
-    backgroundColor: "#e5e7eb",
+    backgroundColor: "#f4f4f5",
   },
+
   emptyContainer: {
     backgroundColor: "#ffffff",
-    borderRadius: 0, // Sharp corners
+    borderRadius: 14,
     borderWidth: 1,
-    borderColor: "#e5e7eb",
-    paddingVertical: 40,
+    borderColor: "#f0f0f0",
+    paddingVertical: 36,
     paddingHorizontal: 20,
     alignItems: "center",
-    marginTop: 8,
+    gap: 4,
   },
+
+  emptyIconCircle: {
+    width: 48,
+    height: 48,
+    borderRadius: 12,
+    backgroundColor: "#f4f4f5",
+    borderWidth: 1,
+    borderColor: "#e4e4e7",
+    justifyContent: "center",
+    alignItems: "center",
+    marginBottom: 6,
+  },
+
+  emptyTitle: {
+    fontSize: 15,
+    fontWeight: "700",
+    color: "#18181b",
+    letterSpacing: -0.2,
+  },
+
   emptyText: {
-    color: "#6b7280",
-    fontSize: 13,
-    fontWeight: "400",
+    color: "#71717a",
+    fontSize: 12,
+    textAlign: "center",
   },
 });

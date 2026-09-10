@@ -1,265 +1,164 @@
-import React, { useEffect, useRef } from "react";
-import {
-  View,
-  Text,
-  StyleSheet,
-  Pressable,
-  Animated,
-  Easing,
-  Dimensions,
-} from "react-native";
+import React from "react";
+import { View, Text, StyleSheet, Pressable } from "react-native";
+import { Image } from "expo-image";
 import { useRouter, Href } from "expo-router";
-import { LinearGradient } from "expo-linear-gradient";
-import { Camera, Sparkles, ArrowRight } from "lucide-react-native";
-
-const { width } = Dimensions.get("window");
+import { Camera, ArrowRight } from "lucide-react-native";
 
 export default function RequestProductSection() {
   const router = useRouter();
 
-  // Subtle ambient animations (slower, smoother)
-  const breath = useRef(new Animated.Value(0)).current;
-  const float = useRef(new Animated.Value(0)).current;
-
-  useEffect(() => {
-    Animated.loop(
-      Animated.sequence([
-        Animated.timing(breath, {
-          toValue: 1,
-          duration: 6000,
-          easing: Easing.inOut(Easing.sin),
-          useNativeDriver: true,
-        }),
-        Animated.timing(breath, {
-          toValue: 0,
-          duration: 6000,
-          easing: Easing.inOut(Easing.sin),
-          useNativeDriver: true,
-        }),
-      ])
-    ).start();
-
-    Animated.loop(
-      Animated.sequence([
-        Animated.timing(float, {
-          toValue: 1,
-          duration: 4000,
-          easing: Easing.inOut(Easing.sin),
-          useNativeDriver: true,
-        }),
-        Animated.timing(float, {
-          toValue: 0,
-          duration: 4000,
-          easing: Easing.inOut(Easing.sin),
-          useNativeDriver: true,
-        }),
-      ])
-    ).start();
-  }, [breath, float]);
-
-  const glowOpacity = breath.interpolate({
-    inputRange: [0, 1],
-    outputRange: [0.15, 0.35],
-  });
-
-  const glowScale = breath.interpolate({
-    inputRange: [0, 1],
-    outputRange: [1, 1.1],
-  });
-
-  const cardTranslateY = float.interpolate({
-    inputRange: [0, 1],
-    outputRange: [0, -6],
-  });
-
   return (
-    <View style={styles.container}>
-      {/* Deep dark background */}
-      <View style={StyleSheet.absoluteFill}>
-        <View style={styles.bgDark} />
-      </View>
+    <View style={styles.section}>
+      <View style={styles.container}>
+        {/* Top Kicker */}
+        <Text style={styles.kicker}>Can&apos;t Find What You Need?</Text>
 
-      {/* Ambient background glows */}
-      <Animated.View
-        style={[
-          styles.ambientGlow,
-          styles.glowTopRight,
-          { opacity: glowOpacity, transform: [{ scale: glowScale }] },
-        ]}
-      />
-      <Animated.View
-        style={[
-          styles.ambientGlow,
-          styles.glowBottomLeft,
-          { opacity: glowOpacity, transform: [{ scale: glowScale }] },
-        ]}
-      />
-
-      {/* Floating Glass Card */}
-      <Animated.View
-        style={[
-          styles.glassCard,
-          { transform: [{ translateY: cardTranslateY }] },
-        ]}
-      >
-        <LinearGradient
-          colors={["rgba(255,255,255,0.06)", "rgba(255,255,255,0.01)"]}
-          start={{ x: 0, y: 0 }}
-          end={{ x: 1, y: 1 }}
-          style={StyleSheet.absoluteFill}
-        />
-
-        {/* Premium Pill Badge */}
-        <View style={styles.badge}>
-          <Sparkles size={12} color="#34d399" />
-          <Text style={styles.badgeText}>CAN&apos;T FIND IT?</Text>
-        </View>
-
-        <Text style={styles.title}>Let us source it for you.</Text>
-        
-        <Text style={styles.subtitle}>
-          Upload a photo or drop a brief description. Our procurement experts 
-          will locate exactly what you need.
+        {/* Headline with Brand Green Highlight */}
+        <Text style={styles.heading}>
+          Can&apos;t find it?{"\n"}
+          <Text style={styles.headingGreen}>Just ask us.</Text>
         </Text>
 
+        {/* Content Row: Description and Watermark Logo */}
+        <View style={styles.middleRow}>
+          <Text style={styles.description}>
+            Take a photo of the product or send us a link. We&apos;ll help you
+            find it and arrange the purchase for you.
+          </Text>
+
+          {/* Subtly Scaled Watermark Logo */}
+          <View style={styles.logoStage}>
+            <Image
+              source={require("@/assets/images/logo.png")}
+              style={styles.logoImage}
+              contentFit="contain"
+              transition={150}
+            />
+          </View>
+        </View>
+
+        {/* Full Pill Action CTA */}
         <Pressable
-          onPress={() => router.push("/request-product" as Href)}
           style={({ pressed }) => [
-            styles.buttonWrapper,
-            pressed && styles.buttonPressed,
+            styles.ctaButton,
+            pressed && styles.ctaButtonPressed,
           ]}
+          onPress={() => router.push("/request-product" as Href)}
         >
-          <LinearGradient
-            colors={["#059669", "#10b981"]}
-            start={{ x: 0, y: 0 }}
-            end={{ x: 1, y: 0 }}
-            style={styles.button}
-          >
-            <Camera size={18} color="#ffffff" strokeWidth={2.5} />
-            <Text style={styles.buttonText}>Request Custom Product</Text>
-            <View style={styles.buttonIconSpacer} />
-            <ArrowRight size={16} color="#ffffff" style={styles.buttonArrow} />
-          </LinearGradient>
+          <View style={styles.ctaLeft}>
+            <Camera size={15} color="#ffffff" strokeWidth={2} />
+            <Text style={styles.ctaText}>Request a Product</Text>
+          </View>
+
+          <View style={styles.arrowCircle}>
+            <ArrowRight size={13} color="#ffffff" strokeWidth={2.2} />
+          </View>
         </Pressable>
-      </Animated.View>
+      </View>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
+  section: {
+    backgroundColor: "#ffffff",
+    paddingVertical: 24,
+    paddingHorizontal: 16,
+    borderTopWidth: 1,
+    borderBottomWidth: 1,
+    borderColor: "#f4f4f5",
+  },
+
   container: {
-    width: "100%",
-    paddingVertical: 40,
-    paddingHorizontal: 20,
-    alignItems: "center",
-    justifyContent: "center",
-    backgroundColor: "#09090b", // Deep zinc background
+    gap: 14,
   },
-  bgDark: {
-    flex: 1,
-    backgroundColor: "#09090b",
-  },
-  ambientGlow: {
-    position: "absolute",
-    width: width * 0.8,
-    height: width * 0.8,
-    borderRadius: width * 0.4,
-    backgroundColor: "#10b981",
-    filter: [{ blur: 60 }], // Works on newer React Native versions, fallback to opacity below
-  },
-  glowTopRight: {
-    top: -width * 0.2,
-    right: -width * 0.2,
-    backgroundColor: "#059669",
-  },
-  glowBottomLeft: {
-    bottom: -width * 0.2,
-    left: -width * 0.2,
-    backgroundColor: "#0ea5e9",
-  },
-  glassCard: {
-    width: "100%",
-    maxWidth: 400,
-    borderRadius: 24,
-    backgroundColor: "rgba(24, 24, 27, 0.65)", // Glass effect base
-    borderWidth: 1,
-    borderColor: "rgba(255, 255, 255, 0.08)",
-    padding: 28,
-    alignItems: "center",
-    overflow: "hidden",
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 10 },
-    shadowOpacity: 0.3,
-    shadowRadius: 20,
-    elevation: 10,
-  },
-  badge: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 6,
-    paddingVertical: 6,
-    paddingHorizontal: 14,
-    borderRadius: 999,
-    backgroundColor: "rgba(16, 185, 129, 0.12)",
-    borderWidth: 1,
-    borderColor: "rgba(16, 185, 129, 0.25)",
-    marginBottom: 20,
-  },
-  badgeText: {
-    color: "#34d399",
+
+  kicker: {
     fontSize: 11,
     fontWeight: "700",
-    letterSpacing: 1.2,
+    textTransform: "uppercase",
+    letterSpacing: 1.4,
+    color: "#008744",
   },
-  title: {
-    fontSize: 26,
-    fontWeight: "800",
-    color: "#ffffff",
-    textAlign: "center",
-    letterSpacing: -0.5,
-    marginBottom: 12,
+
+  heading: {
+    fontSize: 28,
+    fontWeight: "900",
+    color: "#09090b",
+    letterSpacing: -0.8,
+    lineHeight: 33,
   },
-  subtitle: {
-    fontSize: 15,
-    fontWeight: "400",
-    color: "#a1a1aa",
-    textAlign: "center",
-    lineHeight: 22,
-    marginBottom: 32,
-    paddingHorizontal: 8,
+
+  headingGreen: {
+    color: "#008744",
   },
-  buttonWrapper: {
-    width: "100%",
-    shadowColor: "#10b981",
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.25,
-    shadowRadius: 16,
-    elevation: 8,
-  },
-  button: {
-    width: "100%",
+
+  middleRow: {
     flexDirection: "row",
     alignItems: "center",
+    justifyContent: "space-between",
+    gap: 16,
+    paddingVertical: 4,
+  },
+
+  description: {
+    flex: 1,
+    fontSize: 13,
+    lineHeight: 20,
+    color: "#52525b",
+    letterSpacing: -0.1,
+  },
+
+  logoStage: {
+    width: 68,
+    height: 34,
+    alignItems: "center",
     justifyContent: "center",
-    paddingVertical: 16,
-    borderRadius: 999,
+    opacity: 0.85,
+  },
+
+  logoImage: {
+    width: "100%",
+    height: "100%",
+  },
+
+  ctaButton: {
+    height: 48,
+    borderRadius: 24,
+    backgroundColor: "#09090b",
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    paddingLeft: 18,
+    paddingRight: 8,
+    marginTop: 4,
+  },
+
+  ctaButtonPressed: {
+    backgroundColor: "#008744",
+    opacity: 0.95,
+    transform: [{ scale: 0.99 }],
+  },
+
+  ctaLeft: {
+    flexDirection: "row",
+    alignItems: "center",
     gap: 10,
   },
-  buttonText: {
+
+  ctaText: {
     color: "#ffffff",
-    fontSize: 15,
+    fontSize: 13,
     fontWeight: "600",
-    letterSpacing: 0.3,
+    letterSpacing: 0.1,
   },
-  buttonIconSpacer: {
-    flex: 1,
-    maxWidth: 8,
-  },
-  buttonArrow: {
-    opacity: 0.8,
-  },
-  buttonPressed: {
-    transform: [{ scale: 0.97 }],
-    opacity: 0.9,
+
+  arrowCircle: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: "rgba(255, 255, 255, 0.18)",
+    alignItems: "center",
+    justifyContent: "center",
   },
 });

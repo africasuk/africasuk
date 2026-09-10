@@ -7,30 +7,31 @@ import {
   ActivityIndicator,
   Pressable,
   RefreshControl,
-  SafeAreaView,
-  ViewStyle,
-  TextStyle,
-  ImageStyle,
 } from "react-native";
 import { Image } from "expo-image";
 import { useRouter, Href } from "expo-router";
-import { ShoppingBag, ChevronRight, Package, AlertCircle } from "lucide-react-native";
+import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
+import {
+  ShoppingBag,
+  ChevronRight,
+  Package,
+  AlertCircle,
+  ArrowRight,
+} from "lucide-react-native";
 
 import { createClient } from "@/lib/auth/client";
 import type { Order } from "@africasuk/types";
 import { Price } from "@/components/currency/Price";
 
-const BRAND_LIGHT = "#008744";
-const BRAND_DARK = "#111827";
-const LIGHT_GREEN = "#ecfdf5";
-
-// Extend Order type interface locally if not yet updated in @africasuk/types package
 type OrderWithImage = Order & {
   image?: string | null;
+  itemsCount?: number;
 };
 
 export default function OrdersScreen() {
   const router = useRouter();
+  const insets = useSafeAreaInsets();
+
   const [orders, setOrders] = useState<OrderWithImage[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -39,7 +40,6 @@ export default function OrdersScreen() {
   const fetchOrders = useCallback(async () => {
     try {
       setError(null);
-
       const supabase = createClient();
 
       const {
@@ -47,7 +47,7 @@ export default function OrdersScreen() {
       } = await supabase.auth.getUser();
 
       if (!user) {
-        router.replace("/auth/login");
+        router.replace("/auth/login" as Href);
         return;
       }
 
@@ -68,6 +68,7 @@ export default function OrdersScreen() {
         (data ?? []).map((order: any) => ({
           ...order,
           image: order.order_items?.[0]?.image ?? null,
+          itemsCount: order.order_items?.length ?? 0,
         }))
       );
     } catch (err) {
@@ -90,23 +91,24 @@ export default function OrdersScreen() {
 
   const renderStatusBadge = (status: string) => {
     const formatted = status.toUpperCase();
-    let badgeStyle = styles.badgePending;
-    let textStyle = styles.badgeTextPending;
+
+    let badgeContainerStyle = styles.badgeNeutral;
+    let badgeTextStyle = styles.badgeTextNeutral;
 
     if (["PAID", "DELIVERED", "COMPLETED"].includes(formatted)) {
-      badgeStyle = styles.badgeSuccess;
-      textStyle = styles.badgeTextSuccess;
+      badgeContainerStyle = styles.badgeSuccess;
+      badgeTextStyle = styles.badgeTextSuccess;
     } else if (["CANCELLED", "FAILED", "REFUNDED"].includes(formatted)) {
-      badgeStyle = styles.badgeError;
-      textStyle = styles.badgeTextError;
+      badgeContainerStyle = styles.badgeDanger;
+      badgeTextStyle = styles.badgeTextDanger;
     } else if (["SHIPPED", "PROCESSING"].includes(formatted)) {
-      badgeStyle = styles.badgeInfo;
-      textStyle = styles.badgeTextInfo;
+      badgeContainerStyle = styles.badgeActive;
+      badgeTextStyle = styles.badgeTextActive;
     }
 
     return (
-      <View style={[styles.badge, badgeStyle]}>
-        <Text style={[styles.badgeText, textStyle]}>{formatted}</Text>
+      <View style={[styles.badge, badgeContainerStyle]}>
+        <Text style={[styles.badgeText, badgeTextStyle]}>{formatted}</Text>
       </View>
     );
   };
@@ -118,50 +120,61 @@ export default function OrdersScreen() {
       year: "numeric",
     });
 
+    const displayOrderNumber =
+      item.orderNumber ?? item.id.slice(0, 8).toUpperCase();
+
     return (
       <Pressable
         style={({ pressed }) => [
           styles.orderCard,
           pressed && styles.cardPressed,
         ]}
-        onPress={() =>
-          router.push(`/account/order/${item.id}` as Href)
-        }
+        onPress={() => router.push(`/account/order/${item.id}` as Href)}
       >
+        {/* Top Header: Order ID + Status Badge */}
         <View style={styles.cardHeader}>
           <View style={styles.orderIdGroup}>
-            <Package size={18} color={BRAND_LIGHT} />
-            <Text style={styles.orderNumber}>
-              Order #{item.orderNumber ?? item.id.slice(0, 8)}
-            </Text>
+            <Package size={16} color="#71717a" strokeWidth={1.8} />
+            <Text style={styles.orderNumber}>#{displayOrderNumber}</Text>
           </View>
           {renderStatusBadge(item.status)}
         </View>
 
         <View style={styles.cardDivider} />
 
-        <View style={styles.cardFooter}>
+        {/* Card Body */}
+        <View style={styles.cardBody}>
           <View style={styles.orderInfo}>
-            <Image
-              source={{
-                uri:
-                  item.image ??
-                  "https://placehold.co/80x80?text=No+Image",
-              }}
-              style={styles.productImage}
-              contentFit="cover"
-              transition={200}
-            />
+            <View style={styles.imageWrapper}>
+              {item.image ? (
+                <Image
+                  source={{ uri: item.image }}
+                  style={styles.productImage}
+                  contentFit="cover"
+                  transition={150}
+                  cachePolicy="memory-disk"
+                />
+              ) : (
+                <View style={styles.imageFallback}>
+                  <Package size={20} color="#a1a1aa" strokeWidth={1.5} />
+                </View>
+              )}
+            </View>
 
             <View style={styles.orderMeta}>
-              <Text style={styles.dateLabel}>Placed on {formattedDate}</Text>
+              <Text style={styles.dateLabel}>{formattedDate}</Text>
               <Price price={item.total} style={styles.totalAmount} />
+              {Boolean(item.itemsCount) && (
+                <Text style={styles.itemCountText}>
+                  {item.itemsCount} {item.itemsCount === 1 ? "item" : "items"}
+                </Text>
+              )}
             </View>
           </View>
 
           <View style={styles.detailsTrigger}>
             <Text style={styles.detailsText}>Details</Text>
-            <ChevronRight size={16} color={BRAND_LIGHT} />
+            <ChevronRight size={14} color="#71717a" strokeWidth={2} />
           </View>
         </View>
       </Pressable>
@@ -170,61 +183,78 @@ export default function OrdersScreen() {
 
   if (loading && !refreshing) {
     return (
-      <SafeAreaView style={styles.centerContainer}>
-        <ActivityIndicator size="large" color={BRAND_LIGHT} />
-      </SafeAreaView>
+      <View style={styles.centerContainer}>
+        <ActivityIndicator size="small" color="#18181b" />
+      </View>
     );
   }
 
   if (error) {
     return (
-      <SafeAreaView style={styles.centerContainer}>
-        <AlertCircle size={40} color="#ef4444" />
+      <SafeAreaView style={styles.centerContainer} edges={["top", "bottom"]}>
+        <View style={styles.errorIconCircle}>
+          <AlertCircle size={24} color="#dc2626" strokeWidth={1.8} />
+        </View>
         <Text style={styles.errorText}>{error}</Text>
-        <Pressable style={styles.retryButton} onPress={fetchOrders}>
+        <Pressable
+          style={({ pressed }) => [
+            styles.retryButton,
+            pressed && styles.buttonPressed,
+          ]}
+          onPress={fetchOrders}
+        >
           <Text style={styles.retryText}>Try Again</Text>
         </Pressable>
       </SafeAreaView>
     );
   }
 
+  const bottomInset = insets.bottom > 0 ? insets.bottom : 16;
+
   return (
-    <SafeAreaView style={styles.container}>
+    <SafeAreaView style={styles.container} edges={["top", "left", "right"]}>
       <FlatList
         data={orders}
         keyExtractor={(item) => item.id}
         renderItem={renderOrderItem}
-        contentContainerStyle={styles.listContent}
+        contentContainerStyle={[
+          styles.listContent,
+          { paddingBottom: bottomInset + 32 },
+        ]}
         showsVerticalScrollIndicator={false}
         refreshControl={
           <RefreshControl
             refreshing={refreshing}
             onRefresh={onRefresh}
-            tintColor={BRAND_LIGHT}
+            tintColor="#18181b"
           />
         }
         ListHeaderComponent={
           <View style={styles.header}>
-            <Text style={styles.title}>Your Orders</Text>
+            <Text style={styles.title}>Orders</Text>
             <Text style={styles.subtitle}>
-              Track and manage your order history
+              Track shipments, download receipts, and manage order history
             </Text>
           </View>
         }
         ListEmptyComponent={
           <View style={styles.emptyContainer}>
             <View style={styles.emptyIconCircle}>
-              <ShoppingBag size={32} color={BRAND_LIGHT} />
+              <ShoppingBag size={24} color="#71717a" strokeWidth={1.8} />
             </View>
             <Text style={styles.emptyTitle}>No orders yet</Text>
             <Text style={styles.emptySubtitle}>
-              When you place an order, it will appear here.
+              When you place an order, its status and tracking details will appear here.
             </Text>
             <Pressable
-              style={styles.shopButton}
-              onPress={() => router.push("/" as Href)}
+              style={({ pressed }) => [
+                styles.shopButton,
+                pressed && styles.buttonPressed,
+              ]}
+              onPress={() => router.push("/products" as Href)}
             >
-              <Text style={styles.shopButtonText}>Start Shopping</Text>
+              <Text style={styles.shopButtonText}>Explore Products</Text>
+              <ArrowRight size={14} color="#ffffff" strokeWidth={2} />
             </Pressable>
           </View>
         }
@@ -233,261 +263,302 @@ export default function OrdersScreen() {
   );
 }
 
-type Styles = {
-  container: ViewStyle;
-  centerContainer: ViewStyle;
-  listContent: ViewStyle;
-  header: ViewStyle;
-  title: TextStyle;
-  subtitle: TextStyle;
-  orderCard: ViewStyle;
-  cardPressed: ViewStyle;
-  cardHeader: ViewStyle;
-  orderIdGroup: ViewStyle;
-  orderNumber: TextStyle;
-  cardDivider: ViewStyle;
-  cardFooter: ViewStyle;
-  orderInfo: ViewStyle;
-  orderMeta: ViewStyle;
-  productImage: ImageStyle;
-  dateLabel: TextStyle;
-  totalAmount: TextStyle;
-  detailsTrigger: ViewStyle;
-  detailsText: TextStyle;
-  badge: ViewStyle;
-  badgeText: TextStyle;
-  badgePending: ViewStyle;
-  badgeTextPending: TextStyle;
-  badgeSuccess: ViewStyle;
-  badgeTextSuccess: TextStyle;
-  badgeError: ViewStyle;
-  badgeTextError: TextStyle;
-  badgeInfo: ViewStyle;
-  badgeTextInfo: TextStyle;
-  emptyContainer: ViewStyle;
-  emptyIconCircle: ViewStyle;
-  emptyTitle: TextStyle;
-  emptySubtitle: TextStyle;
-  shopButton: ViewStyle;
-  shopButtonText: TextStyle;
-  errorText: TextStyle;
-  retryButton: ViewStyle;
-  retryText: TextStyle;
-};
-
-const styles = StyleSheet.create<Styles>({
+const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#f9fafb",
-    paddingTop: 60,
+    backgroundColor: "#ffffff",
   },
+
   centerContainer: {
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
-    backgroundColor: "#f9fafb",
+    backgroundColor: "#ffffff",
     padding: 24,
+    gap: 12,
   },
+
   listContent: {
     paddingHorizontal: 16,
-    paddingTop: 16,
-    paddingBottom: 32,
+    paddingTop: 12,
+    gap: 10,
   },
+
   header: {
-    marginBottom: 20,
+    marginBottom: 10,
+    gap: 2,
   },
+
   title: {
     fontSize: 24,
-    fontWeight: "500", // Unbolded clean title
-    color: BRAND_DARK,
-    letterSpacing: 0.2,
+    fontWeight: "800",
+    color: "#18181b",
+    letterSpacing: -0.5,
   },
+
   subtitle: {
     fontSize: 13,
-    fontWeight: "400",
-    color: "#6b7280",
-    marginTop: 4,
+    color: "#71717a",
+    letterSpacing: -0.1,
   },
+
   orderCard: {
     backgroundColor: "#ffffff",
-    borderRadius: 0, // Sharp border
-    padding: 16,
-    marginBottom: 12,
+    borderRadius: 14,
     borderWidth: 1,
-    borderColor: "#e5e7eb",
+    borderColor: "#f0f0f0",
+    padding: 14,
   },
+
   cardPressed: {
-    opacity: 0.9,
+    backgroundColor: "#fafafa",
   },
+
   cardHeader: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
   },
+
   orderIdGroup: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 8,
+    gap: 6,
   },
+
   orderNumber: {
-    fontSize: 14,
-    fontWeight: "500", // Non-bold header weight
-    color: BRAND_DARK,
+    fontSize: 13,
+    fontWeight: "700",
+    color: "#18181b",
+    letterSpacing: -0.2,
   },
+
   cardDivider: {
     height: 1,
-    backgroundColor: "#f3f4f6",
+    backgroundColor: "#f4f4f5",
     marginVertical: 12,
   },
-  cardFooter: {
+
+  cardBody: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
   },
+
   orderInfo: {
     flexDirection: "row",
     alignItems: "center",
     gap: 12,
     flex: 1,
   },
+
+  imageWrapper: {
+    width: 60,
+    height: 60,
+    borderRadius: 10,
+    overflow: "hidden",
+    backgroundColor: "#f4f4f5",
+    borderWidth: 1,
+    borderColor: "#f0f0f0",
+  },
+
+  productImage: {
+    width: "100%",
+    height: "100%",
+  },
+
+  imageFallback: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+
   orderMeta: {
     justifyContent: "center",
+    gap: 2,
   },
-  productImage: {
-    width: 56,
-    height: 56,
-    borderRadius: 0, // Sharp border
-    backgroundColor: "#f3f4f6",
-    borderWidth: 1,
-    borderColor: "#e5e7eb",
-  },
+
   dateLabel: {
-    fontSize: 12,
-    color: "#6b7280",
+    fontSize: 11,
+    color: "#71717a",
+    fontWeight: "500",
+  },
+
+  totalAmount: {
+    fontSize: 15,
+    fontWeight: "700",
+    color: "#18181b",
+    letterSpacing: -0.3,
+  },
+
+  itemCountText: {
+    fontSize: 11,
+    color: "#a1a1aa",
     fontWeight: "400",
   },
-  totalAmount: {
-    fontSize: 14,
-    fontWeight: "500", // Non-bold price text
-    color: BRAND_DARK,
-    marginTop: 2,
-  },
+
   detailsTrigger: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 4,
-    paddingLeft: 8,
-  },
-  detailsText: {
-    fontSize: 13,
-    fontWeight: "500", // Non-bold trigger text
-    color: BRAND_LIGHT,
-  },
-  badge: {
+    gap: 2,
+    backgroundColor: "#f4f4f5",
     paddingHorizontal: 8,
     paddingVertical: 4,
-    borderRadius: 0, // Sharp border
+    borderRadius: 6,
+    borderWidth: 1,
+    borderColor: "#e4e4e7",
   },
+
+  detailsText: {
+    fontSize: 11,
+    fontWeight: "600",
+    color: "#52525b",
+  },
+
+  /* Badges */
+  badge: {
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 6,
+    borderWidth: 1,
+  },
+
   badgeText: {
     fontSize: 10,
-    fontWeight: "500", // Non-bold badge text
-    letterSpacing: 0.5,
+    fontWeight: "700",
+    letterSpacing: 0.4,
   },
-  badgePending: {
-    backgroundColor: "#fef3c7",
-    borderWidth: 1,
-    borderColor: "#fde68a",
+
+  badgeNeutral: {
+    backgroundColor: "#f4f4f5",
+    borderColor: "#e4e4e7",
   },
-  badgeTextPending: {
-    color: "#d97706",
+
+  badgeTextNeutral: {
+    color: "#52525b",
   },
+
   badgeSuccess: {
-    backgroundColor: LIGHT_GREEN,
-    borderWidth: 1,
-    borderColor: "#a7f3d0",
+    backgroundColor: "#f0fdf4",
+    borderColor: "#dcfce7",
   },
+
   badgeTextSuccess: {
-    color: BRAND_DARK,
+    color: "#15803d",
   },
-  badgeError: {
-    backgroundColor: "#fee2e2",
-    borderWidth: 1,
-    borderColor: "#fca5a5",
+
+  badgeActive: {
+    backgroundColor: "#f4f4f5",
+    borderColor: "#18181b",
   },
-  badgeTextError: {
-    color: "#dc2626",
+
+  badgeTextActive: {
+    color: "#18181b",
   },
-  badgeInfo: {
-    backgroundColor: "#e0f2fe",
-    borderWidth: 1,
-    borderColor: "#bae6fd",
+
+  badgeDanger: {
+    backgroundColor: "#fef2f2",
+    borderColor: "#fee2e2",
   },
-  badgeTextInfo: {
-    color: "#0284c7",
+
+  badgeTextDanger: {
+    color: "#b91c1c",
   },
+
+  /* Empty & Error States */
   emptyContainer: {
     backgroundColor: "#ffffff",
-    borderRadius: 0, // Sharp border
+    borderRadius: 16,
     borderWidth: 1,
-    borderColor: "#e5e7eb",
+    borderColor: "#f0f0f0",
     alignItems: "center",
     justifyContent: "center",
-    paddingVertical: 50,
-    paddingHorizontal: 20,
-    marginTop: 12,
+    paddingVertical: 44,
+    paddingHorizontal: 24,
+    marginTop: 8,
   },
+
   emptyIconCircle: {
-    width: 60,
-    height: 60,
-    borderRadius: 0, // Sharp border
-    backgroundColor: LIGHT_GREEN,
+    width: 52,
+    height: 52,
+    borderRadius: 14,
+    backgroundColor: "#f4f4f5",
+    borderWidth: 1,
+    borderColor: "#e4e4e7",
     justifyContent: "center",
     alignItems: "center",
-    marginBottom: 16,
-    borderWidth: 1,
-    borderColor: "#a7f3d0",
+    marginBottom: 14,
   },
+
   emptyTitle: {
-    fontSize: 16,
-    fontWeight: "500", // Non-bold
-    color: BRAND_DARK,
+    fontSize: 18,
+    fontWeight: "700",
+    color: "#18181b",
+    letterSpacing: -0.3,
   },
+
   emptySubtitle: {
     fontSize: 13,
-    fontWeight: "400",
-    color: "#6b7280",
+    color: "#71717a",
     textAlign: "center",
-    marginTop: 4,
-    marginBottom: 20,
+    marginTop: 6,
+    lineHeight: 19,
+    maxWidth: 260,
   },
+
   shopButton: {
-    backgroundColor: BRAND_LIGHT,
-    paddingHorizontal: 20,
-    paddingVertical: 12,
-    borderRadius: 0, // Sharp border
+    marginTop: 20,
+    height: 44,
+    paddingHorizontal: 18,
+    borderRadius: 10,
+    backgroundColor: "#18181b",
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 8,
   },
+
   shopButtonText: {
     color: "#ffffff",
-    fontWeight: "500", // Non-bold
     fontSize: 13,
+    fontWeight: "600",
+    letterSpacing: -0.1,
   },
+
+  errorIconCircle: {
+    width: 48,
+    height: 48,
+    borderRadius: 12,
+    backgroundColor: "#fef2f2",
+    borderWidth: 1,
+    borderColor: "#fee2e2",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+
   errorText: {
     fontSize: 13,
-    fontWeight: "400",
-    color: "#374151",
-    marginTop: 12,
+    color: "#71717a",
     textAlign: "center",
   },
+
   retryButton: {
-    marginTop: 16,
+    height: 40,
     paddingHorizontal: 16,
-    paddingVertical: 8,
-    backgroundColor: BRAND_LIGHT,
-    borderRadius: 0, // Sharp border
+    backgroundColor: "#18181b",
+    borderRadius: 8,
+    alignItems: "center",
+    justifyContent: "center",
   },
+
   retryText: {
     color: "#ffffff",
-    fontWeight: "500", // Non-bold
     fontSize: 13,
+    fontWeight: "600",
+  },
+
+  buttonPressed: {
+    opacity: 0.88,
+    transform: [{ scale: 0.985 }],
   },
 });

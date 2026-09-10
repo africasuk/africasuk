@@ -1,36 +1,35 @@
 import React from "react";
-import { View, Text, StyleSheet, TouchableOpacity } from "react-native";
+import { View, Text, StyleSheet, Pressable } from "react-native";
 import { useRouter } from "expo-router";
-import { ShoppingCart } from "lucide-react-native";
-
-const BRAND = "#005c2e";
-const BRAND_DARK = "#002b15";
+import { ShoppingBag, ArrowRight } from "lucide-react-native";
 
 export default function CartEmpty() {
   const router = useRouter();
 
   return (
     <View style={styles.card}>
-      {/* Icon Frame - Sharp Borders */}
+      {/* Icon Frame */}
       <View style={styles.iconWrapper}>
-        <ShoppingCart size={32} color="#9ca3af" />
+        <ShoppingBag size={24} color="#71717a" strokeWidth={1.75} />
       </View>
 
-      {/* Typography - Clean & Unbolded */}
+      {/* Typography */}
       <Text style={styles.title}>Your cart is empty</Text>
-
       <Text style={styles.subtitle}>
-        Start shopping and explore our collections to add your favorite items.
+        Start exploring our collections and discover items curated for you.
       </Text>
 
-      {/* Button - Sharp Corners */}
-      <TouchableOpacity
-        style={styles.button}
-        activeOpacity={0.85}
-        onPress={() => router.push("/")}
+      {/* CTA Button */}
+      <Pressable
+        style={({ pressed }) => [
+          styles.button,
+          pressed && styles.buttonPressed,
+        ]}
+        onPress={() => router.push("/products" as never)}
       >
-        <Text style={styles.buttonText}>Continue Shopping</Text>
-      </TouchableOpacity>
+        <Text style={styles.buttonText}>Explore Collections</Text>
+        <ArrowRight size={14} color="#ffffff" strokeWidth={2} />
+      </Pressable>
     </View>
   );
 }
@@ -38,54 +37,66 @@ export default function CartEmpty() {
 const styles = StyleSheet.create({
   card: {
     backgroundColor: "#ffffff",
-    borderRadius: 0, // Sharp corners design language
+    borderRadius: 16,
     borderWidth: 1,
-    borderColor: "#e5e7eb",
-    paddingVertical: 40,
+    borderColor: "#f0f0f0",
+    paddingVertical: 44,
     paddingHorizontal: 24,
     alignItems: "center",
     justifyContent: "center",
   },
+
   iconWrapper: {
-    width: 64,
-    height: 64,
-    borderRadius: 0, // Sharp corners
-    backgroundColor: "#f9fafb",
+    width: 52,
+    height: 52,
+    borderRadius: 14,
+    backgroundColor: "#f4f4f5",
     borderWidth: 1,
-    borderColor: "#e5e7eb",
+    borderColor: "#e4e4e7",
     justifyContent: "center",
     alignItems: "center",
     marginBottom: 16,
   },
+
   title: {
     fontSize: 18,
-    fontWeight: "500", // Non-bold clean header weight
-    color: BRAND_DARK,
+    fontWeight: "700",
+    color: "#18181b",
+    letterSpacing: -0.3,
     textAlign: "center",
-    letterSpacing: 0.2,
   },
+
   subtitle: {
     fontSize: 13,
     fontWeight: "400",
-    color: "#6b7280",
+    color: "#71717a",
     textAlign: "center",
     marginTop: 6,
-    lineHeight: 18,
+    lineHeight: 19,
     maxWidth: 260,
   },
+
   button: {
     marginTop: 20,
-    backgroundColor: BRAND,
+    height: 44,
     paddingHorizontal: 20,
-    paddingVertical: 12,
-    borderRadius: 0, // Sharp corners
+    borderRadius: 12,
+    backgroundColor: "#18181b",
+    flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
+    gap: 8,
   },
+
+  buttonPressed: {
+    opacity: 0.88,
+    transform: [{ scale: 0.985 }],
+  },
+
   buttonText: {
     color: "#ffffff",
     fontSize: 13,
-    fontWeight: "500", // Clean regular weight
-    letterSpacing: 0.3,
+    fontWeight: "600",
+    letterSpacing: -0.1,
   },
 });

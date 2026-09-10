@@ -1,4 +1,3 @@
-import { Platform } from "react-native";
 import { Tabs } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import {
@@ -9,22 +8,19 @@ import {
 } from "lucide-react-native";
 
 const BRAND = "#004d26";
+const INACTIVE_COLOR = "#71717a";
+
+// Fixed content height for the touchable bar area (excluding system insets)
+const TAB_CONTENT_HEIGHT = 52;
+const BASE_PADDING_BOTTOM = 6;
 
 export default function TabsLayout() {
   const insets = useSafeAreaInsets();
 
-  // Dynamic height ensuring system navigation bars (Android/iOS) never overlap tabs
-  const tabHeight = Platform.select({
-    ios: 56 + insets.bottom,
-    android: 58 + insets.bottom,
-    default: 64,
-  });
-
-  const paddingBottom = Platform.select({
-    ios: insets.bottom > 0 ? insets.bottom : 8,
-    android: insets.bottom > 0 ? insets.bottom + 4 : 8,
-    default: 8,
-  });
+  // If system provides an inset (iOS home indicator or Android gesture navigation),
+  // use it directly. If inset is 0 (Android 3-button navigation), fallback to standard padding.
+  const bottomInset = insets.bottom > 0 ? insets.bottom : BASE_PADDING_BOTTOM;
+  const totalBarHeight = TAB_CONTENT_HEIGHT + bottomInset;
 
   return (
     <Tabs
@@ -32,29 +28,32 @@ export default function TabsLayout() {
         headerShown: false,
 
         tabBarActiveTintColor: BRAND,
-        tabBarInactiveTintColor: "#9CA3AF",
+        tabBarInactiveTintColor: INACTIVE_COLOR,
+        tabBarHideOnKeyboard: true, // Prevents Android navigation bar from shifting over keyboard
 
         tabBarStyle: {
-          height: tabHeight,
-          paddingTop: 8,
-          paddingBottom: paddingBottom,
+          height: totalBarHeight,
+          paddingTop: 6,
+          paddingBottom: bottomInset,
           borderTopWidth: 1,
-          borderTopColor: "#E5E7EB",
-          backgroundColor: "#FFFFFF",
-          elevation: 0,
-          shadowOpacity: 0,
+          borderTopColor: "#f4f4f5",
+          backgroundColor: "#ffffff",
+          elevation: 0, // Eliminates Android gray drop shadow
+          shadowOpacity: 0, // Eliminates iOS card shadow
         },
 
         tabBarItemStyle: {
+          height: TAB_CONTENT_HEIGHT - 6,
           justifyContent: "center",
           alignItems: "center",
+          paddingVertical: 2,
         },
 
         tabBarLabelStyle: {
-          fontSize: 11,
-          fontWeight: "500",
-          marginTop: 3,
-          letterSpacing: 0.2,
+          fontSize: 10,
+          fontWeight: "600",
+          letterSpacing: -0.1,
+          marginTop: 2,
         },
       }}
     >
@@ -62,8 +61,12 @@ export default function TabsLayout() {
         name="index"
         options={{
           title: "Home",
-          tabBarIcon: ({ color }) => (
-            <House color={color} size={20} />
+          tabBarIcon: ({ color, focused }) => (
+            <House
+              color={color}
+              size={20}
+              strokeWidth={focused ? 2.2 : 1.75}
+            />
           ),
         }}
       />
@@ -72,8 +75,12 @@ export default function TabsLayout() {
         name="categories"
         options={{
           title: "Categories",
-          tabBarIcon: ({ color }) => (
-            <Grid2x2 color={color} size={20} />
+          tabBarIcon: ({ color, focused }) => (
+            <Grid2x2
+              color={color}
+              size={20}
+              strokeWidth={focused ? 2.2 : 1.75}
+            />
           ),
         }}
       />
@@ -82,8 +89,12 @@ export default function TabsLayout() {
         name="orders"
         options={{
           title: "Orders",
-          tabBarIcon: ({ color }) => (
-            <Package color={color} size={20} />
+          tabBarIcon: ({ color, focused }) => (
+            <Package
+              color={color}
+              size={20}
+              strokeWidth={focused ? 2.2 : 1.75}
+            />
           ),
         }}
       />
@@ -92,8 +103,12 @@ export default function TabsLayout() {
         name="menu"
         options={{
           title: "Menu",
-          tabBarIcon: ({ color }) => (
-            <Menu color={color} size={20} />
+          tabBarIcon: ({ color, focused }) => (
+            <Menu
+              color={color}
+              size={20}
+              strokeWidth={focused ? 2.2 : 1.75}
+            />
           ),
         }}
       />

@@ -5,25 +5,24 @@ import {
   StyleSheet,
   ActivityIndicator,
   FlatList,
-  TouchableOpacity,
+  Pressable,
   RefreshControl,
 } from "react-native";
 import { useLocalSearchParams, useRouter, Stack } from "expo-router";
+import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
 import { Image } from "expo-image";
 import * as Linking from "expo-linking";
-import { Globe, ArrowLeft } from "lucide-react-native";
+import { Globe, ArrowLeft, AlertCircle, Package } from "lucide-react-native";
 
 import type { Brand, ProductWithDetails } from "@africasuk/types";
 
 import { createClient } from "@/lib/auth/client";
 import { ProductCard } from "@/components/products/ProductCard";
 
-const BRAND_COLOR = "#005c2e";
-const BRAND_DARK = "#002b15";
-
 export default function BrandDetailScreen() {
   const { slug } = useLocalSearchParams<{ slug: string }>();
   const router = useRouter();
+  const insets = useSafeAreaInsets();
 
   const [brand, setBrand] = useState<Brand | null>(null);
   const [products, setProducts] = useState<ProductWithDetails[]>([]);
@@ -36,12 +35,9 @@ export default function BrandDetailScreen() {
 
     try {
       setError(null);
-
       const supabase = createClient();
 
-      // =========================
-      // BRAND
-      // =========================
+      // Fetch Brand
       const { data: brandData, error: brandError } = await supabase
         .from("brands")
         .select("*")
@@ -53,15 +49,12 @@ export default function BrandDetailScreen() {
         return;
       }
 
-      // DB uses snake_case, app uses camelCase
-      const brand: Brand = {
+      const mappedBrand: Brand = {
         ...(brandData as any),
         logoUrl: (brandData as any).logo_url ?? null,
       };
 
-      // =========================
-      // PRODUCTS + COLORS + IMAGES
-      // =========================
+      // Fetch Products with colors and images
       const { data: productData, error: productError } = await supabase
         .from("products")
         .select(`
@@ -71,19 +64,15 @@ export default function BrandDetailScreen() {
             images:product_images(*)
           )
         `)
-        .eq("brand_id", brand.id);
+        .eq("brand_id", mappedBrand.id);
 
       if (productError) throw productError;
 
-      // Convert DB fields to mobile TypeScript fields
       const mappedProducts: ProductWithDetails[] = (productData ?? []).map(
         (product: any) => ({
           ...product,
-
           colors: (product.colors ?? []).map((color: any) => ({
             ...color,
-
-            // product_images uses snake_case in Supabase
             images: (color.images ?? []).map((image: any) => ({
               ...image,
               imageUrl: image.image_url ?? image.url ?? null,
@@ -92,16 +81,11 @@ export default function BrandDetailScreen() {
         })
       );
 
-      setBrand(brand);
+      setBrand(mappedBrand);
       setProducts(mappedProducts);
     } catch (err) {
       console.error("Failed to fetch brand:", err);
-
-      setError(
-        err instanceof Error
-          ? err.message
-          : "Something went wrong."
-      );
+      setError(err instanceof Error ? err.message : "Something went wrong.");
     } finally {
       setLoading(false);
       setRefreshing(false);
@@ -118,16 +102,13 @@ export default function BrandDetailScreen() {
   };
 
   const handleOpenWebsite = (url: string) => {
-    let formattedUrl = url;
-    if (!/^https?:\/\//i.test(url)) {
-      formattedUrl = `https://${url}`;
+    let formattedUrl = url.trim();
+    if (!/^https?:\/\//i.test(formattedUrl)) {
+      formattedUrl = `https://${formattedUrl}`;
     }
-    Linking.openURL(formattedUrl).catch(() => {
-      // Fallback handling if URL fails to open
-    });
+    Linking.openURL(formattedUrl).catch(() => {});
   };
 
-  // Flatten products by color variants for the grid layout
   const flattenedVariants = products.flatMap((product) =>
     product.colors.map((color) => ({
       key: `${product.id}-${color.id}`,
@@ -139,48 +120,53 @@ export default function BrandDetailScreen() {
     }))
   );
 
+  const bottomInset = insets.bottom > 0 ? insets.bottom : 16;
+
   if (loading) {
     return (
-      <View style={styles.centered}>
-        <ActivityIndicator size="large" color={BRAND_COLOR} />
-      </View>
+      <SafeAreaView style={styles.centered} edges={["top", "bottom"]}>
+        <Stack.Screen options={{ headerShown: false }} />
+        <ActivityIndicator size="small" color="#18181b" />
+      </SafeAreaView>
     );
   }
 
   if (error || !brand) {
     return (
-      <View style={styles.centered}>
-        <Stack.Screen options={{ title: "Brand Not Found" }} />
+      <SafeAreaView style={styles.centered} edges={["top", "bottom"]}>
+        <Stack.Screen options={{ headerShown: false }} />
+        <View style={styles.errorIconCircle}>
+          <AlertCircle size={24} color="#dc2626" strokeWidth={1.8} />
+        </View>
         <Text style={styles.errorTitle}>
           {error ?? "Brand could not be found"}
         </Text>
-        <TouchableOpacity
-          style={styles.backButton}
+        <Pressable
+          style={({ pressed }) => [
+            styles.primaryButton,
+            pressed && styles.buttonPressed,
+          ]}
           onPress={() => router.back()}
-          activeOpacity={0.85}
         >
-          <ArrowLeft size={16} color="#ffffff" />
-          <Text style={styles.backButtonText}>Go Back</Text>
-        </TouchableOpacity>
-      </View>
+          <ArrowLeft size={14} color="#ffffff" strokeWidth={2} />
+          <Text style={styles.primaryButtonText}>Go Back</Text>
+        </Pressable>
+      </SafeAreaView>
     );
   }
 
   const renderHeader = () => (
     <View style={styles.headerContainer}>
-      {/* Brand Header Card - Sharp Corners */}
       <View style={styles.brandCard}>
-        {/* Logo Container */}
+        {/* Brand Logo */}
         <View style={styles.logoContainer}>
           {brand.logoUrl ? (
             <Image
-              source={{
-                uri: String(brand.logoUrl).trim(),
-              }}
+              source={{ uri: String(brand.logoUrl).trim() }}
               style={styles.logoImage}
               contentFit="contain"
               cachePolicy="disk"
-              transition={200}
+              transition={150}
             />
           ) : (
             <Text style={styles.logoFallback}>
@@ -189,13 +175,13 @@ export default function BrandDetailScreen() {
           )}
         </View>
 
-        {/* Brand Meta */}
+        {/* Brand Details */}
         <View style={styles.brandDetails}>
           <Text style={styles.brandName} numberOfLines={1}>
             {brand.name}
           </Text>
 
-          {brand.description && (
+          {Boolean(brand.description) && (
             <Text style={styles.brandDescription} numberOfLines={3}>
               {brand.description}
             </Text>
@@ -204,20 +190,22 @@ export default function BrandDetailScreen() {
           <View style={styles.tagsRow}>
             <View style={styles.productBadge}>
               <Text style={styles.productBadgeText}>
-                {products.length}{" "}
-                {products.length === 1 ? "product" : "products"}
+                {products.length} {products.length === 1 ? "product" : "products"}
               </Text>
             </View>
 
-            {brand.website && (
-              <TouchableOpacity
-                style={styles.websiteButton}
-                activeOpacity={0.7}
+            {Boolean(brand.website) && (
+              <Pressable
+                style={({ pressed }) => [
+                  styles.websiteButton,
+                  pressed && styles.websiteButtonPressed,
+                ]}
+                hitSlop={6}
                 onPress={() => handleOpenWebsite(brand.website!)}
               >
-                <Globe size={12} color={BRAND_COLOR} />
-                <Text style={styles.websiteText}>Visit Website</Text>
-              </TouchableOpacity>
+                <Globe size={13} color="#18181b" strokeWidth={1.8} />
+                <Text style={styles.websiteText}>Website</Text>
+              </Pressable>
             )}
           </View>
         </View>
@@ -226,35 +214,56 @@ export default function BrandDetailScreen() {
   );
 
   return (
-    <View style={styles.container}>
-      <Stack.Screen
-        options={{
-          title: brand.name,
-          headerTitleStyle: { fontWeight: "500", color: BRAND_DARK },
-        }}
-      />
+    <SafeAreaView style={styles.container} edges={["top", "left", "right"]}>
+      <Stack.Screen options={{ headerShown: false }} />
+
+      {/* Top Bar Navigation */}
+      <View style={styles.topBar}>
+        <Pressable
+          style={({ pressed }) => [
+            styles.iconButton,
+            pressed && styles.iconButtonPressed,
+          ]}
+          onPress={() => router.back()}
+          hitSlop={8}
+        >
+          <ArrowLeft size={18} color="#18181b" strokeWidth={2} />
+        </Pressable>
+
+        <Text style={styles.topBarTitle} numberOfLines={1}>
+          {brand.name}
+        </Text>
+
+        <View style={styles.topBarSpacer} />
+      </View>
 
       <FlatList
         data={flattenedVariants}
         numColumns={2}
         keyExtractor={(item) => item.key}
-        contentContainerStyle={styles.listContent}
+        contentContainerStyle={[
+          styles.listContent,
+          { paddingBottom: bottomInset + 20 },
+        ]}
         columnWrapperStyle={styles.columnWrapper}
         ListHeaderComponent={renderHeader}
+        showsVerticalScrollIndicator={false}
         refreshControl={
           <RefreshControl
             refreshing={refreshing}
             onRefresh={handleRefresh}
-            colors={[BRAND_COLOR]}
-            tintColor={BRAND_COLOR}
+            colors={["#18181b"]}
+            tintColor="#18181b"
           />
         }
         ListEmptyComponent={
           <View style={styles.emptyCard}>
+            <View style={styles.emptyIconCircle}>
+              <Package size={22} color="#71717a" strokeWidth={1.8} />
+            </View>
             <Text style={styles.emptyTitle}>No products found</Text>
             <Text style={styles.emptySubtitle}>
-              There are no products available for this brand yet. Please check
-              back later.
+              There are no products listed under this brand yet. Please check back later.
             </Text>
           </View>
         }
@@ -264,7 +273,7 @@ export default function BrandDetailScreen() {
           </View>
         )}
       />
-    </View>
+    </SafeAreaView>
   );
 }
 
@@ -272,148 +281,247 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: "#ffffff",
-    paddingTop: 12,
   },
+
+  topBar: {
+    height: 48,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    paddingHorizontal: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: "#f4f4f5",
+    backgroundColor: "#ffffff",
+  },
+
+  iconButton: {
+    width: 34,
+    height: 34,
+    borderRadius: 10,
+    backgroundColor: "#f4f4f5",
+    borderWidth: 1,
+    borderColor: "#e4e4e7",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+
+  iconButtonPressed: {
+    backgroundColor: "#e4e4e7",
+  },
+
+  topBarTitle: {
+    fontSize: 15,
+    fontWeight: "700",
+    color: "#18181b",
+    letterSpacing: -0.2,
+  },
+
+  topBarSpacer: {
+    width: 34,
+  },
+
   centered: {
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
-    padding: 20,
+    padding: 24,
     backgroundColor: "#ffffff",
+    gap: 12,
   },
+
+  errorIconCircle: {
+    width: 48,
+    height: 48,
+    borderRadius: 12,
+    backgroundColor: "#fef2f2",
+    borderWidth: 1,
+    borderColor: "#fee2e2",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+
+  errorTitle: {
+    fontSize: 14,
+    fontWeight: "600",
+    color: "#18181b",
+    textAlign: "center",
+  },
+
+  primaryButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+    backgroundColor: "#18181b",
+    paddingHorizontal: 16,
+    height: 38,
+    borderRadius: 8,
+  },
+
+  primaryButtonText: {
+    fontSize: 12,
+    fontWeight: "600",
+    color: "#ffffff",
+    letterSpacing: -0.1,
+  },
+
+  buttonPressed: {
+    opacity: 0.88,
+    transform: [{ scale: 0.985 }],
+  },
+
   listContent: {
     padding: 16,
-    paddingBottom: 32,
   },
+
   columnWrapper: {
     justifyContent: "space-between",
     marginBottom: 12,
   },
+
   gridItem: {
     width: "48.5%",
   },
+
   headerContainer: {
     marginBottom: 16,
   },
+
   brandCard: {
     flexDirection: "row",
     alignItems: "center",
     backgroundColor: "#ffffff",
-    borderRadius: 0, // Sharp corners design language
+    borderRadius: 14,
     borderWidth: 1,
-    borderColor: "#e5e7eb",
-    padding: 16,
-    gap: 14,
+    borderColor: "#f0f0f0",
+    padding: 14,
+    gap: 12,
   },
+
   logoContainer: {
-    width: 76,
-    height: 76,
-    borderRadius: 0, // Sharp corners
+    width: 72,
+    height: 72,
+    borderRadius: 12,
     borderWidth: 1,
-    borderColor: "#e5e7eb",
+    borderColor: "#e4e4e7",
     backgroundColor: "#ffffff",
     alignItems: "center",
     justifyContent: "center",
-    padding: 6,
+    padding: 8,
+    overflow: "hidden",
   },
+
   logoImage: {
     width: "100%",
     height: "100%",
   },
+
   logoFallback: {
-    fontSize: 24,
-    fontWeight: "500", // Clean weight
-    color: BRAND_COLOR,
+    fontSize: 22,
+    fontWeight: "700",
+    color: "#18181b",
   },
+
   brandDetails: {
     flex: 1,
+    gap: 3,
   },
+
   brandName: {
     fontSize: 16,
-    fontWeight: "500", // Clean regular weight
-    color: BRAND_DARK,
-    letterSpacing: 0.2,
+    fontWeight: "700",
+    color: "#18181b",
+    letterSpacing: -0.3,
   },
+
   brandDescription: {
     fontSize: 12,
     fontWeight: "400",
-    color: "#6b7280",
-    marginTop: 2,
+    color: "#71717a",
     lineHeight: 16,
   },
+
   tagsRow: {
     flexDirection: "row",
     alignItems: "center",
     flexWrap: "wrap",
-    gap: 8,
-    marginTop: 8,
+    gap: 6,
+    marginTop: 4,
   },
+
   productBadge: {
-    backgroundColor: "#f3f4f6",
+    backgroundColor: "#f4f4f5",
     borderWidth: 1,
-    borderColor: "#e5e7eb",
+    borderColor: "#e4e4e7",
     paddingHorizontal: 8,
-    paddingVertical: 2,
-    borderRadius: 0, // Sharp corners
+    paddingVertical: 3,
+    borderRadius: 6,
   },
+
   productBadgeText: {
     fontSize: 11,
-    fontWeight: "500", // Clean weight
-    color: "#4b5563",
+    fontWeight: "600",
+    color: "#52525b",
   },
+
   websiteButton: {
     flexDirection: "row",
     alignItems: "center",
     gap: 4,
+    backgroundColor: "#f4f4f5",
+    borderWidth: 1,
+    borderColor: "#e4e4e7",
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 6,
   },
+
+  websiteButtonPressed: {
+    backgroundColor: "#e4e4e7",
+  },
+
   websiteText: {
     fontSize: 11,
-    fontWeight: "500", // Clean weight
-    color: BRAND_COLOR,
+    fontWeight: "600",
+    color: "#18181b",
   },
+
   emptyCard: {
-    backgroundColor: "#ffffff",
-    borderRadius: 0, // Sharp corners
+    backgroundColor: "#fafafa",
+    borderRadius: 14,
     borderWidth: 1,
-    borderColor: "#e5e7eb",
-    paddingVertical: 40,
+    borderColor: "#e4e4e7",
+    paddingVertical: 36,
     paddingHorizontal: 20,
     alignItems: "center",
     marginTop: 8,
+    gap: 6,
   },
+
+  emptyIconCircle: {
+    width: 48,
+    height: 48,
+    borderRadius: 12,
+    backgroundColor: "#f4f4f5",
+    borderWidth: 1,
+    borderColor: "#e4e4e7",
+    alignItems: "center",
+    justifyContent: "center",
+    marginBottom: 4,
+  },
+
   emptyTitle: {
     fontSize: 15,
-    fontWeight: "500", // Clean weight
-    color: BRAND_DARK,
+    fontWeight: "700",
+    color: "#18181b",
+    letterSpacing: -0.2,
   },
+
   emptySubtitle: {
     fontSize: 12,
     fontWeight: "400",
-    color: "#6b7280",
+    color: "#71717a",
     textAlign: "center",
-    marginTop: 4,
     maxWidth: 260,
-    lineHeight: 18,
-  },
-  errorTitle: {
-    fontSize: 15,
-    fontWeight: "500",
-    color: "#1f2937",
-    marginBottom: 16,
-  },
-  backButton: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 6,
-    backgroundColor: BRAND_COLOR,
-    paddingHorizontal: 18,
-    paddingVertical: 10,
-    borderRadius: 0, // Sharp corners design language
-  },
-  backButtonText: {
-    fontSize: 12,
-    fontWeight: "500", // Clean weight
-    color: "#ffffff",
-    letterSpacing: 0.2,
+    lineHeight: 17,
   },
 });

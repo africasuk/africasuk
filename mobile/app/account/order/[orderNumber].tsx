@@ -6,33 +6,26 @@ import {
   StyleSheet,
   ActivityIndicator,
   Pressable,
-  Image,
-  ViewStyle,
-  TextStyle,
-  ImageStyle,
-  Linking,
 } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
+import { Image } from "expo-image";
+import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
 import { useLocalSearchParams, useRouter, Href } from "expo-router";
-import { LinearGradient } from "expo-linear-gradient";
+import * as Linking from "expo-linking";
 import {
   Package,
   Truck,
-  ArrowRight,
   MapPin,
   CreditCard,
   Clock,
   AlertCircle,
+  ArrowLeft,
+  ExternalLink,
 } from "lucide-react-native";
 
 import { createClient } from "@/lib/auth/client";
 import type { Order } from "@africasuk/types";
 import { Price } from "@/components/currency/Price";
 import { ReviewForm } from "@/components/products/ReviewForm";
-
-const BRAND = "#005c2e";
-const BRAND_LIGHT = "#008744";
-const BRAND_DARK = "#111827";
 
 type OrderItemRow = {
   id: string;
@@ -54,14 +47,13 @@ type OrderItemRow = {
   } | null;
 };
 
-// Raw row directly from order_items table before hydration
 type RawOrderItem = Omit<OrderItemRow, "product" | "variant">;
 
 export default function OrderDetailsScreen() {
   const { orderNumber } = useLocalSearchParams<{ orderNumber: string }>();
   const router = useRouter();
+  const insets = useSafeAreaInsets();
 
-  // Explicitly typed to support Supabase snake_case & type safe Order interface
   const [order, setOrder] = useState<(Order & Record<string, any>) | null>(null);
   const [items, setItems] = useState<OrderItemRow[]>([]);
   const [loading, setLoading] = useState(true);
@@ -79,7 +71,9 @@ export default function OrderDetailsScreen() {
       } = await supabase.auth.getUser();
 
       if (!user) {
-        router.replace(`/auth/login?redirect=/account/orders/${orderNumber}` as Href);
+        router.replace(
+          `/auth/login?redirect=/account/orders/${orderNumber}` as Href
+        );
         return;
       }
 
@@ -97,7 +91,6 @@ export default function OrderDetailsScreen() {
       const fetchedOrder = data as Order & Record<string, any>;
       setOrder(fetchedOrder);
 
-      // 1. Fetch raw order items
       const { data: rawItemsData, error: itemsError } = await supabase
         .from("order_items")
         .select("*")
@@ -116,7 +109,6 @@ export default function OrderDetailsScreen() {
         return;
       }
 
-      // 2. Hydrate product details
       const productIds = Array.from(
         new Set(rawItems.map((i) => i.product_id).filter(Boolean))
       );
@@ -137,7 +129,6 @@ export default function OrderDetailsScreen() {
         }
       }
 
-      // 3. Hydrate variant details
       const variantIds = Array.from(
         new Set(
           rawItems
@@ -149,11 +140,10 @@ export default function OrderDetailsScreen() {
       let variantsMap: Record<string, any> = {};
 
       if (variantIds.length > 0) {
-        const { data: variantsData, error: variantsError } =
-          await supabase
-            .from("product_variants")
-            .select("id, option_name, option_value")
-            .in("id", variantIds);
+        const { data: variantsData, error: variantsError } = await supabase
+          .from("product_variants")
+          .select("id, option_name, option_value")
+          .in("id", variantIds);
 
         if (variantsError) {
           console.error("Failed to fetch variants:", variantsError);
@@ -167,14 +157,11 @@ export default function OrderDetailsScreen() {
         }
       }
 
-      // 4. Build hydrated order items
       const hydratedItems: OrderItemRow[] = rawItems.map((item) => ({
         ...item,
-
         product: item.product_id
           ? productsMap[item.product_id] ?? null
           : null,
-
         variant: item.variant_id
           ? {
               optionName: variantsMap[item.variant_id]?.option_name,
@@ -198,25 +185,32 @@ export default function OrderDetailsScreen() {
 
   if (loading) {
     return (
-      <SafeAreaView style={styles.centerContainer}>
-        <ActivityIndicator size="large" color={BRAND} />
-      </SafeAreaView>
+      <View style={styles.centerContainer}>
+        <ActivityIndicator size="small" color="#18181b" />
+      </View>
     );
   }
 
   if (error || !order) {
     return (
-      <SafeAreaView style={styles.centerContainer}>
-        <AlertCircle size={40} color="#ef4444" />
+      <SafeAreaView style={styles.centerContainer} edges={["top", "bottom"]}>
+        <View style={styles.errorIconCircle}>
+          <AlertCircle size={24} color="#dc2626" strokeWidth={1.8} />
+        </View>
         <Text style={styles.errorText}>{error || "Order not found."}</Text>
-        <Pressable style={styles.retryButton} onPress={() => router.back()}>
-          <Text style={styles.retryText}>Go Back</Text>
+        <Pressable
+          style={({ pressed }) => [
+            styles.primaryButton,
+            pressed && styles.buttonPressed,
+          ]}
+          onPress={() => router.back()}
+        >
+          <Text style={styles.primaryButtonText}>Go Back</Text>
         </Pressable>
       </SafeAreaView>
     );
   }
 
-  // Safe field extractions
   const rawDate = order.created_at ?? order.createdAt;
   const formattedDate = rawDate
     ? new Date(rawDate).toLocaleString(undefined, {
@@ -225,79 +219,206 @@ export default function OrderDetailsScreen() {
       })
     : "N/A";
 
-  const paymentStatus = order.payment_status ?? order.paymentStatus ?? "PENDING";
-  const paymentMethod = order.payment_method ?? order.paymentMethod ?? "CREDIT CARD";
-  const customerName = order.customer_name ?? order.customerName ?? order.shipping_name ?? "N/A";
-  const customerPhone = order.customer_phone ?? order.customerPhone ?? order.shipping_phone;
+  const paymentStatus = (
+    order.payment_status ??
+    order.paymentStatus ??
+    "PENDING"
+  ).toUpperCase();
+
+  const paymentMethod =
+    order.payment_method ?? order.paymentMethod ?? "Credit Card";
+  const customerName =
+    order.customer_name ?? order.customerName ?? order.shipping_name ?? "N/A";
+  const customerPhone =
+    order.customer_phone ?? order.customerPhone ?? order.shipping_phone;
   const postalCode = order.postal_code ?? order.postalCode;
-  const deliveryStart = order.estimated_delivery_start ?? order.estimatedDeliveryStart;
-  const deliveryEnd = order.estimated_delivery_end ?? order.estimatedDeliveryEnd;
-  const deliveryUpdated = order.estimated_delivery_updated_at ?? order.estimatedDeliveryUpdatedAt;
+  const deliveryStart =
+    order.estimated_delivery_start ?? order.estimatedDeliveryStart;
+  const deliveryEnd =
+    order.estimated_delivery_end ?? order.estimatedDeliveryEnd;
+  const deliveryUpdated =
+    order.estimated_delivery_updated_at ?? order.estimatedDeliveryUpdatedAt;
 
   const isDelivered = (order.status ?? "").toUpperCase() === "DELIVERED";
+  const displayOrderNum =
+    order.order_number ?? order.orderNumber ?? order.id.slice(0, 8).toUpperCase();
+
+  const bottomInset = insets.bottom > 0 ? insets.bottom : 16;
+
+  const renderStatusBadge = (status: string) => {
+    const s = (status ?? "").toUpperCase();
+    let isSuccess = ["PAID", "DELIVERED", "COMPLETED"].includes(s);
+    let isDanger = ["CANCELLED", "FAILED", "REFUNDED"].includes(s);
+
+    return (
+      <View
+        style={[
+          styles.badge,
+          isSuccess && styles.badgeSuccess,
+          isDanger && styles.badgeDanger,
+        ]}
+      >
+        <Text
+          style={[
+            styles.badgeText,
+            isSuccess && styles.badgeTextSuccess,
+            isDanger && styles.badgeTextDanger,
+          ]}
+        >
+          {s}
+        </Text>
+      </View>
+    );
+  };
 
   return (
-    <SafeAreaView style={styles.container}>
+    <SafeAreaView style={styles.container} edges={["top", "left", "right"]}>
+      {/* Top Header */}
+      <View style={styles.topBar}>
+        <Pressable
+          style={({ pressed }) => [
+            styles.iconButton,
+            pressed && styles.iconButtonPressed,
+          ]}
+          onPress={() => router.back()}
+          hitSlop={8}
+        >
+          <ArrowLeft size={18} color="#18181b" strokeWidth={2} />
+        </Pressable>
+
+        <Text style={styles.topBarTitle} numberOfLines={1}>
+          Order Details
+        </Text>
+
+        <View style={styles.topBarSpacer} />
+      </View>
+
       <ScrollView
-        contentContainerStyle={styles.scrollContent}
+        contentContainerStyle={[
+          styles.scrollContent,
+          { paddingBottom: bottomInset + 32 },
+        ]}
         showsVerticalScrollIndicator={false}
       >
         <View style={styles.contentWrapper}>
-          {/* Header Module */}
+          {/* Header Card */}
           <View style={styles.card}>
-            <Text style={styles.orderTitle}>
-              Order #{order.order_number ?? order.orderNumber ?? order.id.slice(0, 8)}
-            </Text>
-            <Text style={styles.orderDate}>Placed on {formattedDate}</Text>
-
-            <View style={styles.headerDivider} />
-
-            <View style={styles.headerMetaRow}>
-              <View style={styles.metaGroup}>
-                <View style={styles.metaItem}>
-                  <Text style={styles.metaLabel}>Status:</Text>
-                  <View style={styles.statusChip}>
-                    <Text style={styles.statusChipText}>{order.status}</Text>
-                  </View>
+            <View style={styles.orderHeaderTop}>
+              <View style={styles.orderTitleGroup}>
+                <View style={styles.iconTile}>
+                  <Package size={16} color="#18181b" strokeWidth={1.8} />
                 </View>
-
-                <View style={styles.metaItem}>
-                  <Text style={styles.metaLabel}>Payment:</Text>
-                  <View style={styles.paymentChip}>
-                    <Text style={styles.paymentChipText}>{paymentStatus}</Text>
-                  </View>
+                <View>
+                  <Text style={styles.orderTitle}>Order #{displayOrderNum}</Text>
+                  <Text style={styles.orderDate}>Placed on {formattedDate}</Text>
                 </View>
               </View>
 
               <Pressable
-                    onPress={() => {
-                      const orderNumber =
-                        order.order_number ?? order.orderNumber ?? order.id;
+                style={({ pressed }) => [
+                  styles.trackButton,
+                  pressed && styles.buttonPressed,
+                ]}
+                onPress={async () => {
+                      const trackingId =
+                        order.order_number ??
+                        order.orderNumber ??
+                        order.id;
 
-                      Linking.openURL(
-                        `https://www.africasuk.com/track/${orderNumber}`
-                      );
+                      const url = `https://africasuk.com/track/${trackingId}`;
+
+                      try {
+                        const supported = await Linking.canOpenURL(url);
+
+                        if (supported) {
+                          await Linking.openURL(url);
+                        }
+                      } catch (error) {
+                        console.error("Failed to open tracking URL:", error);
+                      }
                     }}
-                    style={styles.trackButtonContainer}
-                  >
-                <LinearGradient
-                  colors={[BRAND_LIGHT, BRAND_DARK]}
-                  start={{ x: 0, y: 0 }}
-                  end={{ x: 1, y: 1 }}
-                  style={styles.trackButton}
                 >
-                  <Text style={styles.trackButtonText}>Track Order</Text>
-                  <ArrowRight size={16} color="#ffffff" />
-                </LinearGradient>
+                <Text style={styles.trackButtonText}>Track</Text>
+                <ExternalLink size={12} color="#ffffff" strokeWidth={2} />
               </Pressable>
             </View>
+
+            <View style={styles.divider} />
+
+            <View style={styles.orderHeaderMeta}>
+              <View style={styles.metaCol}>
+                <Text style={styles.metaLabel}>Fulfillment Status</Text>
+                {renderStatusBadge(order.status)}
+              </View>
+
+              <View style={styles.metaCol}>
+                <Text style={styles.metaLabel}>Payment Status</Text>
+                {renderStatusBadge(paymentStatus)}
+              </View>
+            </View>
+          </View>
+
+          {/* Delivery Estimation Card */}
+          <View style={styles.card}>
+            <View style={styles.cardHeaderWithIcon}>
+              <View style={styles.iconTile}>
+                <Truck size={14} color="#18181b" strokeWidth={1.8} />
+              </View>
+              <Text style={styles.cardHeading}>Estimated Arrival</Text>
+            </View>
+
+            {deliveryStart && deliveryEnd ? (
+              <View style={styles.deliveryInfo}>
+                <Text style={styles.deliveryDateRange}>
+                  {new Date(deliveryStart).toLocaleDateString(undefined, {
+                    day: "numeric",
+                    month: "short",
+                    year: "numeric",
+                  })}{" "}
+                  —{" "}
+                  {new Date(deliveryEnd).toLocaleDateString(undefined, {
+                    day: "numeric",
+                    month: "short",
+                    year: "numeric",
+                  })}
+                </Text>
+                <Text style={styles.deliverySubtext}>
+                  Delivery estimates may fluctuate depending on customs inspection
+                  and regional carrier dispatch times.
+                </Text>
+
+                {deliveryUpdated && (
+                  <View style={styles.updateTimeRow}>
+                    <Clock size={12} color="#71717a" strokeWidth={1.8} />
+                    <Text style={styles.updateTimeText}>
+                      Updated{" "}
+                      {new Date(deliveryUpdated).toLocaleDateString(undefined, {
+                        day: "numeric",
+                        month: "short",
+                        year: "numeric",
+                      })}
+                    </Text>
+                  </View>
+                )}
+              </View>
+            ) : (
+              <View style={styles.awaitingBox}>
+                <View style={styles.pulseDot} />
+                <Text style={styles.awaitingText}>
+                  Awaiting courier fulfillment confirmation.
+                </Text>
+              </View>
+            )}
           </View>
 
           {/* Delivery Address & Financial Summary */}
           <View style={styles.grid}>
+            {/* Delivery Address */}
             <View style={styles.card}>
               <View style={styles.cardHeaderWithIcon}>
-                <MapPin size={16} color={BRAND} />
+                <View style={styles.iconTile}>
+                  <MapPin size={14} color="#18181b" strokeWidth={1.8} />
+                </View>
                 <Text style={styles.cardHeading}>Delivery Address</Text>
               </View>
 
@@ -309,12 +430,12 @@ export default function OrderDetailsScreen() {
                   {order.state ? `, ${order.state}` : ""}
                 </Text>
                 <Text style={styles.countryText}>{order.country}</Text>
-                {postalCode && (
+                {Boolean(postalCode) && (
                   <Text style={styles.postalText}>{postalCode}</Text>
                 )}
               </View>
 
-              {customerPhone && (
+              {Boolean(customerPhone) && (
                 <View style={styles.phoneContainer}>
                   <Text style={styles.phoneLabel}>Phone: </Text>
                   <Text style={styles.phoneValue}>{customerPhone}</Text>
@@ -322,9 +443,12 @@ export default function OrderDetailsScreen() {
               )}
             </View>
 
+            {/* Payment Summary */}
             <View style={styles.card}>
               <View style={styles.cardHeaderWithIcon}>
-                <CreditCard size={16} color={BRAND} />
+                <View style={styles.iconTile}>
+                  <CreditCard size={14} color="#18181b" strokeWidth={1.8} />
+                </View>
                 <Text style={styles.cardHeading}>Payment Summary</Text>
               </View>
 
@@ -340,17 +464,17 @@ export default function OrderDetailsScreen() {
                 </View>
 
                 <View style={styles.summaryRow}>
-                  <Text style={styles.summaryLabel}>Tax</Text>
+                  <Text style={styles.summaryLabel}>Estimated Tax</Text>
                   <Price price={order.tax} style={styles.summaryValue} />
                 </View>
 
                 <View style={[styles.summaryRow, styles.totalRow]}>
-                  <Text style={styles.totalLabel}>Total Charged</Text>
+                  <Text style={styles.totalLabel}>Total Payable</Text>
                   <Price price={order.total} style={styles.totalValue} />
                 </View>
 
                 <View style={styles.methodRow}>
-                  <Text style={styles.metaLabel}>Method</Text>
+                  <Text style={styles.metaLabel}>Payment Method</Text>
                   <View style={styles.methodChip}>
                     <Text style={styles.methodChipText}>{paymentMethod}</Text>
                   </View>
@@ -359,67 +483,13 @@ export default function OrderDetailsScreen() {
             </View>
           </View>
 
-          {/* Delivery Estimation Card */}
+          {/* Order Items */}
           <View style={styles.card}>
             <View style={styles.cardHeaderWithIcon}>
-              <Truck size={16} color={BRAND} />
-              <Text style={styles.cardHeading}>Estimated Arrival</Text>
-            </View>
-
-            {deliveryStart && deliveryEnd ? (
-              <>
-                <Text style={styles.deliveryDateRange}>
-                  {new Date(deliveryStart).toLocaleDateString(undefined, {
-                    day: "numeric",
-                    month: "short",
-                    year: "numeric",
-                  })}{" "}
-                  —{" "}
-                  {new Date(deliveryEnd).toLocaleDateString(undefined, {
-                    day: "numeric",
-                    month: "short",
-                    year: "numeric",
-                  })}
-                </Text>
-                <Text style={styles.deliverySubtext}>
-                  Delivery estimates may change depending on supplier
-                  availability, customs clearance, and local transit schedules.
-                </Text>
-
-                {deliveryUpdated && (
-                  <View style={styles.updateTimeRow}>
-                    <Clock size={12} color="#9ca3af" />
-                    <Text style={styles.updateTimeText}>
-                      Updated{" "}
-                      {new Date(deliveryUpdated).toLocaleDateString(
-                        undefined,
-                        {
-                          day: "numeric",
-                          month: "short",
-                          year: "numeric",
-                        }
-                      )}
-                    </Text>
-                  </View>
-                )}
-              </>
-            ) : (
-              <View style={styles.awaitingRow}>
-                <View style={styles.pulseDot} />
-                <Text style={styles.awaitingText}>
-                  Awaiting fulfillment confirmation.
-                </Text>
+              <View style={styles.iconTile}>
+                <Package size={14} color="#18181b" strokeWidth={1.8} />
               </View>
-            )}
-          </View>
-
-          {/* Order Items & Reviews */}
-          <View style={styles.card}>
-            <View style={styles.cardHeaderWithIcon}>
-              <Package size={16} color={BRAND} />
-              <Text style={styles.cardHeading}>
-                Order Items ({items.length})
-              </Text>
+              <Text style={styles.cardHeading}>Items Ordered ({items.length})</Text>
             </View>
 
             <View style={styles.itemsList}>
@@ -434,64 +504,64 @@ export default function OrderDetailsScreen() {
                       !isLast && styles.itemBorderBottom,
                     ]}
                   >
-                    {/* Main Row: Image, Info & Price */}
                     <View style={styles.itemMainRow}>
                       <View style={styles.itemImageContainer}>
                         {item.image ? (
                           <Image
                             source={{ uri: item.image }}
                             style={styles.itemImage}
+                            contentFit="cover"
+                            transition={150}
+                            cachePolicy="memory-disk"
                           />
                         ) : (
-                          <Text style={styles.noImageText}>No Image</Text>
+                          <View style={styles.fallbackBox}>
+                            <Package size={16} color="#a1a1aa" strokeWidth={1.8} />
+                          </View>
                         )}
                       </View>
 
                       <View style={styles.itemDetails}>
-                        <Text style={styles.itemName}>
+                        <Text style={styles.itemName} numberOfLines={2}>
                           {item.product?.name ?? item.name}
                         </Text>
 
                         <View style={styles.itemTagsRow}>
-                          {/* Brand */}
                           {item.product?.brand?.name && (
-                            <View style={styles.brandTag}>
-                              <Text style={styles.brandTagText}>
+                            <View style={styles.neutralTag}>
+                              <Text style={styles.neutralTagText}>
                                 {item.product.brand.name}
                               </Text>
                             </View>
                           )}
 
-                          {/* Category */}
                           {item.product?.category?.name && (
-                            <View style={styles.categoryTag}>
-                              <Text style={styles.categoryTagText}>
+                            <View style={styles.neutralTag}>
+                              <Text style={styles.neutralTagText}>
                                 {item.product.category.name}
+                              </Text>
+                            </View>
+                          )}
+
+                          {item.variant?.optionName && (
+                            <View style={styles.neutralTag}>
+                              <Text style={styles.neutralTagText}>
+                                {item.variant.optionName}: {item.variant.optionValue}
                               </Text>
                             </View>
                           )}
                         </View>
 
-                        {/* Variant */}
-                        {item.variant?.optionName && (
-                          <View style={styles.variantTag}>
-                            <Text style={styles.variantTagText}>
-                              {item.variant.optionName}: {item.variant.optionValue}
-                            </Text>
-                          </View>
-                        )}
-
                         <View style={styles.itemQtyPriceRow}>
                           <Text style={styles.itemQtyText}>
                             Qty: <Text style={styles.boldText}>{item.quantity}</Text>
                           </Text>
-
                           <Price price={item.price} style={styles.itemUnitText} />
                         </View>
                       </View>
 
                       <View style={styles.itemTotalContainer}>
-                        <Text style={styles.itemTotalLabel}>Item Total</Text>
+                        <Text style={styles.itemTotalLabel}>Total</Text>
                         <Price
                           price={item.price * item.quantity}
                           style={styles.itemTotalValue}
@@ -499,7 +569,7 @@ export default function OrderDetailsScreen() {
                       </View>
                     </View>
 
-                    {/* Dedicated Full-Width Review Form (Only for Delivered Orders) */}
+                    {/* Dedicated Review Form when delivered */}
                     {isDelivered && (
                       <View style={styles.reviewFormWrapper}>
                         <ReviewForm
@@ -521,508 +591,529 @@ export default function OrderDetailsScreen() {
   );
 }
 
-type Styles = {
-  container: ViewStyle;
-  centerContainer: ViewStyle;
-  scrollContent: ViewStyle;
-  contentWrapper: ViewStyle;
-  card: ViewStyle;
-  orderTitle: TextStyle;
-  orderDate: TextStyle;
-  headerDivider: ViewStyle;
-  headerMetaRow: ViewStyle;
-  metaGroup: ViewStyle;
-  metaItem: ViewStyle;
-  metaLabel: TextStyle;
-  statusChip: ViewStyle;
-  statusChipText: TextStyle;
-  paymentChip: ViewStyle;
-  paymentChipText: TextStyle;
-  trackButtonContainer: ViewStyle;
-  trackButton: ViewStyle;
-  trackButtonText: TextStyle;
-  grid: ViewStyle;
-  cardHeaderWithIcon: ViewStyle;
-  cardHeading: TextStyle;
-  addressBody: ViewStyle;
-  customerName: TextStyle;
-  addressText: TextStyle;
-  countryText: TextStyle;
-  postalText: TextStyle;
-  phoneContainer: ViewStyle;
-  phoneLabel: TextStyle;
-  phoneValue: TextStyle;
-  summaryList: ViewStyle;
-  summaryRow: ViewStyle;
-  summaryLabel: TextStyle;
-  summaryValue: TextStyle;
-  totalRow: ViewStyle;
-  totalLabel: TextStyle;
-  totalValue: TextStyle;
-  methodRow: ViewStyle;
-  methodChip: ViewStyle;
-  methodChipText: TextStyle;
-  deliveryDateRange: TextStyle;
-  deliverySubtext: TextStyle;
-  updateTimeRow: ViewStyle;
-  updateTimeText: TextStyle;
-  awaitingRow: ViewStyle;
-  pulseDot: ViewStyle;
-  awaitingText: TextStyle;
-  itemsList: ViewStyle;
-  itemContainer: ViewStyle;
-  itemBorderBottom: ViewStyle;
-  itemMainRow: ViewStyle;
-  itemImageContainer: ViewStyle;
-  itemImage: ImageStyle;
-  noImageText: TextStyle;
-  itemDetails: ViewStyle;
-  itemName: TextStyle;
-  itemTagsRow: ViewStyle;
-  brandTag: ViewStyle;
-  brandTagText: TextStyle;
-  categoryTag: ViewStyle;
-  categoryTagText: TextStyle;
-  variantTag: ViewStyle;
-  variantTagText: TextStyle;
-  itemQtyPriceRow: ViewStyle;
-  itemQtyText: TextStyle;
-  itemUnitText: TextStyle;
-  boldText: TextStyle;
-  itemTotalContainer: ViewStyle;
-  itemTotalLabel: TextStyle;
-  itemTotalValue: TextStyle;
-  errorText: TextStyle;
-  retryButton: ViewStyle;
-  retryText: TextStyle;
-  reviewFormWrapper: ViewStyle;
-};
-
-const styles = StyleSheet.create<Styles>({
+const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#f9fafb",
+    backgroundColor: "#ffffff",
   },
+
   centerContainer: {
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
-    backgroundColor: "#f9fafb",
+    backgroundColor: "#ffffff",
     padding: 24,
+    gap: 12,
   },
+
+  topBar: {
+    height: 48,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    paddingHorizontal: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: "#f4f4f5",
+    backgroundColor: "#ffffff",
+  },
+
+  iconButton: {
+    width: 34,
+    height: 34,
+    borderRadius: 10,
+    backgroundColor: "#f4f4f5",
+    borderWidth: 1,
+    borderColor: "#e4e4e7",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+
+  iconButtonPressed: {
+    backgroundColor: "#e4e4e7",
+  },
+
+  topBarTitle: {
+    fontSize: 15,
+    fontWeight: "700",
+    color: "#18181b",
+    letterSpacing: -0.2,
+  },
+
+  topBarSpacer: {
+    width: 34,
+  },
+
   scrollContent: {
     paddingHorizontal: 16,
-    paddingVertical: 20,
+    paddingVertical: 14,
   },
+
   contentWrapper: {
     maxWidth: 700,
     width: "100%",
     alignSelf: "center",
-    gap: 16,
+    gap: 12,
   },
+
   card: {
     backgroundColor: "#ffffff",
-    borderRadius: 0,
+    borderRadius: 14,
     borderWidth: 1,
-    borderColor: "#e5e7eb",
-    padding: 20,
+    borderColor: "#f0f0f0",
+    padding: 14,
+    gap: 12,
   },
-  orderTitle: {
-    fontSize: 20,
-    fontWeight: "500",
-    textTransform: "uppercase",
-    letterSpacing: 0.2,
-    color: BRAND_DARK,
-  },
-  orderDate: {
-    fontSize: 13,
-    fontWeight: "400",
-    color: "#6b7280",
-    marginTop: 4,
-  },
-  headerDivider: {
-    height: 1,
-    backgroundColor: "#f3f4f6",
-    marginVertical: 16,
-  },
-  headerMetaRow: {
+
+  orderHeaderTop: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
-    flexWrap: "wrap",
-    gap: 12,
   },
-  metaGroup: {
-    gap: 6,
-  },
-  metaItem: {
+
+  orderTitleGroup: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 8,
+    gap: 10,
+    flex: 1,
   },
-  metaLabel: {
-    fontSize: 11,
-    fontWeight: "500",
-    color: "#9ca3af",
-    textTransform: "uppercase",
-    letterSpacing: 0.5,
-  },
-  statusChip: {
-    backgroundColor: "#f3f4f6",
-    paddingHorizontal: 10,
-    paddingVertical: 2,
-    borderRadius: 0,
+
+  iconTile: {
+    width: 32,
+    height: 32,
+    borderRadius: 8,
+    backgroundColor: "#f4f4f5",
     borderWidth: 1,
-    borderColor: "#e5e7eb",
+    borderColor: "#e4e4e7",
+    justifyContent: "center",
+    alignItems: "center",
   },
-  statusChipText: {
-    fontSize: 11,
-    fontWeight: "500",
-    textTransform: "uppercase",
-    color: BRAND_DARK,
+
+  orderTitle: {
+    fontSize: 15,
+    fontWeight: "700",
+    color: "#18181b",
+    letterSpacing: -0.3,
   },
-  paymentChip: {
-    backgroundColor: "#ecfdf5",
-    paddingHorizontal: 10,
-    paddingVertical: 2,
-    borderRadius: 0,
-    borderWidth: 1,
-    borderColor: "#a7f3d0",
+
+  orderDate: {
+    fontSize: 12,
+    color: "#71717a",
+    marginTop: 1,
   },
-  paymentChipText: {
-    fontSize: 11,
-    fontWeight: "500",
-    textTransform: "uppercase",
-    color: "#047857",
-  },
-  trackButtonContainer: {
-    borderRadius: 0,
-    overflow: "hidden",
-  },
+
   trackButton: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 8,
-    paddingHorizontal: 18,
-    paddingVertical: 12,
-    borderRadius: 0,
+    gap: 5,
+    backgroundColor: "#18181b",
+    paddingHorizontal: 12,
+    height: 32,
+    borderRadius: 8,
   },
+
   trackButtonText: {
     color: "#ffffff",
     fontSize: 12,
-    fontWeight: "500",
-    textTransform: "uppercase",
-    letterSpacing: 0.5,
+    fontWeight: "600",
+    letterSpacing: -0.1,
   },
+
+  buttonPressed: {
+    opacity: 0.88,
+    transform: [{ scale: 0.985 }],
+  },
+
+  divider: {
+    height: 1,
+    backgroundColor: "#f4f4f5",
+  },
+
+  orderHeaderMeta: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+  },
+
+  metaCol: {
+    gap: 4,
+  },
+
+  metaLabel: {
+    fontSize: 11,
+    fontWeight: "600",
+    color: "#71717a",
+  },
+
+  badge: {
+    alignSelf: "flex-start",
+    backgroundColor: "#f4f4f5",
+    borderWidth: 1,
+    borderColor: "#e4e4e7",
+    paddingHorizontal: 8,
+    paddingVertical: 2.5,
+    borderRadius: 6,
+  },
+
+  badgeText: {
+    fontSize: 10,
+    fontWeight: "700",
+    color: "#52525b",
+    letterSpacing: 0.4,
+  },
+
+  badgeSuccess: {
+    backgroundColor: "#f0fdf4",
+    borderColor: "#dcfce7",
+  },
+
+  badgeTextSuccess: {
+    color: "#15803d",
+  },
+
+  badgeDanger: {
+    backgroundColor: "#fef2f2",
+    borderColor: "#fee2e2",
+  },
+
+  badgeTextDanger: {
+    color: "#b91c1c",
+  },
+
   grid: {
-    gap: 16,
+    gap: 12,
   },
+
   cardHeaderWithIcon: {
     flexDirection: "row",
     alignItems: "center",
     gap: 8,
-    marginBottom: 12,
   },
+
   cardHeading: {
-    fontSize: 11,
-    fontWeight: "500",
+    fontSize: 12,
+    fontWeight: "700",
+    color: "#18181b",
     textTransform: "uppercase",
-    letterSpacing: 0.8,
-    color: BRAND_DARK,
+    letterSpacing: 0.6,
   },
+
+  deliveryInfo: {
+    gap: 6,
+  },
+
+  deliveryDateRange: {
+    fontSize: 14,
+    fontWeight: "700",
+    color: "#18181b",
+    letterSpacing: -0.2,
+  },
+
+  deliverySubtext: {
+    fontSize: 12,
+    color: "#71717a",
+    lineHeight: 17,
+  },
+
+  updateTimeRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 5,
+    marginTop: 2,
+  },
+
+  updateTimeText: {
+    fontSize: 11,
+    color: "#71717a",
+  },
+
+  awaitingBox: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+    backgroundColor: "#fafafa",
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: "#f0f0f0",
+    padding: 10,
+  },
+
+  pulseDot: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+    backgroundColor: "#71717a",
+  },
+
+  awaitingText: {
+    fontSize: 12,
+    color: "#71717a",
+  },
+
   addressBody: {
     gap: 2,
   },
+
   customerName: {
-    fontSize: 15,
-    fontWeight: "500",
-    color: "#111827",
-    marginBottom: 4,
-  },
-  addressText: {
     fontSize: 13,
-    fontWeight: "400",
-    color: "#4b5563",
+    fontWeight: "600",
+    color: "#18181b",
   },
+
+  addressText: {
+    fontSize: 12,
+    color: "#71717a",
+  },
+
   countryText: {
     fontSize: 11,
-    fontWeight: "500",
-    textTransform: "uppercase",
-    letterSpacing: 0.5,
-    color: "#6b7280",
+    fontWeight: "600",
+    color: "#52525b",
     marginTop: 2,
   },
+
   postalText: {
-    fontSize: 12,
-    fontWeight: "400",
-    color: "#9ca3af",
+    fontSize: 11,
+    color: "#a1a1aa",
   },
+
   phoneContainer: {
-    marginTop: 12,
+    marginTop: 4,
     borderTopWidth: 1,
-    borderTopColor: "#f3f4f6",
-    paddingTop: 10,
+    borderTopColor: "#f4f4f5",
+    paddingTop: 8,
     flexDirection: "row",
   },
+
   phoneLabel: {
     fontSize: 12,
-    fontWeight: "400",
-    color: "#6b7280",
+    color: "#71717a",
   },
+
   phoneValue: {
     fontSize: 12,
-    fontWeight: "500",
-    color: "#111827",
+    fontWeight: "600",
+    color: "#18181b",
   },
+
   summaryList: {
-    gap: 10,
+    gap: 8,
   },
+
   summaryRow: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
   },
+
   summaryLabel: {
     fontSize: 13,
-    fontWeight: "400",
-    color: "#4b5563",
+    color: "#71717a",
   },
+
   summaryValue: {
     fontSize: 13,
-    fontWeight: "500",
-    color: "#111827",
+    fontWeight: "600",
+    color: "#18181b",
   },
+
   totalRow: {
     borderTopWidth: 1,
-    borderTopColor: "#f3f4f6",
-    paddingTop: 10,
+    borderTopColor: "#f4f4f5",
+    paddingTop: 8,
     marginTop: 2,
   },
+
   totalLabel: {
-    fontSize: 12,
-    fontWeight: "500",
-    textTransform: "uppercase",
-    letterSpacing: 0.5,
-    color: BRAND_DARK,
+    fontSize: 13,
+    fontWeight: "700",
+    color: "#18181b",
   },
+
   totalValue: {
-    fontSize: 15,
-    fontWeight: "500",
-    color: BRAND_DARK,
+    fontSize: 16,
+    fontWeight: "800",
+    color: "#18181b",
+    letterSpacing: -0.3,
   },
+
   methodRow: {
     borderTopWidth: 1,
-    borderTopColor: "#f3f4f6",
-    paddingTop: 10,
+    borderTopColor: "#f4f4f5",
+    paddingTop: 8,
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
   },
+
   methodChip: {
-    backgroundColor: "#f3f4f6",
-    paddingHorizontal: 10,
-    paddingVertical: 2,
-    borderRadius: 0,
+    backgroundColor: "#f4f4f5",
+    paddingHorizontal: 8,
+    paddingVertical: 2.5,
+    borderRadius: 6,
     borderWidth: 1,
-    borderColor: "#e5e7eb",
+    borderColor: "#e4e4e7",
   },
+
   methodChipText: {
     fontSize: 11,
-    fontWeight: "500",
-    textTransform: "uppercase",
-    color: BRAND_DARK,
+    fontWeight: "600",
+    color: "#27272a",
   },
-  deliveryDateRange: {
-    fontSize: 16,
-    fontWeight: "500",
-    textTransform: "uppercase",
-    letterSpacing: 0.2,
-    color: BRAND_DARK,
-  },
-  deliverySubtext: {
-    fontSize: 12,
-    fontWeight: "400",
-    color: "#6b7280",
-    marginTop: 6,
-    lineHeight: 18,
-  },
-  updateTimeRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 6,
-    marginTop: 10,
-  },
-  updateTimeText: {
-    fontSize: 10,
-    fontWeight: "400",
-    textTransform: "uppercase",
-    letterSpacing: 0.5,
-    color: "#9ca3af",
-  },
-  awaitingRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 8,
-  },
-  pulseDot: {
-    width: 8,
-    height: 8,
-    borderRadius: 0,
-    backgroundColor: "#f59e0b",
-  },
-  awaitingText: {
-    fontSize: 13,
-    fontWeight: "400",
-    color: "#6b7280",
-  },
+
   itemsList: {
-    gap: 16,
+    gap: 12,
   },
+
   itemContainer: {
-    paddingBottom: 16,
+    paddingBottom: 12,
   },
+
   itemBorderBottom: {
     borderBottomWidth: 1,
-    borderBottomColor: "#f3f4f6",
+    borderBottomColor: "#f4f4f5",
   },
+
   itemMainRow: {
     flexDirection: "row",
     alignItems: "flex-start",
     gap: 12,
   },
+
   itemImageContainer: {
-    width: 72,
-    height: 72,
-    borderRadius: 0,
-    backgroundColor: "#f9fafb",
+    width: 64,
+    height: 64,
+    borderRadius: 10,
+    backgroundColor: "#f4f4f5",
     borderWidth: 1,
-    borderColor: "#e5e7eb",
-    justifyContent: "center",
-    alignItems: "center",
+    borderColor: "#f0f0f0",
     overflow: "hidden",
   },
+
   itemImage: {
     width: "100%",
     height: "100%",
-    resizeMode: "cover",
   },
-  noImageText: {
-    fontSize: 9,
-    fontWeight: "400",
-    color: "#9ca3af",
-    textTransform: "uppercase",
+
+  fallbackBox: {
+    flex: 1,
+    alignItems: "center",
+    justifyContent: "center",
   },
+
   itemDetails: {
     flex: 1,
-    gap: 4,
+    gap: 3,
   },
+
   itemName: {
-    fontSize: 14,
-    fontWeight: "500",
-    color: BRAND_DARK,
+    fontSize: 13,
+    fontWeight: "600",
+    color: "#18181b",
+    lineHeight: 18,
+    letterSpacing: -0.1,
   },
+
   itemTagsRow: {
     flexDirection: "row",
-    gap: 6,
+    gap: 4,
     flexWrap: "wrap",
+    marginTop: 1,
   },
-  brandTag: {
-    backgroundColor: "#ecfdf5",
+
+  neutralTag: {
+    backgroundColor: "#f4f4f5",
     paddingHorizontal: 6,
     paddingVertical: 2,
-    borderRadius: 0,
+    borderRadius: 5,
     borderWidth: 1,
-    borderColor: "#a7f3d0",
+    borderColor: "#e4e4e7",
   },
-  brandTagText: {
-    fontSize: 9,
-    fontWeight: "500",
-    textTransform: "uppercase",
-    color: "#047857",
-  },
-  categoryTag: {
-    backgroundColor: "#f3f4f6",
-    paddingHorizontal: 6,
-    paddingVertical: 2,
-    borderRadius: 0,
-    borderWidth: 1,
-    borderColor: "#e5e7eb",
-  },
-  categoryTagText: {
-    fontSize: 9,
-    fontWeight: "500",
-    textTransform: "uppercase",
-    color: "#4b5563",
-  },
-  variantTag: {
-    alignSelf: "flex-start",
-    backgroundColor: "#f3f4f6",
-    paddingHorizontal: 8,
-    paddingVertical: 3,
-    borderRadius: 0,
-    borderWidth: 1,
-    borderColor: "#e5e7eb",
-  },
-  variantTagText: {
+
+  neutralTagText: {
     fontSize: 10,
-    fontWeight: "500",
-    color: "#374151",
+    fontWeight: "600",
+    color: "#52525b",
   },
+
   itemQtyPriceRow: {
     flexDirection: "row",
-    gap: 12,
+    alignItems: "center",
+    gap: 10,
     marginTop: 2,
   },
+
   itemQtyText: {
     fontSize: 12,
-    fontWeight: "400",
-    color: "#6b7280",
+    color: "#71717a",
   },
+
   itemUnitText: {
     fontSize: 12,
-    fontWeight: "400",
-    color: "#6b7280",
-  },
-  boldText: {
     fontWeight: "500",
-    color: "#111827",
+    color: "#71717a",
   },
+
+  boldText: {
+    fontWeight: "700",
+    color: "#18181b",
+  },
+
   itemTotalContainer: {
     alignItems: "flex-end",
+    gap: 2,
   },
+
   itemTotalLabel: {
-    fontSize: 9,
-    fontWeight: "400",
-    textTransform: "uppercase",
-    color: "#9ca3af",
+    fontSize: 10,
+    color: "#a1a1aa",
+    fontWeight: "500",
   },
+
   itemTotalValue: {
     fontSize: 13,
-    fontWeight: "500",
-    color: BRAND_DARK,
-    marginTop: 2,
+    fontWeight: "700",
+    color: "#18181b",
+    letterSpacing: -0.2,
   },
+
   reviewFormWrapper: {
     width: "100%",
     marginTop: 12,
+    paddingTop: 12,
+    borderTopWidth: 1,
+    borderTopColor: "#f4f4f5",
   },
+
+  errorIconCircle: {
+    width: 48,
+    height: 48,
+    borderRadius: 12,
+    backgroundColor: "#fef2f2",
+    borderWidth: 1,
+    borderColor: "#fee2e2",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+
   errorText: {
     fontSize: 13,
-    fontWeight: "400",
-    color: "#374151",
-    marginTop: 12,
+    color: "#71717a",
     textAlign: "center",
   },
-  retryButton: {
-    marginTop: 16,
+
+  primaryButton: {
+    height: 40,
     paddingHorizontal: 16,
-    paddingVertical: 8,
-    backgroundColor: BRAND,
-    borderRadius: 0,
+    backgroundColor: "#18181b",
+    borderRadius: 8,
+    alignItems: "center",
+    justifyContent: "center",
   },
-  retryText: {
+
+  primaryButtonText: {
     color: "#ffffff",
-    fontWeight: "500",
     fontSize: 13,
+    fontWeight: "600",
+    letterSpacing: -0.1,
   },
 });

@@ -1,5 +1,5 @@
 import React from "react";
-import { View, Text, StyleSheet, TouchableOpacity } from "react-native";
+import { View, Text, StyleSheet, Pressable } from "react-native";
 import { Image } from "expo-image";
 import { useRouter } from "expo-router";
 import { Minus, Plus, Trash2 } from "lucide-react-native";
@@ -7,8 +7,6 @@ import { Minus, Plus, Trash2 } from "lucide-react-native";
 import type { CartItem as CartItemType } from "@/types/cart";
 import { Price } from "@/components/currency/Price";
 import { useCart } from "@/store/cart";
-
-const BRAND_DARK = "#002b15";
 
 interface Props {
   item: CartItemType;
@@ -21,14 +19,6 @@ export default function CartItem({ item }: Props) {
   const increaseQuantity = useCart((state) => state.increaseQuantity);
   const decreaseQuantity = useCart((state) => state.decreaseQuantity);
 
-  function increase() {
-    increaseQuantity(item.variantId);
-  }
-
-  function decrease() {
-    decreaseQuantity(item.variantId);
-  }
-
   function handleNavigate() {
     if (item.slug) {
       router.push(`/products/${item.slug}` as const);
@@ -39,36 +29,47 @@ export default function CartItem({ item }: Props) {
 
   return (
     <View style={styles.card}>
-      {/* Product Image Frame - Sharp Corners */}
-      <TouchableOpacity activeOpacity={0.8} onPress={handleNavigate}>
+      {/* 1:1 Image Frame */}
+      <Pressable
+        onPress={handleNavigate}
+        style={({ pressed }) => [
+          styles.imageWrapper,
+          pressed && styles.pressedState,
+        ]}
+      >
         <Image
           source={{ uri: item.image }}
           style={styles.image}
           contentFit="cover"
-          transition={200}
+          transition={150}
+          cachePolicy="memory-disk"
         />
-      </TouchableOpacity>
+      </Pressable>
 
       {/* Main Content */}
       <View style={styles.content}>
-        <View>
-          {/* Title */}
-          <TouchableOpacity activeOpacity={0.7} onPress={handleNavigate}>
+        {/* Top Section: Title & Variants */}
+        <View style={styles.headerBlock}>
+          <Pressable
+            onPress={handleNavigate}
+            style={({ pressed }) => pressed && styles.pressedState}
+          >
             <Text style={styles.title} numberOfLines={2}>
               {item.name}
             </Text>
-          </TouchableOpacity>
+          </Pressable>
 
-          {/* Options / Variants */}
           {item.options && item.options.length > 0 && (
             <View style={styles.optionsContainer}>
               {item.options.map((option) => (
                 <View
                   key={`${option.optionName}-${option.value}`}
-                  style={styles.optionRow}
+                  style={styles.optionBadge}
                 >
-                  <Text style={styles.optionName}>{option.optionName}:</Text>
-                  <Text style={styles.optionValue}>{option.value}</Text>
+                  <Text style={styles.optionText} numberOfLines={1}>
+                    <Text style={styles.optionLabel}>{option.optionName}: </Text>
+                    {option.value}
+                  </Text>
                 </View>
               ))}
             </View>
@@ -77,49 +78,57 @@ export default function CartItem({ item }: Props) {
 
         {/* Footer: Stepper & Price/Remove */}
         <View style={styles.footer}>
-          {/* Quantity Stepper - Sharp Corners */}
+          {/* Quantity Stepper */}
           <View style={styles.stepperContainer}>
-            <TouchableOpacity
-              style={styles.stepperButton}
-              activeOpacity={0.7}
-              onPress={decrease}
+            <Pressable
+              style={({ pressed }) => [
+                styles.stepperButton,
+                pressed && styles.stepperButtonPressed,
+              ]}
+              hitSlop={4}
+              onPress={() => decreaseQuantity(item.variantId)}
             >
-              <Minus size={12} color="#374151" />
-            </TouchableOpacity>
+              <Minus size={12} color="#18181b" strokeWidth={2} />
+            </Pressable>
 
             <Text style={styles.quantityText}>{item.quantity}</Text>
 
-            <TouchableOpacity
-              style={[
+            <Pressable
+              style={({ pressed }) => [
                 styles.stepperButton,
+                pressed && !isAtMaxStock && styles.stepperButtonPressed,
                 isAtMaxStock && styles.disabledStepperButton,
               ]}
-              activeOpacity={0.7}
-              onPress={increase}
+              hitSlop={4}
+              onPress={() => increaseQuantity(item.variantId)}
               disabled={isAtMaxStock}
             >
               <Plus
                 size={12}
-                color={isAtMaxStock ? "#d1d5db" : "#374151"}
+                color={isAtMaxStock ? "#a1a1aa" : "#18181b"}
+                strokeWidth={2}
               />
-            </TouchableOpacity>
+            </Pressable>
           </View>
 
-          {/* Price & Remove Button */}
+          {/* Price & Remove */}
           <View style={styles.priceAndRemoveContainer}>
             <Price
               price={item.price * item.quantity}
               style={styles.priceText}
             />
 
-            <TouchableOpacity
-              style={styles.removeButton}
-              activeOpacity={0.7}
+            <Pressable
+              style={({ pressed }) => [
+                styles.removeButton,
+                pressed && styles.pressedState,
+              ]}
+              hitSlop={6}
               onPress={() => removeItem(item.variantId)}
             >
-              <Trash2 size={12} color="#ef4444" />
+              <Trash2 size={12} color="#dc2626" strokeWidth={1.8} />
               <Text style={styles.removeText}>Remove</Text>
-            </TouchableOpacity>
+            </Pressable>
           </View>
         </View>
       </View>
@@ -132,96 +141,138 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     gap: 12,
     backgroundColor: "#ffffff",
-    borderRadius: 0, // Sharp corners design language
+    borderRadius: 14,
     borderWidth: 1,
-    borderColor: "#e5e7eb",
+    borderColor: "#f0f0f0",
     padding: 12,
   },
-  image: {
-    width: 88,
-    height: 88,
-    borderRadius: 0, // Sharp corners
-    backgroundColor: "#f9fafb",
+
+  imageWrapper: {
+    width: 80,
+    height: 80,
+    borderRadius: 10,
+    overflow: "hidden",
+    backgroundColor: "#f4f4f5",
     borderWidth: 1,
-    borderColor: "#e5e7eb",
+    borderColor: "#f0f0f0",
   },
+
+  image: {
+    width: "100%",
+    height: "100%",
+  },
+
   content: {
     flex: 1,
     justifyContent: "space-between",
   },
-  title: {
-    fontSize: 13,
-    fontWeight: "500", // Non-bold clean weight
-    color: BRAND_DARK,
-    lineHeight: 18,
-  },
-  optionsContainer: {
-    marginTop: 4,
-    gap: 2,
-  },
-  optionRow: {
-    flexDirection: "row",
-    alignItems: "center",
+
+  headerBlock: {
     gap: 4,
   },
-  optionName: {
-    fontSize: 11,
-    fontWeight: "400",
-    color: "#6b7280",
+
+  title: {
+    fontSize: 13,
+    fontWeight: "600",
+    color: "#18181b",
+    lineHeight: 18,
+    letterSpacing: -0.1,
   },
-  optionValue: {
-    fontSize: 11,
-    fontWeight: "500", // Clean regular weight
-    color: BRAND_DARK,
+
+  optionsContainer: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: 4,
   },
+
+  optionBadge: {
+    backgroundColor: "#f4f4f5",
+    borderRadius: 6,
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderWidth: 1,
+    borderColor: "#e4e4e7",
+  },
+
+  optionLabel: {
+    color: "#71717a",
+    fontSize: 10,
+    fontWeight: "500",
+  },
+
+  optionText: {
+    fontSize: 10,
+    color: "#27272a",
+    fontWeight: "600",
+  },
+
   footer: {
     marginTop: 10,
     flexDirection: "row",
     alignItems: "flex-end",
     justifyContent: "space-between",
   },
+
   stepperContainer: {
     flexDirection: "row",
     alignItems: "center",
     borderWidth: 1,
-    borderColor: "#e5e7eb",
-    borderRadius: 0, // Sharp corners
-    backgroundColor: "#f9fafb",
+    borderColor: "#e4e4e7",
+    borderRadius: 8,
+    backgroundColor: "#f4f4f5",
+    height: 30,
   },
+
   stepperButton: {
-    paddingHorizontal: 8,
-    paddingVertical: 5,
+    width: 28,
+    height: "100%",
     justifyContent: "center",
     alignItems: "center",
   },
-  disabledStepperButton: {
-    opacity: 0.5,
+
+  stepperButtonPressed: {
+    backgroundColor: "#e4e4e7",
   },
+
+  disabledStepperButton: {
+    opacity: 0.4,
+  },
+
   quantityText: {
-    width: 26,
+    width: 24,
     textAlign: "center",
     fontSize: 12,
-    fontWeight: "500", // Clean weight
-    color: BRAND_DARK,
+    fontWeight: "700",
+    color: "#18181b",
   },
+
   priceAndRemoveContainer: {
     alignItems: "flex-end",
     gap: 4,
   },
+
   priceText: {
     fontSize: 14,
-    fontWeight: "500", // Clean regular weight
-    color: BRAND_DARK,
+    fontWeight: "700",
+    color: "#18181b",
+    letterSpacing: -0.2,
   },
+
   removeButton: {
     flexDirection: "row",
     alignItems: "center",
     gap: 4,
     paddingVertical: 2,
   },
+
   removeText: {
     fontSize: 11,
-    fontWeight: "400", // Clean weight
-    color: "#ef4444",
+    fontWeight: "600",
+    color: "#dc2626",
+    letterSpacing: -0.1,
+  },
+
+  pressedState: {
+    opacity: 0.8,
   },
 });

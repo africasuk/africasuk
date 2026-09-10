@@ -4,12 +4,12 @@ import {
   Text,
   StyleSheet,
   ScrollView,
-  TouchableOpacity,
+  Pressable,
   ActivityIndicator,
 } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
+import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
 import { useRouter, Href } from "expo-router";
-
+import { ArrowLeft, AlertCircle, RefreshCw } from "lucide-react-native";
 
 import type { Profile, Address } from "@africasuk/types";
 
@@ -18,11 +18,9 @@ import ProfileSection from "@/components/profile/ProfileSection";
 import SavedAddresses from "@/components/profile/SavedAddresses";
 import SecurityCenter from "@/components/profile/SecurityCenter";
 
-const BRAND = "#005c2e";
-const BRAND_DARK = "#002b15";
-
 export default function ProfileScreen() {
   const router = useRouter();
+  const insets = useSafeAreaInsets();
 
   const [profile, setProfile] = useState<Profile | null>(null);
   const [addresses, setAddresses] = useState<Address[]>([]);
@@ -30,59 +28,61 @@ export default function ProfileScreen() {
   const [notFound, setNotFound] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-const fetchProfileData = useCallback(async () => {
-  try {
-    setLoading(true);
-    setError(null);
-    setNotFound(false);
+  const fetchProfileData = useCallback(async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      setNotFound(false);
 
-    const supabase = createClient();
+      const supabase = createClient();
 
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
 
-    if (!user) {
-      router.replace("/auth/login" as Href);
-      return;
+      if (!user) {
+        router.replace("/auth/login" as Href);
+        return;
+      }
+
+      const [
+        { data: fetchedProfile, error: profileError },
+        { data: fetchedAddresses, error: addressError },
+      ] = await Promise.all([
+        supabase
+          .from("profiles")
+          .select("*")
+          .eq("user_id", user.id)
+          .single(),
+
+        supabase
+          .from("addresses")
+          .select("*")
+          .eq("user_id", user.id)
+          .order("is_default", { ascending: false }),
+      ]);
+
+      if (profileError || !fetchedProfile) {
+        setNotFound(true);
+        return;
+      }
+
+      if (addressError) throw addressError;
+
+      const profileData = fetchedProfile as any;
+
+      setProfile({
+        ...profileData,
+        avatarUrl: profileData.avatar_url,
+      } as Profile);
+      setAddresses((fetchedAddresses as Address[]) ?? []);
+    } catch (err) {
+      console.error("Failed to load profile details:", err);
+      setError("Unable to load profile information.");
+    } finally {
+      setLoading(false);
     }
-const [
-  { data: fetchedProfile, error: profileError },
-  { data: fetchedAddresses, error: addressError },
-] = await Promise.all([
-  supabase
-    .from("profiles")
-    .select("*")
-    .eq("user_id", user.id)
-    .single(),
-
-  supabase
-    .from("addresses")
-    .select("*")
-    .eq("user_id", user.id),
-]);
-
-if (profileError || !fetchedProfile) {
-  setNotFound(true);
-  return;
-}
-
-if (addressError) throw addressError;
-
-const profileData = fetchedProfile as any;
-
-setProfile({
-  ...profileData,
-  avatarUrl: profileData.avatar_url,
-} as Profile);
-setAddresses((fetchedAddresses as Address[]) ?? []);
-  } catch (err) {
-    console.error("Failed to load profile details:", err);
-    setError("Unable to load profile information.");
-  } finally {
-    setLoading(false);
-  }
-}, [router]);
+  }, [router]);
 
   useEffect(() => {
     fetchProfileData();
@@ -90,20 +90,32 @@ setAddresses((fetchedAddresses as Address[]) ?? []);
 
   if (loading) {
     return (
-      <SafeAreaView style={styles.centerContainer}>
-        <ActivityIndicator size="large" color={BRAND} />
-      </SafeAreaView>
+      <View style={styles.centerContainer}>
+        <ActivityIndicator size="small" color="#18181b" />
+      </View>
     );
   }
 
   if (notFound) {
     return (
-      <SafeAreaView style={styles.centerContainer}>
-        <View style={styles.notFoundCard}>
-          <Text style={styles.notFoundTitle}>Profile not found</Text>
-          <Text style={styles.notFoundSubtitle}>
-            We couldn&apos;t find your profile.
+      <SafeAreaView style={styles.centerContainer} edges={["top", "bottom"]}>
+        <View style={styles.stateCard}>
+          <View style={styles.iconCircleNeutral}>
+            <AlertCircle size={22} color="#71717a" strokeWidth={1.8} />
+          </View>
+          <Text style={styles.stateTitle}>Profile not found</Text>
+          <Text style={styles.stateSubtitle}>
+            We could not locate an active account profile linked to this user.
           </Text>
+          <Pressable
+            style={({ pressed }) => [
+              styles.primaryButton,
+              pressed && styles.buttonPressed,
+            ]}
+            onPress={() => router.replace("/auth/login" as Href)}
+          >
+            <Text style={styles.primaryButtonText}>Sign In Again</Text>
+          </Pressable>
         </View>
       </SafeAreaView>
     );
@@ -111,31 +123,67 @@ setAddresses((fetchedAddresses as Address[]) ?? []);
 
   if (error || !profile) {
     return (
-      <SafeAreaView style={styles.centerContainer}>
-        <Text style={styles.errorText}>{error ?? "Unable to load profile"}</Text>
-        <TouchableOpacity
-          style={styles.retryButton}
-          onPress={fetchProfileData}
-          activeOpacity={0.8}
-        >
-          <Text style={styles.retryButtonText}>Retry</Text>
-        </TouchableOpacity>
+      <SafeAreaView style={styles.centerContainer} edges={["top", "bottom"]}>
+        <View style={styles.stateCard}>
+          <View style={styles.iconCircleError}>
+            <AlertCircle size={22} color="#dc2626" strokeWidth={1.8} />
+          </View>
+          <Text style={styles.stateTitle}>Sync Failed</Text>
+          <Text style={styles.stateSubtitle}>
+            {error ?? "Unable to connect to your account profile."}
+          </Text>
+          <Pressable
+            style={({ pressed }) => [
+              styles.primaryButton,
+              pressed && styles.buttonPressed,
+            ]}
+            onPress={fetchProfileData}
+          >
+            <RefreshCw size={14} color="#ffffff" strokeWidth={2} />
+            <Text style={styles.primaryButtonText}>Try Again</Text>
+          </Pressable>
+        </View>
       </SafeAreaView>
     );
   }
 
+  const bottomInset = insets.bottom > 0 ? insets.bottom : 16;
+
   return (
-    <SafeAreaView style={styles.safeArea} edges={["top", "bottom"]}>
+    <SafeAreaView style={styles.safeArea} edges={["top", "left", "right"]}>
+      {/* Top Header Navigation */}
+      <View style={styles.topBar}>
+        <Pressable
+          style={({ pressed }) => [
+            styles.backButton,
+            pressed && styles.backButtonPressed,
+          ]}
+          onPress={() => router.back()}
+          hitSlop={8}
+        >
+          <ArrowLeft size={18} color="#18181b" strokeWidth={2} />
+        </Pressable>
+
+        <Text style={styles.topBarTitle} numberOfLines={1}>
+          Account Details
+        </Text>
+
+        <View style={styles.topBarSpacer} />
+      </View>
+
       <ScrollView
-        contentContainerStyle={styles.scrollContent}
+        contentContainerStyle={[
+          styles.scrollContent,
+          { paddingBottom: bottomInset + 32 },
+        ]}
         showsVerticalScrollIndicator={false}
       >
         <View style={styles.container}>
           {/* Main User Profile Header & Details */}
-          <ProfileSection profile={profile} />
+          <ProfileSection profile={profile} onRefresh={fetchProfileData} />
 
           {/* User Saved Delivery Addresses */}
-          <SavedAddresses addresses={addresses} />
+          <SavedAddresses addresses={addresses} onRefresh={fetchProfileData} />
 
           {/* Security & Active Sessions */}
           <SecurityCenter devices={[]} />
@@ -148,62 +196,135 @@ setAddresses((fetchedAddresses as Address[]) ?? []);
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: "#f8fafc",
+    backgroundColor: "#ffffff",
   },
+
   centerContainer: {
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
     padding: 24,
-    backgroundColor: "#f8fafc",
+    backgroundColor: "#ffffff",
   },
+
+  topBar: {
+    height: 48,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    paddingHorizontal: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: "#f4f4f5",
+    backgroundColor: "#ffffff",
+  },
+
+  backButton: {
+    width: 34,
+    height: 34,
+    borderRadius: 10,
+    backgroundColor: "#f4f4f5",
+    borderWidth: 1,
+    borderColor: "#e4e4e7",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+
+  backButtonPressed: {
+    backgroundColor: "#e4e4e7",
+  },
+
+  topBarTitle: {
+    fontSize: 15,
+    fontWeight: "700",
+    color: "#18181b",
+    letterSpacing: -0.2,
+  },
+
+  topBarSpacer: {
+    width: 34,
+  },
+
   scrollContent: {
-    paddingVertical: 20,
+    paddingVertical: 14,
     paddingHorizontal: 16,
   },
+
   container: {
-    gap: 24,
+    gap: 16,
   },
-  notFoundCard: {
+
+  stateCard: {
     backgroundColor: "#ffffff",
-    borderRadius: 24,
+    borderRadius: 16,
     borderWidth: 1,
-    borderColor: "rgba(229, 231, 235, 0.8)",
-    padding: 32,
+    borderColor: "#f0f0f0",
+    paddingVertical: 36,
+    paddingHorizontal: 24,
     alignItems: "center",
-    maxWidth: 340,
+    maxWidth: 320,
     width: "100%",
+    gap: 6,
   },
-  notFoundTitle: {
-    fontSize: 20,
-    fontWeight: "800",
-    color: BRAND_DARK,
-    textAlign: "center",
+
+  iconCircleNeutral: {
+    width: 48,
+    height: 48,
+    borderRadius: 12,
+    backgroundColor: "#f4f4f5",
+    borderWidth: 1,
+    borderColor: "#e4e4e7",
+    alignItems: "center",
+    justifyContent: "center",
+    marginBottom: 6,
   },
-  notFoundSubtitle: {
-    fontSize: 14,
-    fontWeight: "500",
-    color: "#6b7280",
-    textAlign: "center",
-    marginTop: 8,
+
+  iconCircleError: {
+    width: 48,
+    height: 48,
+    borderRadius: 12,
+    backgroundColor: "#fef2f2",
+    borderWidth: 1,
+    borderColor: "#fee2e2",
+    alignItems: "center",
+    justifyContent: "center",
+    marginBottom: 6,
   },
-  errorText: {
-    fontSize: 14,
+
+  stateTitle: {
+    fontSize: 17,
     fontWeight: "700",
-    color: "#dc2626",
-    marginBottom: 16,
-    textAlign: "center",
+    color: "#18181b",
+    letterSpacing: -0.3,
   },
-  retryButton: {
-    backgroundColor: BRAND_DARK,
-    paddingHorizontal: 20,
-    paddingVertical: 10,
-    borderRadius: 9999,
-  },
-  retryButtonText: {
-    color: "#ffffff",
+
+  stateSubtitle: {
     fontSize: 12,
-    fontWeight: "800",
-    textTransform: "uppercase",
+    color: "#71717a",
+    textAlign: "center",
+    lineHeight: 18,
+    marginBottom: 10,
+  },
+
+  primaryButton: {
+    height: 42,
+    paddingHorizontal: 18,
+    backgroundColor: "#18181b",
+    borderRadius: 10,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 6,
+  },
+
+  primaryButtonText: {
+    color: "#ffffff",
+    fontSize: 13,
+    fontWeight: "600",
+    letterSpacing: -0.1,
+  },
+
+  buttonPressed: {
+    opacity: 0.88,
+    transform: [{ scale: 0.985 }],
   },
 });

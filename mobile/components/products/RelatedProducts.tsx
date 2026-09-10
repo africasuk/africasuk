@@ -1,3 +1,4 @@
+import { useMemo } from "react";
 import { View, Text, ScrollView, StyleSheet } from "react-native";
 import type { ProductWithDetails } from "@africasuk/types";
 
@@ -8,21 +9,32 @@ interface Props {
 }
 
 export function RelatedProducts({ products }: Props) {
-  if (!products || products.length === 0) {
+  const validProducts = useMemo(() => {
+    return (products ?? []).filter(
+      (p) => p && p.isActive && (p.colors?.length ?? 0) > 0
+    );
+  }, [products]);
+
+  if (!validProducts || validProducts.length === 0) {
     return null;
   }
 
   return (
     <View style={styles.container}>
-      {/* Title - Clean & Unbolded */}
-      <Text style={styles.title}>Related Products</Text>
+      {/* Header with Product Count Badge */}
+      <View style={styles.header}>
+        <Text style={styles.title}>You May Also Like</Text>
+        <Text style={styles.countText}>{validProducts.length} Items</Text>
+      </View>
 
+      {/* Horizontal Carousel */}
       <ScrollView
         horizontal
         showsHorizontalScrollIndicator={false}
         contentContainerStyle={styles.scrollContent}
+        decelerationRate="fast"
       >
-        {products.map((product) => (
+        {validProducts.map((product) => (
           <View key={product.id} style={styles.cardWrapper}>
             <ProductCard product={product} />
           </View>
@@ -34,21 +46,37 @@ export function RelatedProducts({ products }: Props) {
 
 const styles = StyleSheet.create({
   container: {
-    marginVertical: 18,
-    gap: 10,
-  },
-  title: {
-    fontSize: 16,
-    fontWeight: "500", // Non-bold clean header weight
-    color: "#111827",
-    paddingHorizontal: 16,
-    letterSpacing: 0.2,
-  },
-  scrollContent: {
-    paddingHorizontal: 16,
+    paddingVertical: 12,
     gap: 12,
   },
+
+  header: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "baseline",
+    paddingHorizontal: 16,
+  },
+
+  title: {
+    fontSize: 16,
+    fontWeight: "700",
+    color: "#18181b",
+    letterSpacing: -0.3,
+  },
+
+  countText: {
+    fontSize: 12,
+    fontWeight: "500",
+    color: "#71717a",
+  },
+
+  scrollContent: {
+    paddingHorizontal: 16,
+    gap: 10,
+    paddingBottom: 4,
+  },
+
   cardWrapper: {
-    width: 156,
+    width: 154,
   },
 });

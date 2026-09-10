@@ -1,12 +1,12 @@
-import { View, Text, Pressable, StyleSheet, SafeAreaView } from "react-native";
+import React from "react";
+import { View, Text, Pressable, StyleSheet } from "react-native";
 import { Image } from "expo-image";
 import { useRouter, Href } from "expo-router";
-import { ArrowLeft, Heart, ShoppingCart } from "lucide-react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
+import { ArrowLeft, Heart, ShoppingBag } from "lucide-react-native";
 
 import { useWishlist } from "@/store/wishlist";
 import { useCart } from "@/store/cart";
-
-const BADGE_RED = "#ef4444";
 
 interface Props {
   title?: string;
@@ -25,14 +25,13 @@ export default function AppHeader({
 }: Props) {
   const router = useRouter();
 
-  // Live counts directly from Zustand stores
   const wishlistCount = useWishlist((state) => state.items.length);
   const cartCount = useCart((state) =>
     state.items.reduce((acc, item) => acc + item.quantity, 0)
   );
 
   return (
-    <SafeAreaView style={styles.safe}>
+    <SafeAreaView edges={["top"]} style={styles.safe}>
       <View style={styles.container}>
         {/* Left Action Area */}
         <View style={styles.left}>
@@ -43,25 +42,39 @@ export default function AppHeader({
                 pressed && styles.buttonPressed,
               ]}
               onPress={() => router.back()}
-              hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+              hitSlop={8}
             >
-              <ArrowLeft size={20} color="#111827" />
+              <ArrowLeft size={18} color="#18181b" strokeWidth={2} />
             </Pressable>
           ) : showLogo ? (
-            <Image
-              source={require("@/assets/images/logo.png")}
-              style={styles.logo}
-              contentFit="contain"
-            />
+            <Pressable
+              onPress={() => router.push("/" as Href)}
+              style={({ pressed }) => [
+                styles.logoWrapper,
+                pressed && styles.logoPressed,
+              ]}
+              hitSlop={6}
+            >
+              <Image
+                source={require("@/assets/images/logo.png")}
+                style={styles.logo}
+                contentFit="contain"
+                transition={150}
+              />
+            </Pressable>
           ) : null}
         </View>
 
-        {/* Title Header - Clean Weight */}
-        <Text numberOfLines={1} style={styles.title}>
-          {title}
-        </Text>
+        {/* Center Title */}
+        <View style={styles.center}>
+          {title ? (
+            <Text numberOfLines={1} style={styles.title}>
+              {title}
+            </Text>
+          ) : null}
+        </View>
 
-        {/* Right Actions Area */}
+        {/* Right Action Icons */}
         <View style={styles.right}>
           {showWishlist && (
             <Pressable
@@ -70,11 +83,13 @@ export default function AppHeader({
                 pressed && styles.buttonPressed,
               ]}
               onPress={() => router.push("/wishlist" as Href)}
+              hitSlop={6}
             >
               <Heart
-                size={18}
-                color={wishlistCount > 0 ? BADGE_RED : "#111827"}
-                fill={wishlistCount > 0 ? BADGE_RED : "transparent"}
+                size={17}
+                color={wishlistCount > 0 ? "#18181b" : "#71717a"}
+                fill={wishlistCount > 0 ? "#18181b" : "transparent"}
+                strokeWidth={1.8}
               />
               {wishlistCount > 0 && (
                 <View style={styles.badge}>
@@ -93,8 +108,13 @@ export default function AppHeader({
                 pressed && styles.buttonPressed,
               ]}
               onPress={() => router.push("/cart" as Href)}
+              hitSlop={6}
             >
-              <ShoppingCart size={18} color="#111827" />
+              <ShoppingBag
+                size={17}
+                color={cartCount > 0 ? "#18181b" : "#71717a"}
+                strokeWidth={1.8}
+              />
               {cartCount > 0 && (
                 <View style={styles.badge}>
                   <Text style={styles.badgeText}>
@@ -114,78 +134,99 @@ const styles = StyleSheet.create({
   safe: {
     backgroundColor: "#ffffff",
     borderBottomWidth: 1,
-    borderBottomColor: "#e5e7eb",
+    borderBottomColor: "#f4f4f5",
   },
 
   container: {
-    height: 56,
+    height: 48,
     paddingHorizontal: 16,
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
     backgroundColor: "#ffffff",
-    paddingTop: 60,
   },
 
   left: {
-    width: 80,
+    width: 72,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "flex-start",
+  },
+
+  center: {
+    flex: 1,
+    alignItems: "center",
     justifyContent: "center",
+    paddingHorizontal: 8,
   },
 
   right: {
-    width: 80,
+    width: 72,
     flexDirection: "row",
-    justifyContent: "flex-end",
     alignItems: "center",
+    justifyContent: "flex-end",
     gap: 8,
   },
 
   title: {
-    flex: 1,
+    fontSize: 15,
+    fontWeight: "700",
+    color: "#18181b",
+    letterSpacing: -0.2,
     textAlign: "center",
-    fontSize: 16,
-    fontWeight: "500", // Non-bold clean header weight
-    color: "#111827",
-    letterSpacing: 0.2,
+  },
+
+  logoWrapper: {
+    height: 28,
+    width: 80,
+    justifyContent: "center",
+  },
+
+  logoPressed: {
+    opacity: 0.8,
   },
 
   logo: {
-    width: 100,
-    height: 30,
+    width: "100%",
+    height: "100%",
   },
 
   iconButton: {
-    width: 36,
-    height: 36,
-    borderRadius: 0, // Sharp corners
-    backgroundColor: "#f3f4f6",
+    width: 34,
+    height: 34,
+    borderRadius: 10,
+    backgroundColor: "#f4f4f5",
     borderWidth: 1,
-    borderColor: "#e5e7eb",
+    borderColor: "#e4e4e7",
     justifyContent: "center",
     alignItems: "center",
     position: "relative",
   },
 
   buttonPressed: {
-    opacity: 0.8,
+    backgroundColor: "#e4e4e7",
+    transform: [{ scale: 0.97 }],
   },
 
   badge: {
     position: "absolute",
-    top: -4,
-    right: -4,
-    backgroundColor: BADGE_RED,
+    top: -3,
+    right: -3,
+    backgroundColor: "#18181b",
     minWidth: 16,
     height: 16,
-    borderRadius: 0, // Sharp square badge
+    borderRadius: 8,
     justifyContent: "center",
     alignItems: "center",
     paddingHorizontal: 3,
+    borderWidth: 1.5,
+    borderColor: "#ffffff",
   },
 
   badgeText: {
     color: "#ffffff",
     fontSize: 9,
-    fontWeight: "500", // Clean regular weight
+    fontWeight: "700",
+    letterSpacing: -0.2,
   },
 });

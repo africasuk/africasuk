@@ -1,24 +1,20 @@
 import React from "react";
-import { View, Text, FlatList, Pressable, StyleSheet } from "react-native";
+import { View, Text, Pressable, StyleSheet } from "react-native";
 import { router } from "expo-router";
-import { LinearGradient } from "expo-linear-gradient";
 import { ShoppingBag, ArrowRight } from "lucide-react-native";
 
 import { useCart } from "@/store/cart";
-
 import ContinueShoppingCard from "./ContinueShoppingCard";
-
-const BRAND_LIGHT = "#008744";
-const BRAND_DARK = "#002b15";
-const LIGHT_GREEN = "#ecfdf5";
-const BRAND_BORDER = "#a7f3d0";
 
 export default function ContinueShopping() {
   const items = useCart((state) => state.items);
 
-  if (items.length === 0) {
+  if (!items || items.length === 0) {
     return null;
   }
+
+  // Display top 4 cart items to keep home feed layout balanced
+  const displayItems = items.slice(0, 4);
 
   return (
     <View style={styles.container}>
@@ -26,10 +22,8 @@ export default function ContinueShopping() {
       <View style={styles.header}>
         <View style={styles.headerTitleContainer}>
           <Text style={styles.title}>Continue Shopping</Text>
-
           <Text style={styles.description}>
-            You have <Text style={styles.itemCountHighlight}>{items.length}</Text>{" "}
-            {items.length === 1 ? "item" : "items"} waiting in your cart.
+            {items.length} {items.length === 1 ? "item" : "items"} in your cart
           </Text>
         </View>
 
@@ -39,46 +33,32 @@ export default function ContinueShopping() {
             pressed && styles.pressedState,
           ]}
           onPress={() => router.push("/cart")}
+          hitSlop={6}
         >
-          <ShoppingBag size={14} color={BRAND_DARK} />
+          <ShoppingBag size={14} color="#18181b" strokeWidth={1.8} />
           <Text style={styles.outlineButtonText}>View Cart</Text>
         </Pressable>
       </View>
 
-      {/* Product Items Grid */}
-      <FlatList
-        data={items}
-        keyExtractor={(item) => item.variantId}
-        numColumns={2}
-        scrollEnabled={false}
-        columnWrapperStyle={styles.row}
-        contentContainerStyle={styles.list}
-        renderItem={({ item }) => (
-          <View style={styles.cardWrapper}>
+      {/* 2-Column Product Grid (Flex mapped to avoid nested VirtualizedList crashes) */}
+      <View style={styles.grid}>
+        {displayItems.map((item) => (
+          <View key={item.variantId} style={styles.cardWrapper}>
             <ContinueShoppingCard item={item} />
           </View>
-        )}
-      />
+        ))}
+      </View>
 
-      {/* Primary Action Gradient Button */}
+      {/* Primary Action Button */}
       <Pressable
         onPress={() => router.push("/checkout")}
         style={({ pressed }) => [
-          styles.checkoutButtonWrapper,
+          styles.checkoutButton,
           pressed && styles.pressedState,
         ]}
       >
-        <LinearGradient
-          colors={[BRAND_LIGHT, BRAND_DARK]}
-          start={{ x: 0, y: 0 }}
-          end={{ x: 1, y: 1 }}
-          style={styles.checkoutButton}
-        >
-          <Text style={styles.checkoutButtonText}>
-            Continue to Checkout
-          </Text>
-          <ArrowRight size={16} color="#ffffff" />
-        </LinearGradient>
+        <Text style={styles.checkoutButtonText}>Proceed to Checkout</Text>
+        <ArrowRight size={15} color="#ffffff" strokeWidth={2} />
       </Pressable>
     </View>
   );
@@ -87,102 +67,88 @@ export default function ContinueShopping() {
 const styles = StyleSheet.create({
   container: {
     backgroundColor: "#ffffff",
-    borderRadius: 0, // Sharp corners design language
+    borderRadius: 16,
     marginHorizontal: 16,
-    marginVertical: 12,
-    paddingHorizontal: 16,
-    paddingVertical: 20,
+    marginVertical: 10,
+    padding: 14,
     borderWidth: 1,
-    borderColor: "#e5e7eb",
+    borderColor: "#f0f0f0",
   },
 
   header: {
     flexDirection: "row",
     justifyContent: "space-between",
-    alignItems: "flex-start",
-    marginBottom: 20,
-    gap: 12,
+    alignItems: "center",
+    marginBottom: 14,
   },
 
   headerTitleContainer: {
-    flex: 1,
+    gap: 2,
   },
 
   title: {
-    fontSize: 18,
-    fontWeight: "500", // Clean regular weight
-    color: BRAND_DARK,
-    letterSpacing: 0.2,
+    fontSize: 16,
+    fontWeight: "700",
+    color: "#18181b",
+    letterSpacing: -0.3,
   },
 
   description: {
-    marginTop: 4,
     fontSize: 12,
-    fontWeight: "400",
-    color: "#6b7280",
-    lineHeight: 18,
-  },
-
-  itemCountHighlight: {
-    color: BRAND_LIGHT,
     fontWeight: "500",
+    color: "#71717a",
   },
 
   outlineButton: {
+    height: 32,
+    paddingHorizontal: 10,
+    borderRadius: 8,
     borderWidth: 1,
-    borderColor: BRAND_BORDER,
-    backgroundColor: LIGHT_GREEN,
-    borderRadius: 0, // Sharp corners
-    paddingHorizontal: 12,
-    height: 36,
+    borderColor: "#e4e4e7",
+    backgroundColor: "#f4f4f5",
     flexDirection: "row",
-    justifyContent: "center",
     alignItems: "center",
-    gap: 6,
+    gap: 5,
   },
 
   outlineButtonText: {
     fontSize: 12,
-    fontWeight: "500", // Non-bold clean text
-    color: BRAND_DARK,
+    fontWeight: "600",
+    color: "#18181b",
+    letterSpacing: -0.1,
   },
 
-  list: {
-    gap: 12,
-  },
-
-  row: {
+  grid: {
+    flexDirection: "row",
+    flexWrap: "wrap",
     justifyContent: "space-between",
-    marginBottom: 12,
+    rowGap: 10,
   },
 
   cardWrapper: {
-    width: "48%", // Perfectly locks 2-column card widths
-  },
-
-  checkoutButtonWrapper: {
-    marginTop: 16,
-    borderRadius: 0, // Sharp corners
-    overflow: "hidden",
+    width: "48.5%",
   },
 
   checkoutButton: {
-    height: 46,
+    height: 44,
+    backgroundColor: "#18181b",
+    borderRadius: 10,
+    marginTop: 14,
     flexDirection: "row",
-    justifyContent: "center",
     alignItems: "center",
-    gap: 8,
-    paddingHorizontal: 20,
+    justifyContent: "center",
+    gap: 6,
   },
 
   checkoutButtonText: {
     color: "#ffffff",
     fontSize: 13,
-    fontWeight: "500", // Non-bold clean button weight
-    letterSpacing: 0.3,
+    fontWeight: "600",
+    letterSpacing: -0.1,
   },
 
   pressedState: {
-    opacity: 0.9,
+    opacity: 0.85,
+    transform: [{ scale: 0.99 }],
   },
 });

@@ -9,10 +9,10 @@ export function OrganizationJsonLd() {
 
     url: "https://africasuk.com",
 
-    logo: "https://res.cloudinary.com/kwlkw1ta/image/upload/v1784891001/AfricaSuk_e-commerce_marketplace__202607241900_q5aayq.jpg",
+    logo: "https://res.cloudinary.com/kwlkw1ta/image/upload/v1788984152/ChatGPT_Image_Sep_9_2026_06_07_48_AM_rdrtji.png",
 
     image:
-      "https://res.cloudinary.com/kwlkw1ta/image/upload/v1784891001/AfricaSuk_e-commerce_marketplace__202607241900_q5aayq.jpg",
+      "https://res.cloudinary.com/kwlkw1ta/image/upload/v1788984174/ChatGPT_Image_Sep_10_2026_01_25_51_AM_whityw.png",
 
     description:
       "Africa Suk is a South Sudanese online marketplace for electronics, fashion, groceries, beauty, home, automotive, and everyday essentials.",

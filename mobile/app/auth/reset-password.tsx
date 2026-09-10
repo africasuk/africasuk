@@ -3,28 +3,20 @@ import {
   ActivityIndicator,
   Alert,
   Pressable,
-  SafeAreaView,
   StyleSheet,
   Text,
   TextInput,
   View,
-  ViewStyle,
-  TextStyle,
 } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 import { router, Href } from "expo-router";
-import { LinearGradient } from "expo-linear-gradient";
-import { ArrowLeft } from "lucide-react-native";
+import { ArrowLeft, ArrowRight } from "lucide-react-native";
 
 import Logo from "@/components/layout/header/Logo";
 import { useTranslation } from "@/components/providers/LanguageProvider";
 import { createClient } from "@/lib/auth/client";
 
 const supabase = createClient();
-
-const BRAND_LIGHT = "#008744";
-const BRAND_DARK = "#002b15";
-const BORDER_COLOR = "#e5e7eb";
-const TEXT_MUTED = "#6b7280";
 
 export default function ResetPasswordScreen() {
   const { dictionary } = useTranslation();
@@ -35,12 +27,12 @@ export default function ResetPasswordScreen() {
 
   async function handleReset() {
     if (password !== confirmPassword) {
-      Alert.alert("Error", dictionary.auth.passwordsDoNotMatch);
+      Alert.alert("Error", "Passwords do not match.");
       return;
     }
 
     if (password.length < 8) {
-      Alert.alert("Error", dictionary.auth.passwordMinLength);
+      Alert.alert("Error", "Password must be at least 8 characters long.");
       return;
     }
 
@@ -56,8 +48,7 @@ export default function ResetPasswordScreen() {
         return;
       }
 
-      Alert.alert("Success", dictionary.auth.passwordUpdated);
-
+      Alert.alert("Success", "Your password has been updated successfully.");
       router.replace("/auth/login" as Href);
     } catch {
       Alert.alert("Error", "An unexpected error occurred.");
@@ -67,67 +58,67 @@ export default function ResetPasswordScreen() {
   }
 
   return (
-    <SafeAreaView style={styles.container}>
+    <SafeAreaView style={styles.container} edges={["top", "bottom"]}>
       <View style={styles.card}>
-        {/* Brand Header Stack */}
-        <View style={styles.headerStack}>
+        {/* Header */}
+        <View style={styles.header}>
           <View style={styles.logoWrapper}>
             <Logo />
           </View>
-          <Text style={styles.title}>
-            {dictionary.auth.resetPasswordTitle}
-          </Text>
-          <Text style={styles.description}>
-            {dictionary.auth.resetPasswordDescription}
+          <Text style={styles.title}>Reset Password</Text>
+          <Text style={styles.subtitle}>
+            Enter and confirm your new account password below.
           </Text>
         </View>
 
         {/* Inputs */}
         <View style={styles.formGroup}>
-          <TextInput
-            secureTextEntry
-            value={password}
-            editable={!loading}
-            placeholder={dictionary.auth.newPassword}
-            placeholderTextColor="#9ca3af"
-            onChangeText={setPassword}
-            style={styles.input}
-          />
+          <View style={styles.inputContainer}>
+            <Text style={styles.label}>{dictionary.auth.password}</Text>
+            <TextInput
+              secureTextEntry
+              value={password}
+              editable={!loading}
+              placeholder="Enter new password"
+              placeholderTextColor="#a1a1aa"
+              onChangeText={setPassword}
+              style={styles.input}
+              autoCapitalize="none"
+            />
+          </View>
 
-          <TextInput
-            secureTextEntry
-            value={confirmPassword}
-            editable={!loading}
-            placeholder={dictionary.auth.confirmPassword}
-            placeholderTextColor="#9ca3af"
-            onChangeText={setConfirmPassword}
-            style={styles.input}
-          />
+          <View style={styles.inputContainer}>
+            <Text style={styles.label}>{dictionary.auth.confirmPassword}</Text>
+            <TextInput
+              secureTextEntry
+              value={confirmPassword}
+              editable={!loading}
+              placeholder="Re-enter new password"
+              placeholderTextColor="#a1a1aa"
+              onChangeText={setConfirmPassword}
+              style={styles.input}
+              autoCapitalize="none"
+            />
+          </View>
 
-          {/* Primary Action Button */}
+          {/* Submit Button */}
           <Pressable
             disabled={loading}
             onPress={handleReset}
             style={({ pressed }) => [
-              styles.submitButtonWrapper,
+              styles.submitButton,
               pressed && !loading && styles.buttonPressed,
               loading && styles.buttonDisabled,
             ]}
           >
-            <LinearGradient
-              colors={[BRAND_LIGHT, BRAND_DARK]}
-              start={{ x: 0, y: 0 }}
-              end={{ x: 1, y: 1 }}
-              style={styles.submitButton}
-            >
-              {loading ? (
-                <ActivityIndicator color="#ffffff" size="small" />
-              ) : (
-                <Text style={styles.submitButtonText}>
-                  {dictionary.auth.updatePassword}
-                </Text>
-              )}
-            </LinearGradient>
+            {loading ? (
+              <ActivityIndicator color="#ffffff" size="small" />
+            ) : (
+              <>
+                <Text style={styles.submitButtonText}>Update Password</Text>
+                <ArrowRight size={14} color="#ffffff" strokeWidth={2} />
+              </>
+            )}
           </Pressable>
         </View>
 
@@ -135,11 +126,12 @@ export default function ResetPasswordScreen() {
         <Pressable
           style={({ pressed }) => [
             styles.backButton,
-            pressed && styles.buttonPressed,
+            pressed && styles.backButtonPressed,
           ]}
           onPress={() => router.replace("/auth/login" as Href)}
+          hitSlop={6}
         >
-          <ArrowLeft size={16} color={BRAND_LIGHT} />
+          <ArrowLeft size={14} color="#18181b" strokeWidth={2} />
           <Text style={styles.backText}>{dictionary.auth.login}</Text>
         </Pressable>
       </View>
@@ -147,118 +139,125 @@ export default function ResetPasswordScreen() {
   );
 }
 
-type Styles = {
-  container: ViewStyle;
-  card: ViewStyle;
-  headerStack: ViewStyle;
-  logoWrapper: ViewStyle;
-  title: TextStyle;
-  description: TextStyle;
-  formGroup: ViewStyle;
-  input: TextStyle;
-  submitButtonWrapper: ViewStyle;
-  submitButton: ViewStyle;
-  submitButtonText: TextStyle;
-  backButton: ViewStyle;
-  backText: TextStyle;
-  buttonPressed: ViewStyle;
-  buttonDisabled: ViewStyle;
-};
-
-const styles = StyleSheet.create<Styles>({
+const styles = StyleSheet.create({
   container: {
     flex: 1,
     justifyContent: "center",
+    alignItems: "center",
     paddingHorizontal: 16,
-    paddingVertical: 20,
-    backgroundColor: "#f9fafb",
-  },
-  card: {
     backgroundColor: "#ffffff",
-    borderRadius: 20,
+  },
+
+  card: {
+    width: "100%",
+    maxWidth: 400,
+    backgroundColor: "#ffffff",
+    borderRadius: 16,
     padding: 20,
     borderWidth: 1,
-    borderColor: "rgba(229, 231, 235, 0.8)",
+    borderColor: "#f0f0f0",
+    gap: 20,
+  },
 
-    shadowColor: "#000",
-    shadowOffset: {
-      width: 0,
-      height: 4,
-    },
-    shadowOpacity: 0.05,
-    shadowRadius: 12,
-    elevation: 3,
+  header: {
+    alignItems: "center",
+    gap: 4,
   },
-  headerStack: {
-    alignItems: "flex-start",
-    marginBottom: 16,
-  },
+
   logoWrapper: {
-    marginBottom: 10,
-  },
-  title: {
-    fontSize: 24,
-    fontWeight: "900",
-    color: BRAND_DARK,
-    letterSpacing: -0.4,
-  },
-  description: {
-    marginTop: 4,
-    fontSize: 13,
-    lineHeight: 18,
-    color: TEXT_MUTED,
-  },
-  formGroup: {
-    gap: 12,
-  },
-  input: {
-    height: 44,
-    borderWidth: 1,
-    borderColor: BORDER_COLOR,
-    borderRadius: 12,
-    paddingHorizontal: 14,
-    fontSize: 13,
-    color: "#111827",
-    backgroundColor: "#ffffff",
-  },
-  submitButtonWrapper: {
-    marginTop: 6,
-    borderRadius: 12,
-    overflow: "hidden",
-    shadowColor: BRAND_LIGHT,
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.15,
-    shadowRadius: 6,
-    elevation: 2,
-  },
-  submitButton: {
-    height: 44,
-    justifyContent: "center",
+    marginBottom: 8,
     alignItems: "center",
   },
-  submitButtonText: {
-    color: "#ffffff",
-    fontSize: 14,
-    fontWeight: "800",
-    letterSpacing: 0.3,
+
+  title: {
+    fontSize: 20,
+    fontWeight: "700",
+    color: "#18181b",
+    letterSpacing: -0.4,
+    textAlign: "center",
   },
+
+  subtitle: {
+    fontSize: 12,
+    fontWeight: "400",
+    color: "#71717a",
+    textAlign: "center",
+    lineHeight: 17,
+    maxWidth: 280,
+  },
+
+  formGroup: {
+    gap: 14,
+    width: "100%",
+  },
+
+  inputContainer: {
+    width: "100%",
+    gap: 6,
+  },
+
+  label: {
+    fontSize: 12,
+    fontWeight: "600",
+    color: "#27272a",
+    letterSpacing: -0.1,
+  },
+
+  input: {
+    height: 44,
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: "#e4e4e7",
+    backgroundColor: "#ffffff",
+    paddingHorizontal: 13,
+    fontSize: 13,
+    color: "#18181b",
+  },
+
+  submitButton: {
+    height: 44,
+    width: "100%",
+    borderRadius: 10,
+    backgroundColor: "#18181b",
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 8,
+    marginTop: 4,
+  },
+
+  submitButtonText: {
+    fontSize: 13,
+    fontWeight: "600",
+    color: "#ffffff",
+    letterSpacing: -0.1,
+  },
+
+  buttonPressed: {
+    opacity: 0.88,
+    transform: [{ scale: 0.985 }],
+  },
+
+  buttonDisabled: {
+    opacity: 0.45,
+  },
+
   backButton: {
-    marginTop: 18,
     flexDirection: "row",
     justifyContent: "center",
     alignItems: "center",
     gap: 6,
+    paddingTop: 4,
   },
+
+  backButtonPressed: {
+    opacity: 0.7,
+  },
+
   backText: {
-    color: BRAND_LIGHT,
-    fontWeight: "800",
-    fontSize: 13,
-  },
-  buttonPressed: {
-    opacity: 0.9,
-    transform: [{ scale: 0.98 }],
-  },
-  buttonDisabled: {
-    opacity: 0.5,
+    color: "#18181b",
+    fontWeight: "700",
+    fontSize: 12,
+    letterSpacing: -0.1,
   },
 });

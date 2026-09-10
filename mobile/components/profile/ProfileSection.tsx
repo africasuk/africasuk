@@ -22,14 +22,14 @@ export default function ProfileSection({ profile, onRefresh }: Props) {
 
   return (
     <View style={styles.container}>
-      {/* Profile Info Card */}
+      {/* Profile Summary Card */}
       <ProfileCard
         profile={profile}
         onEdit={() => setEditOpen(true)}
         onChangeAvatar={() => setAvatarOpen(true)}
       />
 
-      {/* Edit Profile Modal Sheet */}
+      {/* Edit Profile Modal */}
       <EditProfileModal
         visible={editOpen}
         profile={profile}
@@ -37,7 +37,7 @@ export default function ProfileSection({ profile, onRefresh }: Props) {
         onSuccess={handleSuccess}
       />
 
-      {/* Change Avatar Modal Sheet */}
+      {/* Change Avatar Modal */}
       <ChangeAvatarModal
         visible={avatarOpen}
         profile={profile}
@@ -51,6 +51,5 @@ export default function ProfileSection({ profile, onRefresh }: Props) {
 const styles = StyleSheet.create({
   container: {
     width: "100%",
-    backgroundColor: "#ffffff",
   },
 });

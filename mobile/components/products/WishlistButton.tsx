@@ -17,6 +17,7 @@ export function WishlistButton({ item, style }: Props) {
     <Pressable
       onPress={() => toggleItem(item)}
       accessibilityLabel={active ? "Remove from wishlist" : "Add to wishlist"}
+      hitSlop={6}
       style={({ pressed }) => [
         styles.button,
         active ? styles.activeButton : styles.inactiveButton,
@@ -25,9 +26,10 @@ export function WishlistButton({ item, style }: Props) {
       ]}
     >
       <Heart
-        size={18}
-        color={active ? "#f43f5e" : "#6b7280"}
-        fill={active ? "#f43f5e" : "transparent"}
+        size={20}
+        color={active ? "#e11d48" : "#374151"}
+        fill={active ? "#e11d48" : "transparent"}
+        strokeWidth={2}
       />
     </Pressable>
   );
@@ -35,12 +37,17 @@ export function WishlistButton({ item, style }: Props) {
 
 const styles = StyleSheet.create({
   button: {
-    height: 44,
-    width: 44,
-    borderRadius: 0, // Sharp corners design language
-    borderWidth: 1,
+    height: 52,
+    width: 52,
+    borderRadius: 26,
+    borderWidth: 1.5,
     alignItems: "center",
     justifyContent: "center",
+    shadowColor: "#000000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.04,
+    shadowRadius: 6,
+    elevation: 1,
   },
   inactiveButton: {
     backgroundColor: "#ffffff",
@@ -52,5 +59,6 @@ const styles = StyleSheet.create({
   },
   pressed: {
     opacity: 0.85,
+    transform: [{ scale: 0.96 }],
   },
 });

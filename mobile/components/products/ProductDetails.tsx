@@ -2,14 +2,10 @@ import { useState, useEffect } from "react";
 import {
   View,
   Text,
-  Pressable,
   StyleSheet,
   ActivityIndicator,
 } from "react-native";
-import type {
-  ProductWithDetails,
-  Review,
-} from "@africasuk/types";
+import type { ProductWithDetails, Review } from "@africasuk/types";
 
 import { ProductGallery } from "./ProductGallery";
 import { ProductInfo } from "./ProductInfo";
@@ -27,11 +23,9 @@ interface Rating {
   reviewCount: number;
 }
 
-function StarRating({
-  rating,
-}: {
-  rating: number;
-}) {
+const BRAND_COLOR = "#005c2e";
+
+function StarRating({ rating }: { rating: number }) {
   return (
     <View style={styles.stars}>
       {Array.from({ length: 5 }).map((_, index) => (
@@ -60,53 +54,62 @@ function ReviewsSection({
   rating: Rating;
   loading: boolean;
 }) {
-  if (loading) {
-    return (
-      <View style={styles.reviewsContainer}>
-        <Text style={styles.reviewsTitle}>
+  return (
+    <View style={styles.section}>
+      <View style={styles.sectionHeader}>
+        <Text style={styles.sectionTitle}>
           Customer Reviews
         </Text>
 
-        <ActivityIndicator
-          size="small"
-          color="#005c2e"
-        />
+        {rating.reviewCount > 0 && (
+          <Text style={styles.sectionSubtitle}>
+            {rating.reviewCount}{" "}
+            {rating.reviewCount === 1 ? "review" : "reviews"}
+          </Text>
+        )}
       </View>
-    );
-  }
-
-  return (
-    <View style={styles.reviewsContainer}>
-      <Text style={styles.reviewsTitle}>
-        Customer Reviews
-      </Text>
 
       {/* Rating Summary */}
-      <View style={styles.ratingSummary}>
-        <Text style={styles.ratingNumber}>
-          {Number(rating.averageRating || 0).toFixed(1)}
-        </Text>
+      <View style={styles.ratingCard}>
+        <View style={styles.ratingNumberBox}>
+          <Text style={styles.ratingNumber}>
+            {Number(rating.averageRating || 0).toFixed(1)}
+          </Text>
 
-        <View>
-          <StarRating
-            rating={rating.averageRating}
-          />
+          <Text style={styles.ratingMax}>/ 5.0</Text>
+        </View>
+
+        <View style={styles.ratingMetaBox}>
+          <StarRating rating={rating.averageRating} />
 
           <Text style={styles.reviewCount}>
-            Based on {rating.reviewCount}{" "}
-            {rating.reviewCount === 1
-              ? "review"
-              : "reviews"}
+            {rating.reviewCount === 0
+              ? "Not yet rated"
+              : `Based on ${rating.reviewCount} verified ${
+                  rating.reviewCount === 1
+                    ? "rating"
+                    : "ratings"
+                }`}
           </Text>
         </View>
       </View>
 
       {/* Reviews */}
-      {reviews.length === 0 ? (
-        <View style={styles.noReviews}>
-          <Text style={styles.noReviewsText}>
-            No reviews yet. Be the first to
-            share your thoughts!
+      {loading ? (
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator
+            size="small"
+            color={BRAND_COLOR}
+          />
+        </View>
+      ) : reviews.length === 0 ? (
+        <View style={styles.emptyCard}>
+          <Text style={styles.emptyTitle}>
+            No reviews yet
+          </Text>
+
+          <Text style={styles.emptyText}>
+            Be the first to share your thoughts about this item.
           </Text>
         </View>
       ) : (
@@ -114,28 +117,35 @@ function ReviewsSection({
           {reviews.slice(0, 3).map((review) => (
             <View
               key={review.id}
-              style={styles.review}
+              style={styles.reviewCard}
             >
-              <View style={styles.reviewHeader}>
-                <StarRating
-                  rating={review.rating}
-                />
+              <View style={styles.reviewTopRow}>
+                <StarRating rating={review.rating} />
 
                 <Text style={styles.reviewDate}>
-                  {new Date(
-                    review.createdAt
-                  )
+                  {new Date(review.createdAt)
                     .toISOString()
                     .slice(0, 10)}
                 </Text>
               </View>
 
-              <Text style={styles.reviewerName}>
-                {(review as {
-                  reviewerName?: string;
-                }).reviewerName ??
-                  "Verified Buyer"}
-              </Text>
+              <View style={styles.reviewerRow}>
+                <Text style={styles.reviewerName}>
+                  {(
+                    review as {
+                      reviewerName?: string;
+                    }
+                  ).reviewerName ?? "Verified Buyer"}
+                </Text>
+
+                {review.verifiedPurchase && (
+                  <View style={styles.verifiedBadge}>
+                    <Text style={styles.verifiedText}>
+                      ✓ Verified
+                    </Text>
+                  </View>
+                )}
+              </View>
 
               {review.title && (
                 <Text style={styles.reviewTitle}>
@@ -147,14 +157,6 @@ function ReviewsSection({
                 <Text style={styles.reviewComment}>
                   {review.comment}
                 </Text>
-              )}
-
-              {review.verifiedPurchase && (
-                <View style={styles.verifiedBadge}>
-                  <Text style={styles.verifiedText}>
-                    ✓ Verified Purchase
-                  </Text>
-                </View>
               )}
             </View>
           ))}
@@ -169,23 +171,18 @@ export function ProductDetails({
   selectedColorId,
   relatedProducts = [],
 }: Props) {
-  const [selectedColor, setSelectedColor] =
-    useState(
-      product.colors?.find(
-        (color) =>
-          color.id === selectedColorId
-      ) ?? product.colors?.[0]
-    );
+  const [selectedColor, setSelectedColor] = useState(
+    product.colors?.find(
+      (color) => color.id === selectedColorId
+    ) ?? product.colors?.[0]
+  );
 
-  const [reviews, setReviews] = useState<
-    Review[]
-  >([]);
+  const [reviews, setReviews] = useState<Review[]>([]);
 
-  const [rating, setRating] =
-    useState<Rating>({
-      averageRating: 0,
-      reviewCount: 0,
-    });
+  const [rating, setRating] = useState<Rating>({
+    averageRating: 0,
+    reviewCount: 0,
+  });
 
   const [reviewsLoading, setReviewsLoading] =
     useState(true);
@@ -194,14 +191,13 @@ export function ProductDetails({
   useEffect(() => {
     const targetColor =
       product.colors?.find(
-        (color) =>
-          color.id === selectedColorId
+        (color) => color.id === selectedColorId
       ) ?? product.colors?.[0];
 
     setSelectedColor(targetColor);
   }, [selectedColorId, product]);
 
-  // Fetch real product reviews
+  // Fetch product reviews
   useEffect(() => {
     let cancelled = false;
 
@@ -210,13 +206,11 @@ export function ProductDetails({
         setReviewsLoading(true);
 
         const response = await fetch(
-          `https://africasuk.com/api/reviews?productId=${product.id}`
-        );
+            `https://africasuk.com/api/reviews?productId=${product.id}`
+          );
 
         if (!response.ok) {
-          throw new Error(
-            "Failed to fetch reviews"
-          );
+          throw new Error("Failed to fetch reviews");
         }
 
         const data = await response.json();
@@ -239,6 +233,7 @@ export function ProductDetails({
 
         if (!cancelled) {
           setReviews([]);
+
           setRating({
             averageRating: 0,
             reviewCount: 0,
@@ -258,80 +253,32 @@ export function ProductDetails({
     };
   }, [product.id]);
 
+  const filteredRelated = relatedProducts.filter(
+    (item) => item.id !== product.id
+  );
+
   return (
     <View style={styles.container}>
       {/* Product Gallery */}
-      <View style={styles.galleryContainer}>
+      <View style={styles.galleryWrapper}>
         <ProductGallery
           images={selectedColor?.images ?? []}
         />
       </View>
 
-      {/* Product Info */}
-      <View style={styles.infoContainer}>
+      {/* Product Information */}
+      <View style={styles.infoWrapper}>
         <ProductInfo product={product} />
       </View>
 
-      {/* Options */}
-      <View style={styles.optionsContainer}>
-        {product.colors &&
-          product.colors.length > 0 && (
-            <View style={styles.colorGroup}>
-              <Text style={styles.sectionLabel}>
-                Color
-              </Text>
+      {/* Variant Selector */}
+      <View style={styles.sectionDivider} />
 
-              <View
-                style={
-                  styles.colorPillsContainer
-                }
-              >
-                {product.colors.map((color) => {
-                  const isSelected =
-                    selectedColor?.id ===
-                    color.id;
-
-                  return (
-                    <Pressable
-                      key={color.id}
-                      onPress={() =>
-                        setSelectedColor(color)
-                      }
-                      style={[
-                        styles.colorPill,
-                        isSelected
-                          ? styles.selectedPill
-                          : styles.unselectedPill,
-                      ]}
-                    >
-                      <Text
-                        style={[
-                          styles.colorPillText,
-                          isSelected
-                            ? styles.selectedPillText
-                            : styles.unselectedPillText,
-                        ]}
-                      >
-                        {color.name}
-                      </Text>
-                    </Pressable>
-                  );
-                })}
-              </View>
-            </View>
-          )}
-
-        {/* Variant */}
-        <View style={styles.variantContainer}>
-          <VariantSelector
-            product={{
-              ...product,
-              colors: selectedColor
-                ? [selectedColor]
-                : [],
-            }}
-          />
-        </View>
+      <View style={styles.variantWrapper}>
+        <VariantSelector
+          product={product}
+          onColorChange={setSelectedColor}
+        />
       </View>
 
       {/* Reviews */}
@@ -342,154 +289,129 @@ export function ProductDetails({
       />
 
       {/* Related Products */}
-      {(() => {
-        const filteredProducts =
-          relatedProducts.filter(
-            (item) => item.id !== product.id
-          );
-
-        if (!filteredProducts.length) {
-          return null;
-        }
-
-        return (
-          <View
-            style={styles.relatedContainer}
-          >
-            <Text style={styles.relatedTitle}>
+      {filteredRelated.length > 0 && (
+        <View style={styles.section}>
+          <View style={styles.sectionHeader}>
+            <Text style={styles.sectionTitle}>
               Recommended For You
             </Text>
 
-            <RelatedProducts
-              products={filteredProducts}
-            />
+            <Text style={styles.sectionSubtitle}>
+              Similar styles
+            </Text>
           </View>
-        );
-      })()}
+
+          <RelatedProducts
+            products={filteredRelated}
+          />
+        </View>
+      )}
     </View>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
-    paddingHorizontal: 16,
-    paddingVertical: 12,
     backgroundColor: "#ffffff",
-    paddingTop: 60,
+    paddingBottom: 40,
+    paddingTop: 50,
   },
 
-  galleryContainer: {
-    marginBottom: 20,
+  galleryWrapper: {
+    marginBottom: 16,
   },
 
-  infoContainer: {
-    marginBottom: 24,
+  infoWrapper: {
+    paddingHorizontal: 16,
   },
 
-  optionsContainer: {
-    borderTopWidth: 1,
-    borderTopColor: "#e5e7eb",
-    paddingTop: 20,
-    gap: 20,
+  sectionDivider: {
+    height: 1,
+    backgroundColor: "#f3f4f6",
+    marginHorizontal: 16,
+    marginVertical: 20,
   },
 
-  colorGroup: {
-    gap: 8,
+  variantWrapper: {
+    paddingHorizontal: 16,
+    marginBottom: 8,
   },
 
-  sectionLabel: {
-    fontSize: 11,
-    fontWeight: "700",
-    color: "#6b7280",
-    textTransform: "uppercase",
-    letterSpacing: 0.8,
+  section: {
+    marginTop: 28,
+    paddingHorizontal: 16,
   },
 
-  colorPillsContainer: {
+  sectionHeader: {
     flexDirection: "row",
-    flexWrap: "wrap",
-    gap: 8,
+    justifyContent: "space-between",
+    alignItems: "baseline",
+    marginBottom: 14,
   },
 
-  colorPill: {
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    borderRadius: 20,
-    borderWidth: 1,
-  },
-
-  selectedPill: {
-    backgroundColor: "#002b15",
-    borderColor: "#002b15",
-  },
-
-  unselectedPill: {
-    backgroundColor: "#ffffff",
-    borderColor: "#e5e7eb",
-  },
-
-  colorPillText: {
-    fontSize: 13,
-    fontWeight: "600",
-  },
-
-  selectedPillText: {
-    color: "#ffffff",
-  },
-
-  unselectedPillText: {
-    color: "#374151",
-  },
-
-  variantContainer: {
-    marginTop: 4,
-  },
-
-  /* Reviews */
-
-  reviewsContainer: {
-    marginTop: 32,
-    paddingTop: 24,
-    borderTopWidth: 1,
-    borderTopColor: "#e5e7eb",
-  },
-
-  reviewsTitle: {
-    fontSize: 20,
+  sectionTitle: {
+    fontSize: 18,
     fontWeight: "800",
     color: "#111827",
-    marginBottom: 20,
+    letterSpacing: -0.3,
   },
 
-  ratingSummary: {
+  sectionSubtitle: {
+    fontSize: 12,
+    fontWeight: "500",
+    color: "#6b7280",
+  },
+
+  ratingCard: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 16,
     padding: 16,
-    backgroundColor: "#fafafa",
+    backgroundColor: "#f9fafb",
+    borderRadius: 16,
     borderWidth: 1,
     borderColor: "#f0f0f0",
-    marginBottom: 20,
+    gap: 16,
+    marginBottom: 14,
+  },
+
+  ratingNumberBox: {
+    flexDirection: "row",
+    alignItems: "baseline",
+    gap: 2,
   },
 
   ratingNumber: {
-    fontSize: 38,
+    fontSize: 32,
     fontWeight: "900",
     color: "#111827",
+    letterSpacing: -0.5,
+  },
+
+  ratingMax: {
+    fontSize: 12,
+    fontWeight: "600",
+    color: "#9ca3af",
+  },
+
+  ratingMetaBox: {
+    flex: 1,
+    justifyContent: "center",
+    gap: 4,
   },
 
   stars: {
     flexDirection: "row",
     alignItems: "center",
+    gap: 2,
   },
 
   star: {
-    fontSize: 16,
-    marginRight: 2,
+    fontSize: 13,
+    lineHeight: 14,
   },
 
   starFilled: {
-    color: "#fbbf24",
+    color: "#f59e0b",
   },
 
   starEmpty: {
@@ -498,98 +420,109 @@ const styles = StyleSheet.create({
 
   reviewCount: {
     fontSize: 11,
+    fontWeight: "500",
     color: "#6b7280",
-    marginTop: 4,
   },
 
-  noReviews: {
-    padding: 24,
+  loadingContainer: {
+    paddingVertical: 24,
     alignItems: "center",
+    justifyContent: "center",
+  },
+
+  emptyCard: {
+    padding: 24,
+    borderRadius: 16,
     backgroundColor: "#fafafa",
     borderWidth: 1,
     borderColor: "#f0f0f0",
+    alignItems: "center",
   },
 
-  noReviewsText: {
-    fontSize: 13,
+  emptyTitle: {
+    fontSize: 14,
+    fontWeight: "700",
+    color: "#111827",
+  },
+
+  emptyText: {
+    fontSize: 12,
     color: "#6b7280",
+    marginTop: 4,
     textAlign: "center",
   },
 
   reviewList: {
-    gap: 0,
+    gap: 10,
   },
 
-  review: {
-    paddingVertical: 20,
-    borderBottomWidth: 1,
-    borderBottomColor: "#f3f4f6",
+  reviewCard: {
+    padding: 14,
+    backgroundColor: "#ffffff",
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: "#f0f0f0",
+    shadowColor: "#000",
+    shadowOffset: {
+      width: 0,
+      height: 1,
+    },
+    shadowOpacity: 0.03,
+    shadowRadius: 4,
+    elevation: 1,
   },
 
-  reviewHeader: {
+  reviewTopRow: {
     flexDirection: "row",
-    alignItems: "center",
     justifyContent: "space-between",
-    marginBottom: 8,
+    alignItems: "center",
+    marginBottom: 6,
   },
 
   reviewDate: {
-    fontSize: 10,
+    fontSize: 11,
+    fontWeight: "500",
     color: "#9ca3af",
   },
 
+  reviewerRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+    marginBottom: 6,
+  },
+
   reviewerName: {
-    fontSize: 14,
-    fontWeight: "700",
-    color: "#111827",
-    marginBottom: 5,
-  },
-
-  reviewTitle: {
-    fontSize: 14,
-    fontWeight: "700",
-    color: "#111827",
-    marginBottom: 5,
-  },
-
-  reviewComment: {
     fontSize: 13,
-    lineHeight: 20,
-    color: "#6b7280",
+    fontWeight: "700",
+    color: "#111827",
   },
 
   verifiedBadge: {
-    alignSelf: "flex-start",
-    marginTop: 10,
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-    borderRadius: 20,
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+    borderRadius: 10,
     backgroundColor: "#ecfdf5",
     borderWidth: 1,
-    borderColor: "#bbf7d0",
+    borderColor: "#a7f3d0",
   },
 
   verifiedText: {
-    fontSize: 10,
+    fontSize: 9,
     fontWeight: "700",
     color: "#047857",
   },
 
-  /* Related */
-
-  relatedContainer: {
-    marginTop: 32,
-    borderTopWidth: 1,
-    borderTopColor: "#e5e7eb",
-    paddingTop: 24,
+  reviewTitle: {
+    fontSize: 13,
+    fontWeight: "700",
+    color: "#1f2937",
+    marginBottom: 3,
   },
 
-  relatedTitle: {
-    fontSize: 16,
-    fontWeight: "800",
-    color: "#111827",
-    textTransform: "uppercase",
-    letterSpacing: 0.5,
-    marginBottom: 16,
+  reviewComment: {
+    fontSize: 12,
+    lineHeight: 18,
+    color: "#4b5563",
   },
 });

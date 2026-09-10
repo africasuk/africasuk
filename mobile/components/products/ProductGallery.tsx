@@ -21,17 +21,18 @@ interface Props {
 }
 
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get("window");
+const STAGE_WIDTH = SCREEN_WIDTH - 32; // Exact card width with 16px screen margins
+const BRAND_COLOR = "#005c2e";
 
 export function ProductGallery({ images }: Props) {
   const [selectedIndex, setSelectedIndex] = useState(0);
   const [isLightboxOpen, setIsLightboxOpen] = useState(false);
-  
+
   const scrollViewRef = useRef<ScrollView>(null);
   const lightboxScrollViewRef = useRef<ScrollView>(null);
 
   const imagesCount = images?.length ?? 0;
 
-  // Reset selected index & scroll position when images prop updates
   useEffect(() => {
     setSelectedIndex(0);
     scrollViewRef.current?.scrollTo({ x: 0, animated: false });
@@ -54,7 +55,7 @@ export function ProductGallery({ images }: Props) {
   const scrollToImage = useCallback((index: number) => {
     setSelectedIndex(index);
     scrollViewRef.current?.scrollTo({
-      x: index * (SCREEN_WIDTH - 32),
+      x: index * STAGE_WIDTH,
       animated: true,
     });
   }, []);
@@ -81,7 +82,7 @@ export function ProductGallery({ images }: Props) {
 
   return (
     <View style={styles.container}>
-      {/* 1. Swipeable Main Display Stage */}
+      {/* 1:1 Pinterest Square Display Stage */}
       <View style={styles.mainImageCard}>
         <ScrollView
           ref={scrollViewRef}
@@ -109,37 +110,47 @@ export function ProductGallery({ images }: Props) {
                   style={styles.mainImage}
                   contentFit="cover"
                   transition={200}
+                  cachePolicy="memory-disk"
                 />
               </Pressable>
             );
           })}
         </ScrollView>
 
-        {/* Zoom Hint Badge */}
-        <View style={styles.zoomBadge}>
-          <Maximize2 size={11} color="#ffffff" />
-          <Text style={styles.zoomBadgeText}>Tap for full screen</Text>
+        {/* Floating Top Indicators */}
+        <View style={styles.topBarOverlay}>
+          <View style={styles.counterBadge}>
+            <Text style={styles.counterText}>
+              {safeIndex + 1} / {images.length}
+            </Text>
+          </View>
+
+          <Pressable
+            onPress={() => setIsLightboxOpen(true)}
+            style={styles.zoomButton}
+            hitSlop={8}
+          >
+            <Maximize2 size={13} color="#111827" />
+          </Pressable>
         </View>
 
         {/* Subtle Navigation Overlay Arrows */}
         {images.length > 1 && (
           <View style={styles.navOverlay}>
-            <Pressable onPress={handlePrev} style={styles.navButton}>
-              <ChevronLeft size={16} color="#ffffff" />
+            <Pressable onPress={handlePrev} style={styles.navButton} hitSlop={6}>
+              <ChevronLeft size={16} color="#111827" />
             </Pressable>
 
-            <Pressable onPress={handleNext} style={styles.navButton}>
-              <ChevronRight size={16} color="#ffffff" />
+            <Pressable onPress={handleNext} style={styles.navButton} hitSlop={6}>
+              <ChevronRight size={16} color="#111827" />
             </Pressable>
           </View>
         )}
       </View>
 
-      {/* 2. Thumbnail Selector Bar */}
+      {/* 1:1 Thumbnail Strip */}
       {images.length > 1 && (
         <View style={styles.thumbnailSection}>
-          <Text style={styles.thumbnailLabel}>PRODUCT VIEW</Text>
-
           <ScrollView
             horizontal
             showsHorizontalScrollIndicator={false}
@@ -166,6 +177,8 @@ export function ProductGallery({ images }: Props) {
                     source={{ uri: thumbnailSrc }}
                     style={styles.thumbnailImage}
                     contentFit="cover"
+                    transition={150}
+                    cachePolicy="memory-disk"
                   />
                 </Pressable>
               );
@@ -174,7 +187,7 @@ export function ProductGallery({ images }: Props) {
         </View>
       )}
 
-      {/* 3. Full-Screen Lightbox Modal */}
+      {/* Full-Screen Lightbox Modal */}
       <Modal
         visible={isLightboxOpen}
         transparent
@@ -184,21 +197,22 @@ export function ProductGallery({ images }: Props) {
         <View style={styles.lightboxOverlay}>
           {/* Header Controls */}
           <View style={styles.lightboxHeader}>
-            <View style={styles.counterBadge}>
-              <Text style={styles.counterText}>
-                {safeIndex + 1} / {images.length}
+            <View style={styles.lightboxCounterBadge}>
+              <Text style={styles.lightboxCounterText}>
+                {safeIndex + 1} of {images.length}
               </Text>
             </View>
 
             <Pressable
               onPress={() => setIsLightboxOpen(false)}
-              style={styles.closeButton}
+              style={styles.lightboxCloseButton}
+              hitSlop={8}
             >
               <X size={18} color="#ffffff" />
             </Pressable>
           </View>
 
-          {/* Full Screen Image Stage */}
+          {/* Full-Screen Swiper */}
           <View style={styles.lightboxStage}>
             <ScrollView
               ref={lightboxScrollViewRef}
@@ -211,7 +225,7 @@ export function ProductGallery({ images }: Props) {
                 const src =
                   img?.imageUrl && img.imageUrl.startsWith("http")
                     ? img.imageUrl
-                    : "https://via.placeholder.com/600";
+                    : "https://via.placeholder.com/1000";
 
                 return (
                   <View key={img.id ?? idx} style={styles.lightboxSlide}>
@@ -219,6 +233,8 @@ export function ProductGallery({ images }: Props) {
                       source={{ uri: src }}
                       style={styles.lightboxImage}
                       contentFit="contain"
+                      transition={200}
+                      cachePolicy="memory-disk"
                     />
                   </View>
                 );
@@ -234,158 +250,215 @@ export function ProductGallery({ images }: Props) {
 const styles = StyleSheet.create({
   container: {
     width: "100%",
+    paddingHorizontal: 16,
     gap: 12,
   },
+
   emptyContainer: {
-    height: 320,
-    width: "100%",
-    borderRadius: 0, // Sharp corners
-    backgroundColor: "#ffffff",
+    width: STAGE_WIDTH,
+    aspectRatio: 1,
+    alignSelf: "center",
+    borderRadius: 20,
+    backgroundColor: "#f9fafb",
     borderWidth: 1,
     borderColor: "#e5e7eb",
     alignItems: "center",
     justifyContent: "center",
   },
+
   emptyText: {
     fontSize: 13,
-    fontWeight: "400",
+    fontWeight: "500",
     color: "#9ca3af",
   },
+
+  /* 1:1 Pinterest Square Main Card */
   mainImageCard: {
     position: "relative",
-    width: "100%",
-    height: 340,
-    borderRadius: 0, // Sharp corners design language
-    backgroundColor: "#ffffff",
+    width: STAGE_WIDTH,
+    aspectRatio: 1,
+    alignSelf: "center",
+    borderRadius: 20,
+    backgroundColor: "#f5f5f5",
     overflow: "hidden",
     borderWidth: 1,
-    borderColor: "#e5e7eb",
+    borderColor: "#f0f0f0",
+    shadowColor: "#000000",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.05,
+    shadowRadius: 10,
+    elevation: 2,
   },
+
   stageScrollView: {
     width: "100%",
     height: "100%",
   },
+
   slideFrame: {
-    width: SCREEN_WIDTH - 32, // Adjusted for screen padding
-    height: 340,
+    width: STAGE_WIDTH,
+    height: "100%",
   },
+
   mainImage: {
     width: "100%",
     height: "100%",
   },
-  zoomBadge: {
+
+  /* Floating UI Overlays */
+  topBarOverlay: {
     position: "absolute",
-    top: 10,
-    left: 10,
+    top: 12,
+    left: 12,
+    right: 12,
     flexDirection: "row",
+    justifyContent: "space-between",
     alignItems: "center",
-    gap: 6,
-    backgroundColor: "rgba(17, 24, 39, 0.75)",
-    paddingHorizontal: 8,
+    pointerEvents: "box-none",
+  },
+
+  counterBadge: {
+    backgroundColor: "rgba(255, 255, 255, 0.9)",
+    paddingHorizontal: 9,
     paddingVertical: 4,
-    borderRadius: 0, // Sharp corners
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: "rgba(0, 0, 0, 0.06)",
+    shadowColor: "#000000",
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.08,
+    shadowRadius: 3,
+    elevation: 2,
   },
-  zoomBadgeText: {
-    fontSize: 10,
-    fontWeight: "400", // Clean regular weight
-    color: "#ffffff",
-    letterSpacing: 0.2,
+
+  counterText: {
+    fontSize: 11,
+    fontWeight: "700",
+    color: "#111827",
+    letterSpacing: 0.3,
   },
-  navOverlay: {
-    position: "absolute",
-    bottom: 10,
-    right: 10,
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 6,
-  },
-  navButton: {
+
+  zoomButton: {
     width: 32,
     height: 32,
-    borderRadius: 0, // Sharp corners
-    backgroundColor: "rgba(17, 24, 39, 0.75)",
+    borderRadius: 16,
+    backgroundColor: "rgba(255, 255, 255, 0.9)",
     alignItems: "center",
     justifyContent: "center",
+    borderWidth: 1,
+    borderColor: "rgba(0, 0, 0, 0.06)",
+    shadowColor: "#000000",
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.08,
+    shadowRadius: 3,
+    elevation: 2,
   },
-  thumbnailSection: {
-    width: "100%",
-    gap: 6,
-  },
-  thumbnailLabel: {
-    fontSize: 9,
-    fontWeight: "500", // Clean regular weight
-    color: "#6b7280",
-    letterSpacing: 0.8,
-    alignSelf: "flex-end",
-  },
-  thumbnailList: {
+
+  navOverlay: {
+    position: "absolute",
+    bottom: 12,
+    right: 12,
+    flexDirection: "row",
+    alignItems: "center",
     gap: 8,
   },
-  thumbnailItem: {
-    width: 56,
-    height: 56,
-    borderRadius: 0, // Sharp corners
-    backgroundColor: "#f9fafb",
-    overflow: "hidden",
+
+  navButton: {
+    width: 34,
+    height: 34,
+    borderRadius: 17,
+    backgroundColor: "rgba(255, 255, 255, 0.92)",
+    alignItems: "center",
+    justifyContent: "center",
     borderWidth: 1,
-    borderColor: "#e5e7eb",
+    borderColor: "rgba(0, 0, 0, 0.06)",
+    shadowColor: "#000000",
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 2,
   },
+
+  /* 1:1 Thumbnail Rail */
+  thumbnailSection: {
+    width: "100%",
+  },
+
+  thumbnailList: {
+    gap: 10,
+    paddingVertical: 2,
+  },
+
+  thumbnailItem: {
+    width: 60,
+    height: 60,
+    borderRadius: 14,
+    backgroundColor: "#f5f5f5",
+    overflow: "hidden",
+    borderWidth: 1.5,
+    borderColor: "transparent",
+  },
+
   selectedThumbnailItem: {
-    borderColor: "#004d26",
-    borderWidth: 2,
+    borderColor: BRAND_COLOR,
   },
+
   thumbnailImage: {
     width: "100%",
     height: "100%",
   },
 
-  // Lightbox Modal
+  /* Full Screen Lightbox */
   lightboxOverlay: {
     flex: 1,
-    backgroundColor: "rgba(0, 0, 0, 0.95)",
-    justifyContent: "space-between",
+    backgroundColor: "rgba(0, 0, 0, 0.96)",
   },
+
   lightboxHeader: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
-    paddingTop: 50,
-    paddingHorizontal: 16,
+    paddingTop: 54,
+    paddingHorizontal: 20,
     zIndex: 10,
   },
-  counterBadge: {
-    backgroundColor: "rgba(255, 255, 255, 0.15)",
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-    borderRadius: 0, // Sharp corners
+
+  lightboxCounterBadge: {
+    backgroundColor: "rgba(255, 255, 255, 0.16)",
+    paddingHorizontal: 12,
+    paddingVertical: 5,
+    borderRadius: 14,
   },
-  counterText: {
+
+  lightboxCounterText: {
     color: "#ffffff",
-    fontSize: 11,
-    fontWeight: "400",
-    letterSpacing: 0.5,
+    fontSize: 12,
+    fontWeight: "600",
   },
-  closeButton: {
+
+  lightboxCloseButton: {
     width: 36,
     height: 36,
-    borderRadius: 0, // Sharp corners
-    backgroundColor: "rgba(255, 255, 255, 0.15)",
+    borderRadius: 18,
+    backgroundColor: "rgba(255, 255, 255, 0.16)",
     alignItems: "center",
     justifyContent: "center",
   },
+
   lightboxStage: {
     flex: 1,
-    alignItems: "center",
     justifyContent: "center",
   },
+
   lightboxSlide: {
     width: SCREEN_WIDTH,
     height: SCREEN_HEIGHT * 0.75,
     alignItems: "center",
     justifyContent: "center",
   },
+
   lightboxImage: {
-    width: SCREEN_WIDTH - 32,
+    width: SCREEN_WIDTH - 24,
     height: "100%",
   },
 });

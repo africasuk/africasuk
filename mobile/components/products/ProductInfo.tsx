@@ -5,8 +5,8 @@ import {
   Pressable,
   Share,
   StyleSheet,
-  Clipboard,
 } from "react-native";
+import * as Clipboard from "expo-clipboard";
 import { Share2, Copy, Check } from "lucide-react-native";
 
 import type { ProductWithDetails } from "@africasuk/types";
@@ -15,20 +15,19 @@ interface Props {
   product: ProductWithDetails;
 }
 
+const BRAND_COLOR = "#005c2e";
+
 export function ProductInfo({ product }: Props) {
   const [copied, setCopied] = useState(false);
+  const [isExpanded, setIsExpanded] = useState(false);
 
   const productUrl = `https://africasuk.com/products/${product.slug}`;
 
   const handleCopyLink = async () => {
     try {
-      await Clipboard.setString(productUrl);
-
+      await Clipboard.setStringAsync(productUrl);
       setCopied(true);
-
-      setTimeout(() => {
-        setCopied(false);
-      }, 2000);
+      setTimeout(() => setCopied(false), 2000);
     } catch (err) {
       console.error("Failed to copy link:", err);
     }
@@ -46,142 +45,207 @@ export function ProductInfo({ product }: Props) {
     }
   };
 
+  const hasDescription = Boolean(product.description?.trim());
+
   return (
     <View style={styles.container}>
-      {/* Category / Brand Row & Actions */}
-      <View style={styles.headerRow}>
-        <View style={styles.metadataContainer}>
-          {product.category && (
-            <Text style={styles.metadataText}>{product.category.name}</Text>
-          )}
-          {product.brand && product.category && (
-            <Text style={styles.dotSeparator}>•</Text>
-          )}
+      {/* Top Metadata & Action Buttons */}
+      <View style={styles.topRow}>
+        <View style={styles.badgeRow}>
           {product.brand && (
-            <Text style={styles.metadataText}>{product.brand.name}</Text>
+            <View style={styles.brandPill}>
+              <Text style={styles.brandText} numberOfLines={1}>
+                {product.brand.name}
+              </Text>
+            </View>
+          )}
+
+          {product.category && (
+            <Text style={styles.categoryText} numberOfLines={1}>
+              {product.category.name}
+            </Text>
           )}
         </View>
 
-        {/* Action Buttons (Pill / Rounded) */}
-        <View style={styles.actionsContainer}>
-          {/* Native Share */}
+        {/* Action Pills */}
+        <View style={styles.actionsGroup}>
           <Pressable
             onPress={handleNativeShare}
             style={({ pressed }) => [
-              styles.actionButton,
-              pressed && styles.buttonPressed,
+              styles.actionPill,
+              pressed && styles.pressedState,
             ]}
+            hitSlop={6}
           >
-            <Share2 size={13} color="#6b7280" />
-            <Text style={styles.actionButtonText}>Share</Text>
+            <Share2 size={13} color="#4b5563" />
+            <Text style={styles.actionPillText}>Share</Text>
           </Pressable>
 
-          {/* Copy Link */}
           <Pressable
             onPress={handleCopyLink}
             style={({ pressed }) => [
-              styles.actionButton,
-              copied && styles.copiedButton,
-              pressed && styles.buttonPressed,
+              styles.actionPill,
+              copied && styles.copiedPill,
+              pressed && styles.pressedState,
             ]}
+            hitSlop={6}
           >
             {copied ? (
               <>
-                <Check size={13} color="#ffffff" />
-                <Text style={styles.copiedButtonText}>Copied!</Text>
+                <Check size={13} color="#ffffff" strokeWidth={2.5} />
+                <Text style={styles.copiedPillText}>Copied</Text>
               </>
             ) : (
               <>
-                <Copy size={13} color="#6b7280" />
-                <Text style={styles.actionButtonText}>Copy Link</Text>
+                <Copy size={13} color="#4b5563" />
+                <Text style={styles.actionPillText}>Copy</Text>
               </>
             )}
           </Pressable>
         </View>
       </View>
 
-      {/* Product Title - Explicit Regular Weight */}
+      {/* Product Title */}
       <Text style={styles.title}>{product.name}</Text>
 
-      {/* Description */}
-      {product.description ? (
-        <Text style={styles.description}>{product.description}</Text>
-      ) : null}
+      {/* Product Description */}
+      {hasDescription && (
+        <View style={styles.descriptionBlock}>
+          <Text
+            numberOfLines={isExpanded ? undefined : 3}
+            style={styles.descriptionText}
+          >
+            {product.description}
+          </Text>
+
+          {product.description && product.description.length > 140 && (
+            <Pressable
+              onPress={() => setIsExpanded((prev) => !prev)}
+              style={styles.readMoreTrigger}
+              hitSlop={8}
+            >
+              <Text style={styles.readMoreText}>
+                {isExpanded ? "Show less" : "Read more"}
+              </Text>
+            </Pressable>
+          )}
+        </View>
+      )}
     </View>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
-    gap: 10,
+    gap: 8,
   },
-  headerRow: {
+
+  topRow: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-    gap: 12,
+    gap: 8,
   },
-  metadataContainer: {
+
+  badgeRow: {
     flexDirection: "row",
     alignItems: "center",
     gap: 6,
     flexShrink: 1,
   },
-  metadataText: {
+
+  brandPill: {
+    backgroundColor: "#ecfdf5",
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: "#d1fae5",
+  },
+
+  brandText: {
     fontSize: 11,
-    fontWeight: "400",
-    color: "#6b7280",
+    fontWeight: "700",
+    color: BRAND_COLOR,
+    letterSpacing: 0.4,
     textTransform: "uppercase",
-    letterSpacing: 0.8,
   },
-  dotSeparator: {
-    fontSize: 11,
-    color: "#9ca3af",
+
+  categoryText: {
+    fontSize: 12,
+    fontWeight: "500",
+    color: "#6b7280",
+    textTransform: "capitalize",
   },
-  actionsContainer: {
+
+  actionsGroup: {
     flexDirection: "row",
     alignItems: "center",
     gap: 6,
   },
-  actionButton: {
+
+  actionPill: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 6,
-    paddingHorizontal: 12,
+    gap: 5,
+    paddingHorizontal: 10,
     paddingVertical: 6,
-    borderRadius: 20,
-    backgroundColor: "#ffffff",
+    borderRadius: 14,
+    backgroundColor: "#f9fafb",
     borderWidth: 1,
     borderColor: "#e5e7eb",
   },
-  copiedButton: {
-    backgroundColor: "#002b15",
-    borderColor: "#002b15",
+
+  copiedPill: {
+    backgroundColor: BRAND_COLOR,
+    borderColor: BRAND_COLOR,
   },
-  buttonPressed: {
-    opacity: 0.8,
+
+  pressedState: {
+    opacity: 0.75,
+    transform: [{ scale: 0.98 }],
   },
-  actionButtonText: {
-    fontSize: 12,
-    fontWeight: "400",
+
+  actionPillText: {
+    fontSize: 11,
+    fontWeight: "600",
     color: "#4b5563",
   },
-  copiedButtonText: {
-    fontSize: 12,
-    fontWeight: "400",
+
+  copiedPillText: {
+    fontSize: 11,
+    fontWeight: "700",
     color: "#ffffff",
   },
+
   title: {
-    fontSize: 20,
-    fontWeight: "400", // Strictly regular/unbolded
+    fontSize: 22,
+    fontWeight: "800",
     color: "#111827",
-    letterSpacing: 0,
-    lineHeight: 26,
+    letterSpacing: -0.4,
+    lineHeight: 28,
+    marginTop: 2,
   },
-  description: {
+
+  descriptionBlock: {
+    marginTop: 4,
+  },
+
+  descriptionText: {
     fontSize: 13,
     lineHeight: 20,
-    color: "#6b7280",
+    color: "#4b5563",
     fontWeight: "400",
+  },
+
+  readMoreTrigger: {
+    alignSelf: "flex-start",
+    marginTop: 6,
+  },
+
+  readMoreText: {
+    fontSize: 12,
+    fontWeight: "700",
+    color: BRAND_COLOR,
   },
 });

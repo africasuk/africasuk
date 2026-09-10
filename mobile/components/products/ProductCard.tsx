@@ -1,6 +1,13 @@
-import { View, Text, Pressable, StyleSheet } from "react-native";
+import React, { memo, useState, useCallback, useRef, useEffect } from "react";
+import {
+  View,
+  Text,
+  TouchableOpacity,
+  StyleSheet,
+  ActivityIndicator,
+} from "react-native";
 import { Image } from "expo-image";
-import { Link } from "expo-router";
+import { useRouter, useFocusEffect } from "expo-router";
 import type { ProductWithDetails } from "@africasuk/types";
 import { Price } from "../currency/Price";
 
@@ -10,147 +17,191 @@ interface Props {
   };
 }
 
-export function ProductCard({ product }: Props) {
+export const ProductCard = memo(function ProductCard({ product }: Props) {
+  const router = useRouter();
+  const [isNavigating, setIsNavigating] = useState(false);
+  const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // Clear loading state when returning to this screen
+  useFocusEffect(
+    useCallback(() => {
+      setIsNavigating(false);
+      return () => {
+        if (timeoutRef.current) clearTimeout(timeoutRef.current);
+      };
+    }, [])
+  );
+
+  useEffect(() => {
+    return () => {
+      if (timeoutRef.current) clearTimeout(timeoutRef.current);
+    };
+  }, []);
+
+  if (!product) return null;
+
   const color =
     product.colors?.find((c) => c.id === product.selectedColorId) ??
     product.colors?.[0];
 
   const imageUrl =
-    color?.images?.[0]?.imageUrl ??
-    "https://via.placeholder.com/300";
+    color?.images?.[0]?.imageUrl ?? "https://via.placeholder.com/300";
 
   const basePrice =
     color?.variants?.[0]?.price ??
     product.colors?.flatMap((c) => c.variants ?? [])[0]?.price ??
     0;
 
-  // Real product rating from backend
   const averageRating = product.rating?.averageRating ?? 0;
   const reviewCount = product.rating?.reviewCount ?? 0;
 
+  const handlePress = () => {
+    if (isNavigating) return;
+    setIsNavigating(true);
+
+    router.push({
+      pathname: "/products/[slug]",
+      params: {
+        slug: product.slug,
+        ...(color?.id ? { color: color.id } : {}),
+      },
+    });
+
+    // Safety fallback: reset after 1.5s in case navigation is interrupted
+    timeoutRef.current = setTimeout(() => {
+      setIsNavigating(false);
+    }, 1500);
+  };
+
   return (
-    <Link
-      href={{
-        pathname: "/products/[slug]",
-        params: {
-          slug: product.slug,
-          ...(color?.id ? { color: color.id } : {}),
-        },
-      }}
-      asChild
+    <TouchableOpacity
+      style={styles.card}
+      activeOpacity={0.85}
+      onPress={handlePress}
+      disabled={isNavigating}
     >
-      <Pressable style={styles.card}>
-        {/* Image */}
-        <View style={styles.imageContainer}>
-          <Image
-            source={{ uri: imageUrl }}
-            style={styles.image}
-            contentFit="cover"
-            transition={200}
-          />
+      {/* 1:1 Media Frame */}
+      <View style={styles.imageContainer}>
+        <Image
+          source={{ uri: imageUrl }}
+          style={styles.image}
+          contentFit="cover"
+          transition={200}
+          cachePolicy="memory-disk"
+        />
 
-          {/* Color Swatches */}
-          {product.colors && product.colors.length > 1 && (
-            <View style={styles.swatchPill}>
-              {product.colors.slice(0, 4).map((c) => (
-                <View
-                  key={c.id}
-                  style={[
-                    styles.swatchDot,
-                    {
-                      backgroundColor:
-                        c.hexCode ?? c.name.toLowerCase(),
-                    },
-                    c.id === color?.id && styles.activeSwatchDot,
-                  ]}
-                />
-              ))}
+        {/* Loading Overlay */}
+        {isNavigating && (
+          <View style={styles.loadingOverlay}>
+            <ActivityIndicator size="small" color="#18181b" />
+          </View>
+        )}
 
-              {product.colors.length > 4 && (
-                <Text style={styles.moreColorsText}>
-                  +{product.colors.length - 4}
-                </Text>
-              )}
-            </View>
-          )}
-        </View>
+        {/* Swatches */}
+        {product.colors && product.colors.length > 1 && !isNavigating && (
+          <View style={styles.swatchPill}>
+            {product.colors.slice(0, 4).map((c) => (
+              <View
+                key={c.id}
+                style={[
+                  styles.swatchDot,
+                  {
+                    backgroundColor:
+                      c.hexCode ?? c.name?.toLowerCase() ?? "#000",
+                  },
+                  c.id === color?.id && styles.activeSwatchDot,
+                ]}
+              />
+            ))}
 
-        {/* Content */}
-        <View style={styles.content}>
-          <View style={styles.headerGroup}>
-            {product.brand?.name ? (
-              <Text style={styles.brandText} numberOfLines={1}>
-                {product.brand.name}
+            {product.colors.length > 4 && (
+              <Text style={styles.moreColorsText}>
+                +{product.colors.length - 4}
               </Text>
-            ) : null}
-
-            <Text style={styles.titleText} numberOfLines={1}>
-              {product.name}
-            </Text>
-
-            {/* ⭐ Real Rating */}
-            <View style={styles.ratingRow}>
-              <View style={styles.stars}>
-                {Array.from({ length: 5 }).map((_, index) => (
-                  <Text
-                    key={index}
-                    style={[
-                      styles.star,
-                      index < Math.round(averageRating)
-                        ? styles.filledStar
-                        : styles.emptyStar,
-                    ]}
-                  >
-                    ★
-                  </Text>
-                ))}
-              </View>
-
-              {reviewCount > 0 ? (
-                <Text style={styles.ratingText}>
-                  {averageRating.toFixed(1)} ({reviewCount})
-                </Text>
-              ) : (
-                <Text style={styles.noReviewsText}>
-                  No reviews
-                </Text>
-              )}
-            </View>
+            )}
           </View>
+        )}
+      </View>
 
-          {/* Price */}
-          <View style={styles.priceRow}>
-            <Price
-              price={Number(basePrice)}
-              style={styles.priceText}
-            />
+      {/* Content */}
+      <View style={styles.content}>
+        <View style={styles.headerGroup}>
+          {product.brand?.name ? (
+            <Text style={styles.brandText} numberOfLines={1}>
+              {product.brand.name}
+            </Text>
+          ) : null}
+
+          <Text style={styles.titleText} numberOfLines={1}>
+            {product.name}
+          </Text>
+
+          {/* Rating */}
+          <View style={styles.ratingRow}>
+            <View style={styles.stars}>
+              {Array.from({ length: 5 }).map((_, index) => (
+                <Text
+                  key={index}
+                  style={[
+                    styles.star,
+                    index < Math.round(averageRating)
+                      ? styles.filledStar
+                      : styles.emptyStar,
+                  ]}
+                >
+                  ★
+                </Text>
+              ))}
+            </View>
+
+            {reviewCount > 0 ? (
+              <Text style={styles.ratingText}>
+                {averageRating.toFixed(1)} ({reviewCount})
+              </Text>
+            ) : (
+              <Text style={styles.noReviewsText}>No reviews</Text>
+            )}
           </View>
         </View>
-      </Pressable>
-    </Link>
+
+        {/* Price */}
+        <View style={styles.priceRow}>
+          <Price price={Number(basePrice)} style={styles.priceText} />
+        </View>
+      </View>
+    </TouchableOpacity>
   );
-}
+});
 
 const styles = StyleSheet.create({
   card: {
     backgroundColor: "#ffffff",
-    borderRadius: 0,
-    padding: 8,
+    borderRadius: 14,
+    padding: 6,
     borderWidth: 1,
-    borderColor: "#e5e7eb",
+    borderColor: "#f0f0f0",
   },
 
   imageContainer: {
     position: "relative",
-    height: 160,
+    aspectRatio: 1,
     width: "100%",
-    backgroundColor: "#f9fafb",
+    backgroundColor: "#f5f5f5",
+    borderRadius: 10,
     overflow: "hidden",
   },
 
   image: {
     width: "100%",
     height: "100%",
+  },
+
+  loadingOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: "rgba(255, 255, 255, 0.7)",
+    alignItems: "center",
+    justifyContent: "center",
+    zIndex: 10,
   },
 
   swatchPill: {
@@ -160,37 +211,36 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     gap: 4,
-    backgroundColor: "rgba(255, 255, 255, 0.92)",
+    backgroundColor: "rgba(255, 255, 255, 0.9)",
     paddingHorizontal: 6,
     paddingVertical: 3,
-    borderWidth: 1,
-    borderColor: "#e5e7eb",
+    borderRadius: 10,
   },
 
   swatchDot: {
-    width: 8,
-    height: 8,
-    borderRadius: 0,
+    width: 7,
+    height: 7,
+    borderRadius: 3.5,
     borderWidth: 1,
-    borderColor: "rgba(0,0,0,0.1)",
+    borderColor: "rgba(0, 0, 0, 0.1)",
   },
 
   activeSwatchDot: {
     borderWidth: 1.5,
-    borderColor: "#002b15",
+    borderColor: "#18181b",
   },
 
   moreColorsText: {
-    fontSize: 8,
-    fontWeight: "400",
-    color: "#6b7280",
+    fontSize: 9,
+    fontWeight: "600",
+    color: "#71717a",
     marginLeft: 1,
   },
 
   content: {
     paddingTop: 8,
     paddingHorizontal: 2,
-    gap: 4,
+    gap: 3,
   },
 
   headerGroup: {
@@ -198,25 +248,25 @@ const styles = StyleSheet.create({
   },
 
   brandText: {
-    fontSize: 9,
-    fontWeight: "500",
-    color: "#9ca3af",
+    fontSize: 10,
+    fontWeight: "600",
+    color: "#a1a1aa",
     textTransform: "uppercase",
-    letterSpacing: 0.8,
+    letterSpacing: 0.5,
   },
 
   titleText: {
     fontSize: 13,
-    fontWeight: "500",
-    color: "#111827",
+    fontWeight: "600",
+    color: "#18181b",
+    letterSpacing: -0.2,
   },
 
-  // ⭐ Rating
   ratingRow: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 6,
-    paddingTop: 3,
+    gap: 4,
+    paddingTop: 1,
   },
 
   stars: {
@@ -225,41 +275,38 @@ const styles = StyleSheet.create({
   },
 
   star: {
-    fontSize: 12,
-    lineHeight: 14,
+    fontSize: 11,
+    lineHeight: 12,
   },
 
   filledStar: {
-    color: "#fbbf24",
+    color: "#f59e0b",
   },
 
   emptyStar: {
-    color: "#e5e7eb",
+    color: "#e4e4e7",
   },
 
   ratingText: {
     fontSize: 10,
     fontWeight: "600",
-    color: "#6b7280",
+    color: "#71717a",
   },
 
   noReviewsText: {
     fontSize: 10,
     fontWeight: "500",
-    color: "#9ca3af",
+    color: "#a1a1aa",
   },
 
   priceRow: {
-    paddingTop: 5,
-    flexDirection: "row",
-    alignItems: "baseline",
-    justifyContent: "space-between",
+    paddingTop: 2,
   },
 
   priceText: {
     fontSize: 14,
-    fontWeight: "500",
-    color: "#002b15",
-    letterSpacing: 0.2,
+    fontWeight: "700",
+    color: "#18181b",
+    letterSpacing: -0.2,
   },
 });

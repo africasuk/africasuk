@@ -2,7 +2,6 @@ import React from "react";
 import { StyleSheet, Text, TouchableOpacity, View, Pressable } from "react-native";
 import { Image } from "expo-image";
 import { router } from "expo-router";
-import { LinearGradient } from "expo-linear-gradient";
 import { ArrowRight } from "lucide-react-native";
 
 import type { CartItem } from "@/types/cart";
@@ -12,86 +11,91 @@ interface Props {
   item: CartItem;
 }
 
-const BRAND_LIGHT = "#008744";
-const BRAND_DARK = "#002b15";
-const LIGHT_GREEN = "#ecfdf5";
-
 export default function ContinueShoppingCard({ item }: Props) {
+  const navigateToProduct = () => {
+    router.push(`/products/${item.slug}` as never);
+  };
+
+  const navigateToCheckout = () => {
+    router.push("/checkout" as never);
+  };
+
   return (
     <View style={styles.card}>
-      {/* Product Image Frame - Sharp Corners */}
+      {/* 1:1 Clean Image Container */}
       <TouchableOpacity
-        activeOpacity={0.85}
-        onPress={() => router.push(`/products/${item.slug}` as never)}
+        activeOpacity={0.9}
+        onPress={navigateToProduct}
         style={styles.imageWrapper}
       >
         <Image
           source={{ uri: item.image }}
           style={styles.image}
           contentFit="cover"
-          transition={200}
+          transition={150}
+          cachePolicy="memory-disk"
         />
       </TouchableOpacity>
 
-      {/* Content Body */}
+      {/* Body Content */}
       <View style={styles.content}>
-        <TouchableOpacity
-          onPress={() => router.push(`/products/${item.slug}` as never)}
-          activeOpacity={0.7}
-        >
-          <Text numberOfLines={2} style={styles.name}>
-            {item.name}
-          </Text>
-        </TouchableOpacity>
+        <View style={styles.headerBlock}>
+          {/* Price Prominent at the Top */}
+          <View style={styles.priceRow}>
+            <Price
+              price={item.price * item.quantity}
+              style={styles.totalPrice}
+            />
+            {item.quantity > 1 && (
+              <Text style={styles.unitDetail}>
+                (<Price price={item.price} style={styles.unitPrice} /> ea)
+              </Text>
+            )}
+          </View>
 
-        {/* Option Tags */}
-        {item.options && item.options.length > 0 && (
-          <View style={styles.options}>
-            {item.options.map((option) => (
-              <View
-                key={`${option.optionName}-${option.value}`}
-                style={styles.option}
-              >
-                <Text numberOfLines={1} style={styles.optionText}>
-                  {option.optionName}: {option.value}
-                </Text>
+          {/* Product Title */}
+          <TouchableOpacity
+            onPress={navigateToProduct}
+            activeOpacity={0.7}
+          >
+            <Text numberOfLines={2} style={styles.name}>
+              {item.name}
+            </Text>
+          </TouchableOpacity>
+
+          {/* Selected Variant Options */}
+          {item.options && item.options.length > 0 && (
+            <View style={styles.optionsRow}>
+              {item.options.map((option) => (
+                <View
+                  key={`${option.optionName}-${option.value}`}
+                  style={styles.optionPill}
+                >
+                  <Text numberOfLines={1} style={styles.optionText}>
+                    {option.value}
+                  </Text>
+                </View>
+              ))}
+
+              <View style={styles.qtyPill}>
+                <Text style={styles.qtyText}>Qty: {item.quantity}</Text>
               </View>
-            ))}
-          </View>
-        )}
-
-        {/* Pricing Summary Box */}
-        <View style={styles.summary}>
-          <View style={styles.summaryCol}>
-            <Text style={styles.label}>Qty</Text>
-            <Text style={styles.value}>×{item.quantity}</Text>
-          </View>
-
-          <View style={[styles.summaryCol, styles.alignRight]}>
-            <Text style={styles.label}>Total</Text>
-            <Price price={item.price * item.quantity} style={styles.priceText} />
-          </View>
+            </View>
+          )}
         </View>
 
-        {/* Action Button */}
+        {/* Clean Neutral Checkout Action */}
         <Pressable
-          onPress={() => router.push("/checkout" as never)}
+          onPress={navigateToCheckout}
           style={({ pressed }) => [
-            styles.buttonWrapper,
+            styles.checkoutBtn,
             pressed && styles.pressedState,
           ]}
         >
-          <LinearGradient
-            colors={[BRAND_LIGHT, BRAND_DARK]}
-            start={{ x: 0, y: 0 }}
-            end={{ x: 1, y: 1 }}
-            style={styles.button}
-          >
-            <Text numberOfLines={1} style={styles.buttonText}>
-              Checkout
-            </Text>
-            <ArrowRight size={13} color="#ffffff" />
-          </LinearGradient>
+          <Text numberOfLines={1} style={styles.checkoutBtnText}>
+            Checkout
+          </Text>
+          <ArrowRight size={13} color="#ffffff" strokeWidth={2} />
         </Pressable>
       </View>
     </View>
@@ -102,18 +106,16 @@ const styles = StyleSheet.create({
   card: {
     flex: 1,
     backgroundColor: "#ffffff",
-    borderRadius: 0, // Sharp corners design language
+    borderRadius: 14,
     overflow: "hidden",
     borderWidth: 1,
-    borderColor: "#e5e7eb",
+    borderColor: "#f0f0f0",
   },
 
   imageWrapper: {
     width: "100%",
     aspectRatio: 1,
-    backgroundColor: "#f9fafb",
-    borderBottomWidth: 1,
-    borderBottomColor: "#e5e7eb",
+    backgroundColor: "#f4f4f5",
   },
 
   image: {
@@ -125,104 +127,102 @@ const styles = StyleSheet.create({
     padding: 10,
     flex: 1,
     justifyContent: "space-between",
+    gap: 10,
   },
 
-  name: {
-    fontSize: 13,
-    fontWeight: "500", // Non-bold clean title
-    color: BRAND_DARK,
-    lineHeight: 18,
-    minHeight: 36,
-  },
-
-  options: {
-    flexDirection: "row",
-    flexWrap: "wrap",
-    marginTop: 6,
+  headerBlock: {
     gap: 4,
   },
 
-  option: {
-    backgroundColor: LIGHT_GREEN,
-    borderRadius: 0, // Sharp corners
+  priceRow: {
+    flexDirection: "row",
+    alignItems: "baseline",
+    gap: 4,
+  },
+
+  totalPrice: {
+    fontSize: 15,
+    fontWeight: "700",
+    color: "#18181b",
+    letterSpacing: -0.3,
+  },
+
+  unitDetail: {
+    fontSize: 11,
+    color: "#71717a",
+    fontWeight: "400",
+  },
+
+  unitPrice: {
+    fontSize: 11,
+    color: "#71717a",
+  },
+
+  name: {
+    fontSize: 12,
+    fontWeight: "600",
+    color: "#27272a",
+    lineHeight: 16,
+    letterSpacing: -0.1,
+  },
+
+  optionsRow: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: 4,
+    marginTop: 2,
+  },
+
+  optionPill: {
+    backgroundColor: "#f4f4f5",
+    borderRadius: 6,
     paddingHorizontal: 6,
     paddingVertical: 2,
-    maxWidth: "100%",
     borderWidth: 1,
-    borderColor: "#a7f3d0",
+    borderColor: "#e4e4e7",
   },
 
   optionText: {
     fontSize: 10,
-    color: BRAND_DARK,
-    fontWeight: "400", // Clean regular weight
+    color: "#52525b",
+    fontWeight: "500",
   },
 
-  summary: {
-    marginTop: 8,
-    backgroundColor: "#f9fafb",
-    borderRadius: 0, // Sharp corners
-    padding: 8,
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
+  qtyPill: {
+    backgroundColor: "#fafafa",
+    borderRadius: 6,
+    paddingHorizontal: 6,
+    paddingVertical: 2,
     borderWidth: 1,
-    borderColor: "#e5e7eb",
+    borderColor: "#e4e4e7",
   },
 
-  summaryCol: {
-    flex: 1,
+  qtyText: {
+    fontSize: 10,
+    color: "#71717a",
+    fontWeight: "600",
   },
 
-  alignRight: {
-    alignItems: "flex-end",
-  },
-
-  label: {
-    fontSize: 9,
-    color: "#6b7280",
-    fontWeight: "500",
-    textTransform: "uppercase",
-    letterSpacing: 0.5,
-  },
-
-  value: {
-    fontSize: 11,
-    fontWeight: "500",
-    color: "#111827",
-    marginTop: 1,
-  },
-
-  priceText: {
-    fontSize: 11,
-    fontWeight: "500",
-    color: BRAND_DARK,
-    marginTop: 1,
-  },
-
-  buttonWrapper: {
-    marginTop: 10,
-    borderRadius: 0, // Sharp corners
-    overflow: "hidden",
-  },
-
-  button: {
-    paddingVertical: 9,
+  checkoutBtn: {
+    height: 36,
+    backgroundColor: "#18181b",
+    borderRadius: 8,
     paddingHorizontal: 10,
-    justifyContent: "center",
-    alignItems: "center",
     flexDirection: "row",
-    gap: 4,
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 6,
   },
 
-  buttonText: {
+  checkoutBtnText: {
     color: "#ffffff",
-    fontWeight: "500", // Clean button text weight
+    fontWeight: "600",
     fontSize: 12,
-    letterSpacing: 0.2,
+    letterSpacing: -0.1,
   },
 
   pressedState: {
-    opacity: 0.9,
+    opacity: 0.85,
+    transform: [{ scale: 0.985 }],
   },
 });

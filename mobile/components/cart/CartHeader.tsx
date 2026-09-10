@@ -1,36 +1,36 @@
 import React from "react";
 import { View, Text, StyleSheet } from "react-native";
-import { ShoppingCart } from "lucide-react-native";
+import { ShoppingBag } from "lucide-react-native";
 
 import { useCart } from "@/store/cart";
-
-const BRAND = "#005c2e";
-const BRAND_DARK = "#002b15";
 
 export default function CartHeader() {
   const items = useCart((state) => state.items);
 
-  const totalItems = items.reduce(
-    (sum, item) => sum + item.quantity,
-    0
-  );
+  const totalItems = items.reduce((sum, item) => sum + item.quantity, 0);
 
   return (
     <View style={styles.container}>
       <View style={styles.row}>
-        {/* Icon Wrapper - Sharp Corners */}
+        {/* Rounded Icon Tile */}
         <View style={styles.iconWrapper}>
-          <ShoppingCart size={22} color={BRAND} />
+          <ShoppingBag size={20} color="#18181b" strokeWidth={1.8} />
         </View>
 
-        {/* Text Area */}
+        {/* Header Typography */}
         <View style={styles.textWrapper}>
           <Text style={styles.title}>Shopping Cart</Text>
-
           <Text style={styles.subtitle}>
-            {totalItems} {totalItems === 1 ? "item" : "items"} in your cart
+            {totalItems} {totalItems === 1 ? "item" : "items"} ready for checkout
           </Text>
         </View>
+
+        {/* Counter Pill */}
+        {totalItems > 0 && (
+          <View style={styles.countPill}>
+            <Text style={styles.countText}>{totalItems}</Text>
+          </View>
+        )}
       </View>
     </View>
   );
@@ -38,39 +38,61 @@ export default function CartHeader() {
 
 const styles = StyleSheet.create({
   container: {
+    backgroundColor: "#ffffff",
     borderBottomWidth: 1,
-    borderBottomColor: "#e5e7eb",
-    paddingBottom: 16,
-    marginBottom: 16,
+    borderBottomColor: "#f4f4f5",
+    paddingHorizontal: 16,
+    paddingVertical: 14,
   },
+
   row: {
     flexDirection: "row",
     alignItems: "center",
     gap: 12,
   },
+
   iconWrapper: {
-    width: 44,
-    height: 44,
-    borderRadius: 0, // Sharp corners design language
-    backgroundColor: "#ecfdf5",
+    width: 40,
+    height: 40,
+    borderRadius: 12,
+    backgroundColor: "#f4f4f5",
     borderWidth: 1,
-    borderColor: "#a7f3d0",
+    borderColor: "#e4e4e7",
     justifyContent: "center",
     alignItems: "center",
   },
+
   textWrapper: {
     flex: 1,
+    gap: 2,
   },
+
   title: {
     fontSize: 18,
-    fontWeight: "500", // Non-bold clean header weight
-    color: BRAND_DARK,
-    letterSpacing: 0.2,
+    fontWeight: "700",
+    color: "#18181b",
+    letterSpacing: -0.4,
   },
+
   subtitle: {
     fontSize: 12,
-    fontWeight: "400", // Clean regular weight
-    color: "#6b7280",
-    marginTop: 2,
+    fontWeight: "400",
+    color: "#71717a",
+    letterSpacing: -0.1,
+  },
+
+  countPill: {
+    backgroundColor: "#f4f4f5",
+    borderWidth: 1,
+    borderColor: "#e4e4e7",
+    paddingHorizontal: 9,
+    paddingVertical: 4,
+    borderRadius: 8,
+  },
+
+  countText: {
+    fontSize: 12,
+    fontWeight: "600",
+    color: "#18181b",
   },
 });

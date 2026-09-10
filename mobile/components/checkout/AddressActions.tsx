@@ -30,118 +30,127 @@ export default function AddressActions({
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [loadingDefault, setLoadingDefault] = useState(false);
 
-async function handleDefault() {
-  try {
-    setLoadingDefault(true);
-    setMenuOpen(false);
+  async function handleDefault() {
+    try {
+      setLoadingDefault(true);
+      setMenuOpen(false);
 
-    const supabase = createClient();
+      const supabase = createClient();
 
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
 
-    if (!user) {
-      throw new Error("Please login again.");
+      if (!user) {
+        throw new Error("Please log in again.");
+      }
+
+      // Reset existing default flags for this user
+      const { error: resetError } = await (supabase as any)
+        .from("addresses")
+        .update({
+          is_default: false,
+        })
+        .eq("user_id", user.id);
+
+      if (resetError) throw resetError;
+
+      // Assign target address as default
+      const { error: updateError } = await (supabase as any)
+        .from("addresses")
+        .update({
+          is_default: true,
+        })
+        .eq("id", id);
+
+      if (updateError) throw updateError;
+
+      onRefresh?.();
+    } catch (error) {
+      console.error("Default address update error:", error);
+      Alert.alert(
+        "Update Failed",
+        error instanceof Error ? error.message : "Unable to set default address."
+      );
+    } finally {
+      setLoadingDefault(false);
     }
-
-    // Remove current default address
-    const { error: resetError } = await (supabase as any)
-      .from("addresses")
-      .update({
-        is_default: false,
-      })
-      .eq("user_id", user.id);
-
-    if (resetError) throw resetError;
-
-    // Set selected address as default
-    const { error: updateError } = await (supabase as any)
-      .from("addresses")
-      .update({
-        is_default: true,
-      })
-      .eq("id", id);
-
-    if (updateError) throw updateError;
-
-    Alert.alert("Success", "Default address updated.");
-
-    onRefresh?.();
-  } catch (error) {
-    console.error(error);
-
-    Alert.alert(
-      "Error",
-      error instanceof Error ? error.message : "Something went wrong."
-    );
-  } finally {
-    setLoadingDefault(false);
   }
-}
 
   return (
     <>
-      {/* Action Menu Trigger Button */}
+      {/* Trigger Button */}
       <Pressable
-        style={styles.triggerButton}
+        style={({ pressed }) => [
+          styles.triggerButton,
+          pressed && styles.triggerButtonPressed,
+        ]}
         onPress={() => setMenuOpen(true)}
         hitSlop={8}
       >
         {loadingDefault ? (
-          <ActivityIndicator size="small" color="#6b7280" />
+          <ActivityIndicator size="small" color="#18181b" />
         ) : (
-          <MoreVertical size={20} color="#6b7280" />
+          <MoreVertical size={16} color="#71717a" strokeWidth={1.8} />
         )}
       </Pressable>
 
-      {/* Action Menu Modal */}
+      {/* Menu Action Sheet Modal */}
       <Modal
         visible={menuOpen}
         transparent
         animationType="fade"
+        statusBarTranslucent
         onRequestClose={() => setMenuOpen(false)}
       >
         <Pressable style={styles.overlay} onPress={() => setMenuOpen(false)}>
           <View style={styles.menuContainer}>
             {/* Edit Option */}
             <Pressable
-              style={styles.menuItem}
+              style={({ pressed }) => [
+                styles.menuItem,
+                pressed && styles.menuItemPressed,
+              ]}
               onPress={() => {
                 setMenuOpen(false);
                 onEdit();
               }}
             >
-              <Pencil size={18} color="#374151" />
-              <Text style={styles.menuItemText}>Edit</Text>
+              <Pencil size={15} color="#18181b" strokeWidth={1.8} />
+              <Text style={styles.menuItemText}>Edit Address</Text>
             </Pressable>
 
-            {/* Set Default Option */}
+            {/* Set as Default Option */}
             {!isDefault && (
               <Pressable
-                style={styles.menuItem}
+                style={({ pressed }) => [
+                  styles.menuItem,
+                  pressed && styles.menuItemPressed,
+                ]}
                 disabled={loadingDefault}
                 onPress={() => {
                   void handleDefault();
                 }}
               >
-                <Star size={18} color="#374151" />
-                <Text style={styles.menuItemText}>Set Default</Text>
+                <Star size={15} color="#18181b" strokeWidth={1.8} />
+                <Text style={styles.menuItemText}>Set as Default</Text>
               </Pressable>
             )}
 
             {/* Delete Option */}
             <Pressable
-              style={[styles.menuItem, styles.deleteMenuItem]}
+              style={({ pressed }) => [
+                styles.menuItem,
+                styles.deleteMenuItem,
+                pressed && styles.deleteMenuItemPressed,
+              ]}
               onPress={() => {
                 setMenuOpen(false);
                 setDeleteOpen(true);
               }}
             >
-              <Trash2 size={18} color="#ef4444" />
-              <Text style={[styles.menuItemText, styles.deleteText]}>
-                Delete
-              </Text>
+              <Trash2 size={15} color="#dc2626" strokeWidth={1.8} />
+              <Text style={styles.deleteText}>Delete Address</Text>
             </Pressable>
           </View>
         </Pressable>
@@ -160,44 +169,69 @@ async function handleDefault() {
 
 const styles = StyleSheet.create({
   triggerButton: {
-    padding: 6,
-    borderRadius: 8,
+    width: 28,
+    height: 28,
+    borderRadius: 6,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "#f4f4f5",
   },
+
+  triggerButtonPressed: {
+    backgroundColor: "#e4e4e7",
+  },
+
   overlay: {
     flex: 1,
-    backgroundColor: "rgba(0, 0, 0, 0.3)",
+    backgroundColor: "rgba(0, 0, 0, 0.35)",
     justifyContent: "center",
     alignItems: "center",
-    padding: 20,
+    paddingHorizontal: 24,
   },
+
   menuContainer: {
-    width: 220,
+    width: "100%",
+    maxWidth: 240,
     backgroundColor: "#ffffff",
-    borderRadius: 14,
-    paddingVertical: 6,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.15,
-    shadowRadius: 10,
-    elevation: 6,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: "#e4e4e7",
+    paddingVertical: 4,
+    overflow: "hidden",
   },
+
   menuItem: {
     flexDirection: "row",
     alignItems: "center",
-    paddingHorizontal: 16,
+    gap: 10,
+    paddingHorizontal: 14,
     paddingVertical: 12,
-    gap: 12,
   },
+
+  menuItemPressed: {
+    backgroundColor: "#f4f4f5",
+  },
+
   menuItemText: {
-    fontSize: 15,
-    fontWeight: "500",
-    color: "#374151",
+    fontSize: 13,
+    fontWeight: "600",
+    color: "#18181b",
+    letterSpacing: -0.1,
   },
+
   deleteMenuItem: {
     borderTopWidth: 1,
-    borderTopColor: "#f3f4f6",
+    borderTopColor: "#f4f4f5",
   },
+
+  deleteMenuItemPressed: {
+    backgroundColor: "#fef2f2",
+  },
+
   deleteText: {
-    color: "#ef4444",
+    fontSize: 13,
+    fontWeight: "600",
+    color: "#dc2626",
+    letterSpacing: -0.1,
   },
 });

@@ -3,18 +3,15 @@ import {
   View,
   Text,
   StyleSheet,
-  TouchableOpacity,
+  Pressable,
   ActivityIndicator,
   Alert,
 } from "react-native";
 import { Image } from "expo-image";
 import * as ImagePicker from "expo-image-picker";
-import { Camera, Trash2, User } from "lucide-react-native";
+import { Camera, Trash2, User, Upload } from "lucide-react-native";
 
 import { useAvatarUpload, type MobileSelectedFile } from "./hooks/useAvatarUpload";
-
-const BRAND = "#005c2e";
-const BRAND_DARK = "#002b15";
 
 interface Props {
   userId: string;
@@ -93,7 +90,7 @@ export default function AvatarUploader({
 
   return (
     <View style={styles.container}>
-      {/* Upload Zone & Image Preview - Sharp Corners */}
+      {/* Upload Zone & Image Preview */}
       <View style={styles.dropZone}>
         <View style={styles.avatarContainer}>
           {activeAvatarUri ? (
@@ -101,32 +98,35 @@ export default function AvatarUploader({
               source={{ uri: activeAvatarUri }}
               style={styles.avatarImage}
               contentFit="cover"
-              transition={200}
+              transition={150}
+              cachePolicy="memory-disk"
             />
           ) : (
             <View style={styles.avatarPlaceholder}>
-              <User size={36} color="#9ca3af" />
+              <User size={36} color="#71717a" strokeWidth={1.75} />
             </View>
           )}
         </View>
 
         <Text style={styles.title}>Profile Picture</Text>
         <Text style={styles.subtitle}>
-          Choose an image from your device gallery.
+          Select a high-resolution square image from your device.
         </Text>
 
-        <TouchableOpacity
-          style={styles.chooseButton}
+        <Pressable
+          style={({ pressed }) => [
+            styles.chooseButton,
+            pressed && styles.chooseButtonPressed,
+          ]}
           onPress={pickImage}
           disabled={uploading}
-          activeOpacity={0.85}
         >
-          <Camera size={14} color={BRAND_DARK} style={styles.buttonIcon} />
-          <Text style={styles.chooseButtonText}>Choose Image</Text>
-        </TouchableOpacity>
+          <Camera size={14} color="#18181b" strokeWidth={1.8} />
+          <Text style={styles.chooseButtonText}>Choose Photo</Text>
+        </Pressable>
       </View>
 
-      {/* Selected File Details - Sharp Corners */}
+      {/* Selected File Details */}
       {file && (
         <View style={styles.fileCard}>
           <View style={styles.fileInfo}>
@@ -138,63 +138,71 @@ export default function AvatarUploader({
             )}
           </View>
 
-          <TouchableOpacity
-            style={styles.deleteButton}
+          <Pressable
+            style={({ pressed }) => [
+              styles.deleteButton,
+              pressed && styles.deleteButtonPressed,
+            ]}
             onPress={clear}
             disabled={uploading}
-            activeOpacity={0.7}
+            hitSlop={8}
           >
-            <Trash2 size={16} color="#ef4444" />
-          </TouchableOpacity>
+            <Trash2 size={15} color="#dc2626" strokeWidth={1.8} />
+          </Pressable>
         </View>
       )}
 
-      {/* Progress Status View - Sharp Corners */}
+      {/* Progress Status Bar */}
       {uploading && (
         <View style={styles.statusCard}>
-          <ActivityIndicator size="small" color={BRAND} />
+          <ActivityIndicator size="small" color="#18181b" />
           <View style={styles.statusTextContainer}>
             <Text style={styles.statusTitle}>
-              {status === "preparing" && "Preparing image..."}
-              {status === "uploading" && "Uploading image..."}
-              {status === "saving" && "Saving profile..."}
-              {status === "success" && "Finished"}
+              {status === "preparing" && "Compressing image..."}
+              {status === "uploading" && "Uploading to storage..."}
+              {status === "saving" && "Updating profile records..."}
+              {status === "success" && "Upload complete"}
             </Text>
             <Text style={styles.statusSubtitle}>
-              Please don&apos;t close this screen.
+              Please do not navigate away or close the app.
             </Text>
           </View>
         </View>
       )}
 
-      {/* Action Controls - Sharp Corners */}
+      {/* Action Controls */}
       <View style={styles.actions}>
-        <TouchableOpacity
-          style={styles.removeButton}
+        <Pressable
+          style={({ pressed }) => [
+            styles.removeButton,
+            pressed && styles.removeButtonPressed,
+          ]}
           onPress={clear}
           disabled={uploading}
-          activeOpacity={0.7}
         >
-          <Text style={styles.removeButtonText}>Remove</Text>
-        </TouchableOpacity>
+          <Text style={styles.removeButtonText}>Reset</Text>
+        </Pressable>
 
-        <TouchableOpacity
-          style={[
+        <Pressable
+          style={({ pressed }) => [
             styles.saveButton,
             (!file || uploading) && styles.disabledSaveButton,
+            pressed && file && !uploading && styles.saveButtonPressed,
           ]}
           disabled={!file || uploading}
           onPress={() => {
             void handleUpload();
           }}
-          activeOpacity={0.85}
         >
           {uploading ? (
             <ActivityIndicator size="small" color="#ffffff" />
           ) : (
-            <Text style={styles.saveButtonText}>Save Profile Picture</Text>
+            <>
+              <Upload size={14} color="#ffffff" strokeWidth={2} />
+              <Text style={styles.saveButtonText}>Upload Picture</Text>
+            </>
           )}
-        </TouchableOpacity>
+        </Pressable>
       </View>
     </View>
   );
@@ -202,156 +210,204 @@ export default function AvatarUploader({
 
 const styles = StyleSheet.create({
   container: {
-    gap: 16,
+    gap: 14,
   },
+
   dropZone: {
-    borderRadius: 0, // Sharp corners design language
-    borderWidth: 1,
+    borderRadius: 14,
+    borderWidth: 1.5,
     borderStyle: "dashed",
-    borderColor: "#d1d5db",
+    borderColor: "#d4d4d8",
     padding: 20,
     alignItems: "center",
-    backgroundColor: "#f9fafb",
+    backgroundColor: "#fafafa",
   },
+
   avatarContainer: {
-    width: 100,
-    height: 100,
-    borderRadius: 0, // Sharp corners
+    width: 96,
+    height: 96,
+    borderRadius: 20,
     borderWidth: 1,
-    borderColor: "#e5e7eb",
+    borderColor: "#e4e4e7",
     overflow: "hidden",
     marginBottom: 12,
     backgroundColor: "#ffffff",
   },
+
   avatarImage: {
     width: "100%",
     height: "100%",
   },
+
   avatarPlaceholder: {
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
-    backgroundColor: "#f9fafb",
+    backgroundColor: "#f4f4f5",
   },
+
   title: {
     fontSize: 15,
-    fontWeight: "500", // Non-bold clean header weight
-    color: BRAND_DARK,
-    letterSpacing: 0.2,
+    fontWeight: "700",
+    color: "#18181b",
+    letterSpacing: -0.2,
   },
+
   subtitle: {
     fontSize: 12,
     fontWeight: "400",
-    color: "#6b7280",
+    color: "#71717a",
     marginTop: 2,
     textAlign: "center",
+    maxWidth: 240,
+    lineHeight: 16,
   },
+
   chooseButton: {
     flexDirection: "row",
     alignItems: "center",
+    gap: 6,
     borderWidth: 1,
-    borderColor: "#e5e7eb",
+    borderColor: "#e4e4e7",
     backgroundColor: "#ffffff",
-    paddingVertical: 9,
+    height: 36,
     paddingHorizontal: 14,
-    borderRadius: 0, // Sharp corners
+    borderRadius: 8,
     marginTop: 14,
   },
-  buttonIcon: {
-    marginRight: 6,
+
+  chooseButtonPressed: {
+    backgroundColor: "#f4f4f5",
   },
+
   chooseButtonText: {
     fontSize: 12,
-    fontWeight: "500", // Clean regular weight
-    color: BRAND_DARK,
+    fontWeight: "600",
+    color: "#18181b",
+    letterSpacing: -0.1,
   },
+
   fileCard: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
     borderWidth: 1,
-    borderColor: "#e5e7eb",
-    borderRadius: 0, // Sharp corners
+    borderColor: "#e4e4e7",
+    borderRadius: 10,
     padding: 12,
     backgroundColor: "#ffffff",
   },
+
   fileInfo: {
     flex: 1,
     marginRight: 10,
+    gap: 2,
   },
+
   fileName: {
     fontSize: 12,
-    fontWeight: "500", // Clean weight
-    color: BRAND_DARK,
+    fontWeight: "600",
+    color: "#18181b",
   },
+
   fileSize: {
     fontSize: 11,
-    fontWeight: "400",
-    color: "#6b7280",
-    marginTop: 2,
+    color: "#71717a",
   },
+
   deleteButton: {
-    padding: 4,
+    width: 28,
+    height: 28,
+    borderRadius: 6,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "#fef2f2",
   },
+
+  deleteButtonPressed: {
+    backgroundColor: "#fee2e2",
+  },
+
   statusCard: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 10,
-    backgroundColor: "#ecfdf5",
+    gap: 12,
+    backgroundColor: "#f4f4f5",
     borderWidth: 1,
-    borderColor: "#a7f3d0",
+    borderColor: "#e4e4e7",
     padding: 12,
-    borderRadius: 0, // Sharp corners
+    borderRadius: 10,
   },
+
   statusTextContainer: {
     flex: 1,
+    gap: 2,
   },
+
   statusTitle: {
     fontSize: 12,
-    fontWeight: "500",
-    color: BRAND_DARK,
+    fontWeight: "600",
+    color: "#18181b",
   },
+
   statusSubtitle: {
     fontSize: 11,
-    color: "#059669",
-    marginTop: 1,
+    color: "#71717a",
   },
+
   actions: {
     flexDirection: "row",
     justifyContent: "flex-end",
     alignItems: "center",
-    gap: 10,
+    gap: 8,
     marginTop: 4,
   },
+
   removeButton: {
     borderWidth: 1,
-    borderColor: "#e5e7eb",
-    paddingVertical: 10,
+    borderColor: "#e4e4e7",
+    height: 40,
     paddingHorizontal: 14,
-    borderRadius: 0, // Sharp corners
+    borderRadius: 8,
     backgroundColor: "#ffffff",
-  },
-  removeButtonText: {
-    fontSize: 12,
-    fontWeight: "500", // Clean regular weight
-    color: "#4b5563",
-  },
-  saveButton: {
-    backgroundColor: BRAND,
-    paddingVertical: 10,
-    paddingHorizontal: 16,
-    borderRadius: 0, // Sharp corners
     alignItems: "center",
     justifyContent: "center",
   },
-  disabledSaveButton: {
-    backgroundColor: "#e5e7eb",
-    opacity: 0.8,
+
+  removeButtonPressed: {
+    backgroundColor: "#f4f4f5",
   },
+
+  removeButtonText: {
+    fontSize: 12,
+    fontWeight: "600",
+    color: "#71717a",
+  },
+
+  saveButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 6,
+    backgroundColor: "#18181b",
+    height: 40,
+    paddingHorizontal: 16,
+    borderRadius: 8,
+  },
+
+  saveButtonPressed: {
+    opacity: 0.88,
+    transform: [{ scale: 0.985 }],
+  },
+
+  disabledSaveButton: {
+    opacity: 0.45,
+  },
+
   saveButtonText: {
     color: "#ffffff",
     fontSize: 12,
-    fontWeight: "500", // Clean regular button weight
-    letterSpacing: 0.2,
+    fontWeight: "600",
+    letterSpacing: -0.1,
   },
 });
