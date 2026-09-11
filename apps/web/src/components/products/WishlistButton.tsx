@@ -27,17 +27,18 @@ export function WishlistButton({ item, className }: Props) {
       }}
       aria-label={active ? "Remove from wishlist" : "Add to wishlist"}
       className={cn(
-        "h-10 w-10 rounded-none border border-gray-200 bg-white hover:border-gray-400 hover:bg-gray-50 transition-colors duration-150 shrink-0 cursor-pointer shadow-none",
-        active && "border-rose-200 bg-rose-50/60 hover:border-rose-300 hover:bg-rose-50",
+        "h-11 w-11 shrink-0 cursor-pointer rounded-xl border border-zinc-200 bg-white text-zinc-700 transition-all duration-150 active:scale-95 hover:border-zinc-300 hover:bg-zinc-50 hover:text-zinc-900",
+        active &&
+          "border-rose-200 bg-rose-50/70 text-rose-600 hover:border-rose-300 hover:bg-rose-100/70 hover:text-rose-700",
         className
       )}
     >
       <Heart
         className={cn(
-          "h-4 w-4 stroke-[1.5] transition-colors duration-150",
+          "h-4 w-4 stroke-2 transition-transform duration-150",
           active
-            ? "fill-rose-500 text-rose-500"
-            : "text-gray-500 hover:text-gray-900"
+            ? "scale-110 fill-rose-500 text-rose-500"
+            : "text-zinc-600 group-hover:text-zinc-900"
         )}
       />
     </Button>

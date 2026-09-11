@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { Star, CheckCircle2, AlertCircle, Loader2 } from "lucide-react";
 
 interface ReviewFormProps {
   productId: string;
@@ -25,9 +26,7 @@ export function ReviewForm({
   const [error, setError] = useState("");
   const [success, setSuccess] = useState(false);
 
-  async function handleSubmit(
-    event: React.FormEvent<HTMLFormElement>,
-  ) {
+  async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
 
     setLoading(true);
@@ -54,9 +53,7 @@ export function ReviewForm({
       const data = await response.json();
 
       if (!response.ok) {
-        throw new Error(
-          data.error || "Failed to submit review.",
-        );
+        throw new Error(data.error || "Failed to submit review.");
       }
 
       setSuccess(true);
@@ -67,9 +64,7 @@ export function ReviewForm({
       onSuccess?.();
     } catch (err) {
       setError(
-        err instanceof Error
-          ? err.message
-          : "Failed to submit review.",
+        err instanceof Error ? err.message : "Failed to submit review."
       );
     } finally {
       setLoading(false);
@@ -79,25 +74,31 @@ export function ReviewForm({
   return (
     <form
       onSubmit={handleSubmit}
-      className="mt-6 rounded-3xl border border-gray-200/80 bg-white p-6 sm:p-8 shadow-xs select-none transition-all"
+      className="mt-6 select-none rounded-2xl border border-zinc-200 bg-white p-6 shadow-xs antialiased transition-all sm:p-8"
     >
-      <div className="flex items-center justify-between border-b border-gray-100 pb-4">
-        <h4 className="text-sm font-black uppercase tracking-wider text-[#002b15]">
-          Write a Review
-        </h4>
-        <span className="text-xs text-gray-400 font-medium">
+      {/* Header */}
+      <div className="flex items-center justify-between border-b border-zinc-100 pb-4">
+        <div>
+          <h4 className="text-sm font-bold tracking-tight text-zinc-900">
+            Write a Review
+          </h4>
+          <p className="mt-0.5 text-xs text-zinc-500">
+            Share your feedback with future shoppers
+          </p>
+        </div>
+        <span className="inline-flex items-center rounded-md border border-zinc-200 bg-zinc-50 px-2 py-0.5 text-[11px] font-medium text-zinc-600">
           Verified Purchase
         </span>
       </div>
 
-      {/* Rating */}
-      <div className="mt-6">
-        <label className="mb-2 block text-xs font-bold uppercase tracking-wider text-gray-500">
-          Your Rating
+      {/* Star Rating */}
+      <div className="mt-5">
+        <label className="mb-2 block text-xs font-semibold text-zinc-700">
+          Overall Rating
         </label>
 
         <div
-          className="flex items-center gap-1.5"
+          className="flex items-center gap-1"
           onMouseLeave={() => setHoverRating(0)}
         >
           {Array.from({ length: 5 }).map((_, index) => {
@@ -111,131 +112,110 @@ export function ReviewForm({
                 type="button"
                 onClick={() => setRating(value)}
                 onMouseEnter={() => setHoverRating(value)}
-                className="p-1 text-2xl transition-all duration-150 transform hover:scale-110 active:scale-95 focus:outline-hidden"
-                aria-label={`${value} star`}
+                className="group -m-1 cursor-pointer p-1 transition-transform active:scale-95 focus:outline-hidden"
+                aria-label={`Rate ${value} stars`}
               >
-                <span
-                  className={
+                <Star
+                  className={`h-6 w-6 transition-colors duration-150 ${
                     isFilled
-                      ? "text-amber-400 drop-shadow-2xs"
-                      : "text-gray-200 hover:text-amber-200"
-                  }
-                >
-                  ★
-                </span>
+                      ? "fill-amber-400 text-amber-400"
+                      : "fill-zinc-100 text-zinc-300 group-hover:fill-amber-100 group-hover:text-amber-300"
+                  }`}
+                  strokeWidth={1.5}
+                />
               </button>
             );
           })}
+          <span className="ml-2 text-xs font-medium text-zinc-500">
+            {(hoverRating || rating) === 5
+              ? "Excellent"
+              : (hoverRating || rating) === 4
+              ? "Good"
+              : (hoverRating || rating) === 3
+              ? "Average"
+              : (hoverRating || rating) === 2
+              ? "Poor"
+              : "Terrible"}
+          </span>
         </div>
       </div>
 
       {/* Title */}
-      <div className="mt-6">
-        <label className="mb-2 block text-xs font-bold uppercase tracking-wider text-gray-500">
-          Title
+      <div className="mt-5">
+        <label
+          htmlFor="review-title"
+          className="mb-1.5 block text-xs font-semibold text-zinc-700"
+        >
+          Headline
         </label>
-
         <input
+          id="review-title"
           value={title}
           onChange={(event) => setTitle(event.target.value)}
           maxLength={100}
-          placeholder="How was the product?"
-          className="w-full rounded-2xl border border-gray-200/80 bg-gray-50/50 px-4 py-3 text-sm text-gray-900 placeholder:text-gray-400 transition duration-200 outline-hidden focus:border-[#005c2e] focus:bg-white focus:ring-4 focus:ring-[#005c2e]/10"
+          placeholder="What's the most important thing to know?"
+          className="w-full rounded-xl border border-zinc-200 bg-white px-3.5 py-2.5 text-xs text-zinc-900 placeholder:text-zinc-400 transition outline-hidden focus:border-zinc-900 focus:ring-1 focus:ring-zinc-900"
         />
       </div>
 
       {/* Comment */}
-      <div className="mt-6">
-        <div className="mb-2 flex items-center justify-between">
-          <label className="block text-xs font-bold uppercase tracking-wider text-gray-500">
-            Review
+      <div className="mt-5">
+        <div className="mb-1.5 flex items-center justify-between">
+          <label
+            htmlFor="review-comment"
+            className="block text-xs font-semibold text-zinc-700"
+          >
+            Detailed Review
           </label>
-          <span className="text-[11px] text-gray-400">
+          <span className="text-[11px] text-zinc-400">
             {comment.length}/1000
           </span>
         </div>
 
         <textarea
+          id="review-comment"
           value={comment}
           onChange={(event) => setComment(event.target.value)}
           maxLength={1000}
           rows={4}
-          placeholder="Tell us about your experience..."
-          className="w-full resize-none rounded-2xl border border-gray-200/80 bg-gray-50/50 px-4 py-3 text-sm text-gray-900 placeholder:text-gray-400 transition duration-200 outline-hidden focus:border-[#005c2e] focus:bg-white focus:ring-4 focus:ring-[#005c2e]/10"
+          placeholder="What did you like or dislike? How was the fit, material, or quality?"
+          className="w-full resize-none rounded-xl border border-zinc-200 bg-white px-3.5 py-2.5 text-xs leading-relaxed text-zinc-900 placeholder:text-zinc-400 transition outline-hidden focus:border-zinc-900 focus:ring-1 focus:ring-zinc-900"
         />
       </div>
 
-      {/* Status Messages */}
+      {/* Error Alert */}
       {error && (
-        <div className="mt-4 flex items-center gap-2 rounded-xl border border-red-200 bg-red-50/80 px-4 py-3 text-xs font-medium text-red-700">
-          <svg
-            className="w-4 h-4 shrink-0 text-red-500"
-            fill="none"
-            viewBox="0 0 24 24"
-            stroke="currentColor"
-            strokeWidth={2}
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
-            />
-          </svg>
-          {error}
+        <div className="mt-4 flex items-center gap-2 rounded-xl border border-red-200 bg-red-50/80 px-3.5 py-2.5 text-xs text-red-700">
+          <AlertCircle className="h-4 w-4 shrink-0 text-red-600" strokeWidth={2} />
+          <span>{error}</span>
         </div>
       )}
 
+      {/* Success Alert */}
       {success && (
-        <div className="mt-4 flex items-center gap-2 rounded-xl border border-emerald-200 bg-emerald-50/80 px-4 py-3 text-xs font-medium text-emerald-800">
-          <svg
-            className="w-4 h-4 shrink-0 text-emerald-600"
-            fill="none"
-            viewBox="0 0 24 24"
-            stroke="currentColor"
-            strokeWidth={2.5}
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              d="M5 13l4 4L19 7"
-            />
-          </svg>
-          Review submitted successfully. It will appear after approval.
+        <div className="mt-4 flex items-center gap-2 rounded-xl border border-emerald-200 bg-emerald-50/80 px-3.5 py-2.5 text-xs text-emerald-800">
+          <CheckCircle2
+            className="h-4 w-4 shrink-0 text-emerald-600"
+            strokeWidth={2}
+          />
+          <span>Review submitted successfully. It will appear once approved.</span>
         </div>
       )}
 
-      {/* Submit Button */}
+      {/* Submit Action */}
       <div className="mt-6 flex justify-end">
         <button
           type="submit"
           disabled={loading}
-          className="w-full sm:w-auto cursor-pointer rounded-full bg-linear-to-r from-[#002b15] to-[#005c2e] px-8 py-3.5 text-xs font-black uppercase tracking-wider text-white shadow-sm ring-2 ring-[#005c2e]/20 ring-offset-1 transition-all duration-200 hover:opacity-95 active:scale-98 disabled:cursor-not-allowed disabled:opacity-50 disabled:active:scale-100"
+          className="flex h-11 w-full cursor-pointer items-center justify-center gap-2 rounded-xl bg-zinc-900 px-6 text-xs font-semibold text-white transition active:scale-[0.985] hover:bg-zinc-800 disabled:cursor-not-allowed disabled:bg-zinc-100 disabled:text-zinc-400 sm:w-auto"
         >
           {loading ? (
-            <span className="flex items-center justify-center gap-2">
-              <svg
-                className="w-3.5 h-3.5 animate-spin"
-                fill="none"
-                viewBox="0 0 24 24"
-              >
-                <circle
-                  className="opacity-25"
-                  cx="12"
-                  cy="12"
-                  r="10"
-                  stroke="currentColor"
-                  strokeWidth="4"
-                />
-                <path
-                  className="opacity-75"
-                  fill="currentColor"
-                  d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                />
-              </svg>
-              Submitting...
-            </span>
+            <>
+              <Loader2 className="h-3.5 w-3.5 animate-spin" strokeWidth={2.5} />
+              <span>Submitting...</span>
+            </>
           ) : (
-            "Submit Review"
+            <span>Submit Review</span>
           )}
         </button>
       </div>

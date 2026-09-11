@@ -1,7 +1,6 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { ClipboardList } from "lucide-react";
-
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 import { RequestProductForm } from "@/components/request-product/RequestProductForm";
 import Layout from "@/components/layout/Layout";
@@ -38,6 +37,7 @@ export default async function RequestProductPage() {
             </Link>
           </div>
 
+          {/* Header */}
           <div className="mx-auto mb-10 max-w-2xl text-center">
             <span className="inline-flex rounded-full bg-[#004d26]/10 px-4 py-1 text-xs font-bold uppercase tracking-widest text-[#004d26]">
               Product Request
@@ -48,11 +48,12 @@ export default async function RequestProductPage() {
             </h1>
 
             <p className="mt-4 text-base leading-7 text-gray-600">
-              Upload a photo, tell us what you need, and our sourcing team
-              will help you find it.
+              Tell us what you&apos;re looking for, and we&apos;ll check if we
+              can source it for you.
             </p>
           </div>
 
+          {/* Request Form */}
           <div className="rounded-3xl border border-gray-200 bg-white p-6 shadow-xl sm:p-10">
             <RequestProductForm />
           </div>

@@ -71,22 +71,32 @@ export default async function SearchPage({ searchParams }: Props) {
   return (
     <Layout>
       <SearchScrollReset query={q} />
-      <section className="min-h-[85vh] bg-white py-8 sm:py-14 antialiased select-none border-b border-gray-100">
-        <Container className="max-w-5xl mx-auto px-3 sm:px-6">
+      <section className="min-h-[85vh] border-b border-zinc-100 bg-white py-6 select-none antialiased sm:py-10">
+        <Container className="mx-auto max-w-5xl px-3 sm:px-6">
           {/* Header Section */}
-          <div className="mb-6 sm:mb-8 flex flex-col sm:flex-row sm:items-end justify-between gap-2 sm:gap-4 border-b border-gray-100 pb-5 sm:pb-6">
+          <div className="mb-6 flex flex-col justify-between gap-3 border-b border-zinc-150 pb-5 sm:mb-8 sm:flex-row sm:items-end sm:pb-6">
             <div className="space-y-1">
-              <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-gray-900">
-                {q ? `Search results for "${q}"` : "Search Products"}
+              <h1 className="text-xl font-bold tracking-tight text-zinc-900 sm:text-2xl md:text-3xl">
+                {q ? (
+                  <>
+                    Results for{" "}
+                    <span className="text-zinc-900">&ldquo;{q}&rdquo;</span>
+                  </>
+                ) : (
+                  "Search Products"
+                )}
               </h1>
-              <p className="text-xs sm:text-sm text-gray-500 font-normal">
-                Showing matching items across all colors and variants
+              <p className="text-xs text-zinc-500 sm:text-sm">
+                Showing matching items across all verified colors and sizes
               </p>
             </div>
 
             {q && (
-              <div className="text-[11px] sm:text-xs font-semibold uppercase tracking-wider text-gray-400 shrink-0">
-                {products.length} {products.length === 1 ? "Result" : "Results"}
+              <div className="inline-flex items-center gap-1.5 self-start rounded-lg border border-zinc-200 bg-zinc-50 px-2.5 py-1 text-xs font-semibold text-zinc-700 sm:self-auto">
+                <span>{products.length}</span>
+                <span className="font-normal text-zinc-500">
+                  {products.length === 1 ? "match found" : "matches found"}
+                </span>
               </div>
             )}
           </div>

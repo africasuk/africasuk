@@ -1,5 +1,6 @@
 "use client";
 
+import { ShoppingBag, Zap } from "lucide-react";
 import { useCart } from "@/store/cart";
 import type { CartItem } from "@/types/cart";
 
@@ -15,23 +16,25 @@ export function AddToCartButton({ item }: Props) {
   const isOutOfStock = item.stock <= 0;
 
   return (
-    <div className="flex items-center gap-2.5 w-full select-none antialiased">
-      {/* Primary Add To Cart Button with Brand Gradient */}
+    <div className="flex w-full select-none items-center gap-2.5 antialiased">
+      {/* Primary Add To Cart Button */}
       <button
         type="button"
         onClick={() => addItem(item)}
         disabled={isOutOfStock}
-        className="grow h-10 px-5 bg-linear-to-r from-[#002b15] via-[#004d26] to-[#005c2e] hover:from-[#001f0f] hover:to-[#003d1e] text-white text-xs font-medium uppercase tracking-wider rounded-none transition-all duration-200 flex items-center justify-center gap-2 shadow-none cursor-pointer disabled:bg-none disabled:bg-gray-100 disabled:text-gray-400 disabled:cursor-not-allowed"
+        className="group relative flex h-11 grow cursor-pointer items-center justify-center gap-2 rounded-xl bg-zinc-900 px-5 text-xs font-semibold tracking-wide text-white transition-all active:scale-[0.985] hover:bg-zinc-800 disabled:cursor-not-allowed disabled:bg-zinc-100 disabled:text-zinc-400 disabled:shadow-none"
       >
+        <ShoppingBag className="h-4 w-4 stroke-2" />
         <span>{isOutOfStock ? "Out of Stock" : "Add to Cart"}</span>
+
         {quantity > 0 && (
-          <span className="bg-white/20 text-white px-1.5 py-0.5 rounded-none text-[10px] font-normal leading-none">
+          <span className="ml-0.5 rounded-full bg-white/20 px-2 py-0.5 text-[11px] font-bold leading-none text-white">
             {quantity}
           </span>
         )}
       </button>
 
-      {/* Buy Now Button with Subtle Hover Gradient */}
+      {/* Buy Now Secondary Action */}
       <button
         type="button"
         onClick={() => {
@@ -39,9 +42,10 @@ export function AddToCartButton({ item }: Props) {
           window.location.href = "/checkout";
         }}
         disabled={isOutOfStock}
-        className="h-10 px-5 border border-[#004d26]/30 text-[#004d26] hover:bg-linear-to-r hover:from-[#002b15]/5 hover:to-[#005c2e]/10 text-xs font-medium uppercase tracking-wider rounded-none transition-all duration-200 shadow-none cursor-pointer disabled:border-gray-200 disabled:text-gray-400 disabled:cursor-not-allowed"
+        className="flex h-11 cursor-pointer items-center justify-center gap-1.5 rounded-xl border border-zinc-200 bg-white px-5 text-xs font-semibold tracking-wide text-zinc-900 transition-all active:scale-[0.985] hover:border-zinc-300 hover:bg-zinc-50 disabled:cursor-not-allowed disabled:border-zinc-200 disabled:bg-zinc-100 disabled:text-zinc-400"
       >
-        Buy Now
+        <Zap className="h-3.5 w-3.5 fill-zinc-900 text-zinc-900 group-disabled:fill-zinc-400" />
+        <span>Buy Now</span>
       </button>
     </div>
   );

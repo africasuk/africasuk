@@ -6,12 +6,14 @@ import {
   TileLayer,
   Polyline,
   Marker,
+  useMap,
 } from "react-leaflet";
+import type { Map as LeafletMap } from "leaflet";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
+import { Plus, Minus } from "lucide-react";
 
 import type { OrderStatus } from "@africasuk/types";
-
 import { LOGISTICS_POINTS } from "@/constants/logisticsCoordinates";
 
 interface Props {
@@ -29,35 +31,196 @@ function interpolate(
   ];
 }
 
-// Waypoint Pins (Label sits ABOVE the pin)
-const createCustomPin = (label: string, color: string) =>
-  L.divIcon({
-    className: "custom-map-pin",
+function MapInstanceBridge({
+  onMapReady,
+}: {
+  onMapReady: (map: LeafletMap) => void;
+}) {
+  const map = useMap();
+
+  useEffect(() => {
+    onMapReady(map);
+  }, [map, onMapReady]);
+
+  return null;
+}
+
+function RouteBoundsManager({
+  points,
+}: {
+  points: [number, number][];
+}) {
+  const map = useMap();
+
+  useEffect(() => {
+    if (!points.length) return;
+
+    const bounds = L.latLngBounds(
+      points.map(([lat, lng]) => [lat, lng])
+    );
+
+    map.fitBounds(bounds, {
+      padding: [48, 48],
+      maxZoom: 8.5,
+      animate: false,
+    });
+  }, [map, points]);
+
+  return null;
+}
+
+const createHubPin = (
+  label: string,
+  sublabel: string,
+  type: "origin" | "border" | "destination"
+) => {
+  const isDest = type === "destination";
+  const isBorder = type === "border";
+
+  return L.divIcon({
+    className: "custom-hub-pin",
     html: `
-      <div style="display: flex; flex-direction: column; align-items: center; transform: translate(-50%, -100%);">
-        <div style="background-color: ${color}; padding: 2.5px 8px; border-radius: 9999px; color: white; font-size: 8.5px; font-weight: 500; text-transform: uppercase; letter-spacing: 0.04em; box-shadow: 0 1px 3px rgba(0,0,0,0.15); border: 1px solid rgba(255,255,255,0.9); white-space: nowrap;">
-          ${label}
+      <div style="
+        display:flex;
+        flex-direction:column;
+        align-items:center;
+        transform:translate(-50%, ${
+          isDest ? "-115%" : isBorder ? "-50%" : "-115%"
+        });
+        pointer-events:none;
+      ">
+        <div style="
+          background-color:#ffffff;
+          border:1.5px solid #18181b;
+          padding:4px 9px;
+          border-radius:10px;
+          box-shadow:0 4px 14px rgba(0,0,0,0.12);
+          white-space:nowrap;
+          display:flex;
+          align-items:center;
+          gap:6px;
+        ">
+          <span style="
+            width:7px;
+            height:7px;
+            border-radius:50%;
+            background-color:${
+              isDest
+                ? "#10b981"
+                : isBorder
+                  ? "#f59e0b"
+                  : "#18181b"
+            };
+            flex-shrink:0;
+          "></span>
+
+          <div style="
+            display:flex;
+            flex-direction:column;
+            text-align:left;
+          ">
+            <span style="
+              font-size:10.5px;
+              font-weight:700;
+              color:#18181b;
+              line-height:1.1;
+            ">
+              ${label}
+            </span>
+
+            <span style="
+              font-size:8.5px;
+              font-weight:500;
+              color:#71717a;
+              line-height:1.1;
+            ">
+              ${sublabel}
+            </span>
+          </div>
         </div>
-        <div style="width: 1.5px; height: 7px; background-color: ${color}; opacity: 0.85;"></div>
-        <div style="width: 5px; height: 5px; border-radius: 50%; background-color: ${color}; border: 1px solid white;"></div>
+
+        <div style="
+          width:2px;
+          height:6px;
+          background-color:#18181b;
+        "></div>
       </div>
     `,
     iconSize: [0, 0],
   });
+};
 
-// Live Truck Marker (Label sits BELOW the icon circle)
-const createTruckPin = (label: string = "Live location") =>
+const createTruckPin = () =>
   L.divIcon({
     className: "custom-truck-pin",
     html: `
-      <div style="display: flex; flex-direction: column; align-items: center; transform: translate(-50%, -50%);">
-        <!-- Truck Icon Circle -->
-        <div style="background-color: #005c2e; width: 28px; height: 28px; border-radius: 50%; display: flex; align-items: center; justify-content: center; border: 2px solid white; box-shadow: 0 2px 6px rgba(0,0,0,0.22);">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 18V6a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2v11a1 1 0 0 0 1 1h2"/><path d="M15 18H9"/><path d="M19 18h2a1 1 0 0 0 1-1v-3.65a1 1 0 0 0-.22-.624l-3.48-4.35A1 1 0 0 0 17.52 8H14"/><circle cx="17" cy="18" r="2"/><circle cx="7" cy="18" r="2"/></svg>
+      <div style="
+        display:flex;
+        flex-direction:column;
+        align-items:center;
+        transform:translate(-50%, -50%);
+      ">
+        <div style="position:relative;">
+          <div style="
+            position:absolute;
+            inset:-6px;
+            border-radius:50%;
+            background-color:rgba(16,185,129,0.25);
+            animation:ping 2s cubic-bezier(0,0,0.2,1) infinite;
+          "></div>
+
+          <div style="
+            position:relative;
+            background-color:#18181b;
+            width:34px;
+            height:34px;
+            border-radius:50%;
+            display:flex;
+            align-items:center;
+            justify-content:center;
+            border:2.5px solid #ffffff;
+            box-shadow:0 4px 16px rgba(0,0,0,0.3);
+          ">
+            <svg
+              width="17"
+              height="17"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="#ffffff"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            >
+              <path d="M14 18V6a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2v11a1 1 0 0 0 1 1h2"/>
+              <path d="M15 18H9"/>
+              <path d="M19 18h2a1 1 0 0 0 1-1v-3.65a1 1 0 0 0-.22-.624l-3.48-4.35A1 1 0 0 0 17.52 8H14"/>
+              <circle cx="17" cy="18" r="2"/>
+              <circle cx="7" cy="18" r="2"/>
+            </svg>
+          </div>
         </div>
-        <!-- Label Badge -->
-        <div style="background-color: #002b15; padding: 2px 7px; border-radius: 9999px; color: #34d399; font-size: 8px; font-weight: 500; text-transform: uppercase; letter-spacing: 0.03em; border: 1px solid rgba(255,255,255,0.4); box-shadow: 0 2px 4px rgba(0,0,0,0.15); margin-top: 3px; white-space: nowrap;">
-          ${label}
+
+        <div style="
+          background-color:#18181b;
+          padding:2px 7px;
+          border-radius:6px;
+          color:#ffffff;
+          font-size:8.5px;
+          font-weight:700;
+          text-transform:uppercase;
+          margin-top:4px;
+          box-shadow:0 2px 6px rgba(0,0,0,0.2);
+          display:flex;
+          align-items:center;
+          gap:3.5px;
+        ">
+          <span style="
+            width:4px;
+            height:4px;
+            border-radius:50%;
+            background-color:#10b981;
+          "></span>
+          En Route
         </div>
       </div>
     `,
@@ -65,103 +228,142 @@ const createTruckPin = (label: string = "Live location") =>
   });
 
 export default function TrackingMap({ status }: Props) {
-  const [fullRoadRoute, setFullRoadRoute] = useState<[number, number][]>([]);
+  const [mapInstance, setMapInstance] = useState<LeafletMap | null>(null);
+  const [fullRoadRoute, setFullRoadRoute] = useState<
+    [number, number][]
+  >([]);
 
-  // Calculate active truck coordinates [lat, lng]
+  const keyWaypoints = useMemo<[number, number][]>(
+    () => [
+      [
+        LOGISTICS_POINTS.nairobi.coordinates[1],
+        LOGISTICS_POINTS.nairobi.coordinates[0],
+      ],
+      [
+        LOGISTICS_POINTS.nimule.coordinates[1],
+        LOGISTICS_POINTS.nimule.coordinates[0],
+      ],
+      [
+        LOGISTICS_POINTS.juba.coordinates[1],
+        LOGISTICS_POINTS.juba.coordinates[0],
+      ],
+    ],
+    []
+  );
+
   const truckCoords = useMemo<[number, number]>(() => {
     let point: [number, number];
+
     switch (status) {
       case "PENDING":
-        point = LOGISTICS_POINTS.kampala.coordinates;
+        point = LOGISTICS_POINTS.nairobi.coordinates;
         break;
+
       case "CONFIRMED":
-        point = interpolate(LOGISTICS_POINTS.kampala.coordinates, LOGISTICS_POINTS.nimule.coordinates, 0.25);
+        point = interpolate(
+          LOGISTICS_POINTS.nairobi.coordinates,
+          LOGISTICS_POINTS.nimule.coordinates,
+          0.25
+        );
         break;
+
       case "PROCESSING":
-        point = interpolate(LOGISTICS_POINTS.kampala.coordinates, LOGISTICS_POINTS.nimule.coordinates, 0.6);
+        point = interpolate(
+          LOGISTICS_POINTS.nairobi.coordinates,
+          LOGISTICS_POINTS.nimule.coordinates,
+          0.55
+        );
         break;
-      case "READY_FOR_PICKUP":
-        point = LOGISTICS_POINTS.kampala.coordinates;
-        break;
+
       case "IN_TRANSIT":
-        point = interpolate(LOGISTICS_POINTS.kampala.coordinates, LOGISTICS_POINTS.nimule.coordinates, 0.8);
+        point = interpolate(
+          LOGISTICS_POINTS.nairobi.coordinates,
+          LOGISTICS_POINTS.nimule.coordinates,
+          0.85
+        );
         break;
+
       case "AT_BORDER":
         point = LOGISTICS_POINTS.nimule.coordinates;
         break;
+
       case "AT_JUBA_WAREHOUSE":
         point = LOGISTICS_POINTS.juba.coordinates;
         break;
+
       case "OUT_FOR_DELIVERY":
-        point = interpolate(LOGISTICS_POINTS.juba.coordinates, LOGISTICS_POINTS.customer.coordinates, 0.5);
+        point = interpolate(
+          LOGISTICS_POINTS.juba.coordinates,
+          LOGISTICS_POINTS.customer.coordinates,
+          0.6
+        );
         break;
+
       case "DELIVERED":
         point = LOGISTICS_POINTS.customer.coordinates;
         break;
-      case "CANCELLED":
+
       default:
-        point = LOGISTICS_POINTS.kampala.coordinates;
+        point = LOGISTICS_POINTS.nairobi.coordinates;
         break;
     }
+
     return [point[1], point[0]];
   }, [status]);
 
-  // Fetch real highway geometry from the free OSRM Routing engine
-useEffect(() => {
-  async function fetchRealRoads() {
-    try {
-      const waypoints = [
-        LOGISTICS_POINTS.kampala.coordinates,
-        LOGISTICS_POINTS.nimule.coordinates,
-        LOGISTICS_POINTS.juba.coordinates,
-        LOGISTICS_POINTS.customer.coordinates,
-      ];
+  useEffect(() => {
+    async function fetchRealRoads() {
+      try {
+        const waypoints = [
+          LOGISTICS_POINTS.nairobi.coordinates,
+          LOGISTICS_POINTS.nimule.coordinates,
+          LOGISTICS_POINTS.juba.coordinates,
+        ];
 
-      const coordString = waypoints
-        .map(([lng, lat]) => `${lng},${lat}`)
-        .join(";");
+        const coordString = waypoints
+          .map(([lng, lat]) => `${lng},${lat}`)
+          .join(";");
 
-      const url =
-        `https://router.project-osrm.org/route/v1/driving/${coordString}` +
-        `?overview=full&geometries=geojson`;
+        const res = await fetch(
+          `https://router.project-osrm.org/route/v1/driving/${coordString}?overview=full&geometries=geojson`
+        );
 
-      const res = await fetch(url);
+        if (!res.ok) throw new Error("OSRM error");
 
-      if (!res.ok) {
-        throw new Error(`OSRM HTTP ${res.status}`);
-      }
+        const data = await res.json();
 
-      const data = await res.json();
-
-      if (data.routes?.[0]?.geometry?.coordinates) {
-        const parsedRoute: [number, number][] =
-          data.routes[0].geometry.coordinates.map(
-            ([lng, lat]: [number, number]) => [lat, lng]
+        if (data.routes?.[0]?.geometry?.coordinates) {
+          setFullRoadRoute(
+            data.routes[0].geometry.coordinates.map(
+              ([lng, lat]: [number, number]) => [lat, lng]
+            )
           );
-
-        setFullRoadRoute(parsedRoute);
+        }
+      } catch (err) {
+        console.error("OSRM unavailable", err);
       }
-    } catch (error) {
-      console.error("OSRM unavailable, using fallback route:", error);
-
-      // Don't break the map if OSRM is unavailable
-      setFullRoadRoute([]);
     }
-  }
 
-  fetchRealRoads();
-}, []);
-  // Split full road polyline into Completed vs Remaining based on truck position
+    fetchRealRoads();
+  }, []);
+
   const { completedPolyline, remainingPolyline } = useMemo(() => {
     if (!fullRoadRoute.length) {
-      return { completedPolyline: [], remainingPolyline: [] };
+      return {
+        completedPolyline: [],
+        remainingPolyline: [],
+      };
     }
 
     let closestIndex = 0;
     let minDistance = Infinity;
 
     fullRoadRoute.forEach((pt, idx) => {
-      const dist = Math.hypot(pt[0] - truckCoords[0], pt[1] - truckCoords[1]);
+      const dist = Math.hypot(
+        pt[0] - truckCoords[0],
+        pt[1] - truckCoords[1]
+      );
+
       if (dist < minDistance) {
         minDistance = dist;
         closestIndex = idx;
@@ -175,25 +377,58 @@ useEffect(() => {
   }, [fullRoadRoute, truckCoords]);
 
   return (
-    <div className="relative h-145 w-full overflow-hidden rounded-3xl border border-gray-200/80 shadow-md">
+    <div className="relative h-120 w-full select-none overflow-hidden rounded-2xl border border-zinc-200/90 bg-zinc-100 shadow-xs sm:h-135 lg:h-150">
+      {/* Zoom Controls */}
+      <div className="absolute right-4 top-4 z-999 flex flex-col overflow-hidden rounded-xl border border-zinc-200/90 bg-white shadow-md">
+        <button
+          type="button"
+          onClick={(e) => {
+            e.stopPropagation();
+            mapInstance?.zoomIn();
+          }}
+          aria-label="Zoom in"
+          className="flex h-9 w-9 cursor-pointer items-center justify-center border-b border-zinc-150 text-zinc-700 transition-colors hover:bg-zinc-100 hover:text-zinc-900 active:bg-zinc-200"
+        >
+          <Plus className="h-4 w-4 stroke-2" />
+        </button>
+
+        <button
+          type="button"
+          onClick={(e) => {
+            e.stopPropagation();
+            mapInstance?.zoomOut();
+          }}
+          aria-label="Zoom out"
+          className="flex h-9 w-9 cursor-pointer items-center justify-center text-zinc-700 transition-colors hover:bg-zinc-100 hover:text-zinc-900 active:bg-zinc-200"
+        >
+          <Minus className="h-4 w-4 stroke-2" />
+        </button>
+      </div>
+
       <MapContainer
-        center={[2.8, 32.2]}
-        zoom={7}
+        center={[1.5, 35.5]}
+        zoom={6}
+        zoomControl={false}
+        doubleClickZoom={false}
         scrollWheelZoom={false}
-        className="h-full w-full z-0"
+        className="z-0 h-full w-full [&_.leaflet-tile]:grayscale [&_.leaflet-tile]:contrast-[0.88] [&_.leaflet-tile]:brightness-[1.04]"
       >
+        <MapInstanceBridge onMapReady={setMapInstance} />
+
+        <RouteBoundsManager points={keyWaypoints} />
+
         <TileLayer
-          attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> &copy; <a href="https://carto.com/attributions">CARTO</a>'
-          url="https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png"
-          maxZoom={19}
+          attribution='&copy; <a href="https://www.openstreetmap.org/copyright" target="_blank">OpenStreetMap</a>'
+          url="https://tile.openstreetmap.org/{z}/{x}/{y}.png"
+          maxZoom={18}
         />
 
-        {/* Active Route Following Real Highways */}
+        {/* Completed Route */}
         {completedPolyline.length > 1 && (
           <Polyline
             positions={completedPolyline}
             pathOptions={{
-              color: "#005c2e",
+              color: "#18181b",
               weight: 5,
               opacity: 0.95,
               lineCap: "round",
@@ -201,65 +436,62 @@ useEffect(() => {
           />
         )}
 
-        {/* Remaining Highway Segment */}
+        {/* Remaining Route */}
         {remainingPolyline.length > 1 && (
           <Polyline
             positions={remainingPolyline}
             pathOptions={{
-              color: "#94a3b8",
+              color: "#71717a",
               weight: 3.5,
               dashArray: "6, 8",
-              opacity: 0.8,
+              opacity: 0.75,
               lineCap: "round",
             }}
           />
         )}
 
-        {/* Waypoints */}
+        {/* Nairobi */}
         <Marker
-          position={[LOGISTICS_POINTS.kampala.coordinates[1], LOGISTICS_POINTS.kampala.coordinates[0]]}
-          icon={createCustomPin("Kampala Hub", "#002b15")}
+          position={[
+            LOGISTICS_POINTS.nairobi.coordinates[1],
+            LOGISTICS_POINTS.nairobi.coordinates[0],
+          ]}
+          icon={createHubPin(
+            "Nairobi Hub",
+            "Product Sourcing",
+            "origin"
+          )}
         />
 
+        {/* Nimule */}
         <Marker
-          position={[LOGISTICS_POINTS.nimule.coordinates[1], LOGISTICS_POINTS.nimule.coordinates[0]]}
-          icon={createCustomPin("Nimule Border", "#d97706")}
+          position={[
+            LOGISTICS_POINTS.nimule.coordinates[1],
+            LOGISTICS_POINTS.nimule.coordinates[0],
+          ]}
+          icon={createHubPin(
+            "Nimule Border",
+            "Customs Clearance",
+            "border"
+          )}
         />
 
+        {/* Juba */}
         <Marker
-          position={[LOGISTICS_POINTS.juba.coordinates[1], LOGISTICS_POINTS.juba.coordinates[0]]}
-          icon={createCustomPin("Juba Hub", "#005c2e")}
+          position={[
+            LOGISTICS_POINTS.juba.coordinates[1],
+            LOGISTICS_POINTS.juba.coordinates[0],
+          ]}
+          icon={createHubPin(
+            "Juba Hub",
+            "Africa Suk",
+            "destination"
+          )}
         />
 
-        <Marker
-          position={[LOGISTICS_POINTS.customer.coordinates[1], LOGISTICS_POINTS.customer.coordinates[0]]}
-          icon={createCustomPin("Customer", "#dc2626")}
-        />
-
-        {/* Moving Truck Marker */}
-        <Marker position={truckCoords} icon={createTruckPin("Live Location")} />
+        {/* Truck */}
+        <Marker position={truckCoords} icon={createTruckPin()} />
       </MapContainer>
-
-      {/* Floating Summary Overlay */}
-      <div className="absolute bottom-4 left-4 right-4 z-10 sm:left-6 sm:right-auto sm:w-80 rounded-2xl border border-gray-200/80 bg-white/95 p-4 shadow-xl backdrop-blur-md select-none">
-        <div className="flex items-center justify-between">
-          <div>
-            <p className="text-xs font-medium text-gray-400">
-              Est. Distance
-            </p>
-            <p className="text-lg font-semibold text-[#002b15]">674.2 km</p>
-          </div>
-          <div className="h-8 w-px bg-gray-200" />
-          <div>
-            <p className="text-xs font-medium text-gray-400">
-              Route Status
-            </p>
-            <p className="text-sm font-semibold text-[#005c2e]">
-              On Schedule
-            </p>
-          </div>
-        </div>
-      </div>
     </div>
   );
 }

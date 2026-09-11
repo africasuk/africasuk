@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { createPortal } from "react-dom";
 import Image from "next/image";
 import { ChevronLeft, ChevronRight, X, Maximize2 } from "lucide-react";
@@ -16,9 +16,13 @@ export function ProductGallery({ images }: Props) {
   const [selectedIndex, setSelectedIndex] = useState(0);
   const [isLightboxOpen, setIsLightboxOpen] = useState(false);
 
-  // Touch & Drag Sliding State
-  const [touchStart, setTouchStart] = useState<number | null>(null);
-  const [touchEnd, setTouchEnd] = useState<number | null>(null);
+  // Slide drag/swipe physics
+  const [dragOffset, setDragOffset] = useState(0);
+  const [isDragging, setIsDragging] = useState(false);
+  const startX = useRef(0);
+  const currentX = useRef(0);
+  const containerRef = useRef<HTMLDivElement>(null);
+  const thumbnailRowRef = useRef<HTMLDivElement>(null);
 
   const imagesCount = images?.length ?? 0;
 
@@ -30,7 +34,22 @@ export function ProductGallery({ images }: Props) {
     setSelectedIndex((prev) => (prev === imagesCount - 1 ? 0 : prev + 1));
   }, [imagesCount]);
 
-  // Keyboard Navigation for Lightbox
+  // Keep active thumbnail in view
+  useEffect(() => {
+    if (!thumbnailRowRef.current) return;
+    const activeThumb = thumbnailRowRef.current.children[
+      selectedIndex
+    ] as HTMLElement;
+    if (activeThumb) {
+      activeThumb.scrollIntoView({
+        behavior: "smooth",
+        block: "nearest",
+        inline: "center",
+      });
+    }
+  }, [selectedIndex]);
+
+  // Keyboard navigation for Lightbox
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (!isLightboxOpen) return;
@@ -43,7 +62,7 @@ export function ProductGallery({ images }: Props) {
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [isLightboxOpen, handlePrev, handleNext]);
 
-  // Lock Body Scroll when Lightbox is open
+  // Lock body scroll on Lightbox open
   useEffect(() => {
     if (isLightboxOpen) {
       document.body.style.overflow = "hidden";
@@ -55,98 +74,157 @@ export function ProductGallery({ images }: Props) {
     };
   }, [isLightboxOpen]);
 
-  // Touch Swipe Handlers for Mobile Sliding
-  const minSwipeDistance = 50;
-
-  const onTouchStart = (e: React.TouchEvent) => {
-    setTouchEnd(null);
-    setTouchStart(e.targetTouches[0].clientX);
+  // Pointer/Touch drag handlers for fluid slider
+  const handleDragStart = (clientX: number) => {
+    setIsDragging(true);
+    startX.current = clientX;
+    currentX.current = clientX;
   };
 
-  const onTouchMove = (e: React.TouchEvent) => {
-    setTouchEnd(e.targetTouches[0].clientX);
+  const handleDragMove = (clientX: number) => {
+    if (!isDragging) return;
+    currentX.current = clientX;
+    const diff = clientX - startX.current;
+    setDragOffset(diff);
   };
 
-  const onTouchEnd = () => {
-    if (!touchStart || !touchEnd) return;
-    const distance = touchStart - touchEnd;
-    const isLeftSwipe = distance > minSwipeDistance;
-    const isRightSwipe = distance < -minSwipeDistance;
+  const handleDragEnd = () => {
+    if (!isDragging) return;
+    const threshold = 60;
+    const totalDiff = currentX.current - startX.current;
 
-    if (isLeftSwipe) handleNext();
-    if (isRightSwipe) handlePrev();
+    if (totalDiff < -threshold) {
+      handleNext();
+    } else if (totalDiff > threshold) {
+      handlePrev();
+    }
+
+    setIsDragging(false);
+    setDragOffset(0);
   };
 
   if (!images || images.length === 0) {
     return (
-      <div className="relative h-96 w-full rounded-none bg-gray-50 border border-gray-200 flex items-center justify-center text-gray-400 text-xs font-normal select-none">
-        No image available
+      <div className="relative flex h-96 w-full select-none items-center justify-center rounded-2xl border border-zinc-200 bg-zinc-50 text-xs font-normal text-zinc-400">
+        No images available
       </div>
     );
   }
 
-  const currentImageSrc =
-    images[selectedIndex]?.imageUrl &&
-    images[selectedIndex].imageUrl.startsWith("http")
-      ? images[selectedIndex].imageUrl
-      : "/placeholder.png";
-
   return (
     <>
-      {/* 1. MAIN PRODUCT GALLERY DISPLAY */}
-      <div className="flex flex-col gap-3 w-full select-none antialiased">
-        {/* Main Display Container */}
+      <div className="flex w-full select-none flex-col gap-3 antialiased">
+        {/* Main Sliding Viewport */}
         <div
-          onClick={() => setIsLightboxOpen(true)}
-          className="relative w-full h-100 sm:h-120 lg:h-130 rounded-none bg-gray-50 overflow-hidden border border-gray-200 cursor-pointer group"
+          ref={containerRef}
+          className="group relative h-96 w-full cursor-grab overflow-hidden rounded-2xl border border-zinc-200 bg-zinc-100/70 sm:h-115 lg:h-130 active:cursor-grabbing"
+          onMouseDown={(e) => handleDragStart(e.clientX)}
+          onMouseMove={(e) => handleDragMove(e.clientX)}
+          onMouseUp={handleDragEnd}
+          onMouseLeave={handleDragEnd}
+          onTouchStart={(e) => handleDragStart(e.touches[0].clientX)}
+          onTouchMove={(e) => handleDragMove(e.touches[0].clientX)}
+          onTouchEnd={handleDragEnd}
         >
-          {/* Main Image */}
-          <Image
-            src={currentImageSrc}
-            alt={`Product view ${selectedIndex + 1}`}
-            fill
-            priority
-            sizes="(max-width: 1024px) 100vw, 50vw"
-            className="object-cover transition-transform duration-300 group-hover:scale-102"
-          />
+          {/* Continuous Sliding Filmstrip */}
+          <div
+            className={`flex h-full w-full ${
+              isDragging ? "" : "transition-transform duration-300 ease-out"
+            }`}
+            style={{
+              transform: `translateX(calc(-${selectedIndex * 100}% + ${dragOffset}px))`,
+            }}
+          >
+            {images.map((img, idx) => {
+              const src =
+                img.imageUrl && img.imageUrl.startsWith("http")
+                  ? img.imageUrl
+                  : "/placeholder.png";
 
-          {/* Click to Zoom Indicator */}
-          <div className="absolute inset-0 bg-black/0 group-hover:bg-black/5 transition-colors flex items-center justify-center">
-            <span className="opacity-0 group-hover:opacity-100 bg-[#004d26]/90 text-white text-[11px] font-normal px-3 py-1.5 rounded-none transition-all duration-150 flex items-center gap-1.5 shadow-none">
-              <Maximize2 className="h-3 w-3 stroke-[1.5]" />
-              Click for full screen
-            </span>
+              return (
+                <div
+                  key={img.id || idx}
+                  className="relative h-full w-full shrink-0"
+                >
+                  <Image
+                    src={src}
+                    alt={`Product image view ${idx + 1}`}
+                    fill
+                    priority={idx === 0}
+                    sizes="(max-width: 1024px) 100vw, 55vw"
+                    draggable={false}
+                    className="object-cover"
+                  />
+                </div>
+              );
+            })}
           </div>
 
-          {/* Inline Navigation Arrows */}
+          {/* Fullscreen Expansion Pill */}
+          <button
+            type="button"
+            onClick={(e) => {
+              e.stopPropagation();
+              setIsLightboxOpen(true);
+            }}
+            className="absolute top-3 right-3 z-10 flex h-8 w-8 items-center justify-center rounded-lg border border-zinc-200/80 bg-white/90 text-zinc-700 shadow-xs backdrop-blur-xs transition hover:bg-white hover:text-zinc-900"
+            aria-label="View full screen"
+          >
+            <Maximize2 className="h-4 w-4 stroke-[1.8]" />
+          </button>
+
+          {/* Inline Slider Arrows */}
           {images.length > 1 && (
-            <div
-              className="absolute bottom-3 right-3 flex items-center gap-1 z-10"
-              onClick={(e) => e.stopPropagation()}
-            >
+            <>
               <button
                 type="button"
-                onClick={handlePrev}
-                aria-label="Previous image"
-                className="w-8 h-8 rounded-none bg-white border border-gray-200 text-gray-700 flex items-center justify-center hover:bg-gray-50 hover:border-gray-400 hover:text-gray-900 transition-colors cursor-pointer shadow-none"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handlePrev();
+                }}
+                className="absolute left-3 top-1/2 z-10 flex h-9 w-9 -translate-y-1/2 items-center justify-center rounded-full border border-zinc-200 bg-white/90 text-zinc-700 opacity-0 shadow-xs backdrop-blur-xs transition group-hover:opacity-100 hover:bg-white hover:text-zinc-900 active:scale-95"
+                aria-label="Previous slide"
               >
-                <ChevronLeft className="h-4 w-4 stroke-[1.5]" />
+                <ChevronLeft className="h-4 w-4 stroke-2" />
               </button>
+
               <button
                 type="button"
-                onClick={handleNext}
-                aria-label="Next image"
-                className="w-8 h-8 rounded-none bg-[#004d26] text-white flex items-center justify-center hover:bg-[#00361a] transition-colors cursor-pointer shadow-none"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleNext();
+                }}
+                className="absolute right-3 top-1/2 z-10 flex h-9 w-9 -translate-y-1/2 items-center justify-center rounded-full border border-zinc-200 bg-white/90 text-zinc-700 opacity-0 shadow-xs backdrop-blur-xs transition group-hover:opacity-100 hover:bg-white hover:text-zinc-900 active:scale-95"
+                aria-label="Next slide"
               >
-                <ChevronRight className="h-4 w-4 stroke-[1.5]" />
+                <ChevronRight className="h-4 w-4 stroke-2" />
               </button>
+            </>
+          )}
+
+          {/* Slide Indicator Dots (Mobile only) */}
+          {images.length > 1 && (
+            <div className="absolute bottom-3 left-1/2 z-10 flex -translate-x-1/2 gap-1.5 sm:hidden">
+              {images.map((_, i) => (
+                <div
+                  key={i}
+                  className={`h-1.5 rounded-full transition-all duration-200 ${
+                    i === selectedIndex
+                      ? "w-5 bg-zinc-900"
+                      : "w-1.5 bg-zinc-400/60"
+                  }`}
+                />
+              ))}
             </div>
           )}
         </div>
 
-        {/* Thumbnail Row */}
+        {/* Thumbnail Carousel Row */}
         {images.length > 1 && (
-          <div className="flex gap-2 overflow-x-auto py-1 max-w-full no-scrollbar">
+          <div
+            ref={thumbnailRowRef}
+            className="flex max-w-full gap-2 overflow-x-auto py-1 scroll-smooth no-scrollbar"
+          >
             {images.map((image, index) => {
               const thumbnailSrc =
                 image.imageUrl && image.imageUrl.startsWith("http")
@@ -158,17 +236,17 @@ export function ProductGallery({ images }: Props) {
               return (
                 <button
                   type="button"
-                  key={image.id}
+                  key={image.id || index}
                   onClick={() => setSelectedIndex(index)}
-                  className={`relative h-16 w-16 min-w-16 rounded-none overflow-hidden bg-gray-50 border transition-colors cursor-pointer ${
+                  className={`relative h-16 w-16 shrink-0 overflow-hidden rounded-xl border transition-all duration-150 focus:outline-none focus-visible:ring-2 focus-visible:ring-zinc-900 ${
                     isSelected
-                      ? "border-[#004d26]"
-                      : "border-gray-200 opacity-60 hover:opacity-100 hover:border-gray-400"
+                      ? "border-zinc-900 ring-1 ring-zinc-900 shadow-xs"
+                      : "border-zinc-200 opacity-60 hover:border-zinc-300 hover:opacity-100"
                   }`}
                 >
                   <Image
                     src={thumbnailSrc}
-                    alt={`Thumbnail ${index + 1}`}
+                    alt={`Thumbnail view ${index + 1}`}
                     fill
                     sizes="64px"
                     className="object-cover"
@@ -180,38 +258,38 @@ export function ProductGallery({ images }: Props) {
         )}
       </div>
 
-      {/* 2. FULL-SCREEN LIGHTBOX MODAL */}
+      {/* Fullscreen Lightbox Modal */}
       {isLightboxOpen &&
         typeof document !== "undefined" &&
         createPortal(
-          <div className="fixed inset-0 z-9999 bg-black/95 flex flex-col justify-between p-4 sm:p-6 select-none animate-in fade-in duration-150 overflow-hidden w-screen h-screen top-0 left-0">
-            {/* Top Bar: Counter & Close Button */}
-            <div className="w-full flex items-center justify-between z-10">
-              <div className="text-[11px] font-normal text-white/80 bg-white/10 px-2.5 py-1 rounded-none border border-white/10">
+          <div className="fixed inset-0 z-9999 flex h-screen w-screen select-none flex-col justify-between bg-black/95 p-4 backdrop-blur-md sm:p-6">
+            {/* Lightbox Navigation Header */}
+            <div className="z-10 flex w-full items-center justify-between">
+              <div className="rounded-md border border-white/10 bg-white/10 px-2.5 py-1 text-xs font-semibold tracking-wider text-white">
                 {selectedIndex + 1} / {images.length}
               </div>
 
               <button
                 type="button"
                 onClick={() => setIsLightboxOpen(false)}
-                className="text-white/80 hover:text-white bg-white/10 hover:bg-white/20 h-8 w-8 rounded-none border border-white/10 flex items-center justify-center transition-colors cursor-pointer"
-                aria-label="Close full screen"
+                className="flex h-9 w-9 cursor-pointer items-center justify-center rounded-lg border border-white/10 bg-white/10 text-white/80 transition hover:bg-white/20 hover:text-white"
+                aria-label="Close fullscreen view"
               >
-                <X className="h-4 w-4 stroke-[1.5]" />
+                <X className="h-4 w-4 stroke-2" />
               </button>
             </div>
 
-            {/* Center Image */}
+            {/* Centered Large Viewport */}
             <div
-              className="relative w-full h-[82vh] sm:h-[86vh] max-w-7xl mx-auto flex items-center justify-center my-auto px-2 sm:px-12"
-              onTouchStart={onTouchStart}
-              onTouchMove={onTouchMove}
-              onTouchEnd={onTouchEnd}
+              className="relative mx-auto flex h-[82vh] w-full max-w-5xl items-center justify-center"
+              onTouchStart={(e) => handleDragStart(e.touches[0].clientX)}
+              onTouchMove={(e) => handleDragMove(e.touches[0].clientX)}
+              onTouchEnd={handleDragEnd}
             >
-              <div className="relative w-full h-full">
+              <div className="relative flex h-full w-full items-center justify-center">
                 <Image
-                  src={currentImageSrc}
-                  alt={`Product detail view ${selectedIndex + 1}`}
+                  src={images[selectedIndex]?.imageUrl || "/placeholder.png"}
+                  alt={`Full detail view ${selectedIndex + 1}`}
                   fill
                   priority
                   sizes="100vw"
@@ -220,28 +298,45 @@ export function ProductGallery({ images }: Props) {
               </div>
             </div>
 
-            {/* Controls */}
+            {/* Lightbox Arrow Controls */}
             {images.length > 1 && (
               <>
                 <button
                   type="button"
                   onClick={handlePrev}
-                  aria-label="Previous photo"
-                  className="fixed left-3 sm:left-6 top-1/2 -translate-y-1/2 z-20 h-10 w-10 rounded-none bg-black/70 border border-white/20 text-white flex items-center justify-center hover:bg-[#004d26] hover:border-[#004d26] transition-colors cursor-pointer"
+                  className="fixed left-4 top-1/2 z-20 flex h-11 w-11 -translate-y-1/2 cursor-pointer items-center justify-center rounded-full border border-white/15 bg-black/60 text-white backdrop-blur-md transition hover:bg-white/20 active:scale-95 sm:left-8"
+                  aria-label="Previous image"
                 >
-                  <ChevronLeft className="h-5 w-5 stroke-[1.5]" />
+                  <ChevronLeft className="h-6 w-6 stroke-2" />
                 </button>
 
                 <button
                   type="button"
                   onClick={handleNext}
-                  aria-label="Next photo"
-                  className="fixed right-3 sm:right-6 top-1/2 -translate-y-1/2 z-20 h-10 w-10 rounded-none bg-black/70 border border-white/20 text-white flex items-center justify-center hover:bg-[#004d26] hover:border-[#004d26] transition-colors cursor-pointer"
+                  className="fixed right-4 top-1/2 z-20 flex h-11 w-11 -translate-y-1/2 cursor-pointer items-center justify-center rounded-full border border-white/15 bg-black/60 text-white backdrop-blur-md transition hover:bg-white/20 active:scale-95 sm:right-8"
+                  aria-label="Next image"
                 >
-                  <ChevronRight className="h-5 w-5 stroke-[1.5]" />
+                  <ChevronRight className="h-6 w-6 stroke-2" />
                 </button>
               </>
             )}
+
+            {/* Bottom Counter Indicator */}
+            <div className="flex w-full items-center justify-center pb-2">
+              <div className="flex gap-1.5">
+                {images.map((_, idx) => (
+                  <button
+                    key={idx}
+                    type="button"
+                    onClick={() => setSelectedIndex(idx)}
+                    className={`h-1.5 rounded-full transition-all duration-200 ${
+                      idx === selectedIndex ? "w-6 bg-white" : "w-1.5 bg-white/30"
+                    }`}
+                    aria-label={`Jump to image ${idx + 1}`}
+                  />
+                ))}
+              </div>
+            </div>
           </div>,
           document.body
         )}

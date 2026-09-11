@@ -41,7 +41,7 @@ export default function FeaturedProducts({ products = [] }: Props) {
       <Container className="max-w-none w-full px-4 sm:px-6 lg:px-12">
         <SectionHeader
           title="Featured Products"
-          description="Hand-picked premium selections curated exclusively for you."
+          description="Explore products available from Africa Suk."
           action={
             <Link
               href="/products"

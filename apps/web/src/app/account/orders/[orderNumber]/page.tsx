@@ -9,6 +9,8 @@ import {
   MapPin,
   CreditCard,
   Clock,
+  CheckCircle2,
+  Phone,
 } from "lucide-react";
 
 import { getOrder } from "@/actions/orders";
@@ -24,6 +26,29 @@ interface Props {
   params: Promise<{
     orderNumber: string;
   }>;
+}
+
+function formatStatus(status: string) {
+  return status
+    .toLowerCase()
+    .split("_")
+    .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+    .join(" ");
+}
+
+function getStatusBadgeStyle(status: string) {
+  switch (status.toUpperCase()) {
+    case "DELIVERED":
+      return "bg-emerald-50 text-emerald-700 border-emerald-200/80";
+    case "IN_TRANSIT":
+    case "OUT_FOR_DELIVERY":
+    case "AT_BORDER":
+      return "bg-amber-50 text-amber-700 border-amber-200/80";
+    case "CANCELLED":
+      return "bg-rose-50 text-rose-700 border-rose-200/80";
+    default:
+      return "bg-zinc-100 text-zinc-700 border-zinc-200";
+  }
 }
 
 export default async function OrderDetailsPage({ params }: Props) {
@@ -48,28 +73,29 @@ export default async function OrderDetailsPage({ params }: Props) {
 
   return (
     <Layout>
-      <section className="min-h-screen bg-gray-50/60 py-10 antialiased select-none">
-        <Container className="max-w-none w-full px-4 sm:px-6 lg:px-12">
-          {/* Main 2-Column Responsive Layout for Large Screens */}
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+      <section className="min-h-screen bg-zinc-50/50 py-8 select-none antialiased sm:py-12">
+        <Container className="mx-auto max-w-5xl px-4 sm:px-6">
+          <div className="grid grid-cols-1 gap-6 items-start lg:grid-cols-12">
             
-            {/* LEFT COLUMN: Main Order Header, Items & Shipping */}
-            <div className="lg:col-span-8 space-y-6">
+            {/* LEFT COLUMN: Main Order Header, Items & Delivery */}
+            <div className="space-y-6 lg:col-span-8">
               
               {/* Header Module */}
-              <div className="rounded-3xl border border-gray-200/80 bg-white p-6 sm:p-8 shadow-xs">
+              <div className="rounded-2xl border border-zinc-200/90 bg-white p-6 shadow-xs sm:p-8">
                 <div className="flex flex-col gap-6 md:flex-row md:items-center md:justify-between">
-                  <div>
-                    <div className="flex items-center gap-2 mb-2">
-                      <span className="text-xs font-medium text-[#005c2e] bg-emerald-50 px-2.5 py-1 rounded-full border border-emerald-100">
+                  <div className="space-y-1.5">
+                    <div className="flex items-center gap-1.5">
+                      <span className="inline-flex items-center gap-1 rounded-md border border-emerald-200/80 bg-emerald-50 px-2 py-0.5 text-[11px] font-semibold text-emerald-700">
+                        <CheckCircle2 className="h-3 w-3 stroke-2" />
                         Verified Purchase
                       </span>
                     </div>
-                    <h1 className="text-2xl sm:text-3xl font-semibold tracking-tight text-[#002b15]">
+
+                    <h1 className="text-2xl font-bold tracking-tight text-zinc-900 sm:text-3xl">
                       Order #{order.orderNumber}
                     </h1>
 
-                    <p className="mt-1 text-xs sm:text-sm font-normal text-gray-500">
+                    <p className="text-xs text-zinc-500 sm:text-sm">
                       Placed on{" "}
                       {new Date(order.createdAt).toLocaleString(undefined, {
                         dateStyle: "medium",
@@ -78,63 +104,70 @@ export default async function OrderDetailsPage({ params }: Props) {
                     </p>
                   </div>
 
-                  <div className="flex flex-wrap items-center gap-4 border-t md:border-t-0 pt-4 md:pt-0 border-gray-100">
-                    <div className="text-left md:text-right space-y-1">
+                  <div className="flex flex-wrap items-center gap-4 border-t border-zinc-100 pt-4 md:border-t-0 md:pt-0">
+                    <div className="space-y-1.5 text-left md:text-right">
                       <div className="flex items-center gap-2 md:justify-end">
-                        <span className="text-xs font-medium text-gray-400">
+                        <span className="text-xs font-medium text-zinc-400">
                           Status:
                         </span>
-                        <span className="text-xs font-semibold text-[#002b15] bg-gray-100 px-2.5 py-0.5 rounded-full">
-                          {order.status}
+                        <span
+                          className={`inline-flex items-center gap-1 rounded-md border px-2 py-0.5 text-[10px] font-semibold tracking-wide ${getStatusBadgeStyle(
+                            order.status
+                          )}`}
+                        >
+                          <span className="h-1.5 w-1.5 rounded-full bg-current" />
+                          {formatStatus(order.status)}
                         </span>
                       </div>
 
                       <div className="flex items-center gap-2 md:justify-end">
-                        <span className="text-xs font-medium text-gray-400">
+                        <span className="text-xs font-medium text-zinc-400">
                           Payment:
                         </span>
-                        <span className="text-xs font-semibold text-emerald-700 bg-emerald-50 px-2.5 py-0.5 rounded-full">
-                          {order.paymentStatus}
+                        <span className="inline-flex items-center rounded-md border border-zinc-200 bg-zinc-50 px-2 py-0.5 text-[10px] font-semibold text-zinc-700">
+                          {formatStatus(order.paymentStatus)}
                         </span>
                       </div>
                     </div>
 
                     <Link
                       href={`/track/${order.orderNumber}`}
-                      className="inline-flex items-center gap-2 rounded-full bg-linear-to-r from-[#002b15] to-[#005c2e] px-5 py-2.5 text-xs font-medium text-white shadow-md shadow-[#002b15]/10 hover:opacity-95 active:scale-98 transition-all duration-300"
+                      className="inline-flex h-10 items-center gap-2 rounded-xl bg-zinc-900 px-4 text-xs font-semibold text-white transition-all active:scale-[0.985] hover:bg-zinc-800"
                     >
-                      <span>Track order</span>
-                      <ArrowRight className="h-4 w-4" />
+                      <span>Track Order</span>
+                      <ArrowRight className="h-3.5 w-3.5" strokeWidth={2} />
                     </Link>
                   </div>
                 </div>
               </div>
 
               {/* Delivery Estimation Card */}
-              <div className="rounded-3xl border border-gray-200/80 bg-white p-6 sm:p-8 shadow-xs">
-                <div className="flex items-center gap-2 mb-3">
-                  <Truck className="h-4 w-4 text-[#005c2e]" />
-                  <h2 className="text-xs font-semibold text-[#002b15]">
+              <div className="rounded-2xl border border-zinc-200/90 bg-white p-6 shadow-xs sm:p-7">
+                <div className="mb-3 flex items-center gap-2">
+                  <div className="flex h-7 w-7 items-center justify-center rounded-lg border border-zinc-200 bg-zinc-50 text-zinc-700">
+                    <Truck className="h-4 w-4" strokeWidth={1.8} />
+                  </div>
+                  <h2 className="text-xs font-bold uppercase tracking-wider text-zinc-500">
                     Estimated Arrival
                   </h2>
                 </div>
 
                 {order.estimatedDeliveryStart && order.estimatedDeliveryEnd ? (
                   <>
-                    <p className="text-xl sm:text-2xl font-semibold tracking-tight text-[#002b15]">
+                    <p className="text-xl font-bold tracking-tight text-zinc-900 sm:text-2xl">
                       {format(new Date(order.estimatedDeliveryStart), "dd MMM yyyy")}{" "}
                       —{" "}
                       {format(new Date(order.estimatedDeliveryEnd), "dd MMM yyyy")}
                     </p>
 
-                    <p className="mt-2 text-xs text-gray-500 font-normal max-w-2xl leading-relaxed">
-                      Delivery estimates may change depending on supplier availability,
-                      customs clearance, and local transit schedules.
+                    <p className="mt-2 max-w-2xl text-xs leading-relaxed text-zinc-500">
+                      Delivery schedules may vary slightly depending on regional customs clearance,
+                      supplier dispatch windows, and local road transit.
                     </p>
 
                     {order.estimatedDeliveryUpdatedAt && (
-                      <div className="mt-3 flex items-center gap-1.5 text-xs font-medium text-gray-400">
-                        <Clock className="h-3 w-3" />
+                      <div className="mt-3 flex items-center gap-1.5 text-xs text-zinc-400">
+                        <Clock className="h-3.5 w-3.5 text-zinc-400" strokeWidth={1.8} />
                         <span>
                           Updated{" "}
                           {format(
@@ -146,20 +179,27 @@ export default async function OrderDetailsPage({ params }: Props) {
                     )}
                   </>
                 ) : (
-                  <div className="flex items-center gap-2 text-sm font-normal text-gray-500">
+                  <div className="flex items-center gap-2 text-xs font-medium text-zinc-500">
                     <span className="h-2 w-2 rounded-full bg-amber-500 animate-pulse" />
-                    <span>Awaiting fulfillment confirmation.</span>
+                    <span>Awaiting warehouse dispatch confirmation</span>
                   </div>
                 )}
               </div>
 
               {/* Order Items Block */}
-              <div className="rounded-3xl border border-gray-200/80 bg-white p-6 sm:p-8 shadow-xs">
-                <div className="flex items-center gap-2 mb-6">
-                  <Package className="h-4 w-4 text-[#005c2e]" />
-                  <h2 className="text-xs font-semibold text-[#002b15]">
-                    Order Items ({items.length})
-                  </h2>
+              <div className="rounded-2xl border border-zinc-200/90 bg-white p-6 shadow-xs sm:p-8">
+                <div className="mb-6 flex items-center justify-between border-b border-zinc-100 pb-4">
+                  <div className="flex items-center gap-2">
+                    <div className="flex h-7 w-7 items-center justify-center rounded-lg border border-zinc-200 bg-zinc-50 text-zinc-700">
+                      <Package className="h-4 w-4" strokeWidth={1.8} />
+                    </div>
+                    <h2 className="text-xs font-bold uppercase tracking-wider text-zinc-500">
+                      Items Ordered
+                    </h2>
+                  </div>
+                  <span className="text-xs font-semibold text-zinc-500">
+                    {items.length} {items.length === 1 ? "item" : "items"}
+                  </span>
                 </div>
 
                 <div className="space-y-6">
@@ -170,87 +210,86 @@ export default async function OrderDetailsPage({ params }: Props) {
                     return (
                       <div
                         key={item.id}
-                        className="border-b border-gray-100 pb-6 last:border-0 last:pb-0"
+                        className="border-b border-zinc-100 pb-6 last:border-0 last:pb-0"
                       >
-                        <div className="flex flex-col sm:flex-row items-center gap-6">
-                          {/* Image Preview Container */}
-                          <div className="relative h-24 w-24 shrink-0 rounded-2xl overflow-hidden border border-gray-200/80 bg-gray-50 shadow-xs">
+                        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:gap-5">
+                          {/* 1:1 Aspect Ratio Thumbnail */}
+                          <div className="relative aspect-square h-24 w-24 shrink-0 overflow-hidden rounded-xl border border-zinc-150 bg-zinc-50/80">
                             {image ? (
                               <Image
                                 src={image}
                                 alt={product?.name ?? item.name}
                                 fill
                                 sizes="96px"
-                                className="object-cover"
+                                className="object-contain p-1.5"
                               />
                             ) : (
-                              <div className="flex h-full w-full items-center justify-center text-xs font-medium text-gray-400">
+                              <div className="flex h-full w-full items-center justify-center text-[10px] font-medium text-zinc-400">
                                 No Image
                               </div>
                             )}
                           </div>
 
-                          {/* Info & Metadata */}
-                          <div className="flex-1 space-y-2 text-center sm:text-left">
+                          {/* Item Details */}
+                          <div className="min-w-0 flex-1 space-y-2">
                             <div>
-                              <h3 className="text-base font-semibold text-[#002b15]">
+                              <h3 className="text-sm font-bold tracking-tight text-zinc-900 sm:text-base">
                                 {product?.name ?? item.name}
                               </h3>
 
-                              <div className="mt-1 flex flex-wrap items-center justify-center sm:justify-start gap-2 text-xs">
+                              <div className="mt-1 flex flex-wrap items-center gap-2 text-xs text-zinc-500">
                                 {detailedProduct?.brand && (
-                                  <span className="font-medium text-emerald-800 bg-emerald-50 px-2 py-0.5 rounded-md text-xs">
+                                  <span className="font-semibold text-zinc-800">
                                     {detailedProduct.brand.name}
                                   </span>
                                 )}
-
+                                {detailedProduct?.brand && detailedProduct?.category && (
+                                  <span className="text-zinc-300">•</span>
+                                )}
                                 {detailedProduct?.category && (
-                                  <span className="font-medium text-gray-600 bg-gray-100 px-2 py-0.5 rounded-md text-xs">
-                                    {detailedProduct.category.name}
-                                  </span>
+                                  <span>{detailedProduct.category.name}</span>
                                 )}
                               </div>
                             </div>
 
-                            {variant && variant.optionName && (
-                              <div className="flex flex-wrap gap-2 justify-center sm:justify-start pt-0.5">
-                                <span className="rounded-full bg-gray-100 border border-gray-200/60 px-3 py-1 text-xs font-normal text-gray-700">
-                                  <span className="text-gray-900 font-medium">
-                                    {variant.optionName}
-                                  </span>
-                                  : {variant.optionValue}
+                            {/* Option Variant Badge */}
+                            {variant && variant.optionValue && (
+                              <div className="flex flex-wrap gap-1.5">
+                                <span className="inline-flex items-center rounded-md border border-zinc-200 bg-zinc-50 px-2 py-0.5 text-[11px] font-semibold text-zinc-700">
+                                  {variant.optionName || "Size"}: {variant.optionValue}
                                 </span>
                               </div>
                             )}
 
-                            <div className="flex gap-4 text-xs font-normal text-gray-500 justify-center sm:justify-start pt-1">
+                            {/* Pricing & Units */}
+                            <div className="flex items-center gap-3 text-xs text-zinc-500">
                               <span>
                                 Qty:{" "}
-                                <span className="text-gray-900 font-medium">
+                                <span className="font-semibold text-zinc-900">
                                   {item.quantity}
                                 </span>
                               </span>
-                              <span>•</span>
+                              <span className="text-zinc-300">•</span>
                               <span>
                                 Unit: <Price price={item.price} />
                               </span>
                             </div>
                           </div>
 
-                          {/* Line Item Total Price */}
-                          <div className="text-center sm:text-right min-w-28">
-                            <span className="block text-xs font-medium text-gray-400">
-                              Item Total
+                          {/* Line Item Total */}
+                          <div className="text-left sm:text-right shrink-0">
+                            <span className="block text-[10px] font-medium uppercase tracking-wider text-zinc-400">
+                              Total
                             </span>
-                            <div className="text-base font-semibold text-[#002b15]">
+                            <div className="text-base font-bold tracking-tight text-zinc-900 sm:text-lg">
                               <Price price={item.price * item.quantity} />
                             </div>
                           </div>
                         </div>
 
-                        {/* Review Form Section for Delivered Orders */}
+                        {/* Customer Review Form */}
                         {order.status === "DELIVERED" && (
-                          <div className="mt-4 pt-4 border-t border-gray-100/80">
+                          <div className="mt-4 pt-4 border-t border-zinc-100">
                             <ReviewForm
                               productId={item.productId}
                               orderId={order.id}
@@ -267,91 +306,87 @@ export default async function OrderDetailsPage({ params }: Props) {
 
             </div>
 
-            {/* RIGHT COLUMN: Sticky Sidebar (Address & Payment Summary) */}
-            <div className="lg:col-span-4 space-y-6 lg:sticky lg:top-24">
+            {/* RIGHT COLUMN: Delivery & Payment Details */}
+            <div className="space-y-6 lg:col-span-4 lg:sticky lg:top-24">
               
               {/* Delivery Address Card */}
-              <div className="rounded-3xl border border-gray-200/80 bg-white p-6 sm:p-8 shadow-xs flex flex-col justify-between">
-                <div>
-                  <div className="flex items-center gap-2 mb-4">
-                    <MapPin className="h-4 w-4 text-[#005c2e]" />
-                    <h2 className="text-xs font-semibold text-[#002b15]">
-                      Delivery Address
-                    </h2>
+              <div className="rounded-2xl border border-zinc-200/90 bg-white p-6 shadow-xs">
+                <div className="mb-4 flex items-center gap-2">
+                  <div className="flex h-7 w-7 items-center justify-center rounded-lg border border-zinc-200 bg-zinc-50 text-zinc-700">
+                    <MapPin className="h-4 w-4" strokeWidth={1.8} />
                   </div>
+                  <h2 className="text-xs font-bold uppercase tracking-wider text-zinc-500">
+                    Delivery Address
+                  </h2>
+                </div>
 
-                  <div className="space-y-1 text-sm text-gray-600 font-normal leading-relaxed">
-                    <p className="font-semibold text-gray-900 text-base mb-1">
-                      {order.customerName}
-                    </p>
-                    <p>{order.address}</p>
-                    <p>
-                      {order.city}
-                      {order.state ? `, ${order.state}` : ""}
-                    </p>
-                    <p className="font-medium text-xs tracking-wider text-gray-500">
-                      {order.country}
-                    </p>
+                <div className="space-y-1 text-xs leading-relaxed text-zinc-600">
+                  <p className="text-sm font-bold text-zinc-900 mb-1.5">
+                    {order.customerName}
+                  </p>
+                  <p>{order.address}</p>
+                  <p>
+                    {order.city}
+                    {order.state ? `, ${order.state}` : ""}
+                  </p>
+                  <p className="font-semibold text-zinc-800">{order.country}</p>
 
-                    {order.postalCode && (
-                      <p className="text-xs text-gray-400">{order.postalCode}</p>
-                    )}
-                  </div>
+                  {order.postalCode && (
+                    <p className="text-zinc-400">{order.postalCode}</p>
+                  )}
                 </div>
 
                 {order.customerPhone && (
-                  <div className="mt-6 border-t border-gray-100 pt-3 text-xs font-medium text-gray-500">
-                    Phone:{" "}
-                    <span className="text-gray-900">{order.customerPhone}</span>
+                  <div className="mt-4 flex items-center gap-2 border-t border-zinc-100 pt-3 text-xs text-zinc-500">
+                    <Phone className="h-3.5 w-3.5 text-zinc-400" strokeWidth={1.8} />
+                    <span className="font-semibold text-zinc-900">{order.customerPhone}</span>
                   </div>
                 )}
               </div>
 
               {/* Payment Summary Card */}
-              <div className="rounded-3xl border border-gray-200/80 bg-white p-6 sm:p-8 shadow-xs">
-                <div className="flex items-center gap-2 mb-4">
-                  <CreditCard className="h-4 w-4 text-[#005c2e]" />
-                  <h2 className="text-xs font-semibold text-[#002b15]">
+              <div className="rounded-2xl border border-zinc-200/90 bg-white p-6 shadow-xs">
+                <div className="mb-4 flex items-center gap-2">
+                  <div className="flex h-7 w-7 items-center justify-center rounded-lg border border-zinc-200 bg-zinc-50 text-zinc-700">
+                    <CreditCard className="h-4 w-4" strokeWidth={1.8} />
+                  </div>
+                  <h2 className="text-xs font-bold uppercase tracking-wider text-zinc-500">
                     Payment Summary
                   </h2>
                 </div>
 
-                <div className="space-y-3 text-xs sm:text-sm font-normal text-gray-600">
-                  <div className="flex justify-between items-center">
+                <div className="space-y-2.5 text-xs text-zinc-600">
+                  <div className="flex items-center justify-between">
                     <span>Subtotal</span>
-                    <div className="font-semibold text-gray-900">
+                    <span className="font-semibold text-zinc-900">
                       <Price price={order.subtotal} />
-                    </div>
-                  </div>
-
-                  <div className="flex justify-between items-center">
-                    <span>Shipping fee</span>
-                    <div className="font-semibold text-gray-900">
-                      <Price price={order.shipping} />
-                    </div>
-                  </div>
-
-                  <div className="flex justify-between items-center">
-                    <span>Tax</span>
-                    <div className="font-semibold text-gray-900">
-                      <Price price={order.tax} />
-                    </div>
-                  </div>
-
-                  <div className="flex justify-between items-center border-t border-gray-100 pt-3 text-sm sm:text-base font-semibold text-[#002b15]">
-                    <span className="text-xs font-medium">
-                      Total Charged
                     </span>
-                    <div>
+                  </div>
+
+                  <div className="flex items-center justify-between">
+                    <span>Shipping fee</span>
+                    <span className="font-semibold text-zinc-900">
+                      <Price price={order.shipping} />
+                    </span>
+                  </div>
+
+                  <div className="flex items-center justify-between">
+                    <span>Tax</span>
+                    <span className="font-semibold text-zinc-900">
+                      <Price price={order.tax} />
+                    </span>
+                  </div>
+
+                  <div className="flex items-center justify-between border-t border-zinc-100 pt-3 text-sm font-bold text-zinc-900">
+                    <span>Total Charged</span>
+                    <div className="text-base font-bold text-zinc-900">
                       <Price price={order.total} />
                     </div>
                   </div>
 
-                  <div className="pt-3 border-t border-gray-100 flex items-center justify-between">
-                    <span className="text-xs text-gray-400 font-medium">
-                      Method
-                    </span>
-                    <span className="text-xs font-semibold text-[#002b15] bg-gray-100 px-3 py-1 rounded-full">
+                  <div className="flex items-center justify-between border-t border-zinc-100 pt-3">
+                    <span className="text-zinc-400">Payment Method</span>
+                    <span className="rounded-md border border-zinc-200 bg-zinc-50 px-2 py-0.5 text-[11px] font-semibold text-zinc-700">
                       {order.paymentMethod}
                     </span>
                   </div>

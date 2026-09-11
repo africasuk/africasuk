@@ -1,7 +1,7 @@
 export const LOGISTICS_POINTS = {
-  kampala: {
-    name: "Kampala Warehouse",
-    coordinates: [32.5825, 0.3476] as [number, number],
+  nairobi: {
+    name: "Nairobi Warehouse",
+    coordinates: [36.8219, -1.2921] as [number, number],
   },
 
   nimule: {
@@ -21,34 +21,41 @@ export const LOGISTICS_POINTS = {
   },
 };
 
-// High-resolution highway points tracing the real A109 road corridor
+// Nairobi → Nimule → Juba → Customer
 export const LOGISTICS_ROUTE: [number, number][] = [
-  // Kampala Hub
-  LOGISTICS_POINTS.kampala.coordinates,
-  
-  // A109 Highway North via Luweero & Nakasongola
-  [32.4991, 0.8491],
-  [32.4563, 1.3089],
-  
-  // Karuma Falls Bridge Crossing
-  [32.2472, 2.2384],
-  
-  // Gulu Transit Node
-  [32.2990, 2.7747],
-  
-  // Atiak Highway Segment
-  [32.1224, 3.2581],
-  
-  // Nimule Border Control Point
+  // Nairobi Hub
+  LOGISTICS_POINTS.nairobi.coordinates,
+
+  // Nairobi → Northern Kenya
+  [36.75, -1.05],
+  [36.65, -0.75],
+  [36.55, -0.40],
+  [36.45, -0.05],
+
+  // Kenya → Uganda/South Sudan corridor
+  [36.30, 0.35],
+  [36.05, 0.75],
+  [35.80, 1.15],
+  [35.50, 1.55],
+  [35.20, 1.95],
+
+  // Northern Uganda / South Sudan approach
+  [34.90, 2.35],
+  [34.50, 2.70],
+  [34.10, 2.95],
+  [33.70, 3.15],
+  [33.30, 3.35],
+
+  // Nimule Border
   LOGISTICS_POINTS.nimule.coordinates,
-  
-  // Nimule - Juba Road (A43 Corridor)
+
+  // Nimule → Juba
   [31.8902, 3.9851],
   [31.7345, 4.3129],
-  
-  // Juba City Warehouse
+
+  // Juba Warehouse
   LOGISTICS_POINTS.juba.coordinates,
-  
-  // Final Mile Delivery to Customer
+
+  // Final Mile Delivery
   LOGISTICS_POINTS.customer.coordinates,
 ];

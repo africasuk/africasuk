@@ -1,37 +1,42 @@
 "use client";
 
 import Link from "next/link";
-import { ArrowLeft, Globe } from "lucide-react";
+import { ArrowLeft } from "lucide-react";
 
 export default function AboutHero() {
   return (
-    <div className="mb-8 border-b border-gray-200 pb-6">
-      <Link
-        href="/"
-        className="mb-4 inline-flex items-center gap-1.5 rounded-full border border-gray-200 px-3.5 py-1.5 text-xs font-medium text-gray-700 transition hover:border-[#004d26] hover:bg-[#004d26] hover:text-white"
-      >
-        <ArrowLeft className="h-3.5 w-3.5" />
-        <span>Back to Website</span>
-      </Link>
-
-      <div className="mb-2 inline-flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-[#004d26]">
-        <Globe className="h-4 w-4" />
-        <span>About AfricaSuk</span>
+    <div className="mb-10 border-b border-gray-300 pb-8">
+      {/* Top Navigation Row */}
+      <div className="flex items-center justify-start">
+        <Link
+          href="/"
+          className="inline-flex items-center gap-2 border border-gray-300 bg-white px-3.5 py-1.5 text-xs font-semibold text-gray-800 transition hover:border-gray-900 hover:bg-gray-100"
+        >
+          <ArrowLeft className="h-3.5 w-3.5" />
+          <span>Back to Website</span>
+        </Link>
       </div>
 
-      <h1 className="text-3xl font-serif font-bold text-gray-900 sm:text-4xl">
-        AfricaSuk
-      </h1>
+      {/* Centered Large Heading & Subtitle */}
+      <div className="mt-6 space-y-3 text-center">
+        <span className="block text-xs font-bold uppercase tracking-widest text-[#004d26]">
+          Africa Suk
+        </span>
 
-      <p className="mt-2 text-lg font-semibold tracking-wide text-[#004d26]">
-        Shop with Confidence
-      </p>
+        <h1 className="text-4xl font-extrabold tracking-tight text-gray-900 sm:text-5xl">
+          About Africa Suk
+        </h1>
 
-      <p className="mt-3 max-w-2xl text-sm leading-7 text-gray-600 sm:text-base">
-        Bringing authentic international products and product sourcing services
-        to South Sudan, while making global shopping simple, accessible, and
-        convenient.
-      </p>
+        <p className="text-lg font-bold text-[#004d26] sm:text-xl">
+          Making Shopping Easier in South Sudan
+        </p>
+
+        <p className="mx-auto max-w-2xl pt-1 text-base leading-relaxed text-gray-800">
+          Africa Suk sources products from regional and international suppliers
+          and makes them available to customers in South Sudan through our
+          website and mobile app.
+        </p>
+      </div>
     </div>
   );
 }

@@ -2,6 +2,7 @@
 
 import { useState, useMemo } from "react";
 import Image from "next/image";
+import { Check } from "lucide-react";
 import type { ProductWithDetails } from "@africasuk/types";
 
 import type { CartItem } from "@/types/cart";
@@ -30,51 +31,21 @@ export function VariantSelector({ product, onColorChange }: Props) {
     if (onColorChange) {
       onColorChange(color);
     }
+
+    // Automatically pick the first in-stock variant of this color, or fall back to the first variant
+    const inStockVariant =
+      color.variants.find((v) => (v.stock ?? 0) > 0) ?? color.variants[0];
+    setSelectedVariant(inStockVariant);
   };
 
-  const allSizes = useMemo(() => {
-    const sizeMap = new Map<string, { optionName: string; value: string }>();
-    product.colors.forEach((c) => {
-      c.variants.forEach((v) => {
-        if (!sizeMap.has(v.optionValue)) {
-          sizeMap.set(v.optionValue, {
-            optionName: v.optionName || "SIZE",
-            value: v.optionValue,
-          });
-        }
-      });
-    });
-    return Array.from(sizeMap.values());
-  }, [product]);
+  // Only sizes that actually belong to the currently selected color
+  const colorSizes = useMemo(() => {
+    return selectedColor?.variants ?? [];
+  }, [selectedColor]);
 
   if (!selectedColor || !selectedVariant) {
     return null;
   }
-
-  const handleSizeSelect = (sizeValue: string) => {
-    const matchingVariantInCurrentColor = selectedColor.variants.find(
-      (v) => v.optionValue === sizeValue
-    );
-
-    if (matchingVariantInCurrentColor) {
-      setSelectedVariant(matchingVariantInCurrentColor);
-      return;
-    }
-
-    const colorWithSize = product.colors.find((c) =>
-      c.variants.some((v) => v.optionValue === sizeValue)
-    );
-
-    if (colorWithSize) {
-      updateSelectedColor(colorWithSize);
-      const variant = colorWithSize.variants.find(
-        (v) => v.optionValue === sizeValue
-      );
-      if (variant) {
-        setSelectedVariant(variant);
-      }
-    }
-  };
 
   const item: CartItem = {
     variantId: selectedVariant.id,
@@ -92,7 +63,7 @@ export function VariantSelector({ product, onColorChange }: Props) {
         value: selectedColor.name,
       },
       {
-        optionName: selectedVariant.optionName,
+        optionName: selectedVariant.optionName || "Size",
         value: selectedVariant.optionValue,
       },
     ],
@@ -100,96 +71,134 @@ export function VariantSelector({ product, onColorChange }: Props) {
   };
 
   return (
-    <div className="space-y-5 select-none antialiased">
+    <div className="space-y-6 select-none antialiased">
       {/* 1. COLOR SELECTION */}
-      <div className="space-y-2">
-        <div className="flex items-center justify-between text-xs text-gray-500 font-normal">
-          <span className="uppercase tracking-wider">Color</span>
-          <span className="text-gray-900 font-medium capitalize">
+      <div className="space-y-3">
+        <div className="flex items-center justify-between text-xs">
+          <span className="font-semibold uppercase tracking-wider text-zinc-500">
+            Color
+          </span>
+          <span className="font-semibold text-zinc-900 capitalize">
             {selectedColor.name}
           </span>
         </div>
 
-        <div className="flex flex-wrap gap-2">
+        {/* Color Thumbnail Cards */}
+        <div className="grid grid-cols-4 sm:grid-cols-5 md:grid-cols-6 gap-2">
           {product.colors.map((color) => {
             const isSelected = selectedColor.id === color.id;
+            const primaryImage = color.images[0]?.imageUrl;
+            const totalStock = color.variants.reduce(
+              (acc, v) => acc + (v.stock || 0),
+              0
+            );
+            const isSoldOut = totalStock <= 0;
 
             return (
               <button
                 key={color.id}
                 type="button"
-                onClick={() => {
-                  updateSelectedColor(color);
-                  const matchingVariant = color.variants.find(
-                    (v) => v.optionValue === selectedVariant.optionValue
-                  );
-                  setSelectedVariant(matchingVariant ?? color.variants[0]);
-                }}
-                className={`group relative flex items-center gap-2 rounded-none px-2.5 py-1.5 text-xs transition-colors duration-150 border cursor-pointer ${
+                aria-label={`Select ${color.name}`}
+                aria-pressed={isSelected}
+                disabled={isSoldOut}
+                onClick={() => updateSelectedColor(color)}
+                className={`group relative flex flex-col rounded-xl border p-1 text-left transition-all duration-150 focus:outline-none focus-visible:ring-2 focus-visible:ring-zinc-900 focus-visible:ring-offset-2 ${
                   isSelected
-                    ? "border-[#004d26] bg-[#004d26]/5 text-[#004d26] font-medium"
-                    : "border-gray-200 bg-white text-gray-700 hover:border-gray-300 font-normal"
+                    ? "border-zinc-900 bg-zinc-50 shadow-sm ring-1 ring-zinc-900"
+                    : isSoldOut
+                    ? "border-zinc-200/60 bg-zinc-50/50 opacity-40 cursor-not-allowed"
+                    : "border-zinc-200 bg-white hover:border-zinc-300 hover:bg-zinc-50/60"
                 }`}
               >
-                {/* Sharp Swatch Thumbnail */}
-                <div className="relative h-4 w-4 rounded-none overflow-hidden border border-gray-200 shrink-0 bg-gray-50">
-                  {color.images[0]?.imageUrl ? (
+                {/* Image Aspect Box */}
+                <div className="relative aspect-square w-full overflow-hidden rounded-lg bg-zinc-100">
+                  {primaryImage ? (
                     <Image
-                      src={color.images[0].imageUrl}
+                      src={primaryImage}
                       alt={color.name}
                       fill
-                      sizes="16px"
-                      className="object-cover"
+                      sizes="(max-width: 640px) 25vw, 120px"
+                      className="object-cover transition-transform duration-200 group-hover:scale-105"
                     />
                   ) : (
                     <div
                       className="h-full w-full"
                       style={{
-                        backgroundColor: color.hexCode ?? "#e5e7eb",
+                        backgroundColor: color.hexCode ?? "#e4e4e7",
                       }}
                     />
                   )}
+
+                  {/* Selected Indicator Check */}
+                  {isSelected && (
+                    <div className="absolute top-1.5 right-1.5 flex h-4 w-4 items-center justify-center rounded-full bg-zinc-900 text-white shadow-sm">
+                      <Check className="h-2.5 w-2.5" strokeWidth={3} />
+                    </div>
+                  )}
+
+                  {/* Out of Stock Overlay */}
+                  {isSoldOut && (
+                    <div className="absolute inset-0 flex items-center justify-center bg-white/70">
+                      <div className="h-px w-full rotate-45 bg-zinc-400" />
+                    </div>
+                  )}
                 </div>
 
-                <span>{color.name}</span>
+                {/* Swatch Dot & Color Name */}
+                <div className="flex items-center gap-1.5 px-1 pt-1.5 pb-0.5">
+                  <span
+                    className="h-2 w-2 shrink-0 rounded-full border border-black/10"
+                    style={{
+                      backgroundColor: color.hexCode ?? "#e4e4e7",
+                    }}
+                  />
+                  <span
+                    className={`truncate text-[11px] font-medium leading-tight ${
+                      isSelected
+                        ? "text-zinc-900 font-semibold"
+                        : "text-zinc-600"
+                    }`}
+                  >
+                    {color.name}
+                  </span>
+                </div>
               </button>
             );
           })}
         </div>
       </div>
 
-      {/* 2. SIZE SELECTION */}
-      <div className="space-y-2">
-        <div className="flex items-center justify-between text-xs text-gray-500 font-normal">
-          <span className="uppercase tracking-wider">
-            {allSizes[0]?.optionName || "Size"}
+      {/* 2. SIZES FOR SELECTED COLOR ONLY */}
+      <div className="space-y-3">
+        <div className="flex items-center justify-between text-xs">
+          <span className="font-semibold uppercase tracking-wider text-zinc-500">
+            {colorSizes[0]?.optionName || "Size"}
           </span>
-          <span className="text-gray-900 font-medium">
+          <span className="font-semibold text-zinc-900">
             {selectedVariant.optionValue}
           </span>
         </div>
 
-        <div className="flex flex-wrap gap-1.5 sm:gap-2">
-          {allSizes.map((size) => {
-            const isSelected = selectedVariant.optionValue === size.value;
-            const isAvailableInCurrentColor = selectedColor.variants.some(
-              (v) => v.optionValue === size.value
-            );
+        <div className="flex flex-wrap gap-2">
+          {colorSizes.map((variant) => {
+            const isSelected = selectedVariant.id === variant.id;
+            const isOutOfStock = (variant.stock ?? 0) <= 0;
 
             return (
               <button
-                key={size.value}
+                key={variant.id}
                 type="button"
-                onClick={() => handleSizeSelect(size.value)}
-                className={`min-w-9 h-8 sm:min-w-10 sm:h-9 px-2.5 sm:px-3 flex items-center justify-center rounded-none text-xs transition-colors border cursor-pointer ${
+                disabled={isOutOfStock}
+                onClick={() => setSelectedVariant(variant)}
+                className={`relative min-w-11 h-10 px-3.5 flex items-center justify-center rounded-lg text-xs font-semibold transition-all duration-150 border focus:outline-none focus-visible:ring-2 focus-visible:ring-zinc-900 ${
                   isSelected
-                    ? "border-[#004d26] bg-[#004d26] text-white font-medium shadow-none"
-                    : isAvailableInCurrentColor
-                    ? "border-gray-200 bg-white text-gray-700 hover:border-gray-400 font-normal"
-                    : "border-dashed border-gray-200 bg-gray-50 text-gray-400 font-normal hover:border-gray-300"
+                    ? "border-zinc-900 bg-zinc-900 text-white shadow-sm"
+                    : isOutOfStock
+                    ? "border-zinc-200 bg-zinc-100 text-zinc-400 cursor-not-allowed line-through"
+                    : "border-zinc-200 bg-white text-zinc-800 hover:border-zinc-300 hover:bg-zinc-50 cursor-pointer"
                 }`}
               >
-                {size.value}
+                {variant.optionValue}
               </button>
             );
           })}
@@ -197,28 +206,35 @@ export function VariantSelector({ product, onColorChange }: Props) {
       </div>
 
       {/* 3. PRICE & STOCK DISPLAY */}
-      <div className="pt-2 border-t border-gray-100 space-y-1">
-        <div className="flex items-baseline gap-2.5">
-          <div className="text-lg sm:text-xl font-semibold text-[#004d26] tracking-tight">
+      <div className="pt-3 border-t border-zinc-100 space-y-1">
+        <div className="flex items-baseline justify-between">
+          <div className="text-2xl font-bold tracking-tight text-zinc-900">
             <Price price={Number(selectedVariant.price)} />
           </div>
 
-          <span
-            className={`text-xs font-normal ${
-              selectedVariant.stock > 0
-                ? "text-[#004d26]"
-                : "text-red-500"
+          <div
+            className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium ${
+              (selectedVariant.stock ?? 0) > 0
+                ? "bg-emerald-50 text-emerald-700 border border-emerald-200"
+                : "bg-red-50 text-red-700 border border-red-200"
             }`}
           >
-            {selectedVariant.stock > 0
+            <span
+              className={`h-1.5 w-1.5 rounded-full ${
+                (selectedVariant.stock ?? 0) > 0
+                  ? "bg-emerald-500"
+                  : "bg-red-500"
+              }`}
+            />
+            {(selectedVariant.stock ?? 0) > 0
               ? `${selectedVariant.stock} in stock`
               : "Out of stock"}
-          </span>
+          </div>
         </div>
       </div>
 
       {/* 4. ACTIONS */}
-      <div className="flex items-center gap-2 pt-1">
+      <div className="flex items-center gap-3 pt-1">
         <div className="grow">
           <AddToCartButton item={item} />
         </div>

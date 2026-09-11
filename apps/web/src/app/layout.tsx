@@ -19,7 +19,6 @@ import "./globals.css";
 
 import { CurrencyProvider } from "providers/CurrencyProvider";
 import { ExchangeRateProvider } from "providers/ExchangeRateProvider";
-import AppOpenPrompt from "@/components/AppOpenPrompt";
 
 export const metadata: Metadata = {
   metadataBase: new URL("https://africasuk.com"),
@@ -214,7 +213,6 @@ return (
           <ExchangeRateProvider
             initialRate={currentRate?.rate ?? 1}
           >
-            <AppOpenPrompt />
 
             {children}
 

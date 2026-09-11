@@ -1,10 +1,10 @@
 "use client";
 
-import type { CartItem } from "@/types/cart";
+import { ShoppingBag } from "lucide-react";
 import { useCart } from "@/store/cart";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { ShoppingBag } from "lucide-react";
+import type { CartItem } from "@/types/cart";
 
 interface Props {
   item: CartItem;
@@ -33,15 +33,15 @@ export default function AddSearchCartButton({ item }: Props) {
           addItem(item);
         }
       }}
-      className="relative rounded-none bg-[#004d26] text-white hover:bg-[#00361a] disabled:bg-gray-100 disabled:text-gray-400 font-medium text-xs px-2.5 sm:px-3.5 h-8 transition-colors shadow-none cursor-pointer disabled:cursor-not-allowed flex items-center justify-center gap-1.5"
+      className="relative h-10 cursor-pointer items-center justify-center gap-1.5 rounded-xl bg-zinc-900 px-4 text-xs font-semibold text-white transition-all active:scale-[0.985] hover:bg-zinc-800 disabled:cursor-not-allowed disabled:bg-zinc-100 disabled:text-zinc-400"
     >
-      <ShoppingBag className="w-3.5 h-3.5 shrink-0" />
-      <span>{isOutOfStock ? "Out of Stock" : "Add"}</span>
+      <ShoppingBag className="h-4 w-4 shrink-0" strokeWidth={1.8} />
+      <span>{isOutOfStock ? "Out of Stock" : "Add to Cart"}</span>
 
       {quantity > 0 && (
         <Badge
           variant="secondary"
-          className="ml-1 h-4 min-w-4 rounded-none bg-white/20 px-1 text-[10px] font-medium text-white border-0 justify-center leading-none"
+          className="ml-1 flex h-4 min-w-4 items-center justify-center rounded-full border-0 bg-white/20 px-1 text-[10px] font-bold text-white"
         >
           {quantity}
         </Badge>

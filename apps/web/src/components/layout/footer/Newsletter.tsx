@@ -10,31 +10,33 @@ export default function Newsletter() {
 
   function handleSubscribe(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
+
     if (!email.trim()) return;
 
-    // Simulate API submission sequence
+    // Replace with your newsletter API when available.
     setIsSubmitted(true);
     setEmail("");
   }
 
   return (
-    <section className="border-b border-gray-100 bg-gray-50/50 py-8 sm:py-12 md:py-14 text-gray-900 select-none antialiased">
+    <section className="border-b border-gray-100 bg-gray-50/50 py-8 text-gray-900 antialiased select-none sm:py-12 md:py-14">
       <Container>
-        <div className="mx-auto max-w-xl text-center flex flex-col items-center px-2">
-          <h2 className="text-xl sm:text-2xl md:text-3xl font-black uppercase tracking-tight text-[#002b15] leading-tight">
+        <div className="mx-auto flex max-w-xl flex-col items-center px-2 text-center">
+          <h2 className="text-xl font-black leading-tight tracking-tight text-[#002b15] sm:text-2xl md:text-3xl">
             Stay Updated
           </h2>
 
-          <p className="mt-1.5 max-w-md text-[11px] sm:text-xs md:text-sm text-gray-600 font-medium leading-relaxed">
-            Subscribe to receive offers, premium brand new arrivals, and exclusive collection updates directly.
+          <p className="mt-1.5 max-w-md text-[11px] font-medium leading-relaxed text-gray-600 sm:text-xs md:text-sm">
+            Subscribe for new products, special offers, and updates from
+            Africa Suk.
           </p>
 
-          {/* Interactive Form Capture Flow */}
-          <div className="mt-4 sm:mt-6 w-full relative min-h-10 sm:min-h-11">
+          {/* Newsletter Form */}
+          <div className="relative mt-4 min-h-10 w-full sm:mt-6 sm:min-h-11">
             {!isSubmitted ? (
-              <form 
+              <form
                 onSubmit={handleSubscribe}
-                className="flex w-full h-10 sm:h-11 items-center bg-white rounded-xl border border-gray-200/80 shadow-2xs overflow-hidden focus-within:border-[#005c2e] focus-within:ring-1 focus-within:ring-[#005c2e] transition-all duration-300"
+                className="flex h-10 w-full items-center overflow-hidden rounded-xl border border-gray-200/80 bg-white shadow-2xs transition-all duration-300 focus-within:border-[#005c2e] focus-within:ring-1 focus-within:ring-[#005c2e] sm:h-11"
               >
                 <input
                   type="email"
@@ -42,28 +44,30 @@ export default function Newsletter() {
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   placeholder="Enter your email address..."
-                  className="w-full h-full px-3 sm:px-4 text-[11px] sm:text-xs md:text-sm font-medium bg-transparent text-gray-800 placeholder-gray-400 focus:outline-hidden"
+                  aria-label="Email address"
+                  className="h-full w-full bg-transparent px-3 text-[11px] font-medium text-gray-800 placeholder-gray-400 outline-hidden sm:px-4 sm:text-xs md:text-sm"
                 />
-                
+
                 <button
                   type="submit"
-                  className="h-full px-4 sm:px-6 bg-linear-to-r from-[#002b15] to-[#005c2e] text-white flex items-center gap-1.5 text-[10px] sm:text-xs font-black uppercase tracking-wider hover:opacity-95 active:scale-98 transition-all duration-200 shrink-0 cursor-pointer"
-                  aria-label="Subscribe to newsletter"
+                  aria-label="Subscribe to Africa Suk updates"
+                  className="flex h-full shrink-0 cursor-pointer items-center gap-1.5 bg-linear-to-r from-[#002b15] to-[#005c2e] px-4 text-[10px] font-black uppercase tracking-wider text-white transition-all duration-200 hover:opacity-95 active:scale-[0.98] sm:px-6 sm:text-xs"
                 >
                   <span className="hidden sm:inline">Subscribe</span>
+
                   <Send className="h-3 w-3 sm:h-3.5 sm:w-3.5" />
                 </button>
               </form>
             ) : (
-              <div className="flex items-center justify-center gap-1.5 sm:gap-2 py-2 text-[#005c2e] animate-in fade-in zoom-in-95 duration-300">
-                <CheckCircle2 className="h-4 w-4 text-[#005c2e] shrink-0" />
-                <span className="text-[11px] sm:text-xs md:text-sm font-bold uppercase tracking-wider">
+              <div className="flex animate-in items-center justify-center gap-1.5 py-2 text-[#005c2e] fade-in zoom-in-95 duration-300 sm:gap-2">
+                <CheckCircle2 className="h-4 w-4 shrink-0 text-[#005c2e]" />
+
+                <span className="text-[11px] font-bold tracking-wider sm:text-xs md:text-sm">
                   Thank you for subscribing!
                 </span>
               </div>
             )}
           </div>
-
         </div>
       </Container>
     </section>

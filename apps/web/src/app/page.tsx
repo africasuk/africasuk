@@ -20,6 +20,7 @@ import Layout from "@/components/layout/Layout";
 import { RequestProductSection } from "@/components/home/RequestProductSection";
 import GenderSection from "@/components/home/GenderSection";
 import { ButtonSection } from "@/components/home/ButtonSection";
+import AppDownloadSection from "@/components/home/AppDownloadSection";
 
 export default async function HomePage() {
   const supabase = await createClient();
@@ -93,6 +94,8 @@ export default async function HomePage() {
       
       <ContinueShopping />
 
+      <AppDownloadSection />
+      
     </Layout>
   );
 }

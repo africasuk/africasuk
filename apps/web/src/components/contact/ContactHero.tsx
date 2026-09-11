@@ -1,35 +1,42 @@
 "use client";
 
 import Link from "next/link";
-import { ArrowLeft, Headphones } from "lucide-react";
+import { ArrowLeft } from "lucide-react";
 
 export default function ContactHero() {
   return (
-    <div className="mb-8 border-b border-gray-200 pb-6">
-      <Link
-        href="/"
-        className="mb-4 inline-flex items-center gap-1.5 rounded-full border border-gray-200 px-3.5 py-1.5 text-xs font-medium text-gray-700 transition hover:border-[#004d26] hover:bg-[#004d26] hover:text-white"
-      >
-        <ArrowLeft className="h-3.5 w-3.5" />
-        <span>Back to Website</span>
-      </Link>
-
-      <div className="mb-2 inline-flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-[#004d26]">
-        <Headphones className="h-4 w-4" />
-        <span>Get in Touch</span>
+    <div className="mb-10 border-b border-gray-300 pb-8">
+      {/* Top Navigation Row */}
+      <div className="flex items-center justify-start">
+        <Link
+          href="/"
+          className="inline-flex items-center gap-2 border border-gray-300 bg-white px-3.5 py-1.5 text-xs font-semibold text-gray-800 transition hover:border-gray-900 hover:bg-gray-100"
+        >
+          <ArrowLeft className="h-3.5 w-3.5" />
+          <span>Back to Website</span>
+        </Link>
       </div>
 
-      <h1 className="text-3xl font-serif font-bold text-gray-900 sm:text-4xl">
-        Contact Us
-      </h1>
+      {/* Centered Large Heading & Subtitle */}
+      <div className="mt-6 text-center space-y-3">
+        <span className="text-xs font-bold uppercase tracking-widest text-[#004d26] block">
+          Get in Touch
+        </span>
 
-      <p className="mt-2 text-lg font-semibold tracking-wide text-[#004d26]">
-        We&apos;re here to help.
-      </p>
+        <h1 className="text-4xl font-extrabold tracking-tight text-gray-900 sm:text-5xl">
+          Contact Us
+        </h1>
 
-      <p className="mt-3 max-w-2xl text-sm leading-7 text-gray-600 sm:text-base">
-        Whether you have a question about an order, need help finding a product, want to request a product, or simply have feedback, our team is ready to assist you.
-      </p>
+        <p className="text-lg font-bold text-[#004d26] sm:text-xl">
+          We&apos;re here to help.
+        </p>
+
+        <p className="mx-auto max-w-2xl text-base text-gray-800 leading-relaxed pt-1">
+          Whether you have a question about an order, need help finding a
+          product, want to request a product, or simply have feedback, our team
+          is ready to assist you.
+        </p>
+      </div>
     </div>
   );
 }

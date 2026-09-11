@@ -1,6 +1,6 @@
 "use client";
 
-import { SearchX } from "lucide-react";
+import { SearchX, RotateCcw } from "lucide-react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 
@@ -10,37 +10,41 @@ interface Props {
 
 export function SearchEmptyState({ q }: Props) {
   return (
-    <div className="rounded-none border border-dashed border-gray-200 bg-gray-50/50 p-8 sm:p-14 text-center select-none shadow-none">
-      {/* Sharp Icon Box */}
-      <div className="mx-auto mb-4 flex h-12 w-12 sm:h-14 sm:w-14 items-center justify-center rounded-none border border-gray-200 bg-white shadow-none">
-        <SearchX className="h-6 w-6 text-gray-400 stroke-[1.5]" />
+    <div className="mx-auto max-w-md select-none rounded-2xl border border-zinc-200 bg-white p-8 text-center antialiased shadow-xs sm:p-12">
+      {/* Icon Badge */}
+      <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-xl border border-zinc-200 bg-zinc-50 sm:h-14 sm:w-14">
+        <SearchX className="h-6 w-6 text-zinc-400" strokeWidth={1.8} />
       </div>
 
-      {/* Text Content */}
-      <div className="space-y-1.5 max-w-sm mx-auto">
-        <h3 className="text-sm sm:text-base font-semibold text-gray-900">
+      {/* Content */}
+      <div className="mx-auto space-y-2">
+        <h3 className="text-base font-bold tracking-tight text-zinc-900 sm:text-lg">
           No matching products found
         </h3>
 
-        <p className="text-xs text-gray-500 font-normal leading-relaxed">
+        <p className="text-xs leading-relaxed text-zinc-500 sm:text-sm">
           {q ? (
             <>
-              We couldn&apos;t find anything for{" "}
-              <span className="font-medium text-gray-800">&quot;{q}&quot;</span>. Try checking for typos or searching with broader keywords.
+              We couldn&apos;t find any results for{" "}
+              <span className="font-semibold text-zinc-900">&quot;{q}&quot;</span>.
+              Try checking your spelling or searching for a more general term.
             </>
           ) : (
-            "We couldn't find any products matching your active filters."
+            "We couldn't find any products matching your current filters."
           )}
         </p>
 
-        {/* Clear Action Button */}
-        <div className="pt-3.5">
+        {/* Action Button */}
+        <div className="pt-3">
           <Button
             asChild
             variant="outline"
-            className="rounded-none border-gray-300 text-xs font-medium text-gray-800 bg-white hover:bg-gray-50 hover:border-gray-400 cursor-pointer h-8 px-4 shadow-none transition-colors"
+            className="h-10 cursor-pointer rounded-xl border-zinc-200 bg-white px-4 text-xs font-semibold text-zinc-800 transition-all active:scale-[0.985] hover:border-zinc-300 hover:bg-zinc-50 hover:text-zinc-900"
           >
-            <Link href="/search">Clear Search Filters</Link>
+            <Link href="/search" className="inline-flex items-center gap-1.5">
+              <RotateCcw className="h-3.5 w-3.5 text-zinc-500" strokeWidth={2} />
+              <span>Clear Search Filters</span>
+            </Link>
           </Button>
         </div>
       </div>

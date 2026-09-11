@@ -1,3 +1,4 @@
+import Image from "next/image";
 import Link from "next/link";
 import {
   Mail,
@@ -8,11 +9,11 @@ import {
   PackageSearch,
   MessageSquare,
   Sparkles,
-  ExternalLink,
   ShieldCheck,
   UserCheck,
   FileText,
   Camera,
+  ArrowRight,
 } from "lucide-react";
 
 import Container from "@/components/layout/Container";
@@ -21,205 +22,287 @@ import ContactHero from "@/components/contact/ContactHero";
 export default function ContactPage() {
   return (
     <>
-      <div className="py-10 sm:py-16 bg-white">
+      <div className="bg-white py-10 sm:py-16 text-gray-900">
         <Container>
           <div className="mx-auto max-w-5xl">
-            
             {/* Header */}
             <ContactHero />
 
-            <div className="grid gap-12 lg:grid-cols-12">
-              
+            <div className="grid gap-12 lg:grid-cols-12 items-start mt-6">
               {/* Main Article Column */}
-              <div className="lg:col-span-8 space-y-10 text-gray-800 leading-relaxed text-sm sm:text-base">
+              <div className="space-y-10 text-base leading-relaxed text-gray-800 lg:col-span-8">
                 
                 {/* Customer Support */}
                 <section className="space-y-3">
-                  <h2 className="text-xl font-bold text-gray-900 border-b border-gray-200 pb-2 flex items-center gap-2.5">
-                    <Mail className="h-5 w-5 text-[#004d26]" />
+                  <h2 className="flex items-center gap-2.5 border-b border-gray-300 pb-2.5 text-2xl font-bold text-gray-900">
+                    <Mail className="h-6 w-6 text-[#004d26] shrink-0" />
                     <span>Customer Support</span>
                   </h2>
-                  <p className="text-gray-600">
-                    For general inquiries, orders, product requests, and account assistance:
+
+                  <p className="text-gray-800">
+                    For questions about your account, orders, products,
+                    deliveries, returns, refunds, or product requests:
                   </p>
-                  <p className="font-mono text-sm text-gray-900 font-bold flex items-center gap-2 pt-1">
-                    <span className="text-[#004d26]">Email:</span>
-                    <a href="mailto:customer@africasuk.com" className="underline underline-offset-2 hover:text-[#004d26]">
-                      customer@africasuk.com
-                    </a>
-                  </p>
+
+                  <div className="border border-gray-300 p-4 bg-gray-50">
+                    <p className="font-mono text-base font-bold text-gray-900">
+                      <span className="text-[#004d26] mr-2">Email:</span>
+                      <a
+                        href="mailto:customer@africasuk.com"
+                        className="underline underline-offset-4 hover:text-[#004d26]"
+                      >
+                        customer@africasuk.com
+                      </a>
+                    </p>
+                  </div>
                 </section>
 
                 {/* Business & Partnerships */}
                 <section className="space-y-3">
-                  <h2 className="text-xl font-bold text-gray-900 border-b border-gray-200 pb-2 flex items-center gap-2.5">
-                    <Building2 className="h-5 w-5 text-[#004d26]" />
+                  <h2 className="flex items-center gap-2.5 border-b border-gray-300 pb-2.5 text-2xl font-bold text-gray-900">
+                    <Building2 className="h-6 w-6 text-[#004d26] shrink-0" />
                     <span>Business &amp; Partnerships</span>
                   </h2>
-                  <p className="text-gray-600">
-                    Interested in partnering with AfricaSuk, supplying products, or discussing business opportunities?
+
+                  <p className="text-gray-800">
+                    For business inquiries, product supply opportunities,
+                    logistics, technology, or other commercial partnerships with
+                    Africa Suk:
                   </p>
-                  <p className="font-mono text-sm text-gray-900 font-bold flex items-center gap-2 pt-1">
-                    <span className="text-[#004d26]">Email:</span>
-                    <a href="mailto:business@africasuk.com" className="underline underline-offset-2 hover:text-[#004d26]">
-                      business@africasuk.com
-                    </a>
-                  </p>
+
+                  <div className="border border-gray-300 p-4 bg-gray-50">
+                    <p className="font-mono text-base font-bold text-gray-900">
+                      <span className="text-[#004d26] mr-2">Email:</span>
+                      <a
+                        href="mailto:business@africasuk.com"
+                        className="underline underline-offset-4 hover:text-[#004d26]"
+                      >
+                        business@africasuk.com
+                      </a>
+                    </p>
+                  </div>
                 </section>
 
                 {/* Office Location & Hours */}
                 <section className="space-y-4">
-                  <h2 className="text-xl font-bold text-gray-900 border-b border-gray-200 pb-2 flex items-center gap-2.5">
-                    <MapPin className="h-5 w-5 text-[#004d26]" />
+                  <h2 className="flex items-center gap-2.5 border-b border-gray-300 pb-2.5 text-2xl font-bold text-gray-900">
+                    <MapPin className="h-6 w-6 text-[#004d26] shrink-0" />
                     <span>Office Location &amp; Hours</span>
                   </h2>
-                  
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <div className="space-y-1">
-                      <h3 className="font-bold text-gray-900 text-sm flex items-center gap-1.5">
-                        <MapPin className="h-4 w-4 text-[#004d26]" /> Office Location
+
+                  <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
+                    <div className="space-y-2 border border-gray-300 p-4 bg-gray-50">
+                      <h3 className="flex items-center gap-1.5 text-sm font-bold uppercase tracking-wider text-gray-900">
+                        <MapPin className="h-4 w-4 text-[#004d26]" />
+                        <span>Office Location</span>
                       </h3>
-                      <p className="text-gray-700 font-medium">Juba, South Sudan 🇸🇸</p>
-                      <p className="text-xs text-gray-500 italic">
-                        Our full office address will be published as our operations continue to expand.
+
+                      <p className="font-bold text-base text-gray-900">
+                        Juba, South Sudan 🇸🇸
+                      </p>
+
+                      <p className="text-sm text-gray-700 leading-normal">
+                        Africa Suk operates centrally in Juba. Additional
+                        distribution hubs and service offices may be added as our operations expand.
                       </p>
                     </div>
 
-                    <div className="space-y-1">
-                      <h3 className="font-bold text-gray-900 text-sm flex items-center gap-1.5">
-                        <Clock className="h-4 w-4 text-[#004d26]" /> Business Hours
+                    <div className="space-y-2 border border-gray-300 p-4 bg-gray-50">
+                      <h3 className="flex items-center gap-1.5 text-sm font-bold uppercase tracking-wider text-gray-900">
+                        <Clock className="h-4 w-4 text-[#004d26]" />
+                        <span>Business Hours</span>
                       </h3>
-                      <p className="text-gray-700 text-xs sm:text-sm">
-                        <strong className="text-gray-900">Monday – Saturday:</strong> 9:00 AM – 6:00 PM (EAT)
-                      </p>
-                      <p className="text-gray-700 text-xs sm:text-sm">
-                        <strong className="text-gray-900">Sunday:</strong> Closed
-                      </p>
+
+                      <div className="space-y-1 text-sm text-gray-800">
+                        <p>
+                          <strong className="text-gray-900">Monday – Saturday:</strong>{" "}
+                          9:00 AM – 6:00 PM (EAT)
+                        </p>
+                        <p>
+                          <strong className="text-gray-900">Sunday:</strong>{" "}
+                          Closed
+                        </p>
+                      </div>
                     </div>
                   </div>
                 </section>
 
                 {/* Before Contacting Us */}
-                <section className="space-y-3">
-                  <h2 className="text-xl font-bold text-gray-900 border-b border-gray-200 pb-2 flex items-center gap-2.5">
-                    <CheckCircle2 className="h-5 w-5 text-[#004d26]" />
+                <section className="space-y-4">
+                  <h2 className="flex items-center gap-2.5 border-b border-gray-300 pb-2.5 text-2xl font-bold text-gray-900">
+                    <CheckCircle2 className="h-6 w-6 text-[#004d26] shrink-0" />
                     <span>Before Contacting Us</span>
                   </h2>
-                  <p className="text-gray-600">
-                    To help us assist you as quickly as possible, please include:
+
+                  <p className="text-gray-800">
+                    To help us resolve your request promptly, please include the
+                    following details in your message:
                   </p>
-                  <ul className="space-y-2 text-gray-700 pl-1 text-xs sm:text-sm">
-                    <li className="flex items-center gap-2.5">
-                      <UserCheck className="h-4 w-4 text-[#004d26] shrink-0" />
+
+                  <ul className="space-y-2.5 pl-1 text-base text-gray-800">
+                    <li className="flex items-center gap-3">
+                      <UserCheck className="h-5 w-5 shrink-0 text-[#004d26]" />
                       <span>Your full name</span>
                     </li>
-                    <li className="flex items-center gap-2.5">
-                      <Mail className="h-4 w-4 text-[#004d26] shrink-0" />
-                      <span>Your registered email address</span>
+
+                    <li className="flex items-center gap-3">
+                      <Mail className="h-5 w-5 shrink-0 text-[#004d26]" />
+                      <span>Your registered account email address</span>
                     </li>
-                    <li className="flex items-center gap-2.5">
-                      <FileText className="h-4 w-4 text-[#004d26] shrink-0" />
+
+                    <li className="flex items-center gap-3">
+                      <FileText className="h-5 w-5 shrink-0 text-[#004d26]" />
                       <span>Your order number (if applicable)</span>
                     </li>
-                    <li className="flex items-center gap-2.5">
-                      <MessageSquare className="h-4 w-4 text-[#004d26] shrink-0" />
-                      <span>A clear description of your inquiry</span>
+
+                    <li className="flex items-center gap-3">
+                      <MessageSquare className="h-5 w-5 shrink-0 text-[#004d26]" />
+                      <span>A clear description of your issue or request</span>
                     </li>
-                    <li className="flex items-center gap-2.5">
-                      <Camera className="h-4 w-4 text-[#004d26] shrink-0" />
-                      <span>Photos or screenshots, if relevant</span>
+
+                    <li className="flex items-center gap-3">
+                      <Camera className="h-5 w-5 shrink-0 text-[#004d26]" />
+                      <span>Relevant photographs, screenshots, or packaging labels</span>
                     </li>
                   </ul>
                 </section>
 
                 {/* Need a Product? */}
-                <section className="space-y-3">
-                  <h2 className="text-xl font-bold text-gray-900 border-b border-gray-200 pb-2 flex items-center gap-2.5">
-                    <PackageSearch className="h-5 w-5 text-[#004d26]" />
+                <section className="space-y-4">
+                  <h2 className="flex items-center gap-2.5 border-b border-gray-300 pb-2.5 text-2xl font-bold text-gray-900">
+                    <PackageSearch className="h-6 w-6 text-[#004d26] shrink-0" />
                     <span>Need a Product?</span>
                   </h2>
-                  <p className="text-gray-600">
-                    Can&apos;t find the product you&apos;re looking for? Submit a product request through our custom sourcing portal:
+
+                  <p className="text-gray-800">
+                    Can&apos;t find the product you are looking for in our store?
+                    Submit a product request and our sourcing team will check
+                    availability through regional and international suppliers.
                   </p>
+
                   <div className="pt-1">
                     <Link
                       href="/request-product"
-                      className="inline-flex items-center gap-2 text-xs font-bold text-white bg-[#004d26] px-4 py-2.5 rounded-full hover:bg-[#00361a] transition-colors"
+                      className="inline-flex items-center gap-2 bg-[#004d26] px-5 py-3 text-sm font-bold text-white transition-colors hover:bg-[#00361a]"
                     >
-                      <ExternalLink className="h-3.5 w-3.5" />
-                      <span>Submit Product Request</span>
+                      <span>Request a Product</span>
+                      <ArrowRight className="h-4 w-4" />
                     </Link>
                   </div>
-                  <p className="text-xs text-gray-500 italic pt-1">
-                    If we successfully source the product, we&apos;ll add it to our catalog and notify you so you can place your order through your AfricaSuk account.
+
+                  <p className="text-sm italic text-gray-600">
+                    Note: Product requests do not guarantee availability. If we
+                    can source the requested product, we will contact you with
+                    pricing and delivery options before an order is placed.
                   </p>
                 </section>
 
-                {/* Response Time & Footer Slogan */}
+                {/* Response Time */}
                 <section className="space-y-3 pt-2">
-                  <h2 className="text-xl font-bold text-gray-900 border-b border-gray-200 pb-2 flex items-center gap-2.5">
-                    <Sparkles className="h-5 w-5 text-[#004d26]" />
+                  <h2 className="flex items-center gap-2.5 border-b border-gray-300 pb-2.5 text-2xl font-bold text-gray-900">
+                    <Sparkles className="h-6 w-6 text-[#004d26] shrink-0" />
                     <span>Response Time</span>
                   </h2>
-                  <p className="text-gray-600">
-                    We aim to respond to all inquiries as quickly as possible during our business hours. Response times may vary depending on the nature and volume of requests.
-                  </p>
-                  <p className="text-sm font-bold text-[#004d26] pt-2 flex items-center gap-2">
-                    <ShieldCheck className="h-4 w-4" />
-                    <span>Thank you for choosing AfricaSuk. Shop with Confidence.</span>
-                  </p>
-                </section>
 
+                  <p className="text-gray-800">
+                    We aim to respond to all inquiries within business hours
+                    (Monday–Saturday, 9:00 AM – 6:00 PM EAT). Response times may
+                    vary slightly depending on the volume and technical complexity of inquiries.
+                  </p>
+
+                  <div className="flex items-center gap-2.5 pt-2 text-base font-bold text-[#004d26]">
+                    <ShieldCheck className="h-5 w-5 shrink-0" />
+                    <span>Thank you for choosing Africa Suk. Shop with Confidence.</span>
+                  </div>
+                </section>
               </div>
 
-              {/* Sidebar: Wikipedia Infobox */}
+              {/* Sidebar: Wikipedia-Style Infobox */}
               <aside className="lg:col-span-4">
-                <div className="bg-gray-50/80 p-5 text-xs space-y-4 rounded-lg sticky top-6 border border-gray-200/60">
-                  
-                  <div className="text-center pb-3 border-b border-gray-200">
-                    <div className="flex justify-center mb-2">
-                      <Mail className="h-8 w-8 text-[#004d26]" />
+                <div className="sticky top-6 border border-gray-300 bg-gray-50 p-6 space-y-4">
+                  <div className="border-b border-gray-300 pb-4 text-center">
+                    <div className="mb-3 flex justify-center">
+                      <Image
+                        src="/icon.png"
+                        alt="Africa Suk Logo"
+                        width={60}
+                        height={60}
+                        className="object-contain"
+                        priority
+                      />
                     </div>
-                    <h3 className="font-bold text-sm text-gray-900">Contact Summary</h3>
-                    <p className="text-gray-500 text-[11px]">AfricaSuk Desk</p>
+
+                    <h3 className="text-lg font-extrabold text-gray-900">
+                      Africa Suk
+                    </h3>
+
+                    <p className="text-xs font-semibold text-gray-700">
+                      Customer Service &amp; Communications
+                    </p>
                   </div>
 
-                  <table className="w-full text-left">
+                  <table className="w-full text-left text-sm mt-3">
                     <tbody>
-                      <tr className="border-b border-gray-200/80">
-                        <th className="py-2 font-semibold text-gray-600 w-1/3">Support</th>
-                        <td className="py-2 text-gray-900 font-mono text-[11px]">customer@africasuk.com</td>
+                      <tr className="border-b border-gray-200">
+                        <th className="w-1/3 py-2.5 font-bold text-gray-900 align-top">
+                          Support
+                        </th>
+                        <td className="py-2.5 font-mono text-xs text-gray-900 align-top font-semibold">
+                          customer@africasuk.com
+                        </td>
                       </tr>
-                      <tr className="border-b border-gray-200/80">
-                        <th className="py-2 font-semibold text-gray-600">Business</th>
-                        <td className="py-2 text-gray-900 font-mono text-[11px]">business@africasuk.com</td>
+
+                      <tr className="border-b border-gray-200">
+                        <th className="py-2.5 font-bold text-gray-900 align-top">
+                          Business
+                        </th>
+                        <td className="py-2.5 font-mono text-xs text-gray-900 align-top font-semibold">
+                          business@africasuk.com
+                        </td>
                       </tr>
-                      <tr className="border-b border-gray-200/80">
-                        <th className="py-2 font-semibold text-gray-600">Hours</th>
-                        <td className="py-2 text-gray-900">Mon–Sat (9 AM–6 PM EAT)</td>
+
+                      <tr className="border-b border-gray-200">
+                        <th className="py-2.5 font-bold text-gray-900 align-top">
+                          Hours
+                        </th>
+                        <td className="py-2.5 text-gray-800 font-medium align-top">
+                          Mon–Sat (9 AM–6 PM EAT)
+                        </td>
                       </tr>
-                      <tr className="border-b border-gray-200/80">
-                        <th className="py-2 font-semibold text-gray-600">Location</th>
-                        <td className="py-2 text-gray-900">Juba, South Sudan 🇸🇸</td>
+
+                      <tr className="border-b border-gray-200">
+                        <th className="py-2.5 font-bold text-gray-900 align-top">
+                          Location
+                        </th>
+                        <td className="py-2.5 text-gray-900 font-semibold align-top">
+                          Juba, South Sudan 🇸🇸
+                        </td>
                       </tr>
+
                       <tr>
-                        <th className="py-2 font-semibold text-gray-600">Requests</th>
-                        <td className="py-2 text-[#004d26] font-semibold">africasuk.com/request-product</td>
+                        <th className="py-2.5 font-bold text-gray-900 align-top">
+                          Sourcing
+                        </th>
+                        <td className="py-2.5 align-top">
+                          <Link
+                            href="/request-product"
+                            className="font-bold text-[#004d26] underline hover:text-[#00361a]"
+                          >
+                            Request a Product
+                          </Link>
+                        </td>
                       </tr>
                     </tbody>
                   </table>
 
-                  <div className="pt-2 border-t border-gray-200 text-center">
-                    <p className="italic text-[11px] text-gray-500">
-                      &ldquo;Shop with Confidence. Dedicated support for South Sudan.&rdquo;
+                  <div className="border-t border-gray-300 pt-3 text-center">
+                    <p className="text-xs italic font-medium text-gray-700">
+                      &ldquo;Shop with Confidence. Direct support for customers across South Sudan.&rdquo;
                     </p>
                   </div>
-
                 </div>
               </aside>
-
             </div>
-
           </div>
         </Container>
       </div>
