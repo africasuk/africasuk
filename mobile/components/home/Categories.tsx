@@ -1,6 +1,13 @@
 // mobile/components/home/Categories.tsx
 
-import { View, Text, Image, TouchableOpacity, StyleSheet, Pressable } from "react-native";
+import {
+  View,
+  Text,
+  Image,
+  TouchableOpacity,
+  StyleSheet,
+  Pressable,
+} from "react-native";
 import { router } from "expo-router";
 import { ArrowRight } from "lucide-react-native";
 import type { Category } from "@africasuk/types";
@@ -16,20 +23,24 @@ export default function Categories({ categories = [] }: Props) {
       <View style={styles.header}>
         <View style={styles.headerTextContainer}>
           <Text style={styles.title}>SHOP BY CATEGORY</Text>
+
           <Text style={styles.subtitle}>
-            Discover verified premium brands across our curated departments.
+            Explore products across a wide range of categories, all in one
+            place.
           </Text>
         </View>
 
         <TouchableOpacity
           onPress={() => router.push("/(tabs)/categories" as never)}
           activeOpacity={0.7}
+          accessibilityRole="button"
+          accessibilityLabel="View all categories"
         >
           <Text style={styles.viewAll}>View All</Text>
         </TouchableOpacity>
       </View>
 
-      {/* Grid */}
+      {/* Category Grid */}
       <View style={styles.grid}>
         {categories.slice(0, 6).map((category) => (
           <TouchableOpacity
@@ -39,25 +50,32 @@ export default function Categories({ categories = [] }: Props) {
             onPress={() =>
               router.push(`/categories/${category.slug}` as never)
             }
+            accessibilityRole="button"
+            accessibilityLabel={`Browse ${category.name}`}
           >
-            {/* Image Box - No rounded borders */}
+            {/* Image */}
             <View style={styles.imageBox}>
               {category.imageUrl ? (
                 <Image
                   source={{ uri: category.imageUrl }}
                   style={styles.image}
                   resizeMode="cover"
+                  accessibilityLabel={`${category.name} products`}
                 />
               ) : (
-                <View style={styles.placeholder} />
+                <View
+                  style={styles.placeholder}
+                  accessibilityElementsHidden
+                />
               )}
             </View>
 
-            {/* Name under every card - Non-bold */}
+            {/* Details */}
             <View style={styles.details}>
               <Text numberOfLines={1} style={styles.name}>
                 {category.name}
               </Text>
+
               {category.description && (
                 <Text numberOfLines={1} style={styles.description}>
                   {category.description}
@@ -75,9 +93,18 @@ export default function Categories({ categories = [] }: Props) {
           pressed && styles.allCategoriesBtnPressed,
         ]}
         onPress={() => router.push("/(tabs)/categories" as never)}
+        accessibilityRole="button"
+        accessibilityLabel="Explore all categories"
       >
-        <Text style={styles.allCategoriesBtnText}>Explore All Categories</Text>
-        <ArrowRight size={14} color="#18181b" strokeWidth={2} />
+        <Text style={styles.allCategoriesBtnText}>
+          Explore All Categories
+        </Text>
+
+        <ArrowRight
+          size={14}
+          color="#18181b"
+          strokeWidth={2}
+        />
       </Pressable>
     </View>
   );
@@ -104,7 +131,7 @@ const styles = StyleSheet.create({
 
   title: {
     fontSize: 18,
-    fontWeight: "500", // Non-bold clean weight
+    fontWeight: "500",
     color: "#111827",
     letterSpacing: 0.5,
   },
@@ -113,13 +140,14 @@ const styles = StyleSheet.create({
     marginTop: 4,
     color: "#6b7280",
     fontSize: 12,
-    fontWeight: "400", // Regular
+    fontWeight: "400",
+    lineHeight: 17,
   },
 
   viewAll: {
     color: "#002b15",
     fontSize: 13,
-    fontWeight: "500", // Clean regular
+    fontWeight: "500",
   },
 
   grid: {
@@ -138,7 +166,7 @@ const styles = StyleSheet.create({
     width: "100%",
     height: 170,
     backgroundColor: "#f3f4f6",
-    borderRadius: 0, // Explicitly no rounded borders
+    borderRadius: 0,
     overflow: "hidden",
   },
 
@@ -160,7 +188,7 @@ const styles = StyleSheet.create({
 
   name: {
     color: "#111827",
-    fontWeight: "500", // Regular/medium weight (not bold)
+    fontWeight: "500",
     fontSize: 14,
   },
 

@@ -11,22 +11,22 @@ export default function RequestProductSection() {
     <View style={styles.section}>
       <View style={styles.container}>
         {/* Top Kicker */}
-        <Text style={styles.kicker}>Can&apos;t Find What You Need?</Text>
+        <Text style={styles.kicker}>Looking for Something?</Text>
 
-        {/* Headline with Brand Green Highlight */}
+        {/* Headline */}
         <Text style={styles.heading}>
           Can&apos;t find it?{"\n"}
           <Text style={styles.headingGreen}>Just ask us.</Text>
         </Text>
 
-        {/* Content Row: Description and Watermark Logo */}
+        {/* Content */}
         <View style={styles.middleRow}>
           <Text style={styles.description}>
-            Take a photo of the product or send us a link. We&apos;ll help you
-            find it and arrange the purchase for you.
+            Send us a photo, product link, or details about what you&apos;re
+            looking for. We&apos;ll check if we can source it for you.
           </Text>
 
-          {/* Subtly Scaled Watermark Logo */}
+          {/* Subtle Brand Logo */}
           <View style={styles.logoStage}>
             <Image
               source={require("@/assets/images/logo.png")}
@@ -37,21 +37,36 @@ export default function RequestProductSection() {
           </View>
         </View>
 
-        {/* Full Pill Action CTA */}
+        {/* CTA */}
         <Pressable
           style={({ pressed }) => [
             styles.ctaButton,
             pressed && styles.ctaButtonPressed,
           ]}
-          onPress={() => router.push("/request-product" as Href)}
+          onPress={() =>
+            router.push("/request-product" as Href)
+          }
+          accessibilityRole="button"
+          accessibilityLabel="Request a product"
         >
           <View style={styles.ctaLeft}>
-            <Camera size={15} color="#ffffff" strokeWidth={2} />
-            <Text style={styles.ctaText}>Request a Product</Text>
+            <Camera
+              size={15}
+              color="#ffffff"
+              strokeWidth={2}
+            />
+
+            <Text style={styles.ctaText}>
+              Request a Product
+            </Text>
           </View>
 
           <View style={styles.arrowCircle}>
-            <ArrowRight size={13} color="#ffffff" strokeWidth={2.2} />
+            <ArrowRight
+              size={13}
+              color="#ffffff"
+              strokeWidth={2.2}
+            />
           </View>
         </Pressable>
       </View>

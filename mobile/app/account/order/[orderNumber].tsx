@@ -6,11 +6,11 @@ import {
   StyleSheet,
   ActivityIndicator,
   Pressable,
+  Alert,
 } from "react-native";
 import { Image } from "expo-image";
 import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
 import { useLocalSearchParams, useRouter, Href } from "expo-router";
-import * as Linking from "expo-linking";
 import {
   Package,
   Truck,
@@ -26,6 +26,7 @@ import { createClient } from "@/lib/auth/client";
 import type { Order } from "@africasuk/types";
 import { Price } from "@/components/currency/Price";
 import { ReviewForm } from "@/components/products/ReviewForm";
+import * as WebBrowser from "expo-web-browser";
 
 type OrderItemRow = {
   id: string;
@@ -314,30 +315,35 @@ export default function OrderDetailsScreen() {
                 </View>
               </View>
 
-              <Pressable
+           <Pressable
                 style={({ pressed }) => [
                   styles.trackButton,
                   pressed && styles.buttonPressed,
                 ]}
                 onPress={async () => {
-                      const trackingId =
-                        order.order_number ??
-                        order.orderNumber ??
-                        order.id;
+                  const trackingId =
+                    order?.order_number ??
+                    order?.orderNumber ??
+                    order?.id;
 
-                      const url = `https://africasuk.com/track/${trackingId}`;
+                  if (!trackingId) {
+                    Alert.alert("Tracking Unavailable", "Tracking information is not available for this order.");
+                    return;
+                  }
 
-                      try {
-                        const supported = await Linking.canOpenURL(url);
+                  const url = `https://africasuk.com/track/${trackingId}`;
 
-                        if (supported) {
-                          await Linking.openURL(url);
-                        }
-                      } catch (error) {
-                        console.error("Failed to open tracking URL:", error);
-                      }
-                    }}
-                >
+                  try {
+                    await WebBrowser.openBrowserAsync(url);
+                  } catch (error) {
+                    console.error("Failed to open tracking URL:", error);
+                    Alert.alert(
+                      "Unable to Open",
+                      "We couldn't open the tracking page. Please try again."
+                    );
+                  }
+                }}
+              >
                 <Text style={styles.trackButtonText}>Track</Text>
                 <ExternalLink size={12} color="#ffffff" strokeWidth={2} />
               </Pressable>

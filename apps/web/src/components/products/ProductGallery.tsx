@@ -74,7 +74,7 @@ export function ProductGallery({ images }: Props) {
     };
   }, [isLightboxOpen]);
 
-  // Pointer/Touch drag handlers for fluid slider
+  // Pointer/Touch drag handlers
   const handleDragStart = (clientX: number) => {
     setIsDragging(true);
     startX.current = clientX;
@@ -105,7 +105,7 @@ export function ProductGallery({ images }: Props) {
 
   if (!images || images.length === 0) {
     return (
-      <div className="relative flex h-96 w-full select-none items-center justify-center rounded-2xl border border-zinc-200 bg-zinc-50 text-xs font-normal text-zinc-400">
+      <div className="relative flex aspect-square w-full select-none items-center justify-center rounded-2xl border border-zinc-200 bg-zinc-50 text-xs font-normal text-zinc-400">
         No images available
       </div>
     );
@@ -114,10 +114,10 @@ export function ProductGallery({ images }: Props) {
   return (
     <>
       <div className="flex w-full select-none flex-col gap-3 antialiased">
-        {/* Main Sliding Viewport */}
+        {/* Main Sliding Viewport - Fixed 1:1 Aspect Ratio */}
         <div
           ref={containerRef}
-          className="group relative h-96 w-full cursor-grab overflow-hidden rounded-2xl border border-zinc-200 bg-zinc-100/70 sm:h-115 lg:h-130 active:cursor-grabbing"
+          className="group relative aspect-square w-full cursor-grab overflow-hidden rounded-2xl border border-zinc-200 bg-zinc-100/70 active:cursor-grabbing"
           onMouseDown={(e) => handleDragStart(e.clientX)}
           onMouseMove={(e) => handleDragMove(e.clientX)}
           onMouseUp={handleDragEnd}
@@ -151,7 +151,7 @@ export function ProductGallery({ images }: Props) {
                     alt={`Product image view ${idx + 1}`}
                     fill
                     priority={idx === 0}
-                    sizes="(max-width: 1024px) 100vw, 55vw"
+                    sizes="(max-width: 1024px) 100vw, 50vw"
                     draggable={false}
                     className="object-cover"
                   />
@@ -160,7 +160,7 @@ export function ProductGallery({ images }: Props) {
             })}
           </div>
 
-          {/* Fullscreen Expansion Pill */}
+          {/* Fullscreen Expansion Button */}
           <button
             type="button"
             onClick={(e) => {
@@ -219,7 +219,7 @@ export function ProductGallery({ images }: Props) {
           )}
         </div>
 
-        {/* Thumbnail Carousel Row */}
+        {/* Thumbnail Carousel Row - 1:1 Thumbnails */}
         {images.length > 1 && (
           <div
             ref={thumbnailRowRef}
@@ -238,7 +238,7 @@ export function ProductGallery({ images }: Props) {
                   type="button"
                   key={image.id || index}
                   onClick={() => setSelectedIndex(index)}
-                  className={`relative h-16 w-16 shrink-0 overflow-hidden rounded-xl border transition-all duration-150 focus:outline-none focus-visible:ring-2 focus-visible:ring-zinc-900 ${
+                  className={`relative aspect-square h-16 w-16 shrink-0 overflow-hidden rounded-xl border transition-all duration-150 focus:outline-none focus-visible:ring-2 focus-visible:ring-zinc-900 ${
                     isSelected
                       ? "border-zinc-900 ring-1 ring-zinc-900 shadow-xs"
                       : "border-zinc-200 opacity-60 hover:border-zinc-300 hover:opacity-100"
@@ -263,7 +263,7 @@ export function ProductGallery({ images }: Props) {
         typeof document !== "undefined" &&
         createPortal(
           <div className="fixed inset-0 z-9999 flex h-screen w-screen select-none flex-col justify-between bg-black/95 p-4 backdrop-blur-md sm:p-6">
-            {/* Lightbox Navigation Header */}
+            {/* Header */}
             <div className="z-10 flex w-full items-center justify-between">
               <div className="rounded-md border border-white/10 bg-white/10 px-2.5 py-1 text-xs font-semibold tracking-wider text-white">
                 {selectedIndex + 1} / {images.length}
@@ -279,26 +279,26 @@ export function ProductGallery({ images }: Props) {
               </button>
             </div>
 
-            {/* Centered Large Viewport */}
+            {/* 1:1 Constrained Center Viewport */}
             <div
-              className="relative mx-auto flex h-[82vh] w-full max-w-5xl items-center justify-center"
+              className="relative mx-auto flex h-full max-h-[80vh] aspect-square w-full max-w-4xl items-center justify-center overflow-hidden rounded-2xl"
               onTouchStart={(e) => handleDragStart(e.touches[0].clientX)}
               onTouchMove={(e) => handleDragMove(e.touches[0].clientX)}
               onTouchEnd={handleDragEnd}
             >
-              <div className="relative flex h-full w-full items-center justify-center">
+              <div className="relative h-full w-full">
                 <Image
                   src={images[selectedIndex]?.imageUrl || "/placeholder.png"}
                   alt={`Full detail view ${selectedIndex + 1}`}
                   fill
                   priority
-                  sizes="100vw"
+                  sizes="(max-width: 1024px) 90vw, 800px"
                   className="object-contain"
                 />
               </div>
             </div>
 
-            {/* Lightbox Arrow Controls */}
+            {/* Arrows */}
             {images.length > 1 && (
               <>
                 <button
@@ -321,7 +321,7 @@ export function ProductGallery({ images }: Props) {
               </>
             )}
 
-            {/* Bottom Counter Indicator */}
+            {/* Bottom Dots */}
             <div className="flex w-full items-center justify-center pb-2">
               <div className="flex gap-1.5">
                 {images.map((_, idx) => (

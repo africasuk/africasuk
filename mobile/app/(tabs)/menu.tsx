@@ -1,437 +1,404 @@
-import React, { useEffect, useState } from "react";
+import React from "react";
 import {
-  ScrollView,
   View,
   Text,
-  Pressable,
   StyleSheet,
+  ScrollView,
+  TouchableOpacity,
   Alert,
   Share,
+  Linking,
 } from "react-native";
-import * as Linking from "expo-linking";
-import { useRouter, Href } from "expo-router";
-import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
+import { SafeAreaView } from "react-native-safe-area-context";
 import {
   User,
-  Heart,
-  ShoppingBag,
-  FilePlus2,
   Package,
+  Heart,
   Bell,
-  Store,
-  CircleHelp,
+  HelpCircle,
   Shield,
   FileText,
   Info,
-  Share2,
   Star,
+  Share2,
   LogOut,
-  LogIn,
   ChevronRight,
+  Camera,
 } from "lucide-react-native";
-
+import * as WebBrowser from "expo-web-browser";
+import { useRouter } from "expo-router";
 import { CurrencySwitcher } from "@/components/CurrencySwitcher";
-import { createClient } from "@/lib/auth/client";
 
-const supabase = createClient();
 const PLAY_STORE_URL =
   "https://play.google.com/store/apps/details?id=com.africasuk.app";
 
+const openWebsite = async (url: string) => {
+  try {
+    await WebBrowser.openBrowserAsync(url);
+  } catch (error) {
+    console.error("Failed to open website:", error);
+  }
+};
 
-export default function MenuScreen() {
-  const router = useRouter();
-  const insets = useSafeAreaInsets();
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
-
-  useEffect(() => {
-    async function loadUser() {
-      const {
-        data: { user },
-      } = await supabase.auth.getUser();
-
-      setIsLoggedIn(!!user);
-    }
-
-    loadUser();
-
-    const {
-      data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event, session) => {
-      setIsLoggedIn(!!session?.user);
-    });
-
-    return () => subscription.unsubscribe();
-  }, []);
-
-  const handleLogout = async () => {
-    try {
-      const { error } = await supabase.auth.signOut();
-
-      if (error) {
-        Alert.alert("Logout Failed", error.message);
-        return;
-      }
-
-      setIsLoggedIn(false);
-      router.replace("/");
-    } catch {
-      Alert.alert("Error", "Failed to sign out.");
-    }
-  };
-
-  const handleShareApp = async () => {
-    try {
-      await Share.share({
-        message: `Shop with confidence on AfricaSuk 🛍️\n\nDownload the app:\n${PLAY_STORE_URL}`,
-      });
-    } catch (error) {
-      console.error("Share error:", error);
-    }
-  };
-
-  const handleRateApp = () => {
-    Linking.openURL(PLAY_STORE_URL).catch((err) =>
-      console.error("Failed to open store link:", err)
-    );
-  };
-
-  const bottomInset = insets.bottom > 0 ? insets.bottom : 16;
-
-  return (
-    <SafeAreaView style={styles.container} edges={["top", "left", "right"]}>
-      <ScrollView
-        showsVerticalScrollIndicator={false}
-        contentContainerStyle={[
-          styles.content,
-          { paddingBottom: bottomInset + 32 },
-        ]}
-      >
-        {/* Top Header */}
-        <View style={styles.header}>
-          <Text style={styles.title}>Menu & Settings</Text>
-          <Text style={styles.subtitle}>
-            Manage your account preferences, orders, and support
-          </Text>
-        </View>
-
-        {/* My Account */}
-        <View style={styles.sectionGroup}>
-          <Text style={styles.sectionTitle}>My Account</Text>
-          <View style={styles.sectionCard}>
-            <MenuRow
-              icon={User}
-              label="Account Details"
-              onPress={() => router.push("/profile" as Href)}
-            />
-            <MenuRow
-              icon={Package}
-              label="Orders"
-              onPress={() => router.push("/(tabs)/orders" as Href)}
-            />
-            <MenuRow
-              icon={Heart}
-              label="Wishlist"
-              onPress={() => router.push("/wishlist" as Href)}
-            />
-            <MenuRow
-              icon={ShoppingBag}
-              label="Cart"
-              onPress={() => router.push("/cart" as Href)}
-            />
-            <MenuRow
-              icon={FilePlus2}
-              label="Requested Products"
-              onPress={() => router.push("/requests" as Href)}
-              isLast
-            />
-          </View>
-        </View>
-
-        {/* Preferences */}
-        <View style={styles.sectionGroup}>
-          <Text style={styles.sectionTitle}>Preferences</Text>
-          <View style={styles.sectionCard}>
-            <View style={styles.row}>
-              <View style={styles.left}>
-                <View style={styles.iconTile}>
-                  <Info size={16} color="#71717a" strokeWidth={1.8} />
-                </View>
-                <Text style={styles.rowText}>Language</Text>
-              </View>
-              <View style={styles.badge}>
-                <Text style={styles.badgeText}>English</Text>
-              </View>
-            </View>
-
-            <View style={styles.row}>
-              <CurrencySwitcher />
-            </View>
-
-            <MenuRow
-              icon={Bell}
-              label="Notifications"
-              onPress={() => {}}
-              isLast
-            />
-          </View>
-        </View>
-
-        {/* Support */}
-        <View style={styles.sectionGroup}>
-          <Text style={styles.sectionTitle}>Support & Legal</Text>
-          <View style={styles.sectionCard}>
-            <MenuRow
-              icon={Store}
-              label="Become a Seller"
-              onPress={() => Linking.openURL("https://www.africasuk.com/sell")}
-            />
-            <MenuRow
-              icon={CircleHelp}
-              label="Help Center"
-              onPress={() => Linking.openURL("https://www.africasuk.com/help")}
-            />
-            <MenuRow
-              icon={Shield}
-              label="Privacy Policy"
-              onPress={() => Linking.openURL("https://www.africasuk.com/privacy")}
-            />
-            <MenuRow
-              icon={FileText}
-              label="Terms & Conditions"
-              onPress={() => Linking.openURL("https://www.africasuk.com/terms")}
-            />
-            <MenuRow
-              icon={Info}
-              label="About AfricaSuk"
-              onPress={() => Linking.openURL("https://www.africasuk.com/about")}
-            />
-            <MenuRow icon={Share2} label="Share App" onPress={handleShareApp} />
-            <MenuRow
-              icon={Star}
-              label="Rate App"
-              onPress={handleRateApp}
-              isLast
-            />
-          </View>
-        </View>
-
-        {/* Auth Action */}
-        <Pressable
-          style={({ pressed }) => [
-            styles.authButton,
-            isLoggedIn ? styles.logoutButton : styles.loginButton,
-            pressed && styles.buttonPressed,
-          ]}
-          onPress={() => {
-            if (isLoggedIn) {
-              handleLogout();
-            } else {
-              router.push("/auth/login" as Href);
-            }
-          }}
-        >
-          {isLoggedIn ? (
-            <>
-              <LogOut size={16} color="#dc2626" strokeWidth={2} />
-              <Text style={styles.logoutText}>Log Out</Text>
-            </>
-          ) : (
-            <>
-              <LogIn size={16} color="#ffffff" strokeWidth={2} />
-              <Text style={styles.loginText}>Sign In / Register</Text>
-            </>
-          )}
-        </Pressable>
-
-        <Text style={styles.version}>AfricaSuk v1.0.0</Text>
-      </ScrollView>
-    </SafeAreaView>
-  );
-}
+type MenuRowProps = {
+  icon: React.ComponentType<any>;
+  label: string;
+  onPress: () => void;
+  danger?: boolean;
+  isLast?: boolean;
+};
 
 function MenuRow({
   icon: Icon,
   label,
   onPress,
+  danger = false,
   isLast = false,
-}: {
-  icon: React.ComponentType<any>;
-  label: string;
-  onPress?: () => void;
-  isLast?: boolean;
-}) {
+}: MenuRowProps) {
   return (
-    <Pressable
-      style={({ pressed }) => [
-        styles.row,
-        isLast && styles.noBorder,
-        pressed && styles.rowPressed,
-      ]}
+    <TouchableOpacity
+      activeOpacity={0.7}
       onPress={onPress}
+      style={[styles.menuRow, isLast && styles.menuRowLast]}
     >
-      <View style={styles.left}>
-        <View style={styles.iconTile}>
-          <Icon size={16} color="#18181b" strokeWidth={1.8} />
-        </View>
-        <Text style={styles.rowText}>{label}</Text>
+      <View
+        style={[
+          styles.menuIcon,
+          danger && styles.menuIconDanger,
+        ]}
+      >
+        <Icon
+          size={19}
+          color={danger ? "#DC2626" : "#005C2E"}
+          strokeWidth={2}
+        />
       </View>
-      <ChevronRight size={15} color="#a1a1aa" strokeWidth={2} />
-    </Pressable>
+
+      <Text
+        style={[
+          styles.menuLabel,
+          danger && styles.menuLabelDanger,
+        ]}
+      >
+        {label}
+      </Text>
+
+      <ChevronRight
+        size={18}
+        color={danger ? "#FCA5A5" : "#9CA3AF"}
+        strokeWidth={2}
+      />
+    </TouchableOpacity>
+  );
+}
+
+export default function MenuScreen() {
+  const router = useRouter();
+
+  const handleShareApp = async () => {
+    try {
+      await Share.share({
+        message: `Shop with Confidence on Africa Suk.\n\nDownload the Africa Suk app:\n${PLAY_STORE_URL}`,
+      });
+    } catch (error) {
+      console.error("Failed to share app:", error);
+    }
+  };
+
+  const handleRateApp = async () => {
+    try {
+      await Linking.openURL(PLAY_STORE_URL);
+    } catch (error) {
+      console.error("Failed to open Play Store:", error);
+    }
+  };
+
+  const handleLogout = () => {
+    Alert.alert(
+      "Log Out",
+      "Are you sure you want to log out?",
+      [
+        {
+          text: "Cancel",
+          style: "cancel",
+        },
+        {
+          text: "Log Out",
+          style: "destructive",
+          onPress: () => {
+            router.replace("/");
+          },
+        },
+      ]
+    );
+  };
+
+  return (
+    <SafeAreaView style={styles.safeArea} edges={["top"]}>
+      <ScrollView
+        style={styles.container}
+        contentContainerStyle={styles.content}
+        showsVerticalScrollIndicator={false}
+      >
+        {/* Header */}
+        <View style={styles.header}>
+          <Text style={styles.headerTitle}>Menu</Text>
+          <Text style={styles.headerSubtitle}>
+            Manage your account and preferences
+          </Text>
+        </View>
+
+        {/* Account */}
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Account</Text>
+
+          <View style={styles.sectionCard}>
+            <MenuRow
+              icon={User}
+              label="My Profile"
+              onPress={() => router.push("/profile")}
+            />
+
+            <MenuRow
+              icon={Package}
+              label="My Orders"
+              onPress={() => router.push("/orders")}
+            />
+
+            <MenuRow
+              icon={Heart}
+              label="Wishlist"
+              onPress={() => router.push("/wishlist")}
+            />
+
+            <MenuRow
+              icon={Bell}
+              label="Notifications"
+              onPress={() => {
+                Alert.alert(
+                  "Coming Soon",
+                  "Notifications will be available soon."
+                );
+              }}
+            />
+
+            <CurrencySwitcher />
+          </View>
+        </View>
+
+        {/* Support & Legal */}
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Support & Legal</Text>
+
+          <View style={styles.sectionCard}>
+            <MenuRow
+              icon={HelpCircle}
+              label="Help Center"
+              onPress={() =>
+                openWebsite("https://africasuk.com/help")
+              }
+            />
+
+            <MenuRow
+              icon={Shield}
+              label="Privacy Policy"
+              onPress={() =>
+                openWebsite("https://africasuk.com/privacy")
+              }
+            />
+
+            <MenuRow
+              icon={FileText}
+              label="Terms & Conditions"
+              onPress={() =>
+                openWebsite("https://africasuk.com/terms")
+              }
+            />
+
+            <MenuRow
+              icon={Info}
+              label="About Africa Suk"
+              onPress={() =>
+                openWebsite("https://africasuk.com/about")
+              }
+            />
+
+            <MenuRow
+              icon={Camera}
+              label="Request a Product"
+              isLast
+              onPress={() =>
+                openWebsite("https://africasuk.com/request-product")
+              }
+            />
+          </View>
+        </View>
+
+        {/* App */}
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>App</Text>
+
+          <View style={styles.sectionCard}>
+            <MenuRow
+              icon={Star}
+              label="Rate the App"
+              onPress={handleRateApp}
+            />
+
+            <MenuRow
+              icon={Share2}
+              label="Share Africa Suk"
+              isLast
+              onPress={handleShareApp}
+            />
+          </View>
+        </View>
+
+        {/* Logout */}
+        <View style={styles.section}>
+          <View style={styles.sectionCard}>
+            <MenuRow
+              icon={LogOut}
+              label="Log Out"
+              danger
+              isLast
+              onPress={handleLogout}
+            />
+          </View>
+        </View>
+
+        {/* Footer */}
+        <View style={styles.footer}>
+          <Text style={styles.version}>Africa Suk v1.0.4</Text>
+
+          <Text style={styles.footerText}>
+            Shop with Confidence
+          </Text>
+
+          <Text style={styles.copyright}>
+            © {new Date().getFullYear()} Africa Suk. All rights reserved.
+          </Text>
+        </View>
+      </ScrollView>
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
+  safeArea: {
+    flex: 1,
+    backgroundColor: "#F8FAF9",
+  },
+
   container: {
     flex: 1,
-    backgroundColor: "#ffffff",
   },
 
   content: {
     paddingHorizontal: 16,
-    paddingTop: 12,
-    gap: 16,
+    paddingTop: 18,
+    paddingBottom: 40,
   },
 
   header: {
-    gap: 2,
-    marginBottom: 4,
+    marginBottom: 26,
   },
 
-  title: {
-    fontSize: 24,
+  headerTitle: {
+    fontSize: 28,
     fontWeight: "800",
-    color: "#18181b",
+    color: "#111827",
     letterSpacing: -0.5,
   },
 
-  subtitle: {
-    fontSize: 13,
-    color: "#71717a",
-    letterSpacing: -0.1,
+  headerSubtitle: {
+    marginTop: 5,
+    fontSize: 14,
+    color: "#6B7280",
+    lineHeight: 20,
   },
 
-  sectionGroup: {
-    gap: 6,
+  section: {
+    marginBottom: 22,
   },
 
   sectionTitle: {
-    fontSize: 11,
+    marginBottom: 9,
+    marginLeft: 4,
+    fontSize: 12,
     fontWeight: "700",
-    color: "#71717a",
+    color: "#6B7280",
     textTransform: "uppercase",
-    letterSpacing: 0.6,
-    paddingHorizontal: 2,
+    letterSpacing: 1,
   },
 
   sectionCard: {
-    backgroundColor: "#ffffff",
-    borderRadius: 14,
-    borderWidth: 1,
-    borderColor: "#f0f0f0",
     overflow: "hidden",
+    borderRadius: 16,
+    backgroundColor: "#FFFFFF",
+    borderWidth: 1,
+    borderColor: "#E5E7EB",
   },
 
-  row: {
+  menuRow: {
+    minHeight: 60,
     flexDirection: "row",
-    justifyContent: "space-between",
     alignItems: "center",
     paddingHorizontal: 14,
-    paddingVertical: 12,
     borderBottomWidth: 1,
-    borderBottomColor: "#f4f4f5",
+    borderBottomColor: "#F0F1F2",
   },
 
-  rowPressed: {
-    backgroundColor: "#fafafa",
-  },
-
-  noBorder: {
+  menuRowLast: {
     borderBottomWidth: 0,
   },
 
-  left: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 12,
-  },
-
-  iconTile: {
-    width: 32,
-    height: 32,
-    borderRadius: 8,
-    backgroundColor: "#f4f4f5",
-    borderWidth: 1,
-    borderColor: "#e4e4e7",
-    justifyContent: "center",
-    alignItems: "center",
-  },
-
-  rowText: {
-    fontSize: 13,
-    fontWeight: "600",
-    color: "#18181b",
-    letterSpacing: -0.1,
-  },
-
-  badge: {
-    backgroundColor: "#f4f4f5",
-    paddingHorizontal: 8,
-    paddingVertical: 3,
-    borderRadius: 6,
-    borderWidth: 1,
-    borderColor: "#e4e4e7",
-  },
-
-  badgeText: {
-    fontSize: 11,
-    fontWeight: "600",
-    color: "#71717a",
-  },
-
-  authButton: {
-    flexDirection: "row",
+  menuIcon: {
+    width: 38,
+    height: 38,
     alignItems: "center",
     justifyContent: "center",
-    gap: 8,
-    height: 44,
-    borderRadius: 10,
-    marginTop: 8,
+    marginRight: 13,
+    borderRadius: 11,
+    backgroundColor: "#EAF5EF",
   },
 
-  loginButton: {
-    backgroundColor: "#18181b",
+  menuIconDanger: {
+    backgroundColor: "#FEF2F2",
   },
 
-  logoutButton: {
-    backgroundColor: "#ffffff",
-    borderWidth: 1,
-    borderColor: "#fca5a5",
-  },
-
-  loginText: {
-    fontSize: 13,
+  menuLabel: {
+    flex: 1,
+    fontSize: 15,
     fontWeight: "600",
-    color: "#ffffff",
-    letterSpacing: -0.1,
+    color: "#1F2937",
   },
 
-  logoutText: {
-    fontSize: 13,
-    fontWeight: "600",
-    color: "#dc2626",
-    letterSpacing: -0.1,
+  menuLabelDanger: {
+    color: "#DC2626",
   },
 
-  buttonPressed: {
-    opacity: 0.88,
-    transform: [{ scale: 0.985 }],
+  footer: {
+    alignItems: "center",
+    paddingTop: 12,
   },
 
   version: {
-    textAlign: "center",
-    color: "#a1a1aa",
-    fontSize: 11,
-    fontWeight: "500",
+    fontSize: 13,
+    fontWeight: "700",
+    color: "#005C2E",
+  },
+
+  footerText: {
+    marginTop: 5,
+    fontSize: 12,
+    color: "#6B7280",
+  },
+
+  copyright: {
     marginTop: 4,
+    fontSize: 11,
+    color: "#9CA3AF",
+    textAlign: "center",
   },
 });

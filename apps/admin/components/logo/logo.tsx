@@ -6,8 +6,8 @@ export default function Logo() {
     <div className="relative aspect-300/330 w-full max-w-full select-none">
       {/* Light Mode Logo */}
       <Image
-        src="/blacklogo.png"
-        alt="AfricaSuk Logo"
+        src="/Newlogo.png"
+        alt="Newlogo.png"
         fill
         priority
         sizes="(max-width:640px) 120px, (max-width:1024px) 180px, 240px"
@@ -16,8 +16,8 @@ export default function Logo() {
 
       {/* Dark Mode Logo */}
       <Image
-        src="/whitelogo.png"
-        alt="AfricaSuk Logo"
+        src="/Newlogo.png"
+        alt="Newlogo.png"
         fill
         priority
         sizes="(max-width:640px) 120px, (max-width:1024px) 180px, 240px"

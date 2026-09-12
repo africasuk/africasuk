@@ -45,7 +45,7 @@ export default function FeaturedProducts({ products = [] }: Props) {
           <Text style={styles.badge}>Curated Drops</Text>
           <Text style={styles.title}>Featured Products</Text>
           <Text style={styles.subtitle}>
-            Hand-picked premium selections curated exclusively for you.
+            Explore products available from Africa Suk..
           </Text>
         </View>
 

@@ -41,7 +41,6 @@ const OPTION_VALUES: Record<string, string[]> = {
     "42",
     "Other",
   ],
-
   storage: [
     "32GB",
     "64GB",
@@ -51,7 +50,6 @@ const OPTION_VALUES: Record<string, string[]> = {
     "1TB",
     "Other",
   ],
-
   memory: [
     "2GB",
     "4GB",
@@ -91,10 +89,8 @@ export function ProductVariantList({
   removeVariant,
   updateVariantField,
 }: ProductVariantListProps) {
-  // 1. Normalize option name to lowercase safely handling null/undefined
   const optionType = (color.optionName ?? "").toLowerCase();
 
-  // Auto SKU Generator function
   const generateSku = (
     prodName: string,
     colorName: string,
@@ -106,7 +102,6 @@ export function ProductVariantList({
     return `${prodPart}-${colorPart}-${optionPart}`;
   };
 
-  // Helper to handle option value change + SKU auto update
   const handleOptionValueChange = (
     variantIndex: number,
     newValue: string
@@ -133,16 +128,16 @@ export function ProductVariantList({
           <Label className="text-sm font-normal text-muted-foreground">
             Option Type:
           </Label>
-                  <Select
-                    value={color.optionName}
-                    onValueChange={(value) => {
-                      updateColorField(
-                        colorIndex,
-                        "optionName",
-                        value ?? ""
-                      );
-                    }}
-                  >
+          <Select
+            value={color.optionName}
+            onValueChange={(value) => {
+              updateColorField(
+                colorIndex,
+                "optionName",
+                value ?? ""
+              );
+            }}
+          >
             <SelectTrigger className="w-36">
               <SelectValue placeholder="Select type" />
             </SelectTrigger>
@@ -158,194 +153,187 @@ export function ProductVariantList({
       </div>
 
       {/* Variant Cards */}
-      {color.variants.map((variant, variantIndex) => (
-        <div
-          key={variantIndex}
-          className="space-y-4 rounded-lg border p-4 shadow-sm"
-        >
-          <div className="grid grid-cols-1 items-end gap-4 md:grid-cols-4">
-            
-          {/* Dynamic Option Value Renderer */}
-          <div>
-            <Label>{color.optionName || "Option Value"}</Label>
+      {color.variants.map((variant, variantIndex) => {
+        const currentPrice = variant.price ?? 10;
+        const currentStock = variant.stock ?? 6;
+        const hasPredefinedValues = Boolean(OPTION_VALUES[optionType]);
+        const isPredefinedMatch =
+          hasPredefinedValues &&
+          OPTION_VALUES[optionType].includes(variant.optionValue);
 
-            {optionType === "weight" ? (
-              <div className="flex gap-2">
-                <Input
-                  type="number"
-                  value={(variant.optionValue ?? "").replace(/[^\d.]/g, "")}
-                  onChange={(e) => {
-                    const unit =
-                      (variant.optionValue ?? "").endsWith("kg")
-                        ? "kg"
-                        : "g";
+        return (
+          <div
+            key={variantIndex}
+            className="space-y-4 rounded-lg border p-4 shadow-sm"
+          >
+            <div className="grid grid-cols-1 items-end gap-4 md:grid-cols-4">
+              {/* Dynamic Option Value Renderer */}
+              <div>
+                <Label>{color.optionName || "Option Value"}</Label>
 
-                    handleOptionValueChange(
-                      variantIndex,
-                      `${e.target.value}${unit}`
-                    );
-                  }}
-                  placeholder="500"
-                />
+                {optionType === "weight" ? (
+                  <div className="flex gap-2">
+                    <Input
+                      type="number"
+                      value={(variant.optionValue ?? "").replace(/[^\d.]/g, "")}
+                      onChange={(e) => {
+                        const unit = (variant.optionValue ?? "").endsWith("kg")
+                          ? "kg"
+                          : "g";
 
-                <Select
-                  value={
-                    (variant.optionValue ?? "").endsWith("kg")
-                      ? "kg"
-                      : "g"
-                  }
-                  onValueChange={(unit) => {
-                    if (!unit) return;
+                        handleOptionValueChange(
+                          variantIndex,
+                          `${e.target.value}${unit}`
+                        );
+                      }}
+                      placeholder="500"
+                    />
 
-                    const number = (variant.optionValue ?? "").replace(
-                      /[^\d.]/g,
-                      ""
-                    );
+                    <Select
+                      value={
+                        (variant.optionValue ?? "").endsWith("kg")
+                          ? "kg"
+                          : "g"
+                      }
+                      onValueChange={(unit) => {
+                        if (!unit) return;
 
-                    handleOptionValueChange(
-                      variantIndex,
-                      `${number}${unit}`
-                    );
-                  }}
-                >
-                  <SelectTrigger className="w-24">
-                    <SelectValue />
-                  </SelectTrigger>
+                        const number = (variant.optionValue ?? "").replace(
+                          /[^\d.]/g,
+                          ""
+                        );
 
-                  <SelectContent>
-                    <SelectItem value="g">Gram</SelectItem>
-                    <SelectItem value="kg">Kilogram</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-            ) : OPTION_VALUES[optionType] ? (
-              <>
-                <Select
-                  value={
-                    OPTION_VALUES[optionType].includes(
-                      variant.optionValue
-                    )
-                      ? variant.optionValue
-                      : "Other"
-                  }
-                  onValueChange={(value) => {
-                    if (!value) return;
+                        handleOptionValueChange(
+                          variantIndex,
+                          `${number}${unit}`
+                        );
+                      }}
+                    >
+                      <SelectTrigger className="w-24">
+                        <SelectValue />
+                      </SelectTrigger>
 
-                    if (value === "Other") {
-                      handleOptionValueChange(variantIndex, "");
-                    } else {
-                      handleOptionValueChange(
-                        variantIndex,
-                        value
-                      );
-                    }
-                  }}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select value" />
-                  </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="g">Gram</SelectItem>
+                        <SelectItem value="kg">Kilogram</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                ) : hasPredefinedValues ? (
+                  <div className="space-y-2">
+                    <Select
+                      value={isPredefinedMatch ? variant.optionValue : "Other"}
+                      onValueChange={(value) => {
+                        if (!value) return;
 
-                  <SelectContent>
-                    {(OPTION_VALUES[optionType] ?? []).map((item) => (
-                      <SelectItem key={item} value={item}>
-                        {item}
-                      </SelectItem>
-                    ))}
+                        if (value === "Other") {
+                          handleOptionValueChange(variantIndex, "");
+                        } else {
+                          handleOptionValueChange(variantIndex, value);
+                        }
+                      }}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select value" />
+                      </SelectTrigger>
 
-                    <SelectItem value="Other">
-                      Other
-                    </SelectItem>
-                  </SelectContent>
-                </Select>
+                      <SelectContent>
+                        {OPTION_VALUES[optionType].map((item) => (
+                          <SelectItem key={item} value={item}>
+                            {item}
+                          </SelectItem>
+                        ))}
+                        <SelectItem value="Other">Other</SelectItem>
+                      </SelectContent>
+                    </Select>
 
-                {!OPTION_VALUES[optionType].includes(
-                  variant.optionValue
-                ) && (
+                    {!isPredefinedMatch && (
+                      <Input
+                        placeholder="Enter custom value"
+                        value={variant.optionValue}
+                        onChange={(e) =>
+                          handleOptionValueChange(variantIndex, e.target.value)
+                        }
+                      />
+                    )}
+                  </div>
+                ) : (
                   <Input
-                    className="mt-2"
-                    placeholder="Enter custom value"
                     value={variant.optionValue}
                     onChange={(e) =>
-                      handleOptionValueChange(
-                        variantIndex,
-                        e.target.value
-                      )
+                      handleOptionValueChange(variantIndex, e.target.value)
                     }
+                    placeholder="Enter custom value"
                   />
                 )}
-              </>
-            ) : (
-              <Input
-                value={variant.optionValue}
-                onChange={(e) =>
-                  handleOptionValueChange(
-                    variantIndex,
-                    e.target.value
-                  )
-                }
-                placeholder="Enter custom value"
-              />
-            )}
-          </div>
-            {/* Price Input */}
-            <div>
-              <Label>Price</Label>
-              <Input
-                type="number"
-                value={variant.price}
-                onChange={(e) =>
-                  updateVariantField(
-                    colorIndex,
-                    variantIndex,
-                    "price",
-                    Number(e.target.value)
-                  )
-                }
-              />
+              </div>
+
+              {/* Price Input */}
+              <div>
+                <Label>Price</Label>
+                <Input
+                  type="number"
+                  min="0"
+                  step="any"
+                  value={Number.isNaN(currentPrice) ? "" : currentPrice}
+                  onChange={(e) => {
+                    const val = e.target.value;
+                    updateVariantField(
+                      colorIndex,
+                      variantIndex,
+                      "price",
+                      val === "" ? 0 : Number(val)
+                    );
+                  }}
+                />
+              </div>
+
+              {/* Stock Input */}
+              <div>
+                <Label>Stock</Label>
+                <Input
+                  type="number"
+                  min="0"
+                  step="1"
+                  value={Number.isNaN(currentStock) ? "" : currentStock}
+                  onChange={(e) => {
+                    const val = e.target.value;
+                    updateVariantField(
+                      colorIndex,
+                      variantIndex,
+                      "stock",
+                      val === "" ? 0 : Number(val)
+                    );
+                  }}
+                />
+              </div>
+
+              {/* SKU */}
+              <div>
+                <Label>SKU (Auto)</Label>
+                <Input
+                  value={variant.sku ?? ""}
+                  readOnly
+                  disabled
+                  className="bg-muted font-mono text-xs uppercase"
+                />
+              </div>
             </div>
 
-            {/* Stock Input */}
-            <div>
-              <Label>Stock</Label>
-              <Input
-                type="number"
-                value={variant.stock}
-                onChange={(e) =>
-                  updateVariantField(
-                    colorIndex,
-                    variantIndex,
-                    "stock",
-                    Number(e.target.value)
-                  )
-                }
-              />
-            </div>
-
-            {/* Auto-Generated Read-Only SKU */}
-            <div>
-              <Label>SKU (Auto)</Label>
-              <Input
-                value={variant.sku ?? ""}
-                readOnly
-                disabled
-                className="bg-muted font-mono text-xs uppercase"
-              />
+            {/* Remove Button */}
+            <div className="flex justify-end">
+              <Button
+                type="button"
+                variant="destructive"
+                size="sm"
+                onClick={() => removeVariant(colorIndex, variantIndex)}
+              >
+                Remove Variant
+              </Button>
             </div>
           </div>
-
-          {/* Remove Button */}
-          <div className="flex justify-end">
-            <Button
-              type="button"
-              variant="destructive"
-              size="sm"
-              onClick={() => removeVariant(colorIndex, variantIndex)}
-            >
-              Remove Variant
-            </Button>
-          </div>
-        </div>
-      ))}
+        );
+      })}
 
       {/* Add Variant Button */}
       <Button
