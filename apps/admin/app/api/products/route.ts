@@ -16,8 +16,6 @@ import {
 import { createAdminSupabaseClient } from "@/lib/supabase/admin";
 import cloudinary from "@/lib/cloudinary";
 
-
-
 async function createProductService() {
   const db = createAdminSupabaseClient();
 
@@ -33,9 +31,7 @@ async function uploadToCloudinary(
   file: File,
   folder: string
 ): Promise<string> {
-  const buffer = Buffer.from(
-    await file.arrayBuffer()
-  );
+  const buffer = Buffer.from(await file.arrayBuffer());
 
   return new Promise((resolve, reject) => {
     const upload = cloudinary.uploader.upload_stream(
@@ -60,8 +56,6 @@ export async function POST(request: Request) {
   try {
     const formData = await request.formData();
 
-
-    
     const service = await createProductService();
 
     const colors = JSON.parse(
@@ -69,18 +63,24 @@ export async function POST(request: Request) {
     );
 
     for (const color of colors) {
-      const uploadedImages: string[] = [];
+      const uploadPromises = color.images.map(
+        async (imageKey: string) => {
+          const file = formData.get(imageKey) as File;
 
-      for (const imageKey of color.images) {
-        const file = formData.get(imageKey) as File;
+          if (!file || !(file instanceof File)) {
+            throw new Error(`Image not found: ${imageKey}`);
+          }
 
-        const imageUrl = await uploadToCloudinary(
-          file,
-          "africasuk/products"
-        );
+          return uploadToCloudinary(
+            file,
+            "africasuk/products"
+          );
+        }
+      );
 
-        uploadedImages.push(imageUrl);
-      }
+      const uploadedImages = await Promise.all(
+        uploadPromises
+      );
 
       color.images = uploadedImages;
     }
@@ -151,6 +151,4 @@ export async function GET() {
       }
     );
   }
-  
 }
-

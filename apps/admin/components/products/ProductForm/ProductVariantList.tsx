@@ -292,7 +292,7 @@ export function ProductVariantList({
                 <Label>Price</Label>
                 <Input
                   type="number"
-                  value={variant.price ?? 10}
+                  value={variant.price === 0 ? 10 : variant.price}
                   onChange={(e) =>
                     updateVariantField(
                       colorIndex,
@@ -309,7 +309,7 @@ export function ProductVariantList({
                 <Label>Stock</Label>
                 <Input
                   type="number"
-                  value={variant.stock ?? 6}
+                  value={variant.stock === 0 ? 6 : variant.stock}
                   onChange={(e) =>
                     updateVariantField(
                       colorIndex,
