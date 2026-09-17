@@ -5,8 +5,8 @@ export class ProductQueryService {
     private readonly repository: ProductRepository
   ) {}
 
-  async getAll() {
-    return this.repository.getAll();
+  async getAll(options?: { random?: boolean }) {
+    return this.repository.getAll(options);
   }
 
   async getById(id: string) {
@@ -14,6 +14,6 @@ export class ProductQueryService {
   }
 
   async getBySlug(slug: string) {
-  return this.repository.getBySlug(slug);
-}
+    return this.repository.getBySlug(slug);
+  }
 }

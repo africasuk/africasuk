@@ -43,22 +43,37 @@ export class ProductRepository {
     };
   }
 
-async getAll() {
-  const { data, error } = await this.db
-    .from("products")
-    .select(`
-      *,
-      category:categories(*),
-      brand:brands(*),
-      colors:product_colors(
+  async getAll(options?: { random?: boolean }) {
+  let randomIds: string[] = [];
+
+  // Get ONE random order from Supabase
+  if (options?.random) {
+    const { data, error } =
+      await this.db.rpc("get_random_product_ids");
+
+    if (error) throw error;
+
+    randomIds = (data ?? []).map(
+      (item: { id: string }) => item.id
+    );
+  }
+
+  const { data, error } =
+    await this.db
+      .from("products")
+      .select(`
         *,
-        images:product_images(*),
-        variants:product_variants(*)
-      )
-    `)
-    .order("created_at", {
-      ascending: false,
-    });
+        category:categories(*),
+        brand:brands(*),
+        colors:product_colors(
+          *,
+          images:product_images(*),
+          variants:product_variants(*)
+        )
+      `)
+      .order("created_at", {
+        ascending: false,
+      });
 
   if (error) throw error;
 
@@ -68,12 +83,35 @@ async getAll() {
     return [];
   }
 
-  // Get product IDs
-  const productIds = products.map(
-    (product: any) => product.id,
+  // Randomize using the SAME random order from the RPC
+  let orderedProducts = products;
+
+  if (options?.random && randomIds.length > 0) {
+    const orderMap = new Map<string, number>(
+      randomIds.map(
+        (id, index) => [id, index]
+      )
+    );
+
+    orderedProducts = [...products].sort(
+      (a: any, b: any) => {
+        const aIndex =
+          orderMap.get(a.id) ??
+          Number.MAX_SAFE_INTEGER;
+
+        const bIndex =
+          orderMap.get(b.id) ??
+          Number.MAX_SAFE_INTEGER;
+
+        return aIndex - bIndex;
+      }
+    );
+  }
+
+  const productIds = orderedProducts.map(
+    (product: any) => product.id
   );
 
-  // Get approved reviews
   const {
     data: reviews,
     error: reviewsError,
@@ -85,7 +123,6 @@ async getAll() {
 
   if (reviewsError) throw reviewsError;
 
-  // Calculate rating for each product
   const ratingMap = new Map<
     string,
     {
@@ -106,128 +143,148 @@ async getAll() {
 
     ratingMap.set(
       review.product_id,
-      current,
+      current
     );
   }
 
-  return products.map((product: any) => {
-    const rating =
-      ratingMap.get(product.id);
+  return orderedProducts.map(
+    (product: any) => {
+      const rating =
+        ratingMap.get(product.id);
 
-    return {
-      ...product,
+      return {
+        ...product,
 
-      allowCod: product.allow_cod,
+        allowCod:
+          product.allow_cod,
 
-      allowOnlinePayment:
-        product.allow_online_payment,
+        allowOnlinePayment:
+          product.allow_online_payment,
 
-      categoryId: product.category_id,
+        categoryId:
+          product.category_id,
 
-      brandId: product.brand_id,
+        brandId:
+          product.brand_id,
 
-      isActive: product.is_active,
+        isActive:
+          product.is_active,
 
-      createdAt: product.created_at,
+        createdAt:
+          product.created_at,
 
-      updatedAt: product.updated_at,
+        updatedAt:
+          product.updated_at,
 
-      rating: {
-        averageRating: rating
-          ? Number(
-              (
-                rating.total /
-                rating.count
-              ).toFixed(1),
-            )
-          : 0,
+        rating: {
+          averageRating: rating
+            ? Number(
+                (
+                  rating.total /
+                  rating.count
+                ).toFixed(1)
+              )
+            : 0,
 
-        reviewCount:
-          rating?.count ?? 0,
-      },
+          reviewCount:
+            rating?.count ?? 0,
+        },
 
-      colors: (product.colors ?? []).map(
-        (color: any) => ({
-          ...color,
+        colors: (
+          product.colors ?? []
+        ).map(
+          (color: any) => ({
+            ...color,
 
-          productId: color.product_id,
+            productId:
+              color.product_id,
 
-          hexCode: color.hex_code,
-
-          createdAt: color.created_at,
-
-          updatedAt: color.updated_at,
-
-          images: (
-            color.images ?? []
-          ).map((image: any) => ({
-            ...image,
-
-            productColorId:
-              image.product_color_id,
-
-            imageUrl:
-              image.image_url,
-
-            sortOrder:
-              image.sort_order,
+            hexCode:
+              color.hex_code,
 
             createdAt:
-              image.created_at,
-          })),
-
-          variants: (
-            color.variants ?? []
-          ).map((variant: any) => ({
-            ...variant,
-
-            productColorId:
-              variant.product_color_id,
-
-            optionName:
-              variant.option_name,
-
-            optionValue:
-              variant.option_value,
-
-            isActive:
-              variant.is_active,
-
-            price: Number(
-              variant.price,
-            ),
-
-            stock: variant.stock,
-
-            createdAt:
-              variant.created_at,
+              color.created_at,
 
             updatedAt:
-              variant.updated_at,
-          })),
-        }),
-      ),
-    };
-  });
+              color.updated_at,
+
+            images: (
+              color.images ?? []
+            ).map(
+              (image: any) => ({
+                ...image,
+
+                productColorId:
+                  image.product_color_id,
+
+                imageUrl:
+                  image.image_url,
+
+                sortOrder:
+                  image.sort_order,
+
+                createdAt:
+                  image.created_at,
+              })
+            ),
+
+            variants: (
+              color.variants ?? []
+            ).map(
+              (variant: any) => ({
+                ...variant,
+
+                productColorId:
+                  variant.product_color_id,
+
+                optionName:
+                  variant.option_name,
+
+                optionValue:
+                  variant.option_value,
+
+                isActive:
+                  variant.is_active,
+
+                price: Number(
+                  variant.price
+                ),
+
+                stock:
+                  variant.stock,
+
+                createdAt:
+                  variant.created_at,
+
+                updatedAt:
+                  variant.updated_at,
+              })
+            ),
+          })
+        ),
+      };
+    }
+  );
 }
 
   async getById(
     id: string
   ): Promise<ProductWithDetails | null> {
-    const { data, error } = await this.db
-      .from("products")
-      .select(`
-        *,
-        category:categories(*),
-        brand:brands(*),
-        colors:product_colors(
+    const { data, error } =
+      await this.db
+        .from("products")
+        .select(`
           *,
-          images:product_images(*),
-          variants:product_variants(*)
-        )
-      `)
-      .eq("id", id)
-      .single();
+          category:categories(*),
+          brand:brands(*),
+          colors:product_colors(
+            *,
+            images:product_images(*),
+            variants:product_variants(*)
+          )
+        `)
+        .eq("id", id)
+        .single();
 
     if (error) {
       throw error;
@@ -238,51 +295,108 @@ async getAll() {
     return {
       ...data,
 
-          allowCod: data.allow_cod,
-          allowOnlinePayment:
-            data.allow_online_payment,
+      allowCod:
+        data.allow_cod,
 
-          categoryId: data.category_id,
-          brandId: data.brand_id,
-          isActive: data.is_active,
-          createdAt: data.created_at,
-          updatedAt: data.updated_at,
+      allowOnlinePayment:
+        data.allow_online_payment,
 
-      colors: (data.colors ?? []).map((color: any) => ({
-        ...color,
-        productId: color.product_id,
-        hexCode: color.hex_code,
-        createdAt: color.created_at,
-        updatedAt: color.updated_at,
+      categoryId:
+        data.category_id,
 
-        images: (color.images ?? []).map((image: any) => ({
-          ...image,
-          productColorId: image.product_color_id,
-          imageUrl: image.image_url,
-          sortOrder: image.sort_order,
-          createdAt: image.created_at,
-        })),
+      brandId:
+        data.brand_id,
 
-        variants: (color.variants ?? []).map((variant: any) => ({
-          ...variant,
-          productColorId: variant.product_color_id,
-          optionName: variant.option_name,
-          optionValue: variant.option_value,
-          isActive: variant.is_active,
-          price: Number(variant.price),
-          stock: variant.stock,
-          createdAt: variant.created_at,
-          updatedAt: variant.updated_at,
-        })),
-      })),
+      isActive:
+        data.is_active,
+
+      createdAt:
+        data.created_at,
+
+      updatedAt:
+        data.updated_at,
+
+      colors: (
+        data.colors ?? []
+      ).map(
+        (color: any) => ({
+          ...color,
+
+          productId:
+            color.product_id,
+
+          hexCode:
+            color.hex_code,
+
+          createdAt:
+            color.created_at,
+
+          updatedAt:
+            color.updated_at,
+
+          images: (
+            color.images ?? []
+          ).map(
+            (image: any) => ({
+              ...image,
+
+              productColorId:
+                image.product_color_id,
+
+              imageUrl:
+                image.image_url,
+
+              sortOrder:
+                image.sort_order,
+
+              createdAt:
+                image.created_at,
+            })
+          ),
+
+          variants: (
+            color.variants ?? []
+          ).map(
+            (variant: any) => ({
+              ...variant,
+
+              productColorId:
+                variant.product_color_id,
+
+              optionName:
+                variant.option_name,
+
+              optionValue:
+                variant.option_value,
+
+              isActive:
+                variant.is_active,
+
+              price: Number(
+                variant.price
+              ),
+
+              stock:
+                variant.stock,
+
+              createdAt:
+                variant.created_at,
+
+              updatedAt:
+                variant.updated_at,
+            })
+          ),
+        })
+      ),
     };
   }
 
   async delete(id: string) {
-    const { error } = await this.db
-      .from("products")
-      .delete()
-      .eq("id", id);
+    const { error } =
+      await this.db
+        .from("products")
+        .delete()
+        .eq("id", id);
 
     if (error) {
       throw error;
@@ -299,16 +413,26 @@ async getAll() {
       isActive: boolean;
     }
   ) {
-    const { error } = await this.db
-      .from("products")
-      .update({
-        category_id: data.categoryId,
-        brand_id: data.brandId,
-        name: data.name,
-        description: data.description,
-        is_active: data.isActive,
-      })
-      .eq("id", id);
+    const { error } =
+      await this.db
+        .from("products")
+        .update({
+          category_id:
+            data.categoryId,
+
+          brand_id:
+            data.brandId,
+
+          name:
+            data.name,
+
+          description:
+            data.description,
+
+          is_active:
+            data.isActive,
+        })
+        .eq("id", id);
 
     if (error) {
       throw error;
@@ -318,176 +442,249 @@ async getAll() {
   async getBySlug(
     slug: string
   ): Promise<ProductWithDetails | null> {
-    const { data, error } = await this.db
-      .from("products")
-      .select(`
-        *,
-        category:categories(*),
-        brand:brands(*),
-        colors:product_colors(
+    const { data, error } =
+      await this.db
+        .from("products")
+        .select(`
           *,
-          images:product_images(*),
-          variants:product_variants(*)
-        )
-      `)
-      .eq("slug", slug)
-      .single();
+          category:categories(*),
+          brand:brands(*),
+          colors:product_colors(
+            *,
+            images:product_images(*),
+            variants:product_variants(*)
+          )
+        `)
+        .eq("slug", slug)
+        .single();
 
     if (error) {
-  if (error.code === "PGRST116") {
-    return null;
-  }
+      if (error.code === "PGRST116") {
+        return null;
+      }
 
-  throw error;
-}
-    if (!data) return null;
-        return {
-          ...data,
-          allowCod: data.allow_cod,
-          allowOnlinePayment:
-            data.allow_online_payment,
-
-          categoryId: data.category_id,
-          brandId: data.brand_id,
-          isActive: data.is_active,
-          createdAt: data.created_at,
-          updatedAt: data.updated_at,
-
-          
-      colors: (data.colors ?? []).map((color: any) => ({
-        ...color,
-
-        productId: color.product_id,
-        hexCode: color.hex_code,
-
-        images: (color.images ?? []).map((image: any) => ({
-          ...image,
-          productColorId: image.product_color_id,
-          imageUrl: image.image_url,
-          sortOrder: image.sort_order,
-        })),
-
-        variants: (color.variants ?? []).map((variant: any) => ({
-          ...variant,
-          productColorId: variant.product_color_id,
-          optionName: variant.option_name,
-          optionValue: variant.option_value,
-          isActive: variant.is_active,
-          price: Number(variant.price),
-          stock: variant.stock,
-        })),
-      })),
-    };
-    
-  }
-
-async updatePaymentSettings(
-  id: string,
-  data: {
-    allowCod?: boolean;
-    allowOnlinePayment?: boolean;
-  }
-): Promise<void> {
-  const { error } =
-    await this.db
-      .from("products")
-      .update({
-        ...(data.allowCod !== undefined && {
-          allow_cod: data.allowCod,
-        }),
-
-        ...(data.allowOnlinePayment !== undefined && {
-          allow_online_payment:
-            data.allowOnlinePayment,
-        }),
-      })
-      .eq("id", id);
-
-  if (error) throw error;
-}
-
-async search(query: string) {
-  const { data, error } = await this.db.rpc(
-    "search_products",
-    {
-      search_query: query,
+      throw error;
     }
-  );
 
-  if (error) {
-    throw error;
+    if (!data) return null;
+
+    return {
+      ...data,
+
+      allowCod:
+        data.allow_cod,
+
+      allowOnlinePayment:
+        data.allow_online_payment,
+
+      categoryId:
+        data.category_id,
+
+      brandId:
+        data.brand_id,
+
+      isActive:
+        data.is_active,
+
+      createdAt:
+        data.created_at,
+
+      updatedAt:
+        data.updated_at,
+
+      colors: (
+        data.colors ?? []
+      ).map(
+        (color: any) => ({
+          ...color,
+
+          productId:
+            color.product_id,
+
+          hexCode:
+            color.hex_code,
+
+          images: (
+            color.images ?? []
+          ).map(
+            (image: any) => ({
+              ...image,
+
+              productColorId:
+                image.product_color_id,
+
+              imageUrl:
+                image.image_url,
+
+              sortOrder:
+                image.sort_order,
+            })
+          ),
+
+          variants: (
+            color.variants ?? []
+          ).map(
+            (variant: any) => ({
+              ...variant,
+
+              productColorId:
+                variant.product_color_id,
+
+              optionName:
+                variant.option_name,
+
+              optionValue:
+                variant.option_value,
+
+              isActive:
+                variant.is_active,
+
+              price: Number(
+                variant.price
+              ),
+
+              stock:
+                variant.stock,
+            })
+          ),
+        })
+      ),
+    };
   }
 
-  return (data ?? []).map((product: any) => ({
-    ...product,
+  async updatePaymentSettings(
+    id: string,
+    data: {
+      allowCod?: boolean;
+      allowOnlinePayment?: boolean;
+    }
+  ): Promise<void> {
+    const { error } =
+      await this.db
+        .from("products")
+        .update({
+          ...(data.allowCod !==
+            undefined && {
+            allow_cod:
+              data.allowCod,
+          }),
 
-    categoryId: product.category_id,
-    brandId: product.brand_id,
+          ...(data.allowOnlinePayment !==
+            undefined && {
+            allow_online_payment:
+              data.allowOnlinePayment,
+          }),
+        })
+        .eq("id", id);
 
-    isActive: product.is_active,
-    allowCod: product.allow_cod,
-    allowOnlinePayment:
-      product.allow_online_payment,
+    if (error) throw error;
+  }
 
-    createdAt: product.created_at,
-    updatedAt: product.updated_at,
+  async search(query: string) {
+    const { data, error } =
+      await this.db.rpc(
+        "search_products",
+        {
+          search_query: query,
+        }
+      );
 
-    rating: {
-      averageRating: Number(product.rating ?? 0),
-      reviewCount: Number(product.review_count ?? 0),
-    },
-  }));
-}
+    if (error) {
+      throw error;
+    }
+
+    return (data ?? []).map(
+      (product: any) => ({
+        ...product,
+
+        categoryId:
+          product.category_id,
+
+        brandId:
+          product.brand_id,
+
+        isActive:
+          product.is_active,
+
+        allowCod:
+          product.allow_cod,
+
+        allowOnlinePayment:
+          product.allow_online_payment,
+
+        createdAt:
+          product.created_at,
+
+        updatedAt:
+          product.updated_at,
+
+        rating: {
+          averageRating: Number(
+            product.rating ?? 0
+          ),
+
+          reviewCount: Number(
+            product.review_count ?? 0
+          ),
+        },
+      })
+    );
+  }
 
   async updateStatus(
-  id: string,
-  isActive: boolean
-): Promise<void> {
-  const { error } = await this.db
-    .from("products")
-    .update({
-      is_active: isActive,
-    })
-    .eq("id", id);
+    id: string,
+    isActive: boolean
+  ): Promise<void> {
+    const { error } =
+      await this.db
+        .from("products")
+        .update({
+          is_active:
+            isActive,
+        })
+        .eq("id", id);
 
-  if (error) {
-    throw error;
+    if (error) {
+      throw error;
+    }
   }
-}
 
-private async getProductRating(
-  productId: string,
-) {
-  const {
-    data,
-    error,
-  } = await this.db
-    .from("reviews")
-    .select("rating")
-    .eq("product_id", productId)
-    .eq("status", "APPROVED");
+  private async getProductRating(
+    productId: string
+  ) {
+    const {
+      data,
+      error,
+    } = await this.db
+      .from("reviews")
+      .select("rating")
+      .eq("product_id", productId)
+      .eq("status", "APPROVED");
 
-  if (error) throw error;
+    if (error) throw error;
 
-  if (!data || data.length === 0) {
+    if (!data || data.length === 0) {
+      return {
+        averageRating: 0,
+        reviewCount: 0,
+      };
+    }
+
+    const total = data.reduce(
+      (sum, review) =>
+        sum + Number(review.rating),
+      0
+    );
+
     return {
-      averageRating: 0,
-      reviewCount: 0,
+      averageRating: Number(
+        (
+          total / data.length
+        ).toFixed(1)
+      ),
+
+      reviewCount:
+        data.length,
     };
   }
-
-  const total = data.reduce(
-    (sum, review) =>
-      sum + Number(review.rating),
-    0,
-  );
-
-  return {
-    averageRating: Number(
-      (total / data.length).toFixed(1),
-    ),
-
-    reviewCount: data.length,
-  };
-}
 }
