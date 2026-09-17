@@ -26,9 +26,11 @@ export default function SearchProductList({ products }: Props) {
     <div className="space-y-3 select-none antialiased">
       {items.map((item) => {
         const inStock = (item.variant?.stock ?? 0) > 0;
-        const availableSizes = (item.color.variants || []).map(
-          (v) => v.optionValue
-        );
+          const availableSizes = [
+            ...new Set(
+              (item.color.variants || []).map((v) => v.optionValue)
+            ),
+          ];
 
         return (
           <Link

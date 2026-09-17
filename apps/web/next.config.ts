@@ -10,7 +10,7 @@ const nextConfig: NextConfig = {
   ],
 
   images: {
-    qualities: [75, 80],
+    qualities: [70, 75, 80, 100],
 
     deviceSizes: [640, 750, 828, 1080, 1200],
 

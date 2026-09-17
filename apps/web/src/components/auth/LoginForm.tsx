@@ -7,14 +7,13 @@ import {
 } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-// import { FcGoogle } from "react-icons/fc"; // TEMPORARILY DISABLED
 import { toast } from "sonner";
 
 import Logo from "@/components/layout/header/Logo";
 import { useTranslation } from "@/components/providers/LanguageProvider";
 
 import { login } from "@/lib/auth/login";
-// import { signInWithGoogle } from "@/lib/auth/google"; // TEMPORARILY DISABLED
+
 
 import {
   loginSchema,
@@ -50,38 +49,39 @@ export default function LoginForm() {
   const onSubmit = async (
     data: LoginFormData
   ) => {
-    const { error } = await login({
-      email: data.email,
-      password: data.password,
-    });
+const { data: loginData, error } = await login({
+  email: data.email,
+  password: data.password,
+});
 
-    if (error) {
-      toast.error(error.message);
-      return;
-    }
+if (error) {
+  toast.error(error.message);
+  return;
+}
 
-    toast.success(
-      dictionary.auth.welcomeBackToast
-    );
+const user = loginData.user;
 
-    router.replace(redirectTo);
+if (user?.email) {
+  await fetch("/api/email/login", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      email: user.email,
+      name:
+        user.user_metadata?.full_name ||
+        user.user_metadata?.name ||
+        user.email.split("@")[0],
+    }),
+  });
+}
 
-    router.refresh();
+toast.success(dictionary.auth.welcomeBackToast);
+router.replace(redirectTo);
+router.refresh();
   };
 
-  /* TEMPORARILY DISABLED: Google Login Handler
-  const handleGoogleLogin =
-    async () => {
-      const { error } =
-        await signInWithGoogle(
-          redirectTo
-        );
-
-      if (error) {
-        toast.error(error.message);
-      }
-    };
-  */
 
   return (
     <div className="p-8 sm:p-10">
@@ -105,28 +105,7 @@ export default function LoginForm() {
         </p>
       </div>
 
-      {/* TEMPORARILY DISABLED: Google Sign-In & Divider */}
-      {/* 
-      <button
-        type="button"
-        onClick={handleGoogleLogin}
-        className="flex w-full cursor-pointer items-center justify-center gap-3 rounded-xl border border-muted bg-background py-3 text-sm font-semibold shadow-sm transition-all duration-200 hover:border-muted-foreground/20 hover:bg-muted/50 active:scale-[0.99]"
-      >
-        <FcGoogle size={20} />
-
-        {dictionary.auth.continueWithGoogle}
-      </button>
-
-      <div className="my-6 flex items-center gap-3">
-        <div className="h-px flex-1 bg-muted/60" />
-
-        <span className="text-xs font-bold tracking-widest text-muted-foreground/60">
-          {dictionary.auth.or}
-        </span>
-
-        <div className="h-px flex-1 bg-muted/60" />
-      </div>
-      */}
+  
 
       <form
         onSubmit={handleSubmit(

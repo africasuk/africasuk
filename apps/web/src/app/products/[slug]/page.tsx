@@ -1,5 +1,8 @@
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
+
+export const dynamic = "force-dynamic";
+
 import { ProductJsonLd } from "@/components/seo/ProductJsonLd";
 
 import {
@@ -13,6 +16,7 @@ import {
   ProductQueryService,
   ReviewService,
 } from "@africasuk/api";
+
 import {
   createServerSupabaseClient,
 } from "@/lib/supabase/server";
@@ -41,7 +45,6 @@ export async function generateMetadata({
     };
   }
 
-
   const title = `${product.name} | AfricaSuk`;
 
   const description =
@@ -50,10 +53,11 @@ export async function generateMetadata({
 
   const url = `https://africasuk.com/products/${product.slug}`;
 
-  return {
-    
-    title,
+  const imageUrl =
+    `https://africasuk.com/products/${product.slug}/opengraph-image`;
 
+  return {
+    title,
     description,
 
     keywords: [
@@ -74,9 +78,10 @@ export async function generateMetadata({
       description,
       url,
       type: "website",
+
       images: [
         {
-          url: `https://africasuk.com/products/${product.slug}/opengraph-image`,
+          url: imageUrl,
           width: 1200,
           height: 630,
           alt: product.name,
@@ -84,16 +89,16 @@ export async function generateMetadata({
       ],
     },
 
-twitter: {
-  card: "summary_large_image",
-  title,
-  description,
-  images: [
-    `https://africasuk.com/products/${product.slug}/opengraph-image`,
-  ],
-},
+    twitter: {
+      card: "summary_large_image",
+      title,
+      description,
+
+      images: [imageUrl],
+    },
   };
 }
+
 export default async function ProductDetailsPage({
   params,
   searchParams,
@@ -101,36 +106,41 @@ export default async function ProductDetailsPage({
   params: Promise<{ slug: string }>;
   searchParams: Promise<{ color?: string }>;
 }) {
+  const { slug } = await params;
+  const { color } = await searchParams;
 
-const { slug } = await params;
-const { color } = await searchParams;
+  const db = await createServerSupabaseClient();
 
-const db = await createServerSupabaseClient();
+  const repository = new ProductRepository(db);
 
-const repository = new ProductRepository(db);
+  const service = new ProductQueryService(repository);
 
-const service = new ProductQueryService(repository);
+  const product = await service.getBySlug(slug);
 
-const product = await service.getBySlug(slug);
+  if (!product) {
+    notFound();
+  }
 
-if (!product) {
-  notFound();
-}
+  const reviewService = new ReviewService(
+    new ReviewRepository(db),
+    new OrderRepository(db),
+    new OrderItemRepository(db)
+  );
 
-const reviewService = new ReviewService(
-  new ReviewRepository(db),
-  new OrderRepository(db),
-  new OrderItemRepository(db),
-);
+  const reviews =
+    await reviewService.getProductReviews(
+      product.id
+    );
 
-const reviews = await reviewService.getProductReviews(
-  product.id,
-);
+  const rating =
+    await reviewService.getProductRating(
+      product.id
+    );
 
-const rating = await reviewService.getProductRating(
-  product.id,
-);
-const allProducts = (await repository.getAll()) ?? [];
+const allProducts =
+  (await repository.getAll({
+    random: true,
+  })) ?? [];
 
 const relatedProducts = allProducts
   .filter(
@@ -140,21 +150,21 @@ const relatedProducts = allProducts
   )
   .slice(0, 10);
 
-return (
-  <Layout>
-    <ProductJsonLd
-      product={product}
-      reviews={reviews}
-      rating={rating}
-    />
+  return (
+    <Layout>
+      <ProductJsonLd
+        product={product}
+        reviews={reviews}
+        rating={rating}
+      />
 
-    <ProductDetails
-      product={product}
-      selectedColorId={color}
-      relatedProducts={relatedProducts}
-      reviews={reviews}
-      rating={rating}
-    />
-  </Layout>
-);
+      <ProductDetails
+        product={product}
+        selectedColorId={color}
+        relatedProducts={relatedProducts}
+        reviews={reviews}
+        rating={rating}
+      />
+    </Layout>
+  );
 }

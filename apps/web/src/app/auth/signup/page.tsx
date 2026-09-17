@@ -4,21 +4,21 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-// import { FcGoogle } from "react-icons/fc"; // TEMPORARILY DISABLED
 import { toast } from "sonner";
 
 import Logo from "@/components/layout/header/Logo";
-import { useTranslation } from "@/components/providers/LanguageProvider"; // Translation Hook Import
+import { useTranslation } from "@/components/providers/LanguageProvider";
+
 import {
   signupSchema,
   type SignupFormData,
 } from "@/validation/signup.schema";
+
 import { signUp } from "@/lib/auth/signup";
-// import { signInWithGoogle } from "@/lib/auth/google"; // TEMPORARILY DISABLED
 
 export default function SignupPage() {
   const router = useRouter();
-  const { dictionary } = useTranslation(); // Destructuring Dictionary Definitions
+  const { dictionary } = useTranslation();
 
   const {
     register,
@@ -32,7 +32,7 @@ export default function SignupPage() {
   const onSubmit = async (data: SignupFormData) => {
     const { error } = await signUp({
       fullName: data.fullName,
-      email: data.email,
+      email: data.email.trim().toLowerCase(),
       password: data.password,
     });
 
@@ -41,60 +41,54 @@ export default function SignupPage() {
       return;
     }
 
+    // Welcome email
+    try {
+      await fetch("/api/email/signup", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          email: data.email.trim().toLowerCase(),
+          name: data.fullName,
+        }),
+      });
+    } catch (error) {
+      console.error("Welcome email error:", error);
+    }
+
     toast.success(dictionary.auth.welcomeToAfricaSuk);
+
     reset();
+
     router.refresh();
     router.push("/");
   };
 
-  /* TEMPORARILY DISABLED: Google Signup Handler
-  const handleGoogleSignup = async () => {
-    const { error } = await signInWithGoogle();
-    if (error) {
-      toast.error(error.message);
-    }
-  };
-  */
-
   return (
     <main className="flex min-h-screen items-center justify-center bg-muted/30 p-6 antialiased selection:bg-[#004d26]/10">
-      <div className="w-full max-w-md rounded-2xl border border-muted bg-background p-8 sm:p-10 shadow-xl shadow-green-950/2">
+      <div className="w-full max-w-md rounded-2xl border border-muted bg-background p-8 shadow-xl shadow-green-950/2 sm:p-10">
 
-        {/* Brand Header Stack */}
+        {/* Brand Header */}
         <div className="mb-8 flex flex-col items-center text-center sm:items-start sm:text-left">
-          <div className="mb-5 transform scale-105 select-none">
+          <div className="mb-5 scale-105 transform select-none">
             <Logo />
           </div>
+
           <h1 className="text-3xl font-black tracking-tight text-foreground">
             {dictionary.auth.signupTitle}
           </h1>
+
           <p className="mt-2 text-sm text-muted-foreground">
             {dictionary.auth.signupSubtitle}
           </p>
         </div>
 
-        {/* TEMPORARILY DISABLED: Google Signup Provider & Separator */}
-        {/* 
-        <button
-          type="button"
-          onClick={handleGoogleSignup}
-          className="flex w-full items-center justify-center gap-3 rounded-xl border border-muted bg-background py-3 text-sm font-semibold shadow-sm transition-all duration-200 hover:bg-muted/50 hover:border-muted-foreground/20 active:scale-[0.99] cursor-pointer"
+        {/* Signup Form */}
+        <form
+          onSubmit={handleSubmit(onSubmit)}
+          className="space-y-4"
         >
-          <FcGoogle size={20} />
-          {dictionary.auth.continueWithGoogle}
-        </button>
-
-        <div className="my-6 flex items-center gap-3">
-          <div className="h-px flex-1 bg-muted/60" />
-          <span className="text-xs font-bold tracking-widest text-muted-foreground/60">
-            {dictionary.auth.or}
-          </span>
-          <div className="h-px flex-1 bg-muted/60" />
-        </div>
-        */}
-
-        {/* Signup Core Form Inputs */}
-        <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
           {/* Full Name */}
           <div>
             <input
@@ -102,6 +96,7 @@ export default function SignupPage() {
               placeholder={dictionary.auth.fullName}
               className="w-full rounded-xl border border-muted bg-background p-3 text-sm outline-none shadow-sm transition-all duration-200 focus:border-[#004d26] focus:ring-1 focus:ring-[#004d26] placeholder:text-muted-foreground/60"
             />
+
             {errors.fullName && (
               <p className="mt-1.5 text-xs font-medium text-destructive">
                 {errors.fullName.message}
@@ -109,7 +104,7 @@ export default function SignupPage() {
             )}
           </div>
 
-          {/* Email Address */}
+          {/* Email */}
           <div>
             <input
               {...register("email")}
@@ -117,11 +112,20 @@ export default function SignupPage() {
               placeholder={dictionary.auth.emailAddress}
               className="w-full rounded-xl border border-muted bg-background p-3 text-sm outline-none shadow-sm transition-all duration-200 focus:border-[#004d26] focus:ring-1 focus:ring-[#004d26] placeholder:text-muted-foreground/60"
             />
+
             {errors.email && (
               <p className="mt-1.5 text-xs font-medium text-destructive">
                 {errors.email.message}
               </p>
             )}
+
+            {/* Working Email Notice */}
+            <div className="mt-2 rounded-xl border border-[#004d26]/10 bg-[#004d26]/5 px-3 py-2.5">
+              <p className="text-xs leading-5 text-muted-foreground">
+                Please use a working email address. We’ll use it to send
+                important account, order, payment, and other AfricaSuk updates.
+              </p>
+            </div>
           </div>
 
           {/* Password */}
@@ -132,6 +136,7 @@ export default function SignupPage() {
               placeholder={dictionary.auth.password}
               className="w-full rounded-xl border border-muted bg-background p-3 text-sm outline-none shadow-sm transition-all duration-200 focus:border-[#004d26] focus:ring-1 focus:ring-[#004d26] placeholder:text-muted-foreground/60"
             />
+
             {errors.password && (
               <p className="mt-1.5 text-xs font-medium text-destructive">
                 {errors.password.message}
@@ -147,6 +152,7 @@ export default function SignupPage() {
               placeholder={dictionary.auth.confirmPassword}
               className="w-full rounded-xl border border-muted bg-background p-3 text-sm outline-none shadow-sm transition-all duration-200 focus:border-[#004d26] focus:ring-1 focus:ring-[#004d26] placeholder:text-muted-foreground/60"
             />
+
             {errors.confirmPassword && (
               <p className="mt-1.5 text-xs font-medium text-destructive">
                 {errors.confirmPassword.message}
@@ -154,27 +160,65 @@ export default function SignupPage() {
             )}
           </div>
 
-          {/* Core Submit Call Action */}
+          {/* Terms & Privacy */}
+          <div className="pt-1">
+            <label className="flex cursor-pointer items-start gap-3">
+              <input
+                type="checkbox"
+                {...register("acceptTerms")}
+                className="mt-1 h-4 w-4 shrink-0 cursor-pointer accent-[#004d26]"
+              />
+
+              <span className="text-xs leading-5 text-muted-foreground">
+                I agree to the{" "}
+                <Link
+                  href="/terms"
+                  target="_blank"
+                  className="font-semibold text-[#004d26] hover:underline"
+                >
+                  Terms & Conditions
+                </Link>{" "}
+                and{" "}
+                <Link
+                  href="/privacy"
+                  target="_blank"
+                  className="font-semibold text-[#004d26] hover:underline"
+                >
+                  Privacy Policy
+                </Link>
+                .
+              </span>
+            </label>
+
+            {errors.acceptTerms && (
+              <p className="mt-1.5 text-xs font-medium text-destructive">
+                {errors.acceptTerms.message}
+              </p>
+            )}
+          </div>
+
+          {/* Create Account */}
           <button
             type="submit"
             disabled={isSubmitting}
-            className="w-full rounded-xl bg-[#004d26] py-3 text-sm font-bold tracking-wide text-white shadow-md shadow-green-950/5 transition-all duration-200 hover:bg-[#003b1d] active:scale-[0.99] disabled:opacity-50 disabled:pointer-events-none cursor-pointer mt-2"
+            className="mt-2 w-full cursor-pointer rounded-xl bg-[#004d26] py-3 text-sm font-bold tracking-wide text-white shadow-md shadow-green-950/5 transition-all duration-200 hover:bg-[#003b1d] active:scale-[0.99] disabled:pointer-events-none disabled:opacity-50"
           >
-            {isSubmitting ? dictionary.auth.creatingAccount : dictionary.auth.createAccount}
+            {isSubmitting
+              ? dictionary.auth.creatingAccount
+              : dictionary.auth.createAccount}
           </button>
         </form>
 
-        {/* Context Switching Footnote */}
+        {/* Login */}
         <div className="mt-6 text-center text-sm text-muted-foreground">
           {dictionary.auth.alreadyHaveAccount}{" "}
           <Link
             href="/auth/login"
-            className="font-bold text-[#004d26] hover:underline hover:text-[#003b1d] transition-colors"
+            className="font-bold text-[#004d26] transition-colors hover:text-[#003b1d] hover:underline"
           >
             {dictionary.auth.login}
           </Link>
         </div>
-
       </div>
     </main>
   );
