@@ -112,18 +112,6 @@ export default function FeaturedProducts({
             )
           )}
         </div>
-
-                <div className="mt-8 sm:mt-10 grid grid-cols-2 gap-3 sm:gap-5 sm:grid-cols-[repeat(auto-fit,minmax(200px,1fr))] lg:gap-6">
-          {displayedProducts.map(
-            (product) => (
-              <ProductCard
-                key={product.id}
-                product={product}
-              />
-            )
-          )}
-        </div>
-
       <div className="mt-10 flex justify-center">
         <Link
           href="/products"
