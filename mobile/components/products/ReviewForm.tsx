@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   View,
   Text,
@@ -8,6 +8,11 @@ import {
   ActivityIndicator,
   useWindowDimensions,
 } from "react-native";
+import {
+  createReview,
+  getUserReviewForOrderItem,
+} from "@/lib/api/reviews";
+import type { Review } from "@africasuk/types";
 
 interface ReviewFormProps {
   productId: string;
@@ -17,9 +22,6 @@ interface ReviewFormProps {
   onSuccess?: () => void;
 }
 
-const BRAND = "#005c2e";
-const BRAND_DARK = "#002b15";
-
 export function ReviewForm({
   productId,
   orderId,
@@ -28,49 +30,93 @@ export function ReviewForm({
   onSuccess,
 }: ReviewFormProps) {
   const { width } = useWindowDimensions();
-
-  // Responsive break points
   const isTablet = width >= 600;
 
   const [rating, setRating] = useState(5);
   const [title, setTitle] = useState("");
   const [comment, setComment] = useState("");
+
   const [loading, setLoading] = useState(false);
+  const [checkingReview, setCheckingReview] = useState(true);
+
   const [error, setError] = useState("");
-  const [success, setSuccess] = useState(false);
+  const [existingReview, setExistingReview] =
+    useState<Review | null>(null);
+
+  const ratingLabel =
+    rating === 5
+      ? "Excellent"
+      : rating === 4
+        ? "Good"
+        : rating === 3
+          ? "Average"
+          : rating === 2
+            ? "Poor"
+            : "Terrible";
+
+  /*
+   * Check if the current user has already reviewed
+   * this specific order item.
+   */
+  useEffect(() => {
+    let mounted = true;
+
+    async function checkExistingReview() {
+      setCheckingReview(true);
+      setError("");
+
+      try {
+        const review =
+          await getUserReviewForOrderItem(orderItemId);
+
+        if (mounted) {
+          setExistingReview(review);
+        }
+      } catch (err) {
+        if (mounted) {
+          setError(
+            err instanceof Error
+              ? err.message
+              : "Unable to check your review."
+          );
+        }
+      } finally {
+        if (mounted) {
+          setCheckingReview(false);
+        }
+      }
+    }
+
+    checkExistingReview();
+
+    return () => {
+      mounted = false;
+    };
+  }, [orderItemId]);
 
   async function handleSubmit() {
     if (loading) return;
 
     setLoading(true);
     setError("");
-    setSuccess(false);
 
     try {
-      const baseUrl = process.env.EXPO_PUBLIC_API_URL || "https://africasuk.com";
-      const response = await fetch(`${baseUrl}/api/reviews`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          productId,
-          orderId,
-          orderItemId,
-          variantId,
-          rating,
-          title: title.trim() || null,
-          comment: comment.trim() || null,
-        }),
+      const result = await createReview({
+        productId,
+        orderId,
+        orderItemId,
+        variantId,
+        rating,
+        title: title.trim() || null,
+        comment: comment.trim() || null,
       });
 
-      const data = await response.json();
+      /*
+       * Immediately replace the form with
+       * the newly submitted review.
+       */
+      setExistingReview(result.review);
 
-      if (!response.ok) {
-        throw new Error(data.error || "Failed to submit review.");
-      }
-
-      setSuccess(true);
       setTitle("");
       setComment("");
       setRating(5);
@@ -78,65 +124,255 @@ export function ReviewForm({
       onSuccess?.();
     } catch (err) {
       setError(
-        err instanceof Error ? err.message : "Failed to submit review."
+        err instanceof Error
+          ? err.message
+          : "Failed to submit review."
       );
     } finally {
       setLoading(false);
     }
   }
 
+  /*
+   * Loading state while checking whether
+   * the user already reviewed this item.
+   */
+  if (checkingReview) {
+    return (
+      <View
+        style={[
+          styles.container,
+          styles.loadingContainer,
+          {
+            padding: isTablet ? 24 : 16,
+          },
+        ]}
+      >
+        <ActivityIndicator
+          size="small"
+          color="#111827"
+        />
+
+        <Text style={styles.checkingText}>
+          Checking your review...
+        </Text>
+      </View>
+    );
+  }
+
+  /*
+   * Existing review display.
+   * No input fields and no edit button.
+   */
+  if (existingReview) {
+    return (
+      <View
+        style={[
+          styles.container,
+          {
+            padding: isTablet ? 24 : 16,
+          },
+        ]}
+      >
+        {/* Header */}
+        <View style={styles.header}>
+          <View style={styles.headerText}>
+            <Text style={styles.heading}>
+              Your Review
+            </Text>
+
+            <Text style={styles.subheading}>
+              You have already reviewed this product
+            </Text>
+          </View>
+
+          <View style={styles.verifiedBadge}>
+            <Text style={styles.verified}>
+              Verified Purchase
+            </Text>
+          </View>
+        </View>
+
+        {/* Rating */}
+        <View style={styles.section}>
+          <Text style={styles.label}>
+            YOUR RATING
+          </Text>
+
+          <View style={styles.ratingRow}>
+            <View style={styles.stars}>
+              {[1, 2, 3, 4, 5].map((value) => (
+                <Text
+                  key={value}
+                  style={[
+                    styles.star,
+                    styles.existingStar,
+                    value <= existingReview.rating &&
+                      styles.activeStar,
+                    {
+                      fontSize: isTablet ? 32 : 28,
+                    },
+                  ]}
+                >
+                  ★
+                </Text>
+              ))}
+            </View>
+
+            <Text style={styles.ratingLabel}>
+              {existingReview.rating === 5
+                ? "Excellent"
+                : existingReview.rating === 4
+                  ? "Good"
+                  : existingReview.rating === 3
+                    ? "Average"
+                    : existingReview.rating === 2
+                      ? "Poor"
+                      : "Terrible"}
+            </Text>
+          </View>
+        </View>
+
+        {/* Title */}
+        {existingReview.title ? (
+          <View style={styles.section}>
+            <Text style={styles.label}>
+              HEADLINE
+            </Text>
+
+            <Text style={styles.reviewTitle}>
+              {existingReview.title}
+            </Text>
+          </View>
+        ) : null}
+
+        {/* Comment */}
+        {existingReview.comment ? (
+          <View style={styles.section}>
+            <Text style={styles.label}>
+              DETAILED REVIEW
+            </Text>
+
+            <Text style={styles.reviewComment}>
+              {existingReview.comment}
+            </Text>
+          </View>
+        ) : null}
+
+        {/* Verified */}
+        <View style={styles.reviewFooter}>
+          <Text style={styles.verifiedCheck}>
+            ✓ Verified Purchase
+          </Text>
+        </View>
+      </View>
+    );
+  }
+
+  /*
+   * Review form.
+   */
   return (
-    <View style={[styles.container, { padding: isTablet ? 24 : 16 }]}>
+    <View
+      style={[
+        styles.container,
+        {
+          padding: isTablet ? 24 : 16,
+        },
+      ]}
+    >
       {/* Header */}
       <View style={styles.header}>
-        <Text style={styles.heading}>WRITE A REVIEW</Text>
-        <Text style={styles.verified}>Verified Purchase</Text>
-      </View>
+        <View style={styles.headerText}>
+          <Text style={styles.heading}>
+            Write a Review
+          </Text>
 
-      {/* Star Rating Section */}
-      <View style={styles.section}>
-        <Text style={styles.label}>YOUR RATING</Text>
+          <Text style={styles.subheading}>
+            Share your feedback with future shoppers
+          </Text>
+        </View>
 
-        <View style={styles.stars}>
-          {[1, 2, 3, 4, 5].map((value) => (
-            <Pressable
-              key={value}
-              onPress={() => setRating(value)}
-              hitSlop={{ top: 8, bottom: 8, left: 4, right: 4 }}
-            >
-              <Text
-                style={[
-                  styles.star,
-                  { fontSize: isTablet ? 32 : 28 },
-                  value <= rating && styles.activeStar,
-                ]}
-              >
-                ★
-              </Text>
-            </Pressable>
-          ))}
+        <View style={styles.verifiedBadge}>
+          <Text style={styles.verified}>
+            Verified Purchase
+          </Text>
         </View>
       </View>
 
-      {/* Title Input */}
+      {/* Rating */}
       <View style={styles.section}>
-        <Text style={styles.label}>TITLE</Text>
+        <Text style={styles.label}>
+          OVERALL RATING
+        </Text>
+
+        <View style={styles.ratingRow}>
+          <View style={styles.stars}>
+            {[1, 2, 3, 4, 5].map((value) => (
+              <Pressable
+                key={value}
+                onPress={() => setRating(value)}
+                disabled={loading}
+                hitSlop={{
+                  top: 8,
+                  bottom: 8,
+                  left: 4,
+                  right: 4,
+                }}
+                style={({ pressed }) => [
+                  styles.starButton,
+                  pressed && styles.starPressed,
+                ]}
+              >
+                <Text
+                  style={[
+                    styles.star,
+                    value <= rating &&
+                      styles.activeStar,
+                    {
+                      fontSize: isTablet ? 32 : 28,
+                    },
+                  ]}
+                >
+                  ★
+                </Text>
+              </Pressable>
+            ))}
+          </View>
+
+          <Text style={styles.ratingLabel}>
+            {ratingLabel}
+          </Text>
+        </View>
+      </View>
+
+      {/* Title */}
+      <View style={styles.section}>
+        <Text style={styles.label}>
+          HEADLINE
+        </Text>
 
         <TextInput
           value={title}
           onChangeText={setTitle}
           maxLength={100}
-          placeholder="How was the product?"
+          placeholder="What's the most important thing to know?"
           placeholderTextColor="#9ca3af"
           style={styles.input}
+          editable={!loading}
         />
       </View>
 
-      {/* Review Comment Input & Counter */}
+      {/* Comment */}
       <View style={styles.section}>
         <View style={styles.reviewHeader}>
-          <Text style={styles.label}>REVIEW</Text>
-          <Text style={styles.counter}>{comment.length}/1000</Text>
+          <Text style={styles.label}>
+            DETAILED REVIEW
+          </Text>
+
+          <Text style={styles.counter}>
+            {comment.length}/1000
+          </Text>
         </View>
 
         <TextInput
@@ -146,32 +382,34 @@ export function ReviewForm({
           multiline
           numberOfLines={5}
           textAlignVertical="top"
-          placeholder="Tell us about your experience..."
+          placeholder="What did you like or dislike? How was the fit, material, or quality?"
           placeholderTextColor="#9ca3af"
-          style={[styles.input, styles.textarea]}
+          style={[
+            styles.input,
+            styles.textarea,
+          ]}
+          editable={!loading}
         />
       </View>
 
-      {/* Feedback Messages */}
+      {/* Error */}
       {error ? (
         <View style={styles.errorBox}>
-          <Text style={styles.errorText}>{error}</Text>
-        </View>
-      ) : null}
-
-      {success ? (
-        <View style={styles.successBox}>
-          <Text style={styles.successText}>
-            Review submitted successfully. It will appear after approval.
+          <Text style={styles.errorText}>
+            {error}
           </Text>
         </View>
       ) : null}
 
-      {/* Submit Button Row */}
+      {/* Submit */}
       <View
         style={[
           styles.buttonRow,
-          { justifyContent: isTablet ? "flex-end" : "flex-start" },
+          {
+            justifyContent: isTablet
+              ? "flex-end"
+              : "flex-start",
+          },
         ]}
       >
         <Pressable
@@ -179,15 +417,27 @@ export function ReviewForm({
           disabled={loading}
           style={({ pressed }) => [
             styles.submitButton,
-            isTablet && styles.tabletSubmitButton,
+            isTablet &&
+              styles.tabletSubmitButton,
             pressed && styles.pressed,
             loading && styles.disabled,
           ]}
         >
           {loading ? (
-            <ActivityIndicator color="#ffffff" size="small" />
+            <View style={styles.loadingContent}>
+              <ActivityIndicator
+                color="#ffffff"
+                size="small"
+              />
+
+              <Text style={styles.submitText}>
+                Submitting...
+              </Text>
+            </View>
           ) : (
-            <Text style={styles.submitText}>SUBMIT REVIEW</Text>
+            <Text style={styles.submitText}>
+              Submit Review
+            </Text>
           )}
         </Pressable>
       </View>
@@ -202,65 +452,122 @@ const styles = StyleSheet.create({
     backgroundColor: "#ffffff",
     borderWidth: 1,
     borderColor: "#e5e7eb",
-    borderRadius: 0,
+    borderRadius: 16,
     gap: 16,
+  },
+
+  loadingContainer: {
+    minHeight: 90,
+    alignItems: "center",
+    justifyContent: "center",
+    flexDirection: "row",
+  },
+
+  checkingText: {
+    marginLeft: 8,
+    fontSize: 12,
+    color: "#6b7280",
   },
 
   header: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
-    paddingBottom: 12,
+    paddingBottom: 16,
     borderBottomWidth: 1,
     borderBottomColor: "#f3f4f6",
   },
 
-  heading: {
-    fontSize: 13,
-    fontWeight: "500",
-    color: BRAND_DARK,
-    letterSpacing: 0.5,
+  headerText: {
+    flex: 1,
   },
 
-  verified: {
+  heading: {
+    fontSize: 15,
+    fontWeight: "700",
+    color: "#111827",
+    letterSpacing: -0.2,
+  },
+
+  subheading: {
+    marginTop: 3,
     fontSize: 11,
     fontWeight: "400",
     color: "#6b7280",
   },
 
+  verifiedBadge: {
+    marginLeft: 12,
+    paddingHorizontal: 9,
+    paddingVertical: 5,
+    borderRadius: 7,
+    borderWidth: 1,
+    borderColor: "#e5e7eb",
+    backgroundColor: "#f9fafb",
+  },
+
+  verified: {
+    fontSize: 10,
+    fontWeight: "500",
+    color: "#6b7280",
+  },
+
   section: {
-    gap: 6,
+    gap: 7,
   },
 
   label: {
     fontSize: 11,
-    fontWeight: "500",
-    color: "#6b7280",
-    letterSpacing: 0.8,
+    fontWeight: "600",
+    color: "#374151",
+    letterSpacing: 0.5,
+  },
+
+  ratingRow: {
+    flexDirection: "row",
+    alignItems: "center",
   },
 
   stars: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 8,
-    paddingVertical: 2,
+    gap: 4,
+  },
+
+  starButton: {
+    padding: 2,
+  },
+
+  starPressed: {
+    transform: [{ scale: 0.95 }],
   },
 
   star: {
-    color: "#e5e7eb",
+    color: "#d1d5db",
+  },
+
+  existingStar: {
+    paddingHorizontal: 2,
   },
 
   activeStar: {
     color: "#f59e0b",
   },
 
+  ratingLabel: {
+    marginLeft: 10,
+    fontSize: 11,
+    fontWeight: "500",
+    color: "#6b7280",
+  },
+
   input: {
     borderWidth: 1,
     borderColor: "#e5e7eb",
-    backgroundColor: "#f9fafb",
-    borderRadius: 0,
-    paddingHorizontal: 12,
-    paddingVertical: 10,
+    backgroundColor: "#ffffff",
+    borderRadius: 10,
+    paddingHorizontal: 14,
+    paddingVertical: 11,
     fontSize: 13,
     fontWeight: "400",
     color: "#111827",
@@ -268,6 +575,7 @@ const styles = StyleSheet.create({
 
   textarea: {
     minHeight: 110,
+    paddingTop: 12,
   },
 
   reviewHeader: {
@@ -282,9 +590,36 @@ const styles = StyleSheet.create({
     color: "#9ca3af",
   },
 
+  reviewTitle: {
+    fontSize: 14,
+    fontWeight: "600",
+    color: "#111827",
+    lineHeight: 20,
+  },
+
+  reviewComment: {
+    fontSize: 13,
+    fontWeight: "400",
+    color: "#374151",
+    lineHeight: 20,
+  },
+
+  reviewFooter: {
+    paddingTop: 4,
+    borderTopWidth: 1,
+    borderTopColor: "#f3f4f6",
+  },
+
+  verifiedCheck: {
+    fontSize: 11,
+    fontWeight: "500",
+    color: "#047857",
+  },
+
   errorBox: {
-    padding: 12,
-    borderRadius: 0,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    borderRadius: 10,
     backgroundColor: "#fef2f2",
     borderWidth: 1,
     borderColor: "#fecaca",
@@ -294,20 +629,6 @@ const styles = StyleSheet.create({
     fontSize: 12,
     fontWeight: "400",
     color: "#b91c1c",
-  },
-
-  successBox: {
-    padding: 12,
-    borderRadius: 0,
-    backgroundColor: "#ecfdf5",
-    borderWidth: 1,
-    borderColor: "#a7f3d0",
-  },
-
-  successText: {
-    fontSize: 12,
-    fontWeight: "400",
-    color: "#047857",
   },
 
   buttonRow: {
@@ -321,8 +642,8 @@ const styles = StyleSheet.create({
     width: "100%",
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: BRAND,
-    borderRadius: 0,
+    backgroundColor: "#111827",
+    borderRadius: 10,
     paddingHorizontal: 24,
   },
 
@@ -331,11 +652,17 @@ const styles = StyleSheet.create({
     minWidth: 180,
   },
 
+  loadingContent: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+  },
+
   submitText: {
     color: "#ffffff",
     fontSize: 12,
-    fontWeight: "500",
-    letterSpacing: 0.5,
+    fontWeight: "600",
+    letterSpacing: 0.3,
   },
 
   pressed: {

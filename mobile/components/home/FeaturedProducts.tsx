@@ -18,20 +18,55 @@ export default function FeaturedProducts({ products = [] }: Props) {
   }, [products]);
 
   const featuredColorProducts = useMemo(() => {
-    return featured
-      .flatMap((product) =>
-        (product.colors ?? [])
-          .filter((color) => (color.variants?.length ?? 0) > 0)
-          .map((color) => ({
-            ...product,
-            id: `${product.id}-${color.id}`,
-            name: `${product.name} - ${color.name}`,
-            selectedColorId: color.id,
-            colors: [color],
-          }))
+  type ColorProduct = ProductWithDetails & {
+    selectedColorId?: string;
+  };
+
+  const groupedProducts = featured.map((product) => {
+    return (product.colors ?? [])
+      .filter(
+        (color) =>
+          color.variants &&
+          color.variants.length > 0
       )
-      .slice(0, 12);
-  }, [featured]);
+      .map((color) => ({
+        product,
+        color,
+      }));
+  });
+
+  const result: ColorProduct[] = [];
+
+  const maxColors = Math.max(
+    0,
+    ...groupedProducts.map((group) => group.length)
+  );
+
+  // Same logic as web:
+  // Product A - Color 1
+  // Product B - Color 1
+  // Product C - Color 1
+  // Product A - Color 2
+  // Product B - Color 2
+  // Product C - Color 2
+  for (let index = 0; index < maxColors; index++) {
+    for (const group of groupedProducts) {
+      const item = group[index];
+
+      if (!item) continue;
+
+      result.push({
+        ...item.product,
+        id: `${item.product.id}-${item.color.id}`,
+        name: `${item.product.name} - ${item.color.name}`,
+        selectedColorId: item.color.id,
+        colors: [item.color],
+      });
+    }
+  }
+
+  return result.slice(0, 12);
+}, [featured]);
 
   if (featuredColorProducts.length === 0) {
     return null;

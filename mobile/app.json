@@ -20,7 +20,6 @@
 
     "android": {
       "package": "com.africasuk.app",
-      "versionCode": 22,
       "adaptiveIcon": {
         "foregroundImage": "./assets/images/android-icon-foreground.png",
         "backgroundColor": "#FFFFFF",

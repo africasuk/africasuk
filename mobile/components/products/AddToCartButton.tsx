@@ -4,7 +4,6 @@ import { useRouter, Href } from "expo-router";
 import { ShoppingBag, ArrowRight } from "lucide-react-native";
 
 import { createClient } from "@/lib/auth/client";
-
 import { useCart } from "../../store/cart";
 import type { CartItem } from "../../types/cart";
 
@@ -38,7 +37,7 @@ export function AddToCartButton({ item }: Props) {
 
   return (
     <View style={styles.container}>
-      {/* Primary Clean Solid CTA */}
+      {/* Primary: Add to Cart */}
       <Pressable
         onPress={() => addItem(item)}
         disabled={isOutOfStock}
@@ -48,10 +47,11 @@ export function AddToCartButton({ item }: Props) {
           pressed && !isOutOfStock && styles.pressedState,
         ]}
       >
-        <ShoppingBag size={15} color="#ffffff" strokeWidth={1.8} />
-        <Text style={styles.primaryBtnText}>
+        <ShoppingBag size={14} color="#ffffff" strokeWidth={2} />
+        <Text style={styles.primaryBtnText} numberOfLines={1}>
           {isOutOfStock ? "Sold Out" : "Add to Cart"}
         </Text>
+
         {quantity > 0 && (
           <View style={styles.counterBadge}>
             <Text style={styles.counterBadgeText}>{quantity}</Text>
@@ -59,7 +59,7 @@ export function AddToCartButton({ item }: Props) {
         )}
       </Pressable>
 
-      {/* Secondary Neutral Pill */}
+      {/* Secondary: Buy Now */}
       <Pressable
         onPress={handleBuyNow}
         disabled={isOutOfStock}
@@ -69,8 +69,10 @@ export function AddToCartButton({ item }: Props) {
           pressed && !isOutOfStock && styles.pressedState,
         ]}
       >
-        <Text style={styles.secondaryBtnText}>Buy Now</Text>
-        <ArrowRight size={14} color="#18181b" strokeWidth={1.8} />
+        <Text style={styles.secondaryBtnText} numberOfLines={1}>
+          Buy Now
+        </Text>
+        <ArrowRight size={13} color="#111827" strokeWidth={2} />
       </Pressable>
     </View>
   );
@@ -85,68 +87,68 @@ const styles = StyleSheet.create({
   },
 
   primaryBtn: {
-    flex: 1.3,
-    height: 46,
-    backgroundColor: "#18181b",
-    borderRadius: 23,
-    paddingHorizontal: 16,
+    flex: 1.25,
+    height: 38,
+    backgroundColor: "#111827",
+    borderRadius: 8,
+    paddingHorizontal: 12,
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
-    gap: 7,
+    gap: 6,
   },
 
   primaryBtnText: {
     color: "#ffffff",
-    fontSize: 13,
+    fontSize: 12,
     fontWeight: "600",
     letterSpacing: -0.1,
   },
 
   counterBadge: {
-    backgroundColor: "rgba(255, 255, 255, 0.16)",
-    minWidth: 18,
-    height: 18,
-    borderRadius: 9,
-    paddingHorizontal: 5,
+    backgroundColor: "#004d26",
+    minWidth: 16,
+    height: 16,
+    borderRadius: 8,
+    paddingHorizontal: 4,
     alignItems: "center",
     justifyContent: "center",
-    marginLeft: 1,
   },
 
   counterBadgeText: {
     color: "#ffffff",
-    fontSize: 10,
-    fontWeight: "600",
+    fontSize: 9,
+    fontWeight: "700",
   },
 
   secondaryBtn: {
-    flex: 0.9,
-    height: 46,
-    paddingHorizontal: 14,
-    borderRadius: 23,
-    backgroundColor: "#f4f4f5",
+    flex: 0.95,
+    height: 38,
+    paddingHorizontal: 10,
+    borderRadius: 8,
+    backgroundColor: "#f3f4f6",
     borderWidth: 1,
-    borderColor: "#e4e4e7",
+    borderColor: "#e5e7eb",
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
-    gap: 5,
+    gap: 4,
   },
 
   secondaryBtnText: {
-    color: "#18181b",
-    fontSize: 13,
+    color: "#111827",
+    fontSize: 12,
     fontWeight: "600",
     letterSpacing: -0.1,
   },
 
   disabledBtn: {
-    opacity: 0.35,
+    opacity: 0.4,
+    backgroundColor: "#9ca3af",
   },
 
   pressedState: {
-    opacity: 0.82,
+    opacity: 0.85,
     transform: [{ scale: 0.985 }],
   },
 });

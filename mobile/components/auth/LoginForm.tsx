@@ -16,7 +16,7 @@ import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useRouter, useLocalSearchParams, Href } from "expo-router";
 import * as Linking from "expo-linking";
-import { ArrowRight } from "lucide-react-native";
+import { ArrowRight, Eye, EyeOff } from "lucide-react-native";
 
 import { createClient } from "@/lib/auth/client";
 import {
@@ -33,6 +33,7 @@ export default function LoginForm({ onSuccess }: LoginFormProps) {
   const router = useRouter();
   const scrollRef = useRef<ScrollView>(null);
   const [isKeyboardVisible, setKeyboardVisible] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
 
   const { redirect } = useLocalSearchParams<{ redirect?: string }>();
   const redirectTo = redirect ?? "/";
@@ -111,7 +112,9 @@ export default function LoginForm({ onSuccess }: LoginFormProps) {
             <View style={styles.logoWrapper}>
               <Logo />
             </View>
+
             <Text style={styles.title}>Welcome back</Text>
+
             <Text style={styles.subtitle}>
               Sign in to access your orders, saved addresses, and wishlist
             </Text>
@@ -122,12 +125,16 @@ export default function LoginForm({ onSuccess }: LoginFormProps) {
             {/* Email Field */}
             <View style={styles.inputContainer}>
               <Text style={styles.label}>Email Address</Text>
+
               <Controller
                 control={control}
                 name="email"
                 render={({ field: { onChange, onBlur, value } }) => (
                   <TextInput
-                    style={[styles.input, errors.email && styles.inputError]}
+                    style={[
+                      styles.input,
+                      errors.email && styles.inputError,
+                    ]}
                     placeholder="name@example.com"
                     placeholderTextColor="#a1a1aa"
                     keyboardType="email-address"
@@ -140,8 +147,11 @@ export default function LoginForm({ onSuccess }: LoginFormProps) {
                   />
                 )}
               />
+
               {errors.email && (
-                <Text style={styles.errorText}>{errors.email.message}</Text>
+                <Text style={styles.errorText}>
+                  {errors.email.message}
+                </Text>
               )}
             </View>
 
@@ -149,6 +159,7 @@ export default function LoginForm({ onSuccess }: LoginFormProps) {
             <View style={styles.inputContainer}>
               <View style={styles.passwordHeader}>
                 <Text style={styles.label}>Password</Text>
+
                 <Pressable
                   onPress={() =>
                     Linking.openURL(
@@ -157,7 +168,9 @@ export default function LoginForm({ onSuccess }: LoginFormProps) {
                   }
                   hitSlop={6}
                 >
-                  <Text style={styles.forgotText}>Forgot password?</Text>
+                  <Text style={styles.forgotText}>
+                    Forgot password?
+                  </Text>
                 </Pressable>
               </View>
 
@@ -165,25 +178,59 @@ export default function LoginForm({ onSuccess }: LoginFormProps) {
                 control={control}
                 name="password"
                 render={({ field: { onChange, onBlur, value } }) => (
-                  <TextInput
-                    style={[styles.input, errors.password && styles.inputError]}
-                    placeholder="Enter your password"
-                    placeholderTextColor="#a1a1aa"
-                    secureTextEntry
-                    onFocus={() => {
-                      setTimeout(() => {
-                        scrollRef.current?.scrollToEnd({ animated: true });
-                      }, 120);
-                    }}
-                    onBlur={onBlur}
-                    onChangeText={onChange}
-                    value={value}
-                    editable={!isSubmitting}
-                  />
+                  <View style={styles.passwordInputWrapper}>
+                    <TextInput
+                      style={[
+                        styles.input,
+                        styles.passwordInput,
+                        errors.password && styles.inputError,
+                      ]}
+                      placeholder="Enter your password"
+                      placeholderTextColor="#a1a1aa"
+                      secureTextEntry={!showPassword}
+                      onFocus={() => {
+                        setTimeout(() => {
+                          scrollRef.current?.scrollToEnd({
+                            animated: true,
+                          });
+                        }, 120);
+                      }}
+                      onBlur={onBlur}
+                      onChangeText={onChange}
+                      value={value}
+                      editable={!isSubmitting}
+                    />
+
+                    <Pressable
+                      onPress={() =>
+                        setShowPassword((current) => !current)
+                      }
+                      disabled={isSubmitting}
+                      hitSlop={10}
+                      style={styles.passwordEye}
+                    >
+                      {showPassword ? (
+                        <EyeOff
+                          size={19}
+                          color="#71717a"
+                          strokeWidth={2}
+                        />
+                      ) : (
+                        <Eye
+                          size={19}
+                          color="#71717a"
+                          strokeWidth={2}
+                        />
+                      )}
+                    </Pressable>
+                  </View>
                 )}
               />
+
               {errors.password && (
-                <Text style={styles.errorText}>{errors.password.message}</Text>
+                <Text style={styles.errorText}>
+                  {errors.password.message}
+                </Text>
               )}
             </View>
 
@@ -191,18 +238,30 @@ export default function LoginForm({ onSuccess }: LoginFormProps) {
             <Pressable
               style={({ pressed }) => [
                 styles.submitButton,
-                pressed && !isSubmitting && styles.buttonPressed,
+                pressed &&
+                  !isSubmitting &&
+                  styles.buttonPressed,
                 isSubmitting && styles.disabled,
               ]}
               disabled={isSubmitting}
               onPress={handleSubmit(onSubmit)}
             >
               {isSubmitting ? (
-                <ActivityIndicator color="#ffffff" size="small" />
+                <ActivityIndicator
+                  color="#ffffff"
+                  size="small"
+                />
               ) : (
                 <>
-                  <Text style={styles.submitButtonText}>Sign In</Text>
-                  <ArrowRight size={14} color="#ffffff" strokeWidth={2} />
+                  <Text style={styles.submitButtonText}>
+                    Sign In
+                  </Text>
+
+                  <ArrowRight
+                    size={14}
+                    color="#ffffff"
+                    strokeWidth={2}
+                  />
                 </>
               )}
             </Pressable>
@@ -210,12 +269,19 @@ export default function LoginForm({ onSuccess }: LoginFormProps) {
 
           {/* Footer Navigation */}
           <View style={styles.footerRow}>
-            <Text style={styles.footerText}>Don&apos;t have an account?</Text>
+            <Text style={styles.footerText}>
+              Don&apos;t have an account?
+            </Text>
+
             <Pressable
-              onPress={() => router.push("/auth/signup" as Href)}
+              onPress={() =>
+                router.push("/auth/signup" as Href)
+              }
               hitSlop={6}
             >
-              <Text style={styles.signUpText}>Create Account</Text>
+              <Text style={styles.signUpText}>
+                Create Account
+              </Text>
             </Pressable>
           </View>
         </View>
@@ -371,4 +437,23 @@ const styles = StyleSheet.create({
     color: "#18181b",
     letterSpacing: -0.1,
   },
+
+  passwordInputWrapper: {
+  position: "relative",
+  width: "100%",
+},
+
+passwordInput: {
+  paddingRight: 45,
+},
+
+passwordEye: {
+  position: "absolute",
+  right: 13,
+  top: 0,
+  height: 44,
+  width: 30,
+  alignItems: "center",
+  justifyContent: "center",
+},
 });

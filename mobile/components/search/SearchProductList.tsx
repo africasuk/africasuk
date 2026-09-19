@@ -5,32 +5,34 @@ import {
   StyleSheet,
   Pressable,
   FlatList,
-  TouchableOpacity,
   ViewStyle,
   TextStyle,
   ImageStyle,
+  ListRenderItem,
 } from "react-native";
 import { Image } from "expo-image";
 import { useRouter } from "expo-router";
-import { ShoppingCart } from "lucide-react-native";
 import type { ProductWithDetails } from "@africasuk/types";
 
-import { useCart } from "@/store/cart";
-import { WishlistButton } from "../products/WishlistButton";
+import { WishlistButton } from "@/components/products/WishlistButton";
+import { AddToCartButton } from "@/components/products/AddToCartButton";
+import type { CartItem } from "@/types/cart";
 
-const BRAND = "#004d26";
+type SearchProduct = ProductWithDetails & {
+  selectedColorId?: string;
+};
 
 interface SearchProductListProps {
-  products: ProductWithDetails[];
+  products: SearchProduct[];
+  contentContainerStyle?: ViewStyle;
 }
 
 export default function SearchProductList({
   products,
+  contentContainerStyle,
 }: SearchProductListProps) {
   const router = useRouter();
-  const addItemToCart = useCart((state) => state.addItem);
 
-  // Flatten products across colors and variants
   const items = useMemo(() => {
     return products.flatMap((product) =>
       (product.colors ?? []).map((color) => ({
@@ -46,276 +48,309 @@ export default function SearchProductList({
     router.push(`/products/${slug}?color=${colorId}` as const);
   };
 
+  const renderItem: ListRenderItem<(typeof items)[number]> = ({ item }) => {
+    const image = item.color.images?.[0] as
+      | { imageUrl?: string; image_url?: string }
+      | undefined;
+
+    const imageUrl =
+      image?.image_url ??
+      image?.imageUrl ??
+      "https://via.placeholder.com/300";
+
+    const variant = item.variant;
+    const stock = variant?.stock ?? 0;
+
+    const originalProductId = item.selectedColorId
+      ? item.id.replace(`-${item.selectedColorId}`, "")
+      : item.id;
+
+    const cartItem: CartItem = {
+      productId: originalProductId,
+      variantId: variant?.id?.toString() ?? "",
+      name: item.name,
+      slug: item.slug,
+      price: variant?.price ?? 0,
+      stock,
+      quantity: 1,
+      allowCod: item.allowCod,
+      allowOnlinePayment: item.allowOnlinePayment,
+      image: imageUrl,
+      options: [
+        {
+          optionName: "Color",
+          value: item.color.name,
+        },
+        ...(variant
+          ? [
+              {
+                optionName: variant.optionName ?? "",
+                value: variant.optionValue ?? "",
+              },
+            ]
+          : []),
+      ],
+    };
+
+    return (
+      <Pressable
+        style={({ pressed }) => [
+          styles.card,
+          pressed && styles.cardPressed,
+        ]}
+        onPress={() =>
+          handleNavigate(item.slug, item.color.id.toString())
+        }
+      >
+        <View style={styles.topRow}>
+          {/* Product Image + Floating Wishlist Badge */}
+          <View style={styles.imageContainer}>
+            <Image
+              source={{ uri: imageUrl }}
+              style={styles.image}
+              contentFit="contain"
+              transition={150}
+            />
+            <View style={styles.wishlistBadge}>
+              <WishlistButton item={cartItem} />
+            </View>
+          </View>
+
+          {/* Product Details */}
+          <View style={styles.details}>
+            <View>
+              <Text style={styles.title} numberOfLines={2}>
+                {item.name}
+              </Text>
+
+              {(item.brand || item.category) && (
+                <View style={styles.metaRow}>
+                  {item.brand && (
+                    <Text style={styles.metaText} numberOfLines={1}>
+                      {item.brand.name}
+                    </Text>
+                  )}
+                  {item.brand && item.category && (
+                    <Text style={styles.dot}>•</Text>
+                  )}
+                  {item.category && (
+                    <Text style={styles.metaText} numberOfLines={1}>
+                      {item.category.name}
+                    </Text>
+                  )}
+                </View>
+              )}
+
+              <View style={styles.colorRow}>
+                <View style={styles.colorDot} />
+                <Text style={styles.colorText} numberOfLines={1}>
+                  {item.color.name}
+                </Text>
+              </View>
+            </View>
+
+            {/* Price & Stock */}
+            <View style={styles.priceRow}>
+              <Text style={styles.price}>
+                ${(variant?.price ?? 0).toFixed(2)}
+              </Text>
+              <Text
+                style={[
+                  styles.stockText,
+                  stock <= 0 && styles.outOfStockText,
+                ]}
+              >
+                {stock > 0 ? `${stock} in stock` : "Out of stock"}
+              </Text>
+            </View>
+          </View>
+        </View>
+
+        {/* Full-width dual CTA row */}
+        <View style={styles.actionsRow}>
+          <AddToCartButton item={cartItem} />
+        </View>
+      </Pressable>
+    );
+  };
+
   return (
     <FlatList
       data={items}
       keyExtractor={(item) => item.compositeId}
-      contentContainerStyle={styles.listContainer}
+      renderItem={renderItem}
+      contentContainerStyle={[
+        styles.listContainer,
+        contentContainerStyle,
+      ]}
       showsVerticalScrollIndicator={false}
-      renderItem={({ item }) => {
-        const imageUrl =
-          (
-            item.color.images?.[0] as {
-              imageUrl?: string;
-              image_url?: string;
-            }
-          )?.image_url ??
-          item.color.images?.[0]?.imageUrl ??
-          "https://via.placeholder.com/150";
-
-        const cartAndWishlistItem = {
-          productId: item.id.toString(),
-          variantId: item.variant?.id?.toString() ?? "",
-          name: item.name,
-          slug: item.slug,
-          price: item.variant?.price ?? 0,
-          stock: item.variant?.stock ?? 0,
-          quantity: 1,
-          allowCod: item.allowCod,
-          allowOnlinePayment: item.allowOnlinePayment,
-          image: imageUrl,
-          options: [
-            {
-              optionName: "Color",
-              value: item.color.name,
-            },
-            {
-              optionName: item.variant?.optionName ?? "",
-              value: item.variant?.optionValue ?? "",
-            },
-          ],
-        };
-
-        return (
-          <Pressable
-            style={({ pressed }) => [
-              styles.card,
-              pressed && styles.cardPressed,
-            ]}
-            onPress={() => handleNavigate(item.slug, item.color.id.toString())}
-          >
-            {/* Main Content Row: Image + Details */}
-            <View style={styles.mainRow}>
-              {/* Image - Sharp Borders */}
-              <View style={styles.imageWrapper}>
-                <Image
-                  source={{ uri: imageUrl }}
-                  style={styles.image}
-                  contentFit="cover"
-                  transition={200}
-                />
-              </View>
-
-              {/* Details Column */}
-              <View style={styles.details}>
-                <Text style={styles.title} numberOfLines={1}>
-                  {item.name} - {item.color.name}
-                </Text>
-
-                {/* Brand & Category */}
-                <View style={styles.metaRow}>
-                  {item.brand && (
-                    <Text style={styles.metaText}>
-                      Brand: <Text style={styles.metaValue}>{item.brand.name}</Text>
-                    </Text>
-                  )}
-                  {item.category && (
-                    <Text style={styles.metaText}>
-                      Category:{" "}
-                      <Text style={styles.metaValue}>{item.category.name}</Text>
-                    </Text>
-                  )}
-                </View>
-
-                {/* Badges - Sharp Borders */}
-                {item.variant && (
-                  <View style={styles.badgeRow}>
-                    <View style={styles.secondaryBadge}>
-                      <Text style={styles.secondaryBadgeText}>
-                        {item.variant.optionName}: {item.variant.optionValue}
-                      </Text>
-                    </View>
-
-                    <View style={styles.stockBadge}>
-                      <Text style={styles.stockBadgeText}>
-                        Stock: {item.variant.stock}
-                      </Text>
-                    </View>
-                  </View>
-                )}
-
-                {/* Price */}
-                <Text style={styles.price}>
-                  ${(item.variant?.price ?? 0).toFixed(2)}
-                </Text>
-              </View>
-            </View>
-
-            {/* Bottom Actions Row: Wishlist & Add to Cart */}
-            <View
-              style={styles.actionsRow}
-              onStartShouldSetResponder={() => true} // Intercepts touches to prevent card navigation
-            >
-              <WishlistButton item={cartAndWishlistItem} />
-
-              <TouchableOpacity
-                style={styles.cartButton}
-                activeOpacity={0.8}
-                onPress={() => {
-                  addItemToCart(cartAndWishlistItem);
-                  router.push("/cart" as any);
-                }}
-              >
-                <ShoppingCart size={14} color="#ffffff" />
-                <Text style={styles.cartButtonText}>Add to Cart</Text>
-              </TouchableOpacity>
-            </View>
-          </Pressable>
-        );
-      }}
+      keyboardShouldPersistTaps="handled"
+      removeClippedSubviews
     />
   );
 }
+
+/* -------------------------------------------------------------------------- */
+/* Styles                                                                     */
+/* -------------------------------------------------------------------------- */
 
 type Styles = {
   listContainer: ViewStyle;
   card: ViewStyle;
   cardPressed: ViewStyle;
-  mainRow: ViewStyle;
-  imageWrapper: ViewStyle;
+  topRow: ViewStyle;
+  imageContainer: ViewStyle;
   image: ImageStyle;
+  wishlistBadge: ViewStyle;
   details: ViewStyle;
   title: TextStyle;
   metaRow: ViewStyle;
   metaText: TextStyle;
-  metaValue: TextStyle;
-  badgeRow: ViewStyle;
-  secondaryBadge: ViewStyle;
-  secondaryBadgeText: TextStyle;
-  stockBadge: ViewStyle;
-  stockBadgeText: TextStyle;
+  dot: TextStyle;
+  colorRow: ViewStyle;
+  colorDot: ViewStyle;
+  colorText: TextStyle;
+  priceRow: ViewStyle;
   price: TextStyle;
+  stockText: TextStyle;
+  outOfStockText: TextStyle;
   actionsRow: ViewStyle;
-  cartButton: ViewStyle;
-  cartButtonText: TextStyle;
 };
 
 const styles = StyleSheet.create<Styles>({
   listContainer: {
-    paddingBottom: 24,
-    gap: 12,
+    paddingHorizontal: 16,
+    paddingTop: 6,
+    paddingBottom: 28,
+    gap: 10,
   },
+
   card: {
     backgroundColor: "#ffffff",
-    borderRadius: 0, // Sharp corners
+    borderRadius: 12,
     borderWidth: 1,
     borderColor: "#e5e7eb",
     padding: 12,
   },
+
   cardPressed: {
-    backgroundColor: "#f9fafb",
+    backgroundColor: "#fafafa",
   },
-  mainRow: {
+
+  topRow: {
     flexDirection: "row",
     gap: 12,
   },
-  imageWrapper: {
-    width: 88,
-    height: 88,
-    borderRadius: 0, // Sharp corners
-    backgroundColor: "#f3f4f6",
+
+  imageContainer: {
+    position: "relative",
+    width: 90,
+    height: 90,
+    borderRadius: 8,
+    backgroundColor: "#f9fafb",
     overflow: "hidden",
     borderWidth: 1,
-    borderColor: "#e5e7eb",
+    borderColor: "#f3f4f6",
   },
+
   image: {
     width: "100%",
     height: "100%",
   },
+
+  wishlistBadge: {
+    position: "absolute",
+    top: 4,
+    right: 4,
+    zIndex: 10,
+    backgroundColor: "rgba(255, 255, 255, 0.9)",
+    borderRadius: 14,
+    width: 28,
+    height: 28,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+
   details: {
     flex: 1,
+    minWidth: 0,
     justifyContent: "space-between",
+    paddingVertical: 1,
   },
+
   title: {
     fontSize: 14,
-    fontWeight: "500", // Non-bold clean title weight
+    lineHeight: 18,
+    fontWeight: "600",
     color: "#111827",
   },
+
   metaRow: {
     flexDirection: "row",
-    flexWrap: "wrap",
-    gap: 8,
+    alignItems: "center",
+    gap: 4,
     marginTop: 2,
   },
+
   metaText: {
     fontSize: 11,
-    fontWeight: "400",
     color: "#6b7280",
   },
-  metaValue: {
-    fontWeight: "500",
-    color: "#374151",
+
+  dot: {
+    fontSize: 10,
+    color: "#9ca3af",
   },
-  badgeRow: {
+
+  colorRow: {
     flexDirection: "row",
-    flexWrap: "wrap",
+    alignItems: "center",
+    gap: 4,
+    marginTop: 2,
+  },
+
+  colorDot: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+    backgroundColor: "#111827",
+  },
+
+  colorText: {
+    fontSize: 11,
+    color: "#4b5563",
+    fontWeight: "500",
+  },
+
+  priceRow: {
+    flexDirection: "row",
+    alignItems: "baseline",
     gap: 6,
     marginTop: 4,
   },
-  secondaryBadge: {
-    backgroundColor: "#f3f4f6",
-    paddingHorizontal: 8,
-    paddingVertical: 2,
-    borderRadius: 0, // Sharp corners
-    borderWidth: 1,
-    borderColor: "#e5e7eb",
+
+  price: {
+    fontSize: 16,
+    lineHeight: 20,
+    fontWeight: "700",
+    color: "#111827",
   },
-  secondaryBadgeText: {
-    fontSize: 10,
-    color: "#4b5563",
-    fontWeight: "400",
-  },
-  stockBadge: {
-    backgroundColor: "#ecfdf5",
-    borderWidth: 1,
-    borderColor: "#a7f3d0",
-    paddingHorizontal: 8,
-    paddingVertical: 2,
-    borderRadius: 0, // Sharp corners
-  },
-  stockBadgeText: {
-    fontSize: 10,
-    color: "#059669",
+
+  stockText: {
+    fontSize: 11,
+    color: "#16a34a",
     fontWeight: "500",
   },
-  price: {
-    fontSize: 14,
-    fontWeight: "500", // Clean regular price weight
-    color: BRAND,
-    marginTop: 4,
+
+  outOfStockText: {
+    color: "#dc2626",
   },
+
   actionsRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "flex-end",
-    gap: 8,
+    width: "100%",
+    marginTop: 10,
+    paddingTop: 10,
     borderTopWidth: 1,
     borderTopColor: "#f3f4f6",
-    paddingTop: 10,
-    marginTop: 10,
-  },
-  cartButton: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 6,
-    backgroundColor: BRAND,
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 0, // Sharp corners
-  },
-  cartButtonText: {
-    color: "#ffffff",
-    fontSize: 12,
-    fontWeight: "500", // Non-bold button text
   },
 });

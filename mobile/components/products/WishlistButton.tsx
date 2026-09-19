@@ -6,59 +6,81 @@ import { useWishlist } from "../../store/wishlist";
 
 interface Props {
   item: WishlistItem;
+  size?: "xs" | "sm" | "md" | "lg";
   style?: StyleProp<ViewStyle>;
 }
 
-export function WishlistButton({ item, style }: Props) {
+export function WishlistButton({ item, size = "xs", style }: Props) {
   const toggleItem = useWishlist((state) => state.toggleItem);
   const active = useWishlist((state) => state.isWishlisted(item.variantId));
+
+  const iconSizes = {
+    xs: 13,
+    sm: 15,
+    md: 17,
+    lg: 20,
+  };
 
   return (
     <Pressable
       onPress={() => toggleItem(item)}
       accessibilityLabel={active ? "Remove from wishlist" : "Add to wishlist"}
-      hitSlop={6}
+      hitSlop={8}
       style={({ pressed }) => [
-        styles.button,
+        styles.base,
+        styles[size],
         active ? styles.activeButton : styles.inactiveButton,
         pressed && styles.pressed,
         style,
       ]}
     >
       <Heart
-        size={20}
-        color={active ? "#e11d48" : "#374151"}
+        size={iconSizes[size]}
+        color={active ? "#e11d48" : "#4b5563"}
         fill={active ? "#e11d48" : "transparent"}
-        strokeWidth={2}
+        strokeWidth={2.2}
       />
     </Pressable>
   );
 }
 
 const styles = StyleSheet.create({
-  button: {
-    height: 52,
-    width: 52,
-    borderRadius: 26,
-    borderWidth: 1.5,
+  base: {
     alignItems: "center",
     justifyContent: "center",
-    shadowColor: "#000000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.04,
-    shadowRadius: 6,
-    elevation: 1,
   },
-  inactiveButton: {
-    backgroundColor: "#ffffff",
+  xs: {
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+  },
+  sm: {
+    width: 30,
+    height: 30,
+    borderRadius: 15,
+  },
+  md: {
+    width: 38,
+    height: 38,
+    borderRadius: 8,
+    borderWidth: 1,
     borderColor: "#e5e7eb",
   },
+  lg: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    borderWidth: 1.5,
+    borderColor: "#e5e7eb",
+  },
+  inactiveButton: {
+    backgroundColor: "transparent",
+  },
   activeButton: {
-    backgroundColor: "#fff1f2",
-    borderColor: "#fecdd3",
+    backgroundColor: "transparent",
   },
   pressed: {
-    opacity: 0.85,
-    transform: [{ scale: 0.96 }],
+    opacity: 0.7,
+    transform: [{ scale: 0.9 }],
   },
 });

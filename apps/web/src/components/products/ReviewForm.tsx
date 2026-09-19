@@ -1,7 +1,13 @@
 "use client";
 
-import { useState } from "react";
-import { Star, CheckCircle2, AlertCircle, Loader2 } from "lucide-react";
+import { useEffect, useState } from "react";
+import {
+  Star,
+  CheckCircle2,
+  AlertCircle,
+  Loader2,
+  Check,
+} from "lucide-react";
 
 interface ReviewFormProps {
   productId: string;
@@ -9,6 +15,15 @@ interface ReviewFormProps {
   orderItemId: string;
   variantId?: string | null;
   onSuccess?: () => void;
+}
+
+interface ExistingReview {
+  id: string;
+  rating: number;
+  title?: string | null;
+  comment?: string | null;
+  verifiedPurchase?: boolean;
+  createdAt?: string;
 }
 
 export function ReviewForm({
@@ -22,11 +37,59 @@ export function ReviewForm({
   const [hoverRating, setHoverRating] = useState(0);
   const [title, setTitle] = useState("");
   const [comment, setComment] = useState("");
+
   const [loading, setLoading] = useState(false);
+  const [checkingReview, setCheckingReview] = useState(true);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState(false);
 
-  async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
+  const [existingReview, setExistingReview] =
+    useState<ExistingReview | null>(null);
+
+  // Check whether this order item has already been reviewed
+  useEffect(() => {
+    let mounted = true;
+
+    async function checkExistingReview() {
+      try {
+        setCheckingReview(true);
+
+        const response = await fetch(
+          `/api/reviews?orderItemId=${encodeURIComponent(orderItemId)}`
+        );
+
+        if (!response.ok) {
+          throw new Error("Failed to check existing review.");
+        }
+
+        const data = await response.json();
+
+        if (!mounted) return;
+
+        setExistingReview(data.review ?? null);
+      } catch (err) {
+        console.error("Review check error:", err);
+
+        if (mounted) {
+          setExistingReview(null);
+        }
+      } finally {
+        if (mounted) {
+          setCheckingReview(false);
+        }
+      }
+    }
+
+    checkExistingReview();
+
+    return () => {
+      mounted = false;
+    };
+  }, [orderItemId]);
+
+  async function handleSubmit(
+    event: React.FormEvent<HTMLFormElement>
+  ) {
     event.preventDefault();
 
     setLoading(true);
@@ -53,7 +116,14 @@ export function ReviewForm({
       const data = await response.json();
 
       if (!response.ok) {
-        throw new Error(data.error || "Failed to submit review.");
+        throw new Error(
+          data.error || "Failed to submit review."
+        );
+      }
+
+      // Immediately show the submitted review
+      if (data.review) {
+        setExistingReview(data.review);
       }
 
       setSuccess(true);
@@ -64,11 +134,102 @@ export function ReviewForm({
       onSuccess?.();
     } catch (err) {
       setError(
-        err instanceof Error ? err.message : "Failed to submit review."
+        err instanceof Error
+          ? err.message
+          : "Failed to submit review."
       );
     } finally {
       setLoading(false);
     }
+  }
+
+  // While checking, don't briefly show the review form
+  if (checkingReview) {
+    return (
+      <div className="mt-6 flex items-center justify-center rounded-2xl border border-zinc-200 bg-white p-8 shadow-xs">
+        <div className="flex items-center gap-2 text-xs text-zinc-500">
+          <Loader2 className="h-4 w-4 animate-spin" />
+          <span>Checking your review...</span>
+        </div>
+      </div>
+    );
+  }
+
+  // User has already reviewed this order item
+  if (existingReview) {
+    return (
+      <div className="mt-6 rounded-2xl border border-zinc-200 bg-white p-6 shadow-xs antialiased sm:p-8">
+        <div className="flex items-center justify-between border-b border-zinc-100 pb-4">
+          <div>
+            <h4 className="text-sm font-bold tracking-tight text-zinc-900">
+              Your Review
+            </h4>
+
+            <p className="mt-0.5 text-xs text-zinc-500">
+              You have already reviewed this purchase
+            </p>
+          </div>
+
+          <span className="inline-flex items-center gap-1 rounded-md border border-emerald-200 bg-emerald-50 px-2 py-1 text-[11px] font-semibold text-emerald-700">
+            <Check className="h-3 w-3" strokeWidth={2.5} />
+            Verified Purchase
+          </span>
+        </div>
+
+        <div className="mt-5">
+          <div className="flex items-center gap-1">
+            {Array.from({ length: 5 }).map((_, index) => {
+              const value = index + 1;
+
+              return (
+                <Star
+                  key={value}
+                  className={`h-5 w-5 ${
+                    value <= existingReview.rating
+                      ? "fill-amber-400 text-amber-400"
+                      : "fill-zinc-100 text-zinc-300"
+                  }`}
+                  strokeWidth={1.5}
+                />
+              );
+            })}
+          </div>
+        </div>
+
+        {existingReview.title && (
+          <div className="mt-5">
+            <p className="text-xs font-semibold text-zinc-500">
+              Headline
+            </p>
+
+            <p className="mt-1 text-sm font-semibold text-zinc-900">
+              {existingReview.title}
+            </p>
+          </div>
+        )}
+
+        {existingReview.comment && (
+          <div className="mt-4">
+            <p className="text-xs font-semibold text-zinc-500">
+              Your Review
+            </p>
+
+            <p className="mt-1 text-sm leading-relaxed text-zinc-600">
+              {existingReview.comment}
+            </p>
+          </div>
+        )}
+
+        {existingReview.createdAt && (
+          <p className="mt-5 text-[11px] text-zinc-400">
+            Reviewed on{" "}
+            {new Date(
+              existingReview.createdAt
+            ).toLocaleDateString()}
+          </p>
+        )}
+      </div>
+    );
   }
 
   return (
@@ -82,10 +243,12 @@ export function ReviewForm({
           <h4 className="text-sm font-bold tracking-tight text-zinc-900">
             Write a Review
           </h4>
+
           <p className="mt-0.5 text-xs text-zinc-500">
             Share your feedback with future shoppers
           </p>
         </div>
+
         <span className="inline-flex items-center rounded-md border border-zinc-200 bg-zinc-50 px-2 py-0.5 text-[11px] font-medium text-zinc-600">
           Verified Purchase
         </span>
@@ -126,6 +289,7 @@ export function ReviewForm({
               </button>
             );
           })}
+
           <span className="ml-2 text-xs font-medium text-zinc-500">
             {(hoverRating || rating) === 5
               ? "Excellent"
@@ -148,10 +312,13 @@ export function ReviewForm({
         >
           Headline
         </label>
+
         <input
           id="review-title"
           value={title}
-          onChange={(event) => setTitle(event.target.value)}
+          onChange={(event) =>
+            setTitle(event.target.value)
+          }
           maxLength={100}
           placeholder="What's the most important thing to know?"
           className="w-full rounded-xl border border-zinc-200 bg-white px-3.5 py-2.5 text-xs text-zinc-900 placeholder:text-zinc-400 transition outline-hidden focus:border-zinc-900 focus:ring-1 focus:ring-zinc-900"
@@ -167,6 +334,7 @@ export function ReviewForm({
           >
             Detailed Review
           </label>
+
           <span className="text-[11px] text-zinc-400">
             {comment.length}/1000
           </span>
@@ -175,7 +343,9 @@ export function ReviewForm({
         <textarea
           id="review-comment"
           value={comment}
-          onChange={(event) => setComment(event.target.value)}
+          onChange={(event) =>
+            setComment(event.target.value)
+          }
           maxLength={1000}
           rows={4}
           placeholder="What did you like or dislike? How was the fit, material, or quality?"
@@ -183,26 +353,31 @@ export function ReviewForm({
         />
       </div>
 
-      {/* Error Alert */}
+      {/* Error */}
       {error && (
         <div className="mt-4 flex items-center gap-2 rounded-xl border border-red-200 bg-red-50/80 px-3.5 py-2.5 text-xs text-red-700">
-          <AlertCircle className="h-4 w-4 shrink-0 text-red-600" strokeWidth={2} />
+          <AlertCircle
+            className="h-4 w-4 shrink-0 text-red-600"
+            strokeWidth={2}
+          />
           <span>{error}</span>
         </div>
       )}
 
-      {/* Success Alert */}
+      {/* Success */}
       {success && (
         <div className="mt-4 flex items-center gap-2 rounded-xl border border-emerald-200 bg-emerald-50/80 px-3.5 py-2.5 text-xs text-emerald-800">
           <CheckCircle2
             className="h-4 w-4 shrink-0 text-emerald-600"
             strokeWidth={2}
           />
-          <span>Review submitted successfully. It will appear once approved.</span>
+          <span>
+            Review submitted successfully.
+          </span>
         </div>
       )}
 
-      {/* Submit Action */}
+      {/* Submit */}
       <div className="mt-6 flex justify-end">
         <button
           type="submit"
@@ -211,7 +386,10 @@ export function ReviewForm({
         >
           {loading ? (
             <>
-              <Loader2 className="h-3.5 w-3.5 animate-spin" strokeWidth={2.5} />
+              <Loader2
+                className="h-3.5 w-3.5 animate-spin"
+                strokeWidth={2.5}
+              />
               <span>Submitting...</span>
             </>
           ) : (

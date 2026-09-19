@@ -7,69 +7,71 @@ import {
   ViewStyle,
   TextStyle,
 } from "react-native";
-import { SearchX, Sparkles } from "lucide-react-native";
-import { useRouter, Href } from "expo-router";
-
-const BRAND = "#004d26";
+import { SearchX, ArrowRight } from "lucide-react-native";
+import { useRouter } from "expo-router";
 
 interface SearchEmptyStateProps {
   query?: string;
 }
 
-export default function SearchEmptyState({ query }: SearchEmptyStateProps) {
+export default function SearchEmptyState({
+  query,
+}: SearchEmptyStateProps) {
   const router = useRouter();
 
-  const handleClear = () => {
-    // Navigates to base search screen clearing active query params
-    router.replace("/search" as Href);
+  const handleViewAllProducts = () => {
+    router.replace("/products" as any);
   };
 
   return (
     <View style={styles.card}>
-      {/* Decorative Brand Glow Circle */}
-      <View style={styles.brandGlow} />
-
-      {/* Floating Sticker Icon Badge */}
+      {/* Icon */}
       <View style={styles.iconWrapper}>
-        {/* Outer Rotated Ring */}
-        <View style={styles.outerRing} />
-
-        {/* Main Sticker Container */}
-        <View style={styles.innerBadge}>
-          <SearchX size={32} color={BRAND} />
-          {/* Sparkle Accent */}
-          <View style={styles.sparklePosition}>
-            <Sparkles size={16} color="#f59e0b" />
-          </View>
-        </View>
+        <SearchX
+          size={30}
+          color="#111111"
+          strokeWidth={1.8}
+        />
       </View>
 
-      {/* Text Content */}
+      {/* Text */}
       <View style={styles.textContainer}>
-        <Text style={styles.title}>No matching products found</Text>
+        <Text style={styles.title}>
+          No matching products found
+        </Text>
 
         <Text style={styles.subtitle}>
           {query ? (
-            <Text>
+            <>
               We couldn&apos;t find anything for{" "}
-              <Text style={styles.boldQuery}>&quot;{query}&quot;</Text>. Try checking for
-              typos or searching with broader terms.
-            </Text>
+              <Text style={styles.boldQuery}>
+                &quot;{query}&quot;
+              </Text>
+              . Try a different search.
+            </>
           ) : (
-            "We couldn't find any products matching your active filters."
+            "We couldn't find any products matching your search."
           )}
         </Text>
 
-        {/* Action Button */}
+        {/* View All Products */}
         <View style={styles.actionContainer}>
           <Pressable
-            onPress={handleClear}
+            onPress={handleViewAllProducts}
             style={({ pressed }) => [
               styles.button,
               pressed && styles.buttonPressed,
             ]}
           >
-            <Text style={styles.buttonText}>Clear Search Filters</Text>
+            <Text style={styles.buttonText}>
+              View All Products
+            </Text>
+
+            <ArrowRight
+              size={16}
+              color="#ffffff"
+              strokeWidth={2}
+            />
           </Pressable>
         </View>
       </View>
@@ -79,11 +81,7 @@ export default function SearchEmptyState({ query }: SearchEmptyStateProps) {
 
 type Styles = {
   card: ViewStyle;
-  brandGlow: ViewStyle;
   iconWrapper: ViewStyle;
-  outerRing: ViewStyle;
-  innerBadge: ViewStyle;
-  sparklePosition: ViewStyle;
   textContainer: ViewStyle;
   title: TextStyle;
   subtitle: TextStyle;
@@ -96,100 +94,74 @@ type Styles = {
 
 const styles = StyleSheet.create<Styles>({
   card: {
-    position: "relative",
-    overflow: "hidden",
-    borderRadius: 20,
+    backgroundColor: "#ffffff",
     borderWidth: 1,
     borderColor: "#e5e7eb",
-    backgroundColor: "#ffffff",
+    borderRadius: 10,
+    marginHorizontal: 12,
+    marginTop: 12,
     paddingVertical: 36,
     paddingHorizontal: 24,
     alignItems: "center",
-    justifyContent: "center",
-    marginTop: 12,
   },
-  brandGlow: {
-    position: "absolute",
-    width: 120,
-    height: 120,
-    borderRadius: 60,
-    backgroundColor: "rgba(0, 77, 38, 0.06)",
-    top: "30%",
-  },
+
   iconWrapper: {
-    position: "relative",
-    width: 68,
-    height: 68,
+    width: 58,
+    height: 58,
+    borderRadius: 29,
+    backgroundColor: "#f5f5f5",
     alignItems: "center",
     justifyContent: "center",
     marginBottom: 16,
   },
-  outerRing: {
-    ...StyleSheet.absoluteFillObject,
-    borderRadius: 18,
-    backgroundColor: "rgba(0, 77, 38, 0.08)",
-    transform: [{ rotate: "6deg" }],
-  },
-  innerBadge: {
-    width: 64,
-    height: 64,
-    borderRadius: 18,
-    borderWidth: 1,
-    borderColor: "#e5e7eb",
-    backgroundColor: "#ffffff",
-    alignItems: "center",
-    justifyContent: "center",
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.05,
-    shadowRadius: 4,
-    elevation: 2,
-  },
-  sparklePosition: {
-    position: "absolute",
-    top: -4,
-    right: -4,
-  },
+
   textContainer: {
     alignItems: "center",
-    maxWidth: 280,
+    maxWidth: 290,
   },
+
   title: {
     fontSize: 16,
     fontWeight: "700",
-    color: "#111827",
+    color: "#111111",
     textAlign: "center",
-    marginBottom: 6,
+    marginBottom: 7,
   },
+
   subtitle: {
     fontSize: 13,
-    color: "#6b7280",
+    color: "#666666",
     textAlign: "center",
-    lineHeight: 18,
+    lineHeight: 19,
   },
+
   boldQuery: {
-    fontWeight: "700",
-    color: "#111827",
+    fontWeight: "600",
+    color: "#111111",
   },
+
   actionContainer: {
     marginTop: 20,
   },
+
   button: {
-    paddingHorizontal: 20,
-    paddingVertical: 10,
-    borderRadius: 20,
-    borderWidth: 1,
-    borderColor: "#d1d5db",
-    backgroundColor: "#ffffff",
+    minHeight: 40,
+    paddingHorizontal: 18,
+    borderRadius: 6,
+    backgroundColor: "#111111",
+    flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
+    gap: 7,
   },
+
   buttonPressed: {
-    backgroundColor: "#f3f4f6",
+    backgroundColor: "#333333",
   },
+
   buttonText: {
+    color: "#ffffff",
     fontSize: 13,
     fontWeight: "600",
-    color: "#374151",
   },
 });

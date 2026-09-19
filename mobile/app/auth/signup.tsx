@@ -14,7 +14,7 @@ import {
 import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useRouter, Href } from "expo-router";
-import { ArrowRight } from "lucide-react-native";
+import { ArrowRight, Eye, EyeOff } from "lucide-react-native";
 
 import Logo from "@/components/layout/header/Logo";
 import { useTranslation } from "@/components/providers/LanguageProvider";
@@ -27,6 +27,8 @@ import { signUp } from "@/lib/auth/signup";
 export default function SignupPage() {
   const router = useRouter();
   const { dictionary } = useTranslation();
+  const [showPassword, setShowPassword] = React.useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = React.useState(false);
 
   const {
     control,
@@ -137,60 +139,102 @@ export default function SignupPage() {
               )}
             </View>
 
-            {/* Password */}
-            <View style={styles.inputContainer}>
-              <Text style={styles.label}>{dictionary.auth.password}</Text>
-              <Controller
-                control={control}
-                name="password"
-                render={({ field: { onChange, onBlur, value } }) => (
-                  <TextInput
-                    style={[styles.input, errors.password && styles.inputError]}
-                    placeholder="Create a strong password"
-                    placeholderTextColor="#a1a1aa"
-                    secureTextEntry
-                    onBlur={onBlur}
-                    onChangeText={onChange}
-                    value={value}
-                    autoCapitalize="none"
-                    editable={!isSubmitting}
-                  />
-                )}
-              />
-              {errors.password && (
-                <Text style={styles.errorText}>{errors.password.message}</Text>
-              )}
-            </View>
 
-            {/* Confirm Password */}
-            <View style={styles.inputContainer}>
-              <Text style={styles.label}>{dictionary.auth.confirmPassword}</Text>
-              <Controller
-                control={control}
-                name="confirmPassword"
-                render={({ field: { onChange, onBlur, value } }) => (
-                  <TextInput
-                    style={[
-                      styles.input,
-                      errors.confirmPassword && styles.inputError,
-                    ]}
-                    placeholder="Re-enter your password"
-                    placeholderTextColor="#a1a1aa"
-                    secureTextEntry
-                    onBlur={onBlur}
-                    onChangeText={onChange}
-                    value={value}
-                    autoCapitalize="none"
-                    editable={!isSubmitting}
-                  />
+           {/* Password */}
+              <View style={styles.inputContainer}>
+                <Text style={styles.label}>{dictionary.auth.password}</Text>
+
+                <Controller
+                  control={control}
+                  name="password"
+                  render={({ field: { onChange, onBlur, value } }) => (
+                    <View style={styles.passwordInputWrapper}>
+                      <TextInput
+                        style={[
+                          styles.input,
+                          styles.passwordInput,
+                          errors.password && styles.inputError,
+                        ]}
+                        placeholder="Create a strong password"
+                        placeholderTextColor="#a1a1aa"
+                        secureTextEntry={!showPassword}
+                        onBlur={onBlur}
+                        onChangeText={onChange}
+                        value={value}
+                        autoCapitalize="none"
+                        editable={!isSubmitting}
+                      />
+
+                      <Pressable
+                        onPress={() => setShowPassword((current) => !current)}
+                        disabled={isSubmitting}
+                        hitSlop={10}
+                        style={styles.passwordEye}
+                      >
+                        {showPassword ? (
+                          <EyeOff size={19} color="#71717a" strokeWidth={2} />
+                        ) : (
+                          <Eye size={19} color="#71717a" strokeWidth={2} />
+                        )}
+                      </Pressable>
+                    </View>
+                  )}
+                />
+
+                {errors.password && (
+                  <Text style={styles.errorText}>{errors.password.message}</Text>
                 )}
-              />
-              {errors.confirmPassword && (
-                <Text style={styles.errorText}>
-                  {errors.confirmPassword.message}
-                </Text>
-              )}
-            </View>
+              </View>
+
+                          {/* Confirm Password */}
+              <View style={styles.inputContainer}>
+                <Text style={styles.label}>{dictionary.auth.confirmPassword}</Text>
+
+                <Controller
+                  control={control}
+                  name="confirmPassword"
+                  render={({ field: { onChange, onBlur, value } }) => (
+                    <View style={styles.passwordInputWrapper}>
+                      <TextInput
+                        style={[
+                          styles.input,
+                          styles.passwordInput,
+                          errors.confirmPassword && styles.inputError,
+                        ]}
+                        placeholder="Re-enter your password"
+                        placeholderTextColor="#a1a1aa"
+                        secureTextEntry={!showConfirmPassword}
+                        onBlur={onBlur}
+                        onChangeText={onChange}
+                        value={value}
+                        autoCapitalize="none"
+                        editable={!isSubmitting}
+                      />
+
+                      <Pressable
+                        onPress={() =>
+                          setShowConfirmPassword((current) => !current)
+                        }
+                        disabled={isSubmitting}
+                        hitSlop={10}
+                        style={styles.passwordEye}
+                      >
+                        {showConfirmPassword ? (
+                          <EyeOff size={19} color="#71717a" strokeWidth={2} />
+                        ) : (
+                          <Eye size={19} color="#71717a" strokeWidth={2} />
+                        )}
+                      </Pressable>
+                    </View>
+                  )}
+                />
+
+                {errors.confirmPassword && (
+                  <Text style={styles.errorText}>
+                    {errors.confirmPassword.message}
+                  </Text>
+                )}
+              </View>
 
             {/* Submit Button */}
             <Pressable
@@ -373,4 +417,22 @@ const styles = StyleSheet.create({
     color: "#18181b",
     letterSpacing: -0.1,
   },
+  passwordInputWrapper: {
+  position: "relative",
+  width: "100%",
+},
+
+passwordInput: {
+  paddingRight: 45,
+},
+
+passwordEye: {
+  position: "absolute",
+  right: 13,
+  top: 0,
+  width: 30,
+  height: 44,
+  alignItems: "center",
+  justifyContent: "center",
+},
 });

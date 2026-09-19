@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import {
   View,
   Text,
@@ -28,6 +28,7 @@ import {
 import * as WebBrowser from "expo-web-browser";
 import { useRouter } from "expo-router";
 import { CurrencySwitcher } from "@/components/CurrencySwitcher";
+import { createClient } from "@/lib/auth/client";
 
 const PLAY_STORE_URL =
   "https://play.google.com/store/apps/details?id=com.africasuk.app";
@@ -95,6 +96,97 @@ function MenuRow({
 export default function MenuScreen() {
   const router = useRouter();
 
+  const [user, setUser] = useState<any>(null);
+  const [authLoading, setAuthLoading] = useState(true);
+
+  useEffect(() => {
+    let mounted = true;
+
+    const supabase = createClient();
+
+    const loadUser = async () => {
+      try {
+        const {
+          data: { user },
+        } = await supabase.auth.getUser();
+
+        if (mounted) {
+          setUser(user);
+          setAuthLoading(false);
+        }
+      } catch (error) {
+        console.error("Failed to load user:", error);
+
+        if (mounted) {
+          setUser(null);
+          setAuthLoading(false);
+        }
+      }
+    };
+
+    loadUser();
+
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((_event, session) => {
+      if (mounted) {
+        setUser(session?.user ?? null);
+        setAuthLoading(false);
+      }
+    });
+
+    return () => {
+      mounted = false;
+      subscription.unsubscribe();
+    };
+  }, []);
+
+  const handleSignIn = () => {
+    router.push("/auth/login");
+  };
+
+  const handleLogout = () => {
+    Alert.alert(
+      "Log Out",
+      "Are you sure you want to log out?",
+      [
+        {
+          text: "Cancel",
+          style: "cancel",
+        },
+        {
+          text: "Log Out",
+          style: "destructive",
+          onPress: async () => {
+            try {
+              const supabase = createClient();
+
+              const { error } = await supabase.auth.signOut();
+
+              if (error) {
+                Alert.alert(
+                  "Unable to Log Out",
+                  "Something went wrong. Please try again."
+                );
+                return;
+              }
+
+              setUser(null);
+              router.replace("/");
+            } catch (error) {
+              console.error("Logout error:", error);
+
+              Alert.alert(
+                "Unable to Log Out",
+                "Something went wrong. Please try again."
+              );
+            }
+          },
+        },
+      ]
+    );
+  };
+
   const handleShareApp = async () => {
     try {
       await Share.share({
@@ -113,28 +205,11 @@ export default function MenuScreen() {
     }
   };
 
-  const handleLogout = () => {
-    Alert.alert(
-      "Log Out",
-      "Are you sure you want to log out?",
-      [
-        {
-          text: "Cancel",
-          style: "cancel",
-        },
-        {
-          text: "Log Out",
-          style: "destructive",
-          onPress: () => {
-            router.replace("/");
-          },
-        },
-      ]
-    );
-  };
-
   return (
-    <SafeAreaView style={styles.safeArea} edges={["top"]}>
+    <SafeAreaView
+      style={styles.safeArea}
+      edges={["top"]}
+    >
       <ScrollView
         style={styles.container}
         contentContainerStyle={styles.content}
@@ -143,6 +218,7 @@ export default function MenuScreen() {
         {/* Header */}
         <View style={styles.header}>
           <Text style={styles.headerTitle}>Menu</Text>
+
           <Text style={styles.headerSubtitle}>
             Manage your account and preferences
           </Text>
@@ -153,42 +229,86 @@ export default function MenuScreen() {
           <Text style={styles.sectionTitle}>Account</Text>
 
           <View style={styles.sectionCard}>
-            <MenuRow
-              icon={User}
-              label="My Profile"
-              onPress={() => router.push("/profile")}
-            />
+            {authLoading ? (
+              <View style={styles.authLoading}>
+                <Text style={styles.authLoadingText}>
+                  Checking your account...
+                </Text>
+              </View>
+            ) : !user ? (
+              <>
+                {/* Logged out message */}
+                <View style={styles.signInCard}>
+                  <View style={styles.signInIcon}>
+                    <User
+                      size={22}
+                      color="#005C2E"
+                      strokeWidth={2}
+                    />
+                  </View>
 
-            <MenuRow
-              icon={Package}
-              label="My Orders"
-              onPress={() => router.push("/orders")}
-            />
+                  <View style={styles.signInContent}>
+                    <Text style={styles.signInTitle}>
+                      Sign in to your account
+                    </Text>
 
-            <MenuRow
-              icon={Heart}
-              label="Wishlist"
-              onPress={() => router.push("/wishlist")}
-            />
+                    <Text style={styles.signInSubtitle}>
+                      Access your orders, wishlist and profile
+                    </Text>
+                  </View>
+                </View>
 
-            <MenuRow
-              icon={Bell}
-              label="Notifications"
-              onPress={() => {
-                Alert.alert(
-                  "Coming Soon",
-                  "Notifications will be available soon."
-                );
-              }}
-            />
+                {/* Sign In */}
+                <MenuRow
+                  icon={User}
+                  label="Sign In"
+                  isLast
+                  onPress={handleSignIn}
+                />
+              </>
+            ) : (
+              <>
+                {/* Logged in */}
+                <MenuRow
+                  icon={User}
+                  label="My Profile"
+                  onPress={() => router.push("/profile")}
+                />
 
-            <CurrencySwitcher />
+                <MenuRow
+                  icon={Package}
+                  label="My Orders"
+                  onPress={() => router.push("/orders")}
+                />
+
+                <MenuRow
+                  icon={Heart}
+                  label="Wishlist"
+                  onPress={() => router.push("/wishlist")}
+                />
+
+                <MenuRow
+                  icon={Bell}
+                  label="Notifications"
+                  onPress={() => {
+                    Alert.alert(
+                      "Coming Soon",
+                      "Notifications will be available soon."
+                    );
+                  }}
+                />
+
+                <CurrencySwitcher />
+              </>
+            )}
           </View>
         </View>
 
         {/* Support & Legal */}
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Support & Legal</Text>
+          <Text style={styles.sectionTitle}>
+            Support & Legal
+          </Text>
 
           <View style={styles.sectionCard}>
             <MenuRow
@@ -228,7 +348,9 @@ export default function MenuScreen() {
               label="Request a Product"
               isLast
               onPress={() =>
-                openWebsite("https://africasuk.com/request-product")
+                openWebsite(
+                  "https://africasuk.com/request-product"
+                )
               }
             />
           </View>
@@ -254,29 +376,34 @@ export default function MenuScreen() {
           </View>
         </View>
 
-        {/* Logout */}
-        <View style={styles.section}>
-          <View style={styles.sectionCard}>
-            <MenuRow
-              icon={LogOut}
-              label="Log Out"
-              danger
-              isLast
-              onPress={handleLogout}
-            />
+        {/* Logout - Only logged in users */}
+        {!authLoading && user && (
+          <View style={styles.section}>
+            <View style={styles.sectionCard}>
+              <MenuRow
+                icon={LogOut}
+                label="Log Out"
+                danger
+                isLast
+                onPress={handleLogout}
+              />
+            </View>
           </View>
-        </View>
+        )}
 
         {/* Footer */}
         <View style={styles.footer}>
-          <Text style={styles.version}>Africa Suk v1.0.4</Text>
+          <Text style={styles.version}>
+            Africa Suk v1.0.4
+          </Text>
 
           <Text style={styles.footerText}>
             Shop with Confidence
           </Text>
 
           <Text style={styles.copyright}>
-            © {new Date().getFullYear()} Africa Suk. All rights reserved.
+            © {new Date().getFullYear()} Africa Suk. All rights
+            reserved.
           </Text>
         </View>
       </ScrollView>
@@ -376,6 +503,54 @@ const styles = StyleSheet.create({
 
   menuLabelDanger: {
     color: "#DC2626",
+  },
+
+  /* Logged out account card */
+  signInCard: {
+    flexDirection: "row",
+    alignItems: "center",
+    padding: 16,
+    backgroundColor: "#F0F9F4",
+    borderBottomWidth: 1,
+    borderBottomColor: "#E5E7EB",
+  },
+
+  signInIcon: {
+    width: 44,
+    height: 44,
+    borderRadius: 14,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "#DDF2E6",
+    marginRight: 13,
+  },
+
+  signInContent: {
+    flex: 1,
+  },
+
+  signInTitle: {
+    fontSize: 15,
+    fontWeight: "700",
+    color: "#111827",
+  },
+
+  signInSubtitle: {
+    marginTop: 3,
+    fontSize: 12,
+    lineHeight: 18,
+    color: "#6B7280",
+  },
+
+  authLoading: {
+    minHeight: 60,
+    justifyContent: "center",
+    paddingHorizontal: 16,
+  },
+
+  authLoadingText: {
+    fontSize: 14,
+    color: "#6B7280",
   },
 
   footer: {
