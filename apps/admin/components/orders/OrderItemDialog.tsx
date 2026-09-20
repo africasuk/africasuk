@@ -5,7 +5,6 @@ import type { OrderItemDetails } from "@africasuk/api";
 import Image from "next/image";
 
 import { Button } from "@/components/ui/button";
-
 import {
   Dialog,
   DialogContent,
@@ -21,25 +20,31 @@ interface Props {
 
 export function OrderItemDialog({ item }: Props) {
   const { item: orderItem, product, variant } = item;
-  const subtotal = orderItem.price * orderItem.quantity;
 
-  // 1. Updated image extraction mapping
+  const subtotal =
+    orderItem.price * orderItem.quantity;
+
   const images: string[] = [];
 
   const formatUSD = (amount: number) =>
-  new Intl.NumberFormat("en-US", {
-    style: "currency",
-    currency: "USD",
-    minimumFractionDigits: 2,
-  }).format(amount);
+    new Intl.NumberFormat("en-US", {
+      style: "currency",
+      currency: "USD",
+      minimumFractionDigits: 2,
+    }).format(amount);
 
   return (
     <Dialog>
-     <DialogTrigger>
-      <Button size="sm" variant="outline">
-        View Details
-      </Button>
-    </DialogTrigger>
+      <DialogTrigger
+        render={
+          <Button
+            size="sm"
+            variant="outline"
+          >
+            View Details
+          </Button>
+        }
+      />
 
       <DialogContent className="w-[calc(100%-2rem)] sm:max-w-4xl lg:max-w-6xl max-h-[90vh] overflow-y-auto p-4 sm:p-6 rounded-xl">
         <DialogHeader className="pr-6">
@@ -51,8 +56,7 @@ export function OrderItemDialog({ item }: Props) {
         <div className="space-y-6 sm:space-y-8 mt-4">
           {/* Main Grid */}
           <div className="grid gap-6 lg:gap-8 lg:grid-cols-[320px_1fr]">
-            
-            {/* Image Showcase & Thumbnails */}
+            {/* Image Showcase */}
             <div className="space-y-4 max-w-md mx-auto lg:max-w-none w-full">
               <div className="flex aspect-square items-center justify-center rounded-xl border bg-muted p-2">
                 <div className="relative h-full w-full overflow-hidden rounded-lg">
@@ -73,62 +77,76 @@ export function OrderItemDialog({ item }: Props) {
                 </div>
               </div>
 
-              {/* Dynamic Images Thumbnails Grid */}
+              {/* Thumbnails */}
               <div className="grid grid-cols-4 gap-2">
-                {images.slice(0, 4).map((imgUrl, index) => (
-                  <div
-                    key={index}
-                    className="relative aspect-square rounded-lg border bg-muted overflow-hidden"
-                  >
-                    <Image
-                      src={imgUrl}
-                      alt={`${orderItem.name} thumbnail ${index + 1}`}
-                      fill
-                      sizes="80px"
-                      className="object-cover"
-                    />
-                  </div>
-                ))}
-                {images.length === 0 &&
-                  Array.from({ length: 4 }).map((_, index) => (
+                {images.slice(0, 4).map(
+                  (imgUrl, index) => (
                     <div
                       key={index}
-                      className="aspect-square rounded-lg border bg-muted"
-                    />
-                  ))}
+                      className="relative aspect-square rounded-lg border bg-muted overflow-hidden"
+                    >
+                      <Image
+                        src={imgUrl}
+                        alt={`${orderItem.name} thumbnail ${
+                          index + 1
+                        }`}
+                        fill
+                        sizes="80px"
+                        className="object-cover"
+                      />
+                    </div>
+                  ),
+                )}
+
+                {images.length === 0 &&
+                  Array.from({ length: 4 }).map(
+                    (_, index) => (
+                      <div
+                        key={index}
+                        className="aspect-square rounded-lg border bg-muted"
+                      />
+                    ),
+                  )}
               </div>
             </div>
 
-            {/* Details Container */}
+            {/* Details */}
             <div className="space-y-6">
               <div>
                 <h2 className="text-xl sm:text-2xl lg:text-3xl font-bold tracking-tight wrap-break-word">
                   {orderItem.name}
                 </h2>
+
                 <p className="mt-1 text-xs sm:text-sm text-muted-foreground">
                   Ordered Product
                 </p>
               </div>
 
               <div className="rounded-xl border divide-y bg-card">
-                <Info label="Quantity" value={String(orderItem.quantity)} />
                 <Info
-                    label="Unit Price"
-                    value={formatUSD(orderItem.price)}
-                  />
+                  label="Quantity"
+                  value={String(orderItem.quantity)}
+                />
+
                 <Info
-                    label="Subtotal"
-                    value={formatUSD(subtotal)}
-                  />
+                  label="Unit Price"
+                  value={formatUSD(orderItem.price)}
+                />
+
+                <Info
+                  label="Subtotal"
+                  value={formatUSD(subtotal)}
+                />
               </div>
             </div>
           </div>
 
-          {/* 2. Updated Selected Options Section */}
+          {/* Selected Options */}
           <section className="space-y-3">
             <h3 className="text-base sm:text-lg font-semibold">
               Selected Options
             </h3>
+
             <div className="rounded-xl border divide-y bg-card">
               {variant ? (
                 <>
@@ -136,7 +154,11 @@ export function OrderItemDialog({ item }: Props) {
                     label={variant.optionName}
                     value={variant.optionValue}
                   />
-                  <SpecRow label="SKU" value={variant.sku ?? "-"} />
+
+                  <SpecRow
+                    label="SKU"
+                    value={variant.sku ?? "-"}
+                  />
                 </>
               ) : (
                 <div className="p-4 sm:p-5 text-sm text-muted-foreground">
@@ -151,32 +173,40 @@ export function OrderItemDialog({ item }: Props) {
             <h3 className="text-base sm:text-lg font-semibold">
               Description
             </h3>
+
             <div className="rounded-xl border p-4 sm:p-5 text-xs sm:text-sm whitespace-pre-line text-muted-foreground bg-card wrap-break-word">
               {product?.description ?? "-"}
             </div>
           </section>
+
           {/* Specifications */}
           <section className="space-y-3">
             <h3 className="text-base sm:text-lg font-semibold">
               Specifications
             </h3>
+
             <div className="rounded-xl border divide-y bg-card">
               <SpecRow
                 label="Brand"
                 value={
                   (
                     product as Product & {
-                      brand?: { name: string };
+                      brand?: {
+                        name: string;
+                      };
                     }
                   ).brand?.name ?? "-"
                 }
               />
+
               <SpecRow
                 label="Category"
                 value={
                   (
                     product as Product & {
-                      category?: { name: string };
+                      category?: {
+                        name: string;
+                      };
                     }
                   ).category?.name ?? "-"
                 }
@@ -194,11 +224,19 @@ interface InfoProps {
   value: string;
 }
 
-function Info({ label, value }: InfoProps) {
+function Info({
+  label,
+  value,
+}: InfoProps) {
   return (
     <div className="flex items-center justify-between border-b px-4 sm:px-5 py-3 sm:py-4 last:border-b-0 text-sm">
-      <span className="text-muted-foreground mr-2">{label}</span>
-      <span className="font-semibold text-right break-all">{value}</span>
+      <span className="text-muted-foreground mr-2">
+        {label}
+      </span>
+
+      <span className="font-semibold text-right break-all">
+        {value}
+      </span>
     </div>
   );
 }
@@ -208,13 +246,19 @@ interface SpecRowProps {
   value: string;
 }
 
-function SpecRow({ label, value }: SpecRowProps) {
+function SpecRow({
+  label,
+  value,
+}: SpecRowProps) {
   return (
     <div className="grid grid-cols-1 sm:grid-cols-[160px_1fr] md:grid-cols-[180px_1fr] gap-1 sm:gap-4 px-4 sm:px-5 py-3 text-sm">
       <span className="text-muted-foreground font-medium sm:font-normal">
         {label}
       </span>
-      <span className="wrap-break-word text-foreground">{value}</span>
+
+      <span className="wrap-break-word text-foreground">
+        {value}
+      </span>
     </div>
   );
 }

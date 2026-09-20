@@ -2,7 +2,6 @@
 
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import Image from "next/image";
 import { toast } from "sonner";
 
 import {
@@ -66,22 +65,29 @@ export function ProductRequestDialog({
         </DialogHeader>
 
         <div className="grid gap-8 md:grid-cols-2">
-          <Image
-            src={request.image_url}
-            alt="Requested Product"
-            width={600}
-            height={600}
-            className="aspect-square rounded-lg object-cover"
-          />
+          {/* Product Image */}
+          <div className="relative aspect-square overflow-hidden rounded-lg border border-border bg-muted">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src={request.image_url || "/placeholder.png"}
+              alt="Requested Product"
+              className="h-full w-full object-cover"
+            />
+          </div>
 
+          {/* Details */}
           <div className="space-y-6">
+            {/* Phone */}
             <div>
               <h3 className="font-semibold">Phone</h3>
-              <p>{request.phone}</p>
+              <p className="text-sm text-muted-foreground">
+                {request.phone}
+              </p>
             </div>
 
+            {/* Description */}
             <div>
-              <h3 className="font-semibold">Description</h3>
+              <h3 className="mb-2 font-semibold">Description</h3>
 
               <Textarea
                 value={request.description}
@@ -90,28 +96,45 @@ export function ProductRequestDialog({
               />
             </div>
 
+            {/* Status */}
             <div>
               <h3 className="mb-2 font-semibold">Status</h3>
-            <Select
-              value={status}
-              onValueChange={(value) => {
-              if (value) setStatus(value);
-            }}
-            >
-              <SelectTrigger>
-                <SelectValue />
-              </SelectTrigger>
 
-              <SelectContent>
-                <SelectItem value="pending">Pending</SelectItem>
-                <SelectItem value="reviewing">Reviewing</SelectItem>
-                <SelectItem value="sourcing">Sourcing</SelectItem>
-                <SelectItem value="available">Available</SelectItem>
-                <SelectItem value="rejected">Rejected</SelectItem>
-              </SelectContent>
-            </Select>
+              <Select
+                value={status}
+                onValueChange={(value) => {
+                  if (value) setStatus(value);
+                }}
+              >
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+
+                <SelectContent>
+                  <SelectItem value="pending">
+                    Pending
+                  </SelectItem>
+
+                  <SelectItem value="reviewing">
+                    Reviewing
+                  </SelectItem>
+
+                  <SelectItem value="sourcing">
+                    Sourcing
+                  </SelectItem>
+
+                  <SelectItem value="available">
+                    Available
+                  </SelectItem>
+
+                  <SelectItem value="rejected">
+                    Rejected
+                  </SelectItem>
+                </SelectContent>
+              </Select>
             </div>
 
+            {/* Product Link */}
             {status === "available" && (
               <div>
                 <h3 className="mb-2 font-semibold">
@@ -128,6 +151,7 @@ export function ProductRequestDialog({
               </div>
             )}
 
+            {/* Save */}
             <Button
               className="w-full"
               disabled={isPending}
@@ -147,7 +171,6 @@ export function ProductRequestDialog({
                     );
 
                     onOpenChange(false);
-
                     router.refresh();
                   } catch (error) {
                     toast.error(
@@ -159,7 +182,9 @@ export function ProductRequestDialog({
                 });
               }}
             >
-              {isPending ? "Saving..." : "Save Changes"}
+              {isPending
+                ? "Saving..."
+                : "Save Changes"}
             </Button>
           </div>
         </div>

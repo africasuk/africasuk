@@ -1,12 +1,12 @@
 import { redirect } from "next/navigation";
+
 import { getOrders } from "@/app/actions/orders";
 import { OrderTable } from "@/components/orders/OrderTable";
 import PageHeader from "@/components/shared/PageHeader";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 
-export default async function OrderHistoryPage() {
-  const supabase =
-    await createServerSupabaseClient();
+export default async function ConfirmedOrdersPage() {
+  const supabase = await createServerSupabaseClient();
 
   const {
     data: { user },
@@ -16,24 +16,20 @@ export default async function OrderHistoryPage() {
     redirect("/login");
   }
 
-const allOrders = await getOrders();
+  const orders = await getOrders();
 
-const orders = allOrders.filter(
-  (order) =>
-    order.status === "CANCELLED" ||
-    (
-      order.status === "DELIVERED" &&
-      order.paymentStatus === "PAID"
-    ),
-);
+  const confirmedOrders = orders.filter(
+    (order) => order.status === "CONFIRMED",
+  );
+
   return (
     <div className="space-y-6">
       <PageHeader
-        title="Order History"
-        description="View your completed, paid, and cancelled orders."
+        title="Confirmed Orders"
+        description="Manage orders confirmed and ready for processing."
       />
 
-      <OrderTable orders={orders} />
+      <OrderTable orders={confirmedOrders} />
     </div>
   );
 }

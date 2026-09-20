@@ -2,14 +2,12 @@ import type {
   Order,
   PlaceOrderRequest,
 } from "@africasuk/types";
-
 import {
   OrderItemRepository,
   OrderRepository,
   ProductRepository,
   ProductVariantRepository,
 } from "@africasuk/database";
-
 import { generateOrderNumber } from "./generateOrderNumber";
 
 export class OrderCommandService {
@@ -47,172 +45,195 @@ export class OrderCommandService {
       throw new Error("Address is required.");
     }
 
-const orderNumber = generateOrderNumber();
+    const orderNumber = generateOrderNumber();
 
-let subtotal = 0;
+    let subtotal = 0;
 
-const shipping = 0;
-const tax = 0;
-const discount = 0;
+    // Default pricing rates
+    const TAX_RATE = 0.10;
+    const SHIPPING_RATE = 0.15;
 
-const orderItems: {
-  productId: string;
-  variantId: string;
-  name: string;
-  image: string | null;
-  price: number;
-  quantity: number;
-}[] = [];
+    // No discount by default
+    const discount = 0;
 
-const productCache = new Map<string, Awaited<ReturnType<ProductRepository["getById"]>>>();
+    const orderItems: {
+      productId: string;
+      variantId: string;
+      name: string;
+      image: string | null;
+      price: number;
+      quantity: number;
+    }[] = [];
 
-// Validate products and calculate totals
-for (const item of request.items) {
-  const variant =
-    await this.variantRepository.getById(
-      item.variantId,
-    );
+    const productCache = new Map<
+      string,
+      Awaited<ReturnType<ProductRepository["getById"]>>
+    >();
 
-  if (variant === null) {
-    throw new Error(
-      "Product variant not found.",
-    );
-  }
+    // Validate products and calculate subtotal
+    for (const item of request.items) {
+      const variant =
+        await this.variantRepository.getById(
+          item.variantId,
+        );
 
-  if (!variant.isActive) {
-    throw new Error(
-      "Product variant is unavailable.",
-    );
-  }
+      if (variant === null) {
+        throw new Error(
+          "Product variant not found.",
+        );
+      }
 
-  if (variant.stock < item.quantity) {
-    throw new Error(
-      `Only ${variant.stock} item(s) available.`,
-    );
-  }
+      if (!variant.isActive) {
+        throw new Error(
+          "Product variant is unavailable.",
+        );
+      }
 
-  let product =
-    productCache.get(item.productId);
+      if (variant.stock < item.quantity) {
+        throw new Error(
+          `Only ${variant.stock} item(s) available.`,
+        );
+      }
 
-  if (!product) {
-    product =
-      await this.productRepository.getById(
+      let product = productCache.get(
         item.productId,
       );
 
-    if (product === null) {
-      throw new Error(
-        "Product not found.",
-      );
+      if (!product) {
+        product =
+          await this.productRepository.getById(
+            item.productId,
+          );
+
+        if (product === null) {
+          throw new Error(
+            "Product not found.",
+          );
+        }
+
+        if (!product.isActive) {
+          throw new Error(
+            "Product is unavailable.",
+          );
+        }
+
+        productCache.set(
+          item.productId,
+          product,
+        );
+      }
+
+      subtotal +=
+        variant.price * item.quantity;
+
+      orderItems.push({
+        productId: product.id,
+        variantId: variant.id,
+        name: product.name,
+        image:
+          variant.productColor?.images?.[0]
+            ?.imageUrl ?? null,
+        price: variant.price,
+        quantity: item.quantity,
+      });
     }
 
-    if (!product.isActive) {
-      throw new Error(
-        "Product is unavailable.",
-      );
-    }
+    // Calculate tax and shipping from subtotal
+    const tax = subtotal * TAX_RATE;
+    const shipping =
+      subtotal * SHIPPING_RATE;
 
-    productCache.set(
-      item.productId,
-      product,
+    // Final order total
+    const total = subtotal;
+
+
+    // Default delivery estimate (7–14 days)
+    const now = new Date();
+
+    const estimatedDeliveryStart =
+      new Date(now);
+
+    estimatedDeliveryStart.setDate(
+      estimatedDeliveryStart.getDate() + 7,
     );
-  }
 
-  subtotal +=
-    variant.price *
-    item.quantity;
+    const estimatedDeliveryEnd =
+      new Date(now);
 
-  orderItems.push({
-    productId: product.id,
-    variantId: variant.id,
-    name: product.name,
-    image:
-      variant.productColor?.images?.[0]
-        ?.imageUrl ?? null,
-    price: variant.price,
-    quantity: item.quantity,
-  });
-}
+    estimatedDeliveryEnd.setDate(
+      estimatedDeliveryEnd.getDate() + 14,
+    );
 
-const total =
-  subtotal +
-  shipping +
-  tax -
-  discount;
-
-// Default delivery estimate (7–14 days)
-const now = new Date();
-
-const estimatedDeliveryStart =
-  new Date(now);
-
-estimatedDeliveryStart.setDate(
-  estimatedDeliveryStart.getDate() +
-    7,
-);
-
-const estimatedDeliveryEnd =
-  new Date(now);
-
-estimatedDeliveryEnd.setDate(
-  estimatedDeliveryEnd.getDate() +
-    14,
-);
+    // Create order
     const order =
       await this.orderRepository.create({
-  userId: request.userId ?? null,
+        userId: request.userId ?? null,
+        orderNumber,
+        status: "PENDING",
+        paymentStatus: "PENDING",
+        paymentMethod:
+          request.paymentMethod,
 
-  orderNumber,
+        subtotal,
+        shipping,
+        tax,
+        discount,
+        total,
 
+        currency: request.currency,
 
-  status: "PENDING",
-  paymentStatus: "PENDING",
-  paymentMethod: request.paymentMethod,
+        customerName:
+          request.customer.name,
 
-  subtotal,
-  shipping,
-  tax,
-  discount,
-  total,
+        customerEmail:
+          request.customer.email,
 
-  currency: request.currency,
+        customerPhone:
+          request.customer.phone ?? null,
 
-  customerName: request.customer.name,
-  customerEmail: request.customer.email,
-  customerPhone: request.customer.phone ?? null,
+        country:
+          request.customer.country,
 
-  country: request.customer.country,
-  state: request.customer.state ?? null,
-  city: request.customer.city,
-  address: request.customer.address,
-  postalCode: request.customer.postalCode ?? null,
-  notes: request.customer.notes ?? null,
+        state:
+          request.customer.state ?? null,
 
-  estimatedDeliveryStart:
-    estimatedDeliveryStart.toISOString().split("T")[0],
+        city:
+          request.customer.city,
 
-  estimatedDeliveryEnd:
-    estimatedDeliveryEnd.toISOString().split("T")[0],
+        address:
+          request.customer.address,
 
-  estimatedDeliveryUpdatedAt: new Date().toISOString(),
+        postalCode:
+          request.customer.postalCode ?? null,
 
-  trackingNumber: null,
-  adminNotes: null,
-});
+        notes:
+          request.customer.notes ?? null,
 
+        estimatedDeliveryStart:
+          estimatedDeliveryStart
+            .toISOString()
+            .split("T")[0],
+
+        estimatedDeliveryEnd:
+          estimatedDeliveryEnd
+            .toISOString()
+            .split("T")[0],
+
+        estimatedDeliveryUpdatedAt:
+          new Date().toISOString(),
+
+        trackingNumber: null,
+        adminNotes: null,
+      });
+
+    // Create order items
     await this.orderItemRepository.createMany(
       orderItems.map((item) => ({
         orderId: order.id,
-
-        productId:
-          item.productId,
-
-        variantId:
-          item.variantId,
-
+        productId: item.productId,
+        variantId: item.variantId,
         name: item.name,
         image: item.image,
-
         price: item.price,
         quantity: item.quantity,
       })),
@@ -229,34 +250,34 @@ estimatedDeliveryEnd.setDate(
     return order;
   }
 
- async updateEstimatedDelivery(
-  orderId: string,
-  estimatedDeliveryStart: string | null,
-  estimatedDeliveryEnd: string | null,
-): Promise<void> {
-  await this.orderRepository.update(
-    orderId,
-    {
-      estimatedDeliveryStart,
-      estimatedDeliveryEnd,
-    },
-  );
-}
+  async updateEstimatedDelivery(
+    orderId: string,
+    estimatedDeliveryStart: string | null,
+    estimatedDeliveryEnd: string | null,
+  ): Promise<void> {
+    await this.orderRepository.update(
+      orderId,
+      {
+        estimatedDeliveryStart,
+        estimatedDeliveryEnd,
+      },
+    );
+  }
 
-async updateOrder(
-  orderId: string,
-  input: {
-    status?: Order["status"];
-    paymentStatus?: Order["paymentStatus"];
-    estimatedDeliveryStart?: string | null;
-    estimatedDeliveryEnd?: string | null;
-    trackingNumber?: string | null;
-    adminNotes?: string | null;
-  },
-): Promise<void> {
-  await this.orderRepository.update(
-    orderId,
-    input,
-  );
-}
+  async updateOrder(
+    orderId: string,
+    input: {
+      status?: Order["status"];
+      paymentStatus?: Order["paymentStatus"];
+      estimatedDeliveryStart?: string | null;
+      estimatedDeliveryEnd?: string | null;
+      trackingNumber?: string | null;
+      adminNotes?: string | null;
+    },
+  ): Promise<void> {
+    await this.orderRepository.update(
+      orderId,
+      input,
+    );
+  }
 }

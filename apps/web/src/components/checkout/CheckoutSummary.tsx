@@ -8,11 +8,9 @@ import {
   Wallet,
 } from "lucide-react";
 import { toast } from "sonner";
-
 import { Button } from "@/components/ui/button";
 import { useCart } from "@/store/cart";
 import { Price } from "@/components/currency/Price";
-
 
 import AddAddressDialog from "./AddAddressDialog";
 import { useCheckout } from "./CheckoutContext";
@@ -28,8 +26,11 @@ interface CheckoutSummaryProps {
 export default function CheckoutSummary({
   profile,
 }: CheckoutSummaryProps) {
-  const [placingOrder, setPlacingOrder] = useState(false);
-  const [contactDialogOpen, setContactDialogOpen] = useState(false);
+  const [placingOrder, setPlacingOrder] =
+    useState(false);
+
+  const [contactDialogOpen, setContactDialogOpen] =
+    useState(false);
 
   const router = useRouter();
   const { currency } = useCurrency();
@@ -39,29 +40,48 @@ export default function CheckoutSummary({
     selectedAddress,
   } = useCheckout();
 
-  const items = useCart((state) => state.items);
-  const clear = useCart((state) => state.clear);
+  const items = useCart(
+    (state) => state.items,
+  );
 
-  const hasAddress = selectedAddress !== null;
+  const clear = useCart(
+    (state) => state.clear,
+  );
+
+  const hasAddress =
+    selectedAddress !== null;
 
   const totalItems = items.reduce(
-    (sum, item) => sum + Number(item.quantity),
+    (sum, item) =>
+      sum + Number(item.quantity),
     0,
   );
 
   const subtotal = items.reduce(
     (sum, item) =>
-      sum + Number(item.price) * Number(item.quantity),
+      sum +
+      Number(item.price) *
+        Number(item.quantity),
     0,
   );
 
-  const shipping = 0;
-  const tax = 0;
-  const total = subtotal + shipping + tax;
+  // Included pricing
+  const TAX_RATE = 0.10;
+  const SHIPPING_RATE = 0.15;
+
+  const tax = subtotal * TAX_RATE;
+  const shipping =
+    subtotal * SHIPPING_RATE;
+
+  // Tax and shipping are already included
+  // in the product price.
+  const total = subtotal;
 
   async function handlePlaceOrder() {
     if (!selectedAddress) {
-      toast.error("Please add or select a delivery address.");
+      toast.error(
+        "Please add or select a delivery address.",
+      );
       return;
     }
 
@@ -70,76 +90,104 @@ export default function CheckoutSummary({
       return;
     }
 
-    const phone = profile.phone?.trim() ?? "";
+    const phone =
+      profile.phone?.trim() ?? "";
 
     if (!phone) {
       setContactDialogOpen(true);
       return;
     }
 
-    const phoneRegex = /^\+?[0-9]{6,15}$/;
+    const phoneRegex =
+      /^\+?[0-9]{6,15}$/;
 
     if (!phoneRegex.test(phone)) {
       setContactDialogOpen(true);
       return;
     }
 
-    if (!selectedAddress.street?.trim()) {
-      toast.error("Please enter your street address.");
+    if (
+      !selectedAddress.street?.trim()
+    ) {
+      toast.error(
+        "Please enter your street address.",
+      );
       return;
     }
 
-    if (!selectedAddress.city?.trim()) {
-      toast.error("Please enter your city.");
+    if (
+      !selectedAddress.city?.trim()
+    ) {
+      toast.error(
+        "Please enter your city.",
+      );
       return;
     }
 
-    if (!selectedAddress.country?.trim()) {
-      toast.error("Please enter your country.");
+    if (
+      !selectedAddress.country?.trim()
+    ) {
+      toast.error(
+        "Please enter your country.",
+      );
       return;
     }
 
     try {
       setPlacingOrder(true);
 
- const result = await placeOrder({
-  customer: {
-    name: profile.fullName,
-    email: profile.email,
-    phone: profile.phone ?? undefined,
-    country: selectedAddress.country,
-    state: selectedAddress.state ?? undefined,
-    city: selectedAddress.city,
-    address: selectedAddress.street,
-    postalCode: selectedAddress.postalCode ?? undefined,
-  },
-  items: items.map((item) => ({
-    productId: item.productId,
-    variantId: item.variantId,
-    quantity: item.quantity,
-  })),
-  paymentMethod,
-  currency,
-});
+      const result = await placeOrder({
+        customer: {
+          name: profile.fullName,
+          email: profile.email,
+          phone:
+            profile.phone ?? undefined,
+          country:
+            selectedAddress.country,
+          state:
+            selectedAddress.state ??
+            undefined,
+          city:
+            selectedAddress.city,
+          address:
+            selectedAddress.street,
+          postalCode:
+            selectedAddress.postalCode ??
+            undefined,
+        },
 
-clear();
+        items: items.map((item) => ({
+          productId: item.productId,
+          variantId: item.variantId,
+          quantity: item.quantity,
+        })),
 
-if (paymentMethod === "COD") {
-  toast.success("Order placed successfully.");
+        paymentMethod,
+        currency,
+      });
 
-  router.push(
-    `/account/orders/${result.order.orderNumber}`,
-  );
-} else {
-  router.push(
-    `/payment/${result.payment.referenceId}`,
-  );
-}
+      clear();
+
+      if (paymentMethod === "COD") {
+        toast.success(
+          "Order placed successfully.",
+        );
+
+        router.push(
+          `/account/orders/${result.order.orderNumber}`,
+        );
+      } else {
+        router.push(
+          `/payment/${result.payment.referenceId}`,
+        );
+      }
     } catch (error) {
       console.error(error);
 
       toast.error(
-        error instanceof Error ? error.message : "Failed to place order.",
+        error instanceof Error
+          ? error.message
+          : "Failed to place order.",
       );
     } finally {
       setPlacingOrder(false);
@@ -160,34 +208,47 @@ if (paymentMethod === "COD") {
         </div>
 
         <span className="text-[10px] font-bold tracking-wide text-neutral-400">
-          {totalItems} {totalItems === 1 ? "item" : "items"}
+          {totalItems}{" "}
+          {totalItems === 1
+            ? "item"
+            : "items"}
         </span>
       </div>
 
       <div className="space-y-3 text-xs font-medium text-neutral-500 sm:text-sm">
-        <div className="flex justify-between items-center">
+        <div className="flex items-center justify-between">
           <span>Subtotal</span>
+
           <div className="text-neutral-800">
             <Price price={subtotal} />
           </div>
         </div>
 
-        <div className="flex justify-between items-center">
+        <div className="flex items-center justify-between">
           <span>Shipping</span>
-          <span className="text-[11px] font-bold uppercase tracking-wide text-emerald-600">
-            Free
-          </span>
-        </div>
 
-        <div className="flex justify-between items-center">
-          <span>Estimated Tax</span>
           <div className="text-neutral-800">
-            <Price price={tax} />
+            <Price price={shipping} />
+            <span className="ml-1 text-[10px] font-bold uppercase text-emerald-600">
+              Included
+            </span>
           </div>
         </div>
 
-        <div className="flex justify-between items-center pt-0.5">
+        <div className="flex items-center justify-between">
+          <span>Estimated Tax</span>
+
+          <div className="text-neutral-800">
+            <Price price={tax} />
+            <span className="ml-1 text-[10px] font-bold uppercase text-emerald-600">
+              Included
+            </span>
+          </div>
+        </div>
+
+        <div className="flex items-center justify-between pt-0.5">
           <span>Payment Method</span>
+
           <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-neutral-700">
             {paymentMethod === "COD" ? (
               <>
@@ -205,7 +266,10 @@ if (paymentMethod === "COD") {
 
         <div className="mt-2 border-t border-neutral-100 pt-3.5">
           <div className="flex items-baseline justify-between text-neutral-950">
-            <span className="text-xs font-bold">Total Amount</span>
+            <span className="text-xs font-bold">
+              Total Amount
+            </span>
+
             <div className="text-xl font-extrabold tracking-tight">
               <Price price={total} />
             </div>
@@ -215,7 +279,8 @@ if (paymentMethod === "COD") {
         {!hasAddress && (
           <div className="mt-4 rounded-lg border border-amber-200 bg-amber-50 p-3">
             <p className="text-xs font-semibold leading-normal text-amber-800">
-              Please add or select a delivery address before continuing.
+              Please add or select a delivery
+              address before continuing.
             </p>
           </div>
         )}
@@ -227,7 +292,10 @@ if (paymentMethod === "COD") {
         ) : (
           <Button
             size="lg"
-            disabled={items.length === 0 || placingOrder}
+            disabled={
+              items.length === 0 ||
+              placingOrder
+            }
             onClick={handlePlaceOrder}
             className="mt-4 h-10 w-full rounded-xl bg-[#004d26] text-xs font-bold tracking-wider text-white transition-all duration-200 hover:bg-[#003b1d] active:scale-[0.99]"
           >

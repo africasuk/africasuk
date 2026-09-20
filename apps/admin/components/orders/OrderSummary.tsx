@@ -13,11 +13,8 @@ interface Props {
   order: Order;
 }
 
-function formatMoney(
-  currency: string,
-  amount: number,
-) {
-  return `${currency} ${amount.toFixed(2)}`;
+function formatMoney(amount: number) {
+  return `USD ${amount.toFixed(2)}`;
 }
 
 export function OrderSummary({
@@ -37,6 +34,7 @@ export function OrderSummary({
           <span className="text-muted-foreground">
             Order Number
           </span>
+
           <span className="font-medium wrap-break-word">
             {order.orderNumber}
           </span>
@@ -46,6 +44,7 @@ export function OrderSummary({
           <span className="text-muted-foreground">
             Created
           </span>
+
           <span className="text-foreground font-normal">
             {format(
               new Date(order.createdAt),
@@ -54,17 +53,15 @@ export function OrderSummary({
           </span>
         </div>
 
-        {/* Financial Breakdown Panel */}
+        {/* Financial Breakdown */}
         <div className="border-t pt-4 space-y-3">
           <div className="flex items-center justify-between gap-4">
             <span className="text-muted-foreground sm:text-foreground">
               Subtotal
             </span>
+
             <span className="font-medium break-all">
-              {formatMoney(
-                order.currency,
-                order.subtotal,
-              )}
+              {formatMoney(order.subtotal)}
             </span>
           </div>
 
@@ -72,11 +69,9 @@ export function OrderSummary({
             <span className="text-muted-foreground sm:text-foreground">
               Shipping
             </span>
+
             <span className="font-medium break-all">
-              {formatMoney(
-                order.currency,
-                order.shipping,
-              )}
+              {formatMoney(order.shipping)}
             </span>
           </div>
 
@@ -84,11 +79,9 @@ export function OrderSummary({
             <span className="text-muted-foreground sm:text-foreground">
               Tax
             </span>
+
             <span className="font-medium break-all">
-              {formatMoney(
-                order.currency,
-                order.tax,
-              )}
+              {formatMoney(order.tax)}
             </span>
           </div>
 
@@ -96,22 +89,18 @@ export function OrderSummary({
             <span className="text-muted-foreground sm:text-foreground">
               Discount
             </span>
+
             <span className="font-medium text-emerald-600 dark:text-emerald-500 break-all">
-              -{formatMoney(
-                order.currency,
-                order.discount,
-              )}
+              -{formatMoney(order.discount)}
             </span>
           </div>
 
           {/* Grand Total */}
           <div className="border-t pt-4 flex items-center justify-between gap-4 text-base sm:text-lg font-semibold text-foreground">
             <span>Total</span>
+
             <span className="break-all">
-              {formatMoney(
-                order.currency,
-                order.total,
-              )}
+              {formatMoney(order.total)}
             </span>
           </div>
         </div>

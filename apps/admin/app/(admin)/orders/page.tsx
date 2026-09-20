@@ -1,20 +1,9 @@
-import Link from "next/link";
 import { redirect } from "next/navigation";
 
 import { getOrders } from "@/app/actions/orders";
-
-
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 import PageHeader from "@/components/shared/PageHeader";
-
-
+import OrderStatCard from "@/components/orders/OrderStatCard";
 
 export default async function OrdersPage() {
   const supabase = await createServerSupabaseClient();
@@ -29,17 +18,44 @@ export default async function OrdersPage() {
 
   const orders = await getOrders();
 
-  const activeOrders = orders.filter((order) =>
-    ["PENDING", "PROCESSING", "SHIPPED"].includes(order.status),
+  // 1. Pending
+  const pendingOrders = orders.filter((order) => order.status === "PENDING");
+
+  // 2. Confirmed
+  const confirmedOrders = orders.filter(
+    (order) => order.status === "CONFIRMED"
   );
 
+  // 3. Processing
+  const processingOrders = orders.filter(
+    (order) => order.status === "PROCESSING"
+  );
+
+  // 4. In Fulfillment
+  const fulfillmentStatuses = [
+    "READY_FOR_PICKUP",
+    "IN_TRANSIT",
+    "AT_BORDER",
+    "AT_JUBA_WAREHOUSE",
+    "OUT_FOR_DELIVERY",
+  ] as const;
+
+  const fulfillmentOrders = orders.filter((order) =>
+    fulfillmentStatuses.includes(
+      order.status as (typeof fulfillmentStatuses)[number]
+    )
+  );
+
+  // 5. Delivered
+  const deliveredOrders = orders.filter((order) => order.status === "DELIVERED");
+
+  // 6. Completed = Delivered + Paid
   const completedOrders = orders.filter(
-    (order) => order.status === "DELIVERED",
+    (order) => order.status === "DELIVERED" && order.paymentStatus === "PAID"
   );
 
-  const cancelledOrders = orders.filter(
-    (order) => order.status === "CANCELLED",
-  );
+  // 7. Cancelled
+  const cancelledOrders = orders.filter((order) => order.status === "CANCELLED");
 
   return (
     <div className="space-y-6">
@@ -48,74 +64,70 @@ export default async function OrdersPage() {
         description="Manage and monitor all marketplace orders."
       />
 
-      <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-4">
-        <Link href="/orders/active">
-          <Card className="cursor-pointer transition-all hover:border-primary hover:shadow-lg">
-            <CardHeader>
-              <CardTitle>Active Orders</CardTitle>
-              <CardDescription>
-                Pending, Processing & Shipped
-              </CardDescription>
-            </CardHeader>
+      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4 sm:gap-6">
+        <OrderStatCard
+          stage="pending"
+          href="/orders/pending"
+          title="Pending Orders"
+          description="Awaiting initial confirmation"
+          count={pendingOrders.length}
+        />
 
-            <CardContent>
-              <p className="text-4xl font-bold">
-                {activeOrders.length}
-              </p>
-            </CardContent>
-          </Card>
-        </Link>
+        <OrderStatCard
+          stage="confirmed"
+          href="/orders/confirmed"
+          title="Confirmed Orders"
+          description="Confirmed for store processing"
+          count={confirmedOrders.length}
+        />
 
-        <Link href="/orders/completed">
-          <Card className="cursor-pointer transition-all hover:border-primary hover:shadow-lg">
-            <CardHeader>
-              <CardTitle>Completed Orders</CardTitle>
-              <CardDescription>
-                Successfully delivered orders
-              </CardDescription>
-            </CardHeader>
+        <OrderStatCard
+          stage="processing"
+          href="/orders/processing"
+          title="Processing Orders"
+          description="Items currently being prepared"
+          count={processingOrders.length}
+        />
 
-            <CardContent>
-              <p className="text-4xl font-bold">
-                {completedOrders.length}
-              </p>
-            </CardContent>
-          </Card>
-        </Link>
+        <OrderStatCard
+          stage="fulfillment"
+          href="/orders/fulfillment"
+          title="In Fulfillment"
+          description="In transit, border, or delivery"
+          count={fulfillmentOrders.length}
+        />
 
-        <Link href="/orders/cancelled">
-          <Card className="cursor-pointer transition-all hover:border-primary hover:shadow-lg">
-            <CardHeader>
-              <CardTitle>Cancelled Orders</CardTitle>
-              <CardDescription>
-                Cancelled by customer or admin
-              </CardDescription>
-            </CardHeader>
+        <OrderStatCard
+          stage="delivered"
+          href="/orders/delivered"
+          title="Delivered Orders"
+          description="Successfully dropped at destination"
+          count={deliveredOrders.length}
+        />
 
-            <CardContent>
-              <p className="text-4xl font-bold">
-                {cancelledOrders.length}
-              </p>
-            </CardContent>
-          </Card>
-        </Link>
+        <OrderStatCard
+          stage="completed"
+          href="/orders/completed"
+          title="Completed Orders"
+          description="Delivered and fully paid"
+          count={completedOrders.length}
+        />
 
-        <Link href="/orders/history">
-          <Card className="cursor-pointer transition-all hover:border-primary hover:shadow-lg">
-            <CardHeader>
-              <CardTitle>Order History</CardTitle>
-              <CardDescription>
-                View every marketplace order
-              </CardDescription>
-            </CardHeader>
+        <OrderStatCard
+          stage="cancelled"
+          href="/orders/cancelled"
+          title="Cancelled Orders"
+          description="Cancelled by customer or store"
+          count={cancelledOrders.length}
+        />
 
-            <CardContent>
-              <p className="text-4xl font-bold">
-                {orders.length}
-              </p>
-            </CardContent>
-          </Card>
-        </Link>
+        <OrderStatCard
+          stage="history"
+          href="/orders/history"
+          title="Order History"
+          description="All recorded marketplace orders"
+          count={orders.length}
+        />
       </div>
     </div>
   );

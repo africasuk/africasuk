@@ -1,10 +1,3 @@
-import {
-  Boxes,
-  Building2,
-  Package,
-  ShoppingCart,
-} from "lucide-react";
-
 import StatCard from "./StatCard";
 
 interface DashboardStatsProps {
@@ -16,37 +9,46 @@ interface DashboardStatsProps {
   };
 }
 
-export default function DashboardStats({
-  stats,
-}: DashboardStatsProps) {
+export default function DashboardStats({ stats }: DashboardStatsProps) {
   return (
-    <div className="grid gap-6 sm:grid-cols-2 xl:grid-cols-4">
+    <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4 sm:gap-4 lg:gap-6">
       <StatCard
         title="Brands"
         value={stats.brands}
-        description="Total brands"
-        icon={<Building2 className="h-5 w-5" />}
+        description="Active marketplace brands"
+        iconName="brands"
+        colorScheme="blue"
+        href="/brands"
+        trend={{ value: "+4.2%", isPositive: true }}
       />
 
       <StatCard
         title="Categories"
         value={stats.categories}
-        description="Total categories"
-        icon={<Boxes className="h-5 w-5" />}
+        description="Organized catalog groups"
+        iconName="categories"
+        colorScheme="violet"
+        href="/categories"
       />
 
       <StatCard
         title="Products"
         value={stats.products}
-        description="Total products"
-        icon={<Package className="h-5 w-5" />}
+        description="Live items listed"
+        iconName="products"
+        colorScheme="emerald"
+        href="/products"
+        trend={{ value: "+12.8%", isPositive: true }}
       />
 
       <StatCard
         title="Orders"
         value={stats.orders}
-        description="Total orders"
-        icon={<ShoppingCart className="h-5 w-5" />}
+        description="Completed & pending sales"
+        iconName="orders"
+        colorScheme="amber"
+        href="/orders"
+        trend={{ value: "+8.1%", isPositive: true }}
       />
     </div>
   );
