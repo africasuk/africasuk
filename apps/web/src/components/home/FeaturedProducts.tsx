@@ -123,6 +123,6 @@ export default function FeaturedProducts({
           </Link>
         </div>
       </Container>
-    </section>
+    </section> 
   );
 }
