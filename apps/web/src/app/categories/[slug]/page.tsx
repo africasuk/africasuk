@@ -24,6 +24,10 @@ interface Props {
   }>;
 }
 
+/* -------------------------------------------------------
+   Metadata
+------------------------------------------------------- */
+
 export async function generateMetadata({
   params,
 }: Props): Promise<Metadata> {
@@ -31,11 +35,9 @@ export async function generateMetadata({
 
   const supabase = await createClient();
 
-  const categoryRepository =
-    new CategoryRepository(supabase);
+  const categoryRepository = new CategoryRepository(supabase);
 
-  const category =
-    await categoryRepository.getBySlug(slug);
+  const category = await categoryRepository.getBySlug(slug);
 
   if (!category) {
     return {
@@ -89,6 +91,10 @@ export async function generateMetadata({
   };
 }
 
+/* -------------------------------------------------------
+   Category Page
+------------------------------------------------------- */
+
 export default async function CategoryPage({
   params,
 }: Props) {
@@ -96,13 +102,17 @@ export default async function CategoryPage({
 
   const supabase = await createClient();
 
-  const categoryRepository =
-    new CategoryRepository(supabase);
+  const categoryRepository = new CategoryRepository(
+    supabase
+  );
 
-  const productService =
-    new ProductQueryService(
-      new ProductRepository(supabase)
-    );
+  const productService = new ProductQueryService(
+    new ProductRepository(supabase)
+  );
+
+  /* -------------------------------------------------------
+     Get Category
+  ------------------------------------------------------- */
 
   const category =
     await categoryRepository.getBySlug(slug);
@@ -111,7 +121,11 @@ export default async function CategoryPage({
     notFound();
   }
 
-  // Get products in random order
+  /* -------------------------------------------------------
+     Get Products
+     Keep random order
+  ------------------------------------------------------- */
+
   const products = (
     await productService.getAll({
       random: true,
@@ -121,39 +135,44 @@ export default async function CategoryPage({
       product.categoryId === category.id
   );
 
-  /*
-   * Mix colors from different products.
-   *
-   * Example:
-   *
-   * Shirt - Black
-   * Bag - Red
-   * Shoes - White
-   * Shirt - Pink
-   * Bag - Blue
-   * Shoes - Black
-   */
+  /* -------------------------------------------------------
+     Prepare Products By Color
+
+     Example:
+
+     Shirt - Black
+     Bag   - Red
+     Shoes - White
+     Shirt - Pink
+     Bag   - Blue
+     Shoes - Black
+  ------------------------------------------------------- */
+
   type ProductColor =
     (typeof products)[number]["colors"][number];
 
-  const groupedProducts = products.map(
-    (product) => {
-      return (product.colors ?? [])
-        .filter(
-          (color: ProductColor) =>
-            color.variants &&
-            color.variants.length > 0
-        )
-        .map(
-          (color: ProductColor) => ({
-            product,
-            color,
-          })
-        );
-    }
-  );
+  const groupedProducts = products.map((product) => {
+    return (product.colors ?? [])
+      .filter(
+        (color: ProductColor) =>
+          color.variants &&
+          color.variants.length > 0
+      )
+      .map((color: ProductColor) => ({
+        product,
+        color,
+      }));
+  });
 
-  const mixedProducts = [];
+  /* -------------------------------------------------------
+     Mix Colors From Different Products
+  ------------------------------------------------------- */
+
+  const mixedProducts: Array<
+    (typeof products)[number] & {
+      selectedColorId: string;
+    }
+  > = [];
 
   const maxColors = Math.max(
     0,
@@ -186,71 +205,85 @@ export default async function CategoryPage({
     }
   }
 
- type CategoryProductColor =
-  (typeof products)[number]["colors"][number];
+  /* -------------------------------------------------------
+     Total Items
+  ------------------------------------------------------- */
 
-const totalItemsCount = products.reduce(
-  (total: number, product) =>
-    total +
-    product.colors.reduce(
-      (
-        sum: number,
-        color: CategoryProductColor
-      ) => sum + color.variants.length,
-      0
-    ),
-  0
-);
+  type CategoryProductColor =
+    (typeof products)[number]["colors"][number];
 
+  const totalItemsCount = products.reduce(
+    (total: number, product) =>
+      total +
+      product.colors.reduce(
+        (
+          sum: number,
+          color: CategoryProductColor
+        ) =>
+          sum + color.variants.length,
+        0
+      ),
+    0
+  );
+
+  /* -------------------------------------------------------
+     Render
+  ------------------------------------------------------- */
 
   return (
     <Layout>
       <CategoryJsonLd category={category} />
 
-      <section className="w-full bg-white py-8 sm:py-12 select-none antialiased border-b border-gray-100">
-        <Container className="max-w-7xl w-full px-4 sm:px-6 lg:px-8">
+      <section className="relative w-full overflow-hidden bg-white select-none antialiased">
 
-          <div className="space-y-10 sm:space-y-12">
+        {/* =================================================
+            CATEGORY COVER
+        ================================================= */}
 
-            {/* Category Header */}
-            <div className="flex flex-col sm:flex-row items-center sm:items-start gap-5 sm:gap-7 border-b border-gray-100 pb-8 text-center sm:text-left">
+        <div className="relative h-70 sm:h-85 lg:h-100 w-full overflow-hidden">
 
-              {/* Category Image */}
-              <div className="relative aspect-square w-24 sm:w-28 shrink-0 rounded-3xl overflow-hidden bg-gray-50 border border-gray-100">
+          {category.imageUrl ? (
+            <>
+              <Image
+                src={category.imageUrl}
+                alt={category.name}
+                fill
+                priority
+                sizes="100vw"
+                className="object-cover object-center"
+              />
 
-                {category.imageUrl ? (
-                  <Image
-                    src={category.imageUrl}
-                    alt={category.name}
-                    fill
-                    priority
-                    sizes="(max-width: 640px) 96px, 112px"
-                    className="object-cover"
-                  />
-                ) : (
-                  <div className="w-full h-full flex items-center justify-center font-bold text-xl text-[#008744]">
-                    {category.name
-                      .charAt(0)
-                      .toUpperCase()}
-                  </div>
-                )}
+              {/* Dark overlay */}
+              <div className="absolute inset-0 bg-linear-to-t from-black/75 via-black/30 to-black/5" />
 
-              </div>
+              {/* Fade into products */}
+              <div className="absolute inset-x-0 bottom-0 h-32 bg-linear-to-t from-white via-white/60 to-transparent" />
+            </>
+          ) : (
+            <div className="absolute inset-0 bg-linear-to-br from-[#005c2e] to-[#008744]" />
+          )}
 
-              {/* Category Information */}
-              <div className="flex flex-col justify-center max-w-2xl space-y-1.5 pt-1">
+          {/* Category Content */}
 
-                <div className="flex items-center justify-center sm:justify-start gap-2">
+          <Container className="relative z-10 h-full max-w-7xl w-full px-4 sm:px-6 lg:px-8">
 
-                  <span className="text-[11px] font-semibold uppercase tracking-[0.2em] text-[#008744]">
+            <div className="flex h-full items-end pb-12 sm:pb-14 lg:pb-16">
+
+              <div className="max-w-3xl">
+
+                {/* Department + Items */}
+
+                <div className="flex items-center gap-2 mb-2">
+
+                  <span className="text-[10px] sm:text-[11px] font-semibold uppercase tracking-[0.2em] text-white/90">
                     Department
                   </span>
 
-                  <span className="text-gray-300">
+                  <span className="text-white/50">
                     •
                   </span>
 
-                  <span className="text-xs font-medium text-gray-500">
+                  <span className="text-xs font-medium text-white/80">
                     {totalItemsCount}{" "}
                     {totalItemsCount === 1
                       ? "Item"
@@ -259,28 +292,42 @@ const totalItemsCount = products.reduce(
 
                 </div>
 
-                <h1 className="text-2xl sm:text-4xl font-bold tracking-tight text-gray-950">
+                {/* Category Name */}
+
+                <h1 className="text-3xl sm:text-5xl lg:text-6xl font-bold tracking-tight text-white drop-shadow-sm">
                   {category.name}
                 </h1>
 
-                <p className="text-xs sm:text-sm text-gray-500 font-normal leading-relaxed">
+                {/* Description */}
+
+                <p className="mt-2 max-w-2xl text-xs sm:text-sm lg:text-base text-white/85 leading-relaxed">
                   {category.description ||
                     `Browse our authentic collection of verified items in ${category.name.toLowerCase()}.`}
                 </p>
 
               </div>
+
             </div>
 
-            {/* Catalog */}
-            <div className="w-full">
-              <CategoryProducts
-                products={mixedProducts}
-              />
-            </div>
+          </Container>
+        </div>
 
-          </div>
+        {/* =================================================
+            PRODUCTS + FILTERS
+        ================================================= */}
 
-        </Container>
+        <div className="relative z-10">
+
+          <Container className="w-full max-w-[1800px] mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-12">
+
+            <CategoryProducts
+              products={mixedProducts}
+            />
+
+          </Container>
+
+        </div>
+
       </section>
     </Layout>
   );

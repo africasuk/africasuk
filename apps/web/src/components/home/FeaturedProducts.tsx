@@ -83,7 +83,7 @@ export default function FeaturedProducts({
     featuredColorProducts.slice(0, 50);
 
   return (
-    <section className="bg-white py-12 sm:py-16 antialiased border-y border-gray-100 select-none">
+    <section className="bg-white py-10 sm:py-16 antialiased border-y border-gray-100 select-none">
       <Container className="max-w-none w-full px-4 sm:px-6 lg:px-12">
         <SectionHeader
           title="Featured Products"
@@ -91,39 +91,37 @@ export default function FeaturedProducts({
           action={
             <Link
               href="/products"
-              className="group inline-flex items-center gap-1.5 text-xs sm:text-sm font-semibold text-[#005c2e] hover:text-[#002b15] transition-colors shrink-0"
+              className="group inline-flex items-center gap-1 text-[11px] font-semibold whitespace-nowrap text-[#005c2e] transition-colors hover:text-[#002b15] shrink-0 sm:gap-1.5 sm:text-sm"
             >
-              <span>
-                View All Collection
-              </span>
+              <span className="sm:hidden">View All</span>
+              <span className="hidden sm:inline">View All Collection</span>
 
-              <ArrowUpRight className="h-4 w-4 transition-transform duration-200 group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
+              <ArrowUpRight className="size-3.5 shrink-0 transition-transform duration-200 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 sm:size-4" />
             </Link>
           }
         />
 
-        <div className="mt-8 sm:mt-10 grid grid-cols-2 gap-3 sm:gap-5 sm:grid-cols-[repeat(auto-fit,minmax(200px,1fr))] lg:gap-6">
-          {displayedProducts.map(
-            (product) => (
-              <ProductCard
-                key={product.id}
-                product={product}
-              />
-            )
-          )}
+        <div className="mt-6 sm:mt-10 grid grid-cols-2 gap-3 sm:gap-5 sm:grid-cols-[repeat(auto-fit,minmax(200px,1fr))] lg:gap-6">
+          {displayedProducts.map((product) => (
+            <ProductCard
+              key={product.id}
+              product={product}
+            />
+          ))}
         </div>
-      <div className="mt-10 flex justify-center">
-        <Link
-          href="/products"
-          className="group inline-flex items-center gap-3 rounded-full bg-gray-950 px-6 py-3.5 text-xs font-semibold tracking-wide text-white transition-all duration-300 hover:bg-[#008744] hover:shadow-lg hover:shadow-[#008744]/20 active:scale-95 sm:text-sm"
-        >
-          <span>View All Products</span>
 
-          <div className="flex h-5 w-5 items-center justify-center rounded-full bg-white/20 transition-transform duration-300 group-hover:translate-x-0.5">
-            <ArrowRight className="h-3 w-3 text-white" />
-          </div>
-        </Link>
-      </div>
+        <div className="mt-8 sm:mt-10 flex justify-center">
+          <Link
+            href="/products"
+            className="group inline-flex items-center gap-2.5 rounded-full bg-gray-950 px-5 py-3 text-xs font-semibold tracking-wide text-white transition-all duration-300 hover:bg-[#008744] hover:shadow-lg hover:shadow-[#008744]/20 active:scale-95 sm:gap-3 sm:px-6 sm:py-3.5 sm:text-sm"
+          >
+            <span>View All Products</span>
+
+            <div className="flex size-4.5 sm:size-5 items-center justify-center rounded-full bg-white/20 transition-transform duration-300 group-hover:translate-x-0.5">
+              <ArrowRight className="size-3 text-white" />
+            </div>
+          </Link>
+        </div>
       </Container>
     </section>
   );

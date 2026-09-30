@@ -79,12 +79,11 @@ export default async function HomePage() {
     <Layout>
       <Hero categories={categories} />
 
-      
-      <Categories categories={categories} />
+      <FeaturedProducts products={products} />
 
       <GenderSection />
 
-      <FeaturedProducts products={products} />
+      <Categories categories={categories} />
 
       <ButtonSection />
       

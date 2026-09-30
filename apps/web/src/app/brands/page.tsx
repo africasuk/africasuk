@@ -63,18 +63,18 @@ export default async function BrandsPage() {
                           alt={`${brand.name} products on Africa Suk`}
                           fill
                           sizes="(max-width: 640px) 33vw, (max-width: 1024px) 15vw, 160px"
-                          className="object-contain transition-transform duration-300 group-hover:scale-105"
+                          className="object-contain grayscale contrast-200 transition-transform duration-300 group-hover:scale-105"
                         />
                       </div>
                     ) : (
-                      <span className="text-xs font-bold uppercase tracking-wider text-gray-700 sm:text-sm">
+                      <span className="text-xs font-bold uppercase tracking-wider text-black sm:text-sm">
                         {brand.name.slice(0, 3)}
                       </span>
                     )}
                   </div>
 
                   {/* Brand Name */}
-                  <span className="mt-1.5 w-full line-clamp-1 text-[11px] font-semibold tracking-tight text-gray-700 transition-colors group-hover:text-[#008744] sm:text-xs">
+                  <span className="mt-1.5 w-full line-clamp-1 text-[11px] font-semibold tracking-tight text-gray-600 transition-colors group-hover:text-black sm:text-xs">
                     {brand.name}
                   </span>
                 </Link>

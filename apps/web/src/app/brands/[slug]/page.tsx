@@ -105,6 +105,9 @@ export default async function BrandPage({ params }: Props) {
     await productService.getAll()
   ).filter((product) => product.brandId === brand.id);
 
+  const coverImage =
+    (brand as { coverImageUrl?: string }).coverImageUrl ?? brand.logoUrl;
+
   return (
     <Layout>
       <BrandJsonLd
@@ -115,73 +118,105 @@ export default async function BrandPage({ params }: Props) {
         website={brand.website}
       />
 
-      <section className="min-h-screen w-full border-b border-gray-100 bg-white py-8 antialiased select-none sm:py-12">
-        <Container className="w-full max-w-7xl px-4 sm:px-6 lg:px-8">
-          <div className="space-y-10 sm:space-y-12">
-            {/* Brand Header */}
-            <div className="flex flex-col items-center gap-5 border-b border-gray-100 pb-8 text-center sm:flex-row sm:items-start sm:gap-7 sm:text-left">
-              {/* Brand Logo */}
-              <div className="relative flex aspect-square w-24 shrink-0 items-center justify-center rounded-2xl border border-gray-100 bg-white p-2 sm:w-28 sm:p-2.5">
-                {brand.logoUrl ? (
-                  <div className="relative h-full w-full overflow-hidden rounded-xl">
-                    <Image
-                      src={brand.logoUrl}
-                      alt={`${brand.name} logo`}
-                      fill
-                      priority
-                      sizes="(max-width: 640px) 96px, 112px"
-                      className="rounded-xl object-contain"
-                    />
+      <section className="relative w-full overflow-hidden bg-white select-none antialiased">
+        {/* =================================================
+            BRAND COVER (Same scale & faded layers as Category)
+        ================================================= */}
+        <div className="relative h-70 sm:h-85 lg:h-100 w-full overflow-hidden bg-neutral-950">
+          {coverImage ? (
+            <>
+              <Image
+                src={coverImage}
+                alt={brand.name}
+                fill
+                priority
+                sizes="100vw"
+                className="object-cover object-center grayscale contrast-150 opacity-40"
+              />
+
+              {/* Dark overlay */}
+              <div className="absolute inset-0 bg-linear-to-t from-black/85 via-black/40 to-black/10" />
+
+              {/* Fade into products */}
+              <div className="absolute inset-x-0 bottom-0 h-32 bg-linear-to-t from-white via-white/60 to-transparent" />
+            </>
+          ) : (
+            <>
+              <div className="absolute inset-0 bg-linear-to-b from-neutral-900 to-black" />
+              <div className="absolute inset-x-0 bottom-0 h-32 bg-linear-to-t from-white via-white/60 to-transparent" />
+            </>
+          )}
+
+          {/* Brand Info Overlay */}
+          <Container className="relative z-10 h-full max-w-7xl w-full px-4 sm:px-6 lg:px-8">
+            <div className="flex h-full items-end pb-12 sm:pb-14 lg:pb-16">
+              <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:gap-6">
+                {/* Clean B&W Logo Badge */}
+                {brand.logoUrl && (
+                  <div className="relative flex aspect-square size-20 sm:size-24 shrink-0 items-center justify-center rounded-2xl bg-white/95 p-3 backdrop-blur-sm shadow-md">
+                    <div className="relative size-full">
+                      <Image
+                        src={brand.logoUrl}
+                        alt={`${brand.name} logo`}
+                        fill
+                        sizes="96px"
+                        className="object-contain grayscale contrast-200"
+                      />
+                    </div>
                   </div>
-                ) : (
-                  <span className="text-xl font-bold uppercase tracking-wider text-[#008744] sm:text-2xl">
-                    {brand.name.slice(0, 3)}
-                  </span>
                 )}
-              </div>
 
-              {/* Brand Information */}
-              <div className="flex max-w-2xl flex-col justify-center space-y-1.5 pt-1">
-                <div className="flex items-center justify-center gap-2 sm:justify-start">
-                  <span className="text-[11px] font-semibold uppercase tracking-[0.2em] text-[#008744]">
-                    Brand
-                  </span>
+                <div className="max-w-3xl">
+                  {/* Brand Tag + Count */}
+                  <div className="flex items-center gap-2 mb-2">
+                    <span className="text-[10px] sm:text-[11px] font-semibold uppercase tracking-[0.2em] text-white/90">
+                      Brand
+                    </span>
 
-                  <span className="text-gray-300">•</span>
+                    <span className="text-white/50">•</span>
 
-                  <span className="text-xs font-medium text-gray-500">
-                    {products.length}{" "}
-                    {products.length === 1 ? "Product" : "Products"}
-                  </span>
-                </div>
+                    <span className="text-xs font-medium text-white/80">
+                      {products.length}{" "}
+                      {products.length === 1 ? "Product" : "Products"}
+                    </span>
+                  </div>
 
-                <h1 className="text-2xl font-bold tracking-tight text-gray-950 sm:text-4xl">
-                  {brand.name}
-                </h1>
+                  {/* Brand Name */}
+                  <h1 className="text-3xl sm:text-5xl lg:text-6xl font-bold tracking-tight text-white drop-shadow-sm">
+                    {brand.name}
+                  </h1>
 
-                {brand.description && (
-                  <p className="text-xs font-normal leading-relaxed text-gray-500 sm:text-sm">
-                    {brand.description}
+                  {/* Description */}
+                  <p className="mt-2 max-w-2xl text-xs sm:text-sm lg:text-base text-white/85 leading-relaxed">
+                    {brand.description ||
+                      `Browse authentic ${brand.name} collection on AfricaSuk.`}
                   </p>
-                )}
 
-                {brand.website && (
-                  <div className="flex justify-center pt-1 sm:justify-start">
-                    <Link
-                      href={brand.website}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="inline-flex items-center gap-1 text-xs font-semibold text-[#008744] hover:underline"
-                    >
-                      <span>Visit Brand Website</span>
-                      <ArrowUpRight className="h-3.5 w-3.5" />
-                    </Link>
-                  </div>
-                )}
+                  {/* Optional Website Link */}
+                  {brand.website && (
+                    <div className="mt-3">
+                      <Link
+                        href={brand.website}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-flex items-center gap-1.5 text-xs font-semibold text-white/90 hover:text-white underline decoration-white/40 underline-offset-4"
+                      >
+                        <span>Visit Official Website</span>
+                        <ArrowUpRight className="size-3.5" />
+                      </Link>
+                    </div>
+                  )}
+                </div>
               </div>
             </div>
+          </Container>
+        </div>
 
-            {/* Products */}
+        {/* =================================================
+            PRODUCTS GRID
+        ================================================= */}
+        <div className="relative z-10">
+          <Container className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-12">
             {products.length === 0 ? (
               <div className="rounded-2xl border border-dashed border-gray-200 bg-gray-50/50 py-16 text-center select-none">
                 <h2 className="text-base font-semibold text-gray-800">
@@ -190,7 +225,7 @@ export default async function BrandPage({ params }: Props) {
 
                 <p className="mx-auto mt-1 max-w-xs text-xs text-gray-500">
                   Products from this brand are not currently available on
-                  Africa Suk. Please check back later.
+                  AfricaSuk. Please check back later.
                 </p>
               </div>
             ) : (
@@ -215,8 +250,8 @@ export default async function BrandPage({ params }: Props) {
                 )}
               </div>
             )}
-          </div>
-        </Container>
+          </Container>
+        </div>
       </section>
     </Layout>
   );

@@ -1,78 +1,336 @@
 "use client";
 
-import { useEffect, useRef, useState, useCallback } from "react";
+import {
+  useEffect,
+  useRef,
+  useState,
+  useCallback,
+} from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { ArrowRight, ChevronLeft, ChevronRight, Loader2 } from "lucide-react";
+import {
+  ArrowRight,
+  ChevronLeft,
+  ChevronRight,
+  Loader2,
+} from "lucide-react";
 import type { Category } from "@africasuk/types";
 
 interface HeroProps {
   categories: Category[];
 }
 
-export default function Hero({ categories = [] }: HeroProps) {
+export default function Hero({
+  categories = [],
+}: HeroProps) {
   const [activeIndex, setActiveIndex] = useState(0);
   const [isInteracting, setIsInteracting] = useState(false);
   const [isImageLoading, setIsImageLoading] = useState(true);
+
   const timerRef = useRef<NodeJS.Timeout | null>(null);
+
+  const mobileCarouselRef =
+    useRef<HTMLDivElement | null>(null);
+
+  const mobileCardRefs = useRef<
+    Record<string, HTMLButtonElement | null>
+  >({});
+
+  const mobileScrollTimerRef =
+    useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const total = categories.length;
 
+  /*
+   * --------------------------------------------------
+   * CENTER MOBILE CATEGORY
+   * --------------------------------------------------
+   *
+   * IMPORTANT:
+   * Do NOT use scrollIntoView() here.
+   *
+   * scrollIntoView() can scroll the entire page vertically.
+   * We only want to change the horizontal carousel position.
+   */
+  const centerMobileCategory = useCallback(
+    (
+      index: number,
+      behavior: ScrollBehavior = "smooth",
+    ) => {
+      const category = categories[index];
+
+      if (!category) return;
+
+      const container = mobileCarouselRef.current;
+      const card = mobileCardRefs.current[category.id];
+
+      if (!container || !card) return;
+
+      const containerCenter =
+        container.clientWidth / 2;
+
+      const cardCenter =
+        card.offsetLeft + card.offsetWidth / 2;
+
+      const targetScrollLeft =
+        cardCenter - containerCenter;
+
+      container.scrollTo({
+        left: Math.max(0, targetScrollLeft),
+        behavior,
+      });
+    },
+    [categories],
+  );
+
+  /*
+   * --------------------------------------------------
+   * SELECT CATEGORY
+   * --------------------------------------------------
+   */
   const handleSelect = useCallback(
     (index: number) => {
-      if (index === activeIndex) return;
+      if (!total) return;
+
+      if (index < 0 || index >= total) return;
+
       setIsImageLoading(true);
       setActiveIndex(index);
     },
-    [activeIndex]
+    [total],
   );
 
+  /*
+   * --------------------------------------------------
+   * NEXT
+   * --------------------------------------------------
+   */
   const handleNext = useCallback(() => {
     if (!total) return;
-    handleSelect((activeIndex + 1) % total);
+
+    handleSelect(
+      (activeIndex + 1) % total,
+    );
   }, [total, activeIndex, handleSelect]);
 
+  /*
+   * --------------------------------------------------
+   * PREVIOUS
+   * --------------------------------------------------
+   */
   const handlePrev = useCallback(() => {
     if (!total) return;
-    handleSelect((activeIndex - 1 + total) % total);
+
+    handleSelect(
+      (activeIndex - 1 + total) % total,
+    );
   }, [total, activeIndex, handleSelect]);
 
+  /*
+   * --------------------------------------------------
+   * AUTO CENTER ACTIVE CATEGORY
+   * --------------------------------------------------
+   */
   useEffect(() => {
-    if (total <= 1 || isInteracting) return;
+    if (!total) return;
 
-    timerRef.current = setInterval(() => {
-      handleNext();
-    }, 4500);
+    const timer = window.setTimeout(() => {
+      centerMobileCategory(
+        activeIndex,
+        "smooth",
+      );
+    }, 50);
 
     return () => {
-      if (timerRef.current) clearInterval(timerRef.current);
+      window.clearTimeout(timer);
     };
-  }, [total, isInteracting, handleNext]);
+  }, [
+    activeIndex,
+    total,
+    centerMobileCategory,
+  ]);
 
+  /*
+   * --------------------------------------------------
+   * AUTOPLAY
+   * --------------------------------------------------
+   */
+  useEffect(() => {
+    if (
+      total <= 1 ||
+      isInteracting
+    ) {
+      return;
+    }
+
+    timerRef.current = setInterval(() => {
+      setActiveIndex((current) =>
+        (current + 1) % total,
+      );
+
+      setIsImageLoading(true);
+    }, 6000);
+
+    return () => {
+      if (timerRef.current) {
+        clearInterval(timerRef.current);
+        timerRef.current = null;
+      }
+    };
+  }, [total, isInteracting]);
+
+  /*
+   * --------------------------------------------------
+   * DETECT MANUAL MOBILE SCROLL
+   * --------------------------------------------------
+   */
+  const handleMobileScroll = useCallback(() => {
+    if (mobileScrollTimerRef.current) {
+      clearTimeout(
+        mobileScrollTimerRef.current,
+      );
+    }
+
+    mobileScrollTimerRef.current =
+      setTimeout(() => {
+        const container =
+          mobileCarouselRef.current;
+
+        if (!container) return;
+
+        const children = Array.from(
+          container.children,
+        ) as HTMLElement[];
+
+        if (!children.length) return;
+
+        const containerCenter =
+          container.scrollLeft +
+          container.clientWidth / 2;
+
+        let closestIndex = 0;
+        let closestDistance = Infinity;
+
+        children.forEach((child, index) => {
+          const childCenter =
+            child.offsetLeft +
+            child.offsetWidth / 2;
+
+          const distance = Math.abs(
+            childCenter - containerCenter,
+          );
+
+          if (distance < closestDistance) {
+            closestDistance = distance;
+            closestIndex = index;
+          }
+        });
+
+        if (closestIndex !== activeIndex) {
+          setIsImageLoading(true);
+          setActiveIndex(closestIndex);
+        }
+      }, 120);
+  }, [activeIndex]);
+
+  /*
+   * --------------------------------------------------
+   * CLEANUP
+   * --------------------------------------------------
+   */
+  useEffect(() => {
+    return () => {
+      if (mobileScrollTimerRef.current) {
+        clearTimeout(
+          mobileScrollTimerRef.current,
+        );
+      }
+
+      if (timerRef.current) {
+        clearInterval(timerRef.current);
+      }
+    };
+  }, []);
+
+  /*
+   * --------------------------------------------------
+   * EMPTY STATE
+   * --------------------------------------------------
+   */
   if (!total) return null;
 
-  const currentCategory = categories[activeIndex];
+  const currentCategory =
+    categories[activeIndex];
 
-  // Flanking preview pins
+  /*
+   * --------------------------------------------------
+   * DESKTOP SIDE PREVIEWS
+   * --------------------------------------------------
+   */
   const leftPins = [
-    categories[(activeIndex - 2 + total) % total],
-    categories[(activeIndex - 1 + total) % total],
-  ];
-  const rightPins = [
-    categories[(activeIndex + 1) % total],
-    categories[(activeIndex + 2) % total],
+    categories[
+      (activeIndex - 2 + total) % total
+    ],
+    categories[
+      (activeIndex - 1 + total) % total
+    ],
   ];
 
+  const rightPins = [
+    categories[
+      (activeIndex + 1) % total
+    ],
+    categories[
+      (activeIndex + 2) % total
+    ],
+  ];
+
+  /*
+   * --------------------------------------------------
+   * RENDER
+   * --------------------------------------------------
+   */
   return (
     <section
-      className="relative w-full bg-white text-gray-900 select-none py-6 sm:py-10 border-b border-gray-100 antialiased overflow-hidden"
-      onMouseEnter={() => setIsInteracting(true)}
-      onMouseLeave={() => setIsInteracting(false)}
+      className="
+        relative
+        w-full
+        overflow-hidden
+        bg-white
+        text-gray-900
+        select-none
+        border-b
+        border-gray-100
+        py-6
+        antialiased
+        sm:py-10
+      "
+      onMouseEnter={() =>
+        setIsInteracting(true)
+      }
+      onMouseLeave={() =>
+        setIsInteracting(false)
+      }
+      onTouchStart={() =>
+        setIsInteracting(true)
+      }
+      onTouchEnd={() =>
+        setIsInteracting(false)
+      }
     >
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        {/* Navigation Strip */}
-        <div className="flex items-center justify-between mb-6">
-          <h2 className="text-xl sm:text-2xl font-bold tracking-tight text-gray-900">
+      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+
+        {/* HEADER */}
+        <div className="mb-6 flex items-center justify-between">
+          <h2
+            className="
+              text-xl
+              font-bold
+              tracking-tight
+              text-gray-950
+              sm:text-2xl
+            "
+          >
             Featured Categories
           </h2>
 
@@ -80,173 +338,553 @@ export default function Hero({ categories = [] }: HeroProps) {
             <button
               type="button"
               onClick={handlePrev}
-              className="p-2 border border-gray-200 text-gray-600 hover:text-[#008744] hover:border-[#008744] active:scale-95 transition-all rounded-full bg-white cursor-pointer"
               aria-label="Previous category"
+              className="
+                rounded-full
+                border
+                border-gray-200
+                bg-white
+                p-2
+                text-gray-600
+                transition-all
+                hover:border-[#008744]
+                hover:text-[#008744]
+                active:scale-95
+              "
             >
-              <ChevronLeft className="h-4 w-4" />
+              <ChevronLeft className="size-4" />
             </button>
+
             <button
               type="button"
               onClick={handleNext}
-              className="p-2 border border-gray-200 text-gray-600 hover:text-[#008744] hover:border-[#008744] active:scale-95 transition-all rounded-full bg-white cursor-pointer"
               aria-label="Next category"
+              className="
+                rounded-full
+                border
+                border-gray-200
+                bg-white
+                p-2
+                text-gray-600
+                transition-all
+                hover:border-[#008744]
+                hover:text-[#008744]
+                active:scale-95
+              "
             >
-              <ChevronRight className="h-4 w-4" />
+              <ChevronRight className="size-4" />
             </button>
           </div>
         </div>
 
-        {/* Pinterest Stage */}
-        <div className="grid grid-cols-1 md:grid-cols-12 gap-5 lg:gap-8 items-start">
-          {/* Left Column (Stacked Pins) */}
-          <div className="hidden md:flex md:col-span-3 flex-col gap-6">
-            {leftPins.map((cat, idx) => (
-              <div
-                key={`left-pin-${cat.id}-${idx}`}
-                className="flex flex-col items-center text-center cursor-pointer group"
-                onClick={() =>
-                  handleSelect(categories.findIndex((c) => c.id === cat.id))
-                }
-              >
-                <div className="relative w-full aspect-square rounded-3xl overflow-hidden bg-gray-50 border border-gray-100 transition-transform duration-300 group-hover:scale-[1.02] active:scale-95">
-                  {cat.imageUrl ? (
-                    <Image
-                      src={cat.imageUrl}
-                      alt={cat.name}
-                      fill
-                      sizes="260px"
-                      className="object-cover"
-                    />
-                  ) : (
-                    <div className="w-full h-full bg-gray-100" />
-                  )}
+        {/* DESKTOP CATEGORY STAGE */}
+        <div
+          className="
+            grid
+            grid-cols-1
+            items-start
+            gap-5
+            md:grid-cols-12
+            lg:gap-8
+          "
+        >
+          {/* LEFT */}
+          <div className="hidden flex-col gap-6 md:col-span-3 md:flex">
+            {leftPins.map((cat, idx) => {
+              if (!cat) return null;
+
+              const categoryIndex =
+                categories.findIndex(
+                  (item) => item.id === cat.id,
+                );
+
+              return (
+                <div
+                  key={`left-pin-${cat.id}-${idx}`}
+                  className="
+                    group
+                    flex
+                    cursor-pointer
+                    flex-col
+                    items-center
+                    text-center
+                  "
+                  onClick={() =>
+                    handleSelect(categoryIndex)
+                  }
+                >
+                  <div
+                    className="
+                      relative
+                      aspect-square
+                      w-full
+                      overflow-hidden
+                      rounded-3xl
+                      border
+                      border-gray-100
+                      bg-gray-50
+                      transition-transform
+                      duration-300
+                      group-hover:scale-[1.02]
+                      active:scale-95
+                    "
+                  >
+                    {cat.imageUrl ? (
+                      <Image
+                        src={cat.imageUrl}
+                        alt={cat.name}
+                        fill
+                        sizes="260px"
+                        className="object-cover"
+                      />
+                    ) : (
+                      <div className="size-full bg-gray-100" />
+                    )}
+                  </div>
+
+                  <span
+                    className="
+                      mt-2.5
+                      w-full
+                      truncate
+                      text-xs
+                      font-semibold
+                      text-gray-700
+                      transition-colors
+                      group-hover:text-gray-950
+                      sm:text-sm
+                    "
+                  >
+                    {cat.name}
+                  </span>
                 </div>
-                <span className="mt-2.5 text-xs sm:text-sm font-semibold text-gray-700 group-hover:text-gray-900 truncate w-full">
-                  {cat.name}
-                </span>
-              </div>
-            ))}
+              );
+            })}
           </div>
 
-          {/* Center Main Pin (Large Showcase) */}
-          <div className="col-span-1 md:col-span-6 flex flex-col items-center">
+          {/* CENTER */}
+          <div className="col-span-1 flex flex-col items-center md:col-span-6">
             <Link
               href={`/categories/${currentCategory.slug}`}
-              className="group block w-full max-w-120 focus:outline-none"
+              className="
+                group
+                block
+                w-full
+                max-w-125
+                focus:outline-none
+              "
             >
-              {/* 1:1 Image Card Container */}
-              <div className="relative w-full aspect-square rounded-3xl overflow-hidden bg-gray-50 border border-gray-100 transition-transform duration-500 group-hover:scale-[1.01]">
-                {/* Loading Skeleton & Spinner */}
+              <div
+                className="
+                  relative
+                  aspect-square
+                  w-full
+                  overflow-hidden
+                  rounded-3xl
+                  border
+                  border-gray-100
+                  bg-gray-50
+                  transition-transform
+                  duration-500
+                  group-hover:scale-[1.01]
+                "
+              >
                 {isImageLoading && (
-                  <div className="absolute inset-0 z-10 flex items-center justify-center bg-gray-100/90 animate-pulse transition-opacity">
-                    <Loader2 className="w-7 h-7 text-[#008744] animate-spin" />
+                  <div
+                    className="
+                      absolute
+                      inset-0
+                      z-10
+                      flex
+                      animate-pulse
+                      items-center
+                      justify-center
+                      bg-gray-100/90
+                    "
+                  >
+                    <Loader2
+                      className="
+                        size-7
+                        animate-spin
+                        text-[#008744]
+                      "
+                    />
                   </div>
                 )}
 
                 {currentCategory.imageUrl ? (
                   <Image
-                    key={`pinterest-hero-${currentCategory.id}`}
+                    key={`hero-${currentCategory.id}`}
                     src={currentCategory.imageUrl}
                     alt={currentCategory.name}
                     fill
                     priority
                     sizes="(max-width: 768px) 100vw, 500px"
-                    onLoad={() => setIsImageLoading(false)}
-                    className={`object-cover transition-all duration-500 ${
-                      isImageLoading ? "opacity-0 scale-95" : "opacity-100 scale-100"
-                    }`}
+                    onLoad={() =>
+                      setIsImageLoading(false)
+                    }
+                    className={`
+                      object-cover
+                      transition-all
+                      duration-500
+                      ${
+                        isImageLoading
+                          ? "scale-95 opacity-0"
+                          : "scale-100 opacity-100"
+                      }
+                    `}
                   />
                 ) : (
-                  <div className="w-full h-full bg-gray-100 flex items-center justify-center text-gray-400">
+                  <div
+                    className="
+                      flex
+                      size-full
+                      items-center
+                      justify-center
+                      bg-gray-100
+                      text-gray-400
+                    "
+                  >
                     No Image Available
                   </div>
                 )}
               </div>
 
-              {/* Title & Link Placed Below */}
               <div className="mt-4 flex flex-col items-center text-center">
-                <h3 className="text-xl sm:text-2xl font-bold text-gray-900 tracking-tight transition-colors group-hover:text-[#008744]">
+                <h3
+                  className="
+                    text-xl
+                    font-bold
+                    tracking-tight
+                    text-gray-950
+                    transition-colors
+                    group-hover:text-[#008744]
+                    sm:text-2xl
+                  "
+                >
                   {currentCategory.name}
                 </h3>
-                <div className="inline-flex items-center gap-1.5 text-xs sm:text-sm font-semibold text-[#008744] mt-1.5 hover:underline">
-                  <span>Explore Collection</span>
-                  <ArrowRight className="w-4 h-4 transition-transform duration-300 group-hover:translate-x-1" />
+
+                <div
+                  className="
+                    mt-1.5
+                    inline-flex
+                    items-center
+                    gap-1.5
+                    text-xs
+                    font-semibold
+                    text-[#008744]
+                    sm:text-sm
+                  "
+                >
+                  <span>
+                    Explore Collection
+                  </span>
+
+                  <ArrowRight
+                    className="
+                      size-4
+                      transition-transform
+                      duration-300
+                      group-hover:translate-x-1
+                    "
+                  />
                 </div>
               </div>
             </Link>
           </div>
 
-          {/* Right Column (Stacked Pins) */}
-          <div className="hidden md:flex md:col-span-3 flex-col gap-6">
-            {rightPins.map((cat, idx) => (
-              <div
-                key={`right-pin-${cat.id}-${idx}`}
-                className="flex flex-col items-center text-center cursor-pointer group"
-                onClick={() =>
-                  handleSelect(categories.findIndex((c) => c.id === cat.id))
-                }
-              >
-                <div className="relative w-full aspect-square rounded-3xl overflow-hidden bg-gray-50 border border-gray-100 transition-transform duration-300 group-hover:scale-[1.02] active:scale-95">
-                  {cat.imageUrl ? (
-                    <Image
-                      src={cat.imageUrl}
-                      alt={cat.name}
-                      fill
-                      sizes="260px"
-                      className="object-cover"
-                    />
-                  ) : (
-                    <div className="w-full h-full bg-gray-100" />
-                  )}
+          {/* RIGHT */}
+          <div className="hidden flex-col gap-6 md:col-span-3 md:flex">
+            {rightPins.map((cat, idx) => {
+              if (!cat) return null;
+
+              const categoryIndex =
+                categories.findIndex(
+                  (item) => item.id === cat.id,
+                );
+
+              return (
+                <div
+                  key={`right-pin-${cat.id}-${idx}`}
+                  className="
+                    group
+                    flex
+                    cursor-pointer
+                    flex-col
+                    items-center
+                    text-center
+                  "
+                  onClick={() =>
+                    handleSelect(categoryIndex)
+                  }
+                >
+                  <div
+                    className="
+                      relative
+                      aspect-square
+                      w-full
+                      overflow-hidden
+                      rounded-3xl
+                      border
+                      border-gray-100
+                      bg-gray-50
+                      transition-transform
+                      duration-300
+                      group-hover:scale-[1.02]
+                      active:scale-95
+                    "
+                  >
+                    {cat.imageUrl ? (
+                      <Image
+                        src={cat.imageUrl}
+                        alt={cat.name}
+                        fill
+                        sizes="260px"
+                        className="object-cover"
+                      />
+                    ) : (
+                      <div className="size-full bg-gray-100" />
+                    )}
+                  </div>
+
+                  <span
+                    className="
+                      mt-2.5
+                      w-full
+                      truncate
+                      text-xs
+                      font-semibold
+                      text-gray-700
+                      transition-colors
+                      group-hover:text-gray-950
+                      sm:text-sm
+                    "
+                  >
+                    {cat.name}
+                  </span>
                 </div>
-                <span className="mt-2.5 text-xs sm:text-sm font-semibold text-gray-700 group-hover:text-gray-900 truncate w-full">
-                  {cat.name}
-                </span>
-              </div>
-            ))}
+              );
+            })}
           </div>
         </div>
 
-        {/* Mobile Horizontal Carousel */}
-        <div className="flex md:hidden items-start gap-4 overflow-x-auto pt-4 pb-2 scrollbar-none">
-          {categories.map((cat, index) => {
-            const isActive = index === activeIndex;
-            return (
+        {/* MOBILE CATEGORY CAROUSEL */}
+        <div className="mt-7 md:hidden">
+          <div className="relative">
+
+            {/* Left fade */}
+            <div
+              className="
+                pointer-events-none
+                absolute
+                inset-y-0
+                left-0
+                z-10
+                w-8
+                bg-linear-to-r
+                from-white
+                to-transparent
+              "
+            />
+
+            {/* Right fade */}
+            <div
+              className="
+                pointer-events-none
+                absolute
+                inset-y-0
+                right-0
+                z-10
+                w-8
+                bg-linear-to-l
+                from-white
+                to-transparent
+              "
+            />
+
+            <div
+              ref={mobileCarouselRef}
+              onScroll={handleMobileScroll}
+              className="
+                flex
+                items-center
+                gap-4
+                overflow-x-auto
+                snap-x
+                snap-mandatory
+                scrollbar-none
+                px-[calc(50vw-75px)]
+                py-5
+                touch-pan-x
+                overscroll-x-contain
+              "
+              style={{
+                WebkitOverflowScrolling: "touch",
+              }}
+            >
+              {categories.map((cat, index) => {
+                const isActive =
+                  index === activeIndex;
+
+                return (
+                  <button
+                    key={`mobile-category-${cat.id}`}
+                    ref={(element) => {
+                      mobileCardRefs.current[
+                        cat.id
+                      ] = element;
+                    }}
+                    type="button"
+                    onClick={() =>
+                      handleSelect(index)
+                    }
+                    aria-current={
+                      isActive
+                        ? "true"
+                        : undefined
+                    }
+                    className="
+                      shrink-0
+                      snap-center
+                      focus:outline-none
+                      active:scale-[0.97]
+                    "
+                  >
+                    {/* IMAGE */}
+                    <div
+                      className={`
+                        relative
+                        overflow-hidden
+                        rounded-[24px]
+                        bg-neutral-100
+                        transition-all
+                        duration-700
+                        ease-out
+                        ${
+                          isActive
+                            ? "h-37.5 w-37.5 border-2 border-[#008744] shadow-[0_10px_30px_rgba(0,92,46,0.18)]"
+                            : "size-24 border border-neutral-200 opacity-70"
+                        }
+                      `}
+                    >
+                      {cat.imageUrl ? (
+                        <Image
+                          src={cat.imageUrl}
+                          alt={cat.name}
+                          fill
+                          sizes={
+                            isActive
+                              ? "150px"
+                              : "96px"
+                          }
+                          className="
+                            object-cover
+                            transition-transform
+                            duration-700
+                          "
+                        />
+                      ) : (
+                        <div
+                          className="
+                            flex
+                            size-full
+                            items-center
+                            justify-center
+                            bg-neutral-100
+                          "
+                        >
+                          <span className="text-xs text-neutral-400">
+                            No image
+                          </span>
+                        </div>
+                      )}
+
+                      {/* Active overlay */}
+                      {isActive && (
+                        <div
+                          className="
+                            absolute
+                            inset-0
+                            bg-linear-to-t
+                            from-black/35
+                            via-transparent
+                            to-transparent
+                          "
+                        />
+                      )}
+
+                      {/* Active indicator */}
+                      {isActive && (
+                        <div
+                          className="
+                            absolute
+                            bottom-3
+                            left-1/2
+                            h-1
+                            w-8
+                            -translate-x-1/2
+                            rounded-full
+                            bg-white
+                            shadow-sm
+                          "
+                        />
+                      )}
+                    </div>
+
+                    {/* NAME */}
+                    <div
+                      className={`
+                        mt-2.5
+                        max-w-37.5
+                        truncate
+                        text-center
+                        transition-all
+                        duration-300
+                        ${
+                          isActive
+                            ? "text-sm font-bold text-[#005c2e]"
+                            : "text-[11px] font-medium text-neutral-500"
+                        }
+                      `}
+                    >
+                      {cat.name}
+                    </div>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* MOBILE INDICATORS */}
+          <div className="mt-3 flex items-center justify-center gap-1.5">
+            {categories.map((cat, index) => (
               <button
-                key={`mobile-pin-${cat.id}`}
+                key={`indicator-${cat.id}`}
                 type="button"
-                onClick={() => handleSelect(index)}
-                className="flex flex-col items-center w-24 shrink-0 focus:outline-none cursor-pointer"
-              >
-                <div
-                  className={`relative w-full aspect-square rounded-2xl overflow-hidden border bg-gray-50 transition-all ${
-                    isActive
-                      ? "border-2 border-[#008744] scale-105"
-                      : "border-gray-200 opacity-60 active:scale-95"
-                  }`}
-                >
-                  {cat.imageUrl && (
-                    <Image
-                      src={cat.imageUrl}
-                      alt={cat.name}
-                      fill
-                      sizes="96px"
-                      className="object-cover"
-                    />
-                  )}
-                </div>
-                <span
-                  className={`mt-1.5 text-[11px] truncate w-full text-center ${
-                    isActive
-                      ? "font-bold text-[#008744]"
-                      : "text-gray-600 font-medium"
-                  }`}
-                >
-                  {cat.name}
-                </span>
-              </button>
-            );
-          })}
+                onClick={() =>
+                  handleSelect(index)
+                }
+                aria-label={`Go to ${cat.name}`}
+                aria-current={
+                  index === activeIndex
+                    ? "true"
+                    : undefined
+                }
+                className={`
+                  h-1.5
+                  rounded-full
+                  transition-all
+                  duration-500
+                  ${
+                    index === activeIndex
+                      ? "w-6 bg-[#008744]"
+                      : "w-1.5 bg-neutral-300"
+                  }
+                `}
+              />
+            ))}
+          </div>
         </div>
       </div>
     </section>

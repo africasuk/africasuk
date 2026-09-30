@@ -17,12 +17,11 @@ import {
   ReviewService,
 } from "@africasuk/api";
 
-import {
-  createServerSupabaseClient,
-} from "@/lib/supabase/server";
+import { createServerSupabaseClient } from "@/lib/supabase/server";
 
 import { ProductDetails } from "@/components/products/ProductDetails";
 import Layout from "@/components/layout/Layout";
+import ScrollToTop from "@/components/layout/ScrollToTop";
 
 export async function generateMetadata({
   params,
@@ -53,8 +52,7 @@ export async function generateMetadata({
 
   const url = `https://africasuk.com/products/${product.slug}`;
 
-  const imageUrl =
-    `https://africasuk.com/products/${product.slug}/opengraph-image`;
+  const imageUrl = `https://africasuk.com/products/${product.slug}/opengraph-image`;
 
   return {
     title,
@@ -93,7 +91,6 @@ export async function generateMetadata({
       card: "summary_large_image",
       title,
       description,
-
       images: [imageUrl],
     },
   };
@@ -127,31 +124,32 @@ export default async function ProductDetailsPage({
     new OrderItemRepository(db)
   );
 
-  const reviews =
-    await reviewService.getProductReviews(
-      product.id
-    );
+  const reviews = await reviewService.getProductReviews(
+    product.id
+  );
 
-  const rating =
-    await reviewService.getProductRating(
-      product.id
-    );
+  const rating = await reviewService.getProductRating(
+    product.id
+  );
 
-const allProducts =
-  (await repository.getAll({
-    random: true,
-  })) ?? [];
+  const allProducts =
+    (await repository.getAll({
+      random: true,
+    })) ?? [];
 
-const relatedProducts = allProducts
-  .filter(
-    (item) =>
-      item.categoryId === product.categoryId &&
-      item.id !== product.id
-  )
-  .slice(0, 10);
+  const relatedProducts = allProducts
+    .filter(
+      (item) =>
+        item.categoryId === product.categoryId &&
+        item.id !== product.id
+    )
+    .slice(0, 10);
 
   return (
     <Layout>
+      {/* Always start product page from the top */}
+      <ScrollToTop />
+
       <ProductJsonLd
         product={product}
         reviews={reviews}
