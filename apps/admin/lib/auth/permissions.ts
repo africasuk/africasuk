@@ -10,6 +10,9 @@ export const Permissions = {
   PRODUCTS_UPDATE: "products.update",
   PRODUCTS_DELETE: "products.delete",
 
+  // Product Profitability
+  PRODUCT_PROFITABILITY_VIEW: "product_profitability.view",
+
   // Categories
   CATEGORIES_VIEW: "categories.view",
   CATEGORIES_CREATE: "categories.create",
@@ -88,6 +91,9 @@ export const RolePermissions: Record<Role, Permission[]> = {
     Permissions.PRODUCTS_UPDATE,
     Permissions.PRODUCTS_DELETE,
 
+    // Product Profitability
+    Permissions.PRODUCT_PROFITABILITY_VIEW,
+
     // Categories
     Permissions.CATEGORIES_VIEW,
     Permissions.CATEGORIES_CREATE,
@@ -151,6 +157,9 @@ export const RolePermissions: Record<Role, Permission[]> = {
     Permissions.PRODUCTS_UPDATE,
     Permissions.PRODUCTS_DELETE,
 
+    // Product Profitability
+    Permissions.PRODUCT_PROFITABILITY_VIEW,
+
     // Categories
     Permissions.CATEGORIES_VIEW,
     Permissions.CATEGORIES_CREATE,
@@ -204,6 +213,9 @@ export const RolePermissions: Record<Role, Permission[]> = {
 
     // Products
     Permissions.PRODUCTS_VIEW,
+
+    // Product Profitability
+    Permissions.PRODUCT_PROFITABILITY_VIEW,
 
     // Categories
     Permissions.CATEGORIES_VIEW,

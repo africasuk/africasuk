@@ -2,8 +2,10 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { Eye, EyeOff } from "lucide-react";
 import { toast } from "sonner";
 
 import Logo from "@/components/layout/header/Logo";
@@ -19,6 +21,9 @@ import { signUp } from "@/lib/auth/signup";
 export default function SignupPage() {
   const router = useRouter();
   const { dictionary } = useTranslation();
+
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
   const {
     register,
@@ -68,7 +73,6 @@ export default function SignupPage() {
   return (
     <main className="flex min-h-screen items-center justify-center bg-muted/30 p-6 antialiased selection:bg-[#004d26]/10">
       <div className="w-full max-w-md rounded-2xl border border-muted bg-background p-8 shadow-xl shadow-green-950/2 sm:p-10">
-
         {/* Brand Header */}
         <div className="mb-8 flex flex-col items-center text-center sm:items-start sm:text-left">
           <div className="mb-5 scale-105 transform select-none">
@@ -130,12 +134,27 @@ export default function SignupPage() {
 
           {/* Password */}
           <div>
-            <input
-              {...register("password")}
-              type="password"
-              placeholder={dictionary.auth.password}
-              className="w-full rounded-xl border border-muted bg-background p-3 text-sm outline-none shadow-sm transition-all duration-200 focus:border-[#004d26] focus:ring-1 focus:ring-[#004d26] placeholder:text-muted-foreground/60"
-            />
+            <div className="relative">
+              <input
+                {...register("password")}
+                type={showPassword ? "text" : "password"}
+                placeholder={dictionary.auth.password}
+                className="w-full rounded-xl border border-muted bg-background p-3 pr-10 text-sm outline-none shadow-sm transition-all duration-200 focus:border-[#004d26] focus:ring-1 focus:ring-[#004d26] placeholder:text-muted-foreground/60"
+              />
+
+              <button
+                type="button"
+                onClick={() => setShowPassword((prev) => !prev)}
+                className="absolute inset-y-0 right-0 flex items-center pr-3 text-muted-foreground/70 hover:text-foreground focus:outline-none"
+                aria-label={showPassword ? "Hide password" : "Show password"}
+              >
+                {showPassword ? (
+                  <EyeOff className="size-4.5 stroke-[1.75]" />
+                ) : (
+                  <Eye className="size-4.5 stroke-[1.75]" />
+                )}
+              </button>
+            </div>
 
             {errors.password && (
               <p className="mt-1.5 text-xs font-medium text-destructive">
@@ -146,12 +165,27 @@ export default function SignupPage() {
 
           {/* Confirm Password */}
           <div>
-            <input
-              {...register("confirmPassword")}
-              type="password"
-              placeholder={dictionary.auth.confirmPassword}
-              className="w-full rounded-xl border border-muted bg-background p-3 text-sm outline-none shadow-sm transition-all duration-200 focus:border-[#004d26] focus:ring-1 focus:ring-[#004d26] placeholder:text-muted-foreground/60"
-            />
+            <div className="relative">
+              <input
+                {...register("confirmPassword")}
+                type={showConfirmPassword ? "text" : "password"}
+                placeholder={dictionary.auth.confirmPassword}
+                className="w-full rounded-xl border border-muted bg-background p-3 pr-10 text-sm outline-none shadow-sm transition-all duration-200 focus:border-[#004d26] focus:ring-1 focus:ring-[#004d26] placeholder:text-muted-foreground/60"
+              />
+
+              <button
+                type="button"
+                onClick={() => setShowConfirmPassword((prev) => !prev)}
+                className="absolute inset-y-0 right-0 flex items-center pr-3 text-muted-foreground/70 hover:text-foreground focus:outline-none"
+                aria-label={showConfirmPassword ? "Hide password" : "Show password"}
+              >
+                {showConfirmPassword ? (
+                  <EyeOff className="size-4.5 stroke-[1.75]" />
+                ) : (
+                  <Eye className="size-4.5 stroke-[1.75]" />
+                )}
+              </button>
+            </div>
 
             {errors.confirmPassword && (
               <p className="mt-1.5 text-xs font-medium text-destructive">

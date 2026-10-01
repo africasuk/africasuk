@@ -12,7 +12,6 @@ import SearchBar from "./SearchBar";
 import OrdersButton from "./OrdersButton";
 import WishlistButton from "./WishlistButton";
 import CartButton from "./CartButton";
-import LoginModal from "@/components/auth/LoginModal";
 // import LanguageSwitcher from "./LanguageSwitcher";
 import { CurrencySwitcher } from "@/components/currency/CurrencySwitcher";
 import LogoutButton from "../topbar/LogoutButton";
@@ -89,15 +88,16 @@ export default function MainHeader({ user, dictionary }: MainHeaderProps) {
                     <LogoutButton />
                   </>
                 ) : (
-                  <LoginModal>
-                    <div className="group flex cursor-pointer flex-col items-center justify-center gap-0.5 rounded-none px-2.5 py-1.5 text-gray-600 transition-colors duration-150 hover:bg-gray-50 hover:text-[#004d26]">
+                  <Link
+                      href="/auth/login"
+                      className="group flex cursor-pointer flex-col items-center justify-center gap-0.5 rounded-none px-2.5 py-1.5 text-gray-600 transition-colors duration-150 hover:bg-gray-50 hover:text-[#004d26]"
+                    >
                       <UserIcon className="h-4 w-4 stroke-[1.5]" />
                       <span className="text-[10px] font-medium tracking-wide">
                         {dictionary.common.login}
                       </span>
-                    </div>
-                  </LoginModal>
-                )}
+                    </Link>
+                                    )}
               </div>
 
               {/* Mobile Navigation Trigger */}
@@ -225,12 +225,14 @@ export default function MainHeader({ user, dictionary }: MainHeaderProps) {
                     </div>
                   </div>
                 ) : (
-                  <LoginModal>
-                    <div className="flex items-center gap-3 w-full px-2.5 py-2 text-gray-700 hover:bg-gray-50 hover:text-[#004d26] transition-colors text-xs font-normal cursor-pointer">
-                      <UserIcon className="h-3.5 w-3.5 text-gray-400 shrink-0 stroke-[1.5]" />
-                      <span>{dictionary.common.login}</span>
-                    </div>
-                  </LoginModal>
+                  <Link
+                  href="/auth/login"
+                  onClick={() => setIsMobileMenuOpen(false)}
+                  className="flex items-center gap-3 w-full px-2.5 py-2 text-gray-700 hover:bg-gray-50 hover:text-[#004d26] transition-colors text-xs font-normal"
+                >
+                  <UserIcon className="h-3.5 w-3.5 text-gray-400 shrink-0 stroke-[1.5]" />
+                  <span>{dictionary.common.login}</span>
+                </Link>
                 )}
               </div>
 

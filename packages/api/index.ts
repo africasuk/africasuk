@@ -15,3 +15,5 @@ export * from "./services/MTNMomoService";
 export * from "./services/review.service";
 
 export * from "./services/payment/PaymentWebhookService";
+
+export * from "./services/product-profitability";

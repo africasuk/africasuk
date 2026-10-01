@@ -24,46 +24,58 @@ export const adminNavigation: NavigationGroup[] = [
     ],
   },
   {
-  title: "Catalog",
-  items: [
-    {
-      title: "Products",
-      href: "/products",
-      icon: "package",
-      permission: "products.view",
-    },
-    {
-      title: "Product Requests",
-      href: "/product-requests",
-      icon: "package",
-      permission: "product_requests.view",
-    },
-    {
-      title: "Categories",
-      href: "/categories",
-      icon: "shapes",
-      permission: "categories.view",
-    },
-    {
-      title: "Brands",
-      href: "/brands",
-      icon: "tags",
-      permission: "brands.view",
-    },
-    {
-      title: "Reviews",
-      href: "/reviews",
-      icon: "reviews",
-      permission: "reviews.view",
-    },
-  ],
-},
+    title: "Catalog",
+    items: [
+      {
+        title: "Products",
+        href: "/products",
+        icon: "package",
+        permission: "products.view",
+      },
+      {
+        title: "Product Requests",
+        href: "/product-requests",
+        icon: "package",
+        permission: "product_requests.view",
+      },
+      {
+        title: "Product Profitability",
+        href: "/product-profitability",
+        icon: "reports",
+        permission: "products.view",
+      },
+      {
+        title: "Categories",
+        href: "/categories",
+        icon: "shapes",
+        permission: "categories.view",
+      },
+      {
+        title: "Brands",
+        href: "/brands",
+        icon: "tags",
+        permission: "brands.view",
+      },
+      {
+        title: "Reviews",
+        href: "/reviews",
+        icon: "reviews",
+        permission: "reviews.view",
+      },
+    ],
+  },
   {
     title: "Administration",
     items: [
       {
         title: "Users",
         href: "/users",
+        icon: "users",
+        permission: "users.view",
+      },
+      {
+        title: "Deleted Accounts",
+        href: "/deleted-accounts",
         icon: "users",
         permission: "users.view",
       },

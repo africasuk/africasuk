@@ -20,3 +20,6 @@ export * from "./repositories/review.repository";
 
 export * from "./client";
 export * from "./types";
+
+export * from "./repositories/product-profitability/product-profitability.repository";
+

@@ -58,7 +58,7 @@ export default async function ProfilePage() {
       <ProfileSection profile={profile} />
 
       {/* 2. Product Requests Action Banner */}
-      <section className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 border border-gray-200 bg-gradient-to-r from-emerald-50/50 via-stone-50/30 to-white p-4 sm:p-6 shadow-none">
+      <section className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 border border-gray-200 bg-linear-to-r from-emerald-50/50 via-stone-50/30 to-white p-4 sm:p-6 shadow-none">
         <div className="flex items-start sm:items-center gap-3.5">
           <div className="flex h-10 w-10 shrink-0 items-center justify-center bg-[#004d26] text-white border border-[#004d26]">
             <PackageSearch className="h-5 w-5 stroke-[1.5]" />

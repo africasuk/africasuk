@@ -1,14 +1,18 @@
-import { createClient } from "./client";
-
 export async function forgotPassword(email: string) {
-  const supabase = createClient();
-
-  const { data, error } = await supabase.auth.resetPasswordForEmail(email, {
-    redirectTo: `${window.location.origin}/auth/reset-password`,
+  const response = await fetch("/api/auth/forgot-password", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({ email }),
   });
+
+  const data = await response.json();
 
   return {
     data,
-    error,
+    error: response.ok
+      ? null
+      : new Error(data.error || "Failed to send reset email"),
   };
 }

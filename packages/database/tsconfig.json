@@ -5,7 +5,7 @@
     "declaration": true,
     "declarationMap": true
   },
-  "include": ["**/*.ts"],
+  "include": ["**/*.ts", "../api/services/product-profitability/ProductProfitabilityCommandService.ts", "../api/services/product-profitability/ProductProfitabilityQueryService.ts"],
   "references": [
     {
       "path": "../types"
