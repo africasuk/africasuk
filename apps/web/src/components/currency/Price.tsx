@@ -2,10 +2,8 @@
 
 import { useCurrencyPrice } from "hooks/useCurrencyPrice";
 
-
 interface PriceProps {
   price: number;
-
   className?: string;
 }
 

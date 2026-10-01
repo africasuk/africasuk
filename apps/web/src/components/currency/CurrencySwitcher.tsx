@@ -1,7 +1,6 @@
 "use client";
 
 import { Check, ChevronDown, Globe } from "lucide-react";
-
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -36,6 +35,7 @@ const CURRENCIES = {
       </svg>
     ),
   },
+
   SSP: {
     label: "SSP",
     fullName: "South Sudanese Pound",
@@ -45,10 +45,27 @@ const CURRENCIES = {
         viewBox="0 0 1200 600"
       >
         <rect width="1200" height="600" fill="#000" />
-        <rect y="200" width="1200" height="200" fill="#c8102e" />
-        <rect y="400" width="1200" height="200" fill="#00843d" />
-        <path d="M0,160h1200M0,440h1200" stroke="#fff" strokeWidth="40" />
-        <polygon points="0,0 400,300 0,600" fill="#002f6c" />
+        <rect
+          y="200"
+          width="1200"
+          height="200"
+          fill="#c8102e"
+        />
+        <rect
+          y="400"
+          width="1200"
+          height="200"
+          fill="#00843d"
+        />
+        <path
+          d="M0,160h1200M0,440h1200"
+          stroke="#fff"
+          strokeWidth="40"
+        />
+        <polygon
+          points="0,0 400,300 0,600"
+          fill="#002f6c"
+        />
         <polygon
           points="100,300 160,345 135,275 195,230 120,230"
           fill="#eaaa00"
@@ -65,8 +82,9 @@ export function CurrencySwitcher() {
   const { currency, setCurrency } = useCurrency();
 
   const activeCode = (
-    currency in CURRENCIES ? currency : "USD"
+    currency in CURRENCIES ? currency : "SSP"
   ) as CurrencyCode;
+
   const activeCurrency = CURRENCIES[activeCode];
 
   return (
@@ -79,8 +97,10 @@ export function CurrencySwitcher() {
           <span className="text-[9px] font-bold uppercase tracking-wider text-gray-400 group-hover:text-gray-500 block">
             Currency
           </span>
+
           <div className="flex items-center gap-1.5 mt-0.5">
             {activeCurrency.renderFlag()}
+
             <span className="text-[11px] font-black tracking-wide text-gray-900">
               {activeCurrency.label}
             </span>
@@ -95,37 +115,42 @@ export function CurrencySwitcher() {
         sideOffset={6}
         className="min-w-45 z-50 bg-white border border-gray-100 rounded-2xl p-1.5 shadow-lg antialiased select-none"
       >
-        {(Object.keys(CURRENCIES) as CurrencyCode[]).map((code) => {
-          const item = CURRENCIES[code];
-          const isActive = activeCode === code;
+        {(Object.keys(CURRENCIES) as CurrencyCode[]).map(
+          (code) => {
+            const item = CURRENCIES[code];
+            const isActive = activeCode === code;
 
-          return (
-            <DropdownMenuItem
-              key={code}
-              onClick={() => setCurrency(code)}
-              className={`flex items-center justify-between gap-3 cursor-pointer rounded-xl px-2.5 py-2 text-xs font-bold transition-colors outline-none ${
-                isActive
-                  ? "bg-gray-50 text-[#002b15]"
-                  : "text-gray-600 hover:bg-gray-50 hover:text-gray-900"
-              }`}
-            >
-              <div className="flex items-center gap-2">
-                {item.renderFlag()}
-                <div className="flex flex-col leading-tight">
-                  <span className="text-gray-900 font-black">
-                    {item.label}
-                  </span>
-                  <span className="text-[9px] font-medium text-gray-400 normal-case">
-                    {item.fullName}
-                  </span>
+            return (
+              <DropdownMenuItem
+                key={code}
+                onClick={() => setCurrency(code)}
+                className={`flex items-center justify-between gap-3 cursor-pointer rounded-xl px-2.5 py-2 text-xs font-bold transition-colors outline-none ${
+                  isActive
+                    ? "bg-gray-50 text-[#002b15]"
+                    : "text-gray-600 hover:bg-gray-50 hover:text-gray-900"
+                }`}
+              >
+                <div className="flex items-center gap-2">
+                  {item.renderFlag()}
+
+                  <div className="flex flex-col leading-tight">
+                    <span className="text-gray-900 font-black">
+                      {item.label}
+                    </span>
+
+                    <span className="text-[9px] font-medium text-gray-400 normal-case">
+                      {item.fullName}
+                    </span>
+                  </div>
                 </div>
-              </div>
-              {isActive && (
-                <Check className="h-3.5 w-3.5 text-[#002b15] shrink-0 stroke-3" />
-              )}
-            </DropdownMenuItem>
-          );
-        })}
+
+                {isActive && (
+                  <Check className="h-3.5 w-3.5 text-[#002b15] shrink-0 stroke-3" />
+                )}
+              </DropdownMenuItem>
+            );
+          },
+        )}
       </DropdownMenuContent>
     </DropdownMenu>
   );

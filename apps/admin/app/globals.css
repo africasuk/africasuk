@@ -115,39 +115,39 @@ body {
 }
 
 .dark {
-  /* Admin panel */
+  /* Admin panel - Pure Monochromatic Neutral */
   --background: #090909;
-  --foreground: #f8fafc;
+  --foreground: #f5f5f5;
 
   /* Cards / panels */
-  --card: #111827;
-  --card-foreground: #f8fafc;
+  --card: #141414;
+  --card-foreground: #f5f5f5;
 
-  --popover: #111827;
-  --popover-foreground: #f8fafc;
+  --popover: #141414;
+  --popover-foreground: #f5f5f5;
 
   /* Primary */
-  --primary: #f8fafc;
+  --primary: #f5f5f5;
   --primary-foreground: #090909;
 
   /* Secondary */
-  --secondary: #162033;
-  --secondary-foreground: #f8fafc;
+  --secondary: #1f1f1f;
+  --secondary-foreground: #f5f5f5;
 
   /* Muted */
-  --muted: #162033;
-  --muted-foreground: #94a3b8;
+  --muted: #1f1f1f;
+  --muted-foreground: #a3a3a3;
 
   /* Accent */
-  --accent: #162033;
-  --accent-foreground: #f8fafc;
+  --accent: #1f1f1f;
+  --accent-foreground: #f5f5f5;
 
   --destructive: oklch(0.704 0.191 22.216);
 
   /* Borders / inputs */
-  --border: #273244;
-  --input: #273244;
-  --ring: #64748b;
+  --border: #262626;
+  --input: #262626;
+  --ring: #525252;
 
   /* Charts */
   --chart-1: oklch(0.87 0 0);
@@ -157,14 +157,14 @@ body {
   --chart-5: oklch(0.269 0 0);
 
   /* Sidebar */
-  --sidebar: #171717;
-  --sidebar-foreground: #f8fafc;
+  --sidebar: #0f0f0f;
+  --sidebar-foreground: #f5f5f5;
   --sidebar-primary: #005c2e;
   --sidebar-primary-foreground: #ffffff;
-  --sidebar-accent: #292929;
+  --sidebar-accent: #212121;
   --sidebar-accent-foreground: #ffffff;
-  --sidebar-border: #2a2a2a;
-  --sidebar-ring: #64748b;
+  --sidebar-border: #262626;
+  --sidebar-ring: #525252;
 }
 
 @layer base {
@@ -178,5 +178,139 @@ body {
 
   html {
     @apply font-sans;
+  }
+}
+
+@media print {
+  @page {
+    size: 80mm auto;
+    margin: 0;
+  }
+
+  html,
+  body {
+    width: 80mm !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    background: white !important;
+  }
+
+  body * {
+    visibility: hidden !important;
+  }
+
+  #africasuk-receipt,
+  #africasuk-receipt * {
+    visibility: visible !important;
+  }
+
+  #africasuk-receipt {
+    display: block !important;
+    position: absolute !important;
+    top: 0 !important;
+    left: 0 !important;
+    width: 80mm !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    background: white !important;
+  }
+
+  .receipt-inner {
+    width: 72mm !important;
+    margin: 0 auto !important;
+    padding: 4mm 0 !important;
+    font-size: 11px !important;
+    line-height: 1.35 !important;
+    color: #000 !important;
+  }
+
+  .receipt-header {
+    text-align: center;
+  }
+
+  .receipt-logo {
+    display: block;
+    width: 42mm;
+    max-height: 18mm;
+    object-fit: contain;
+    margin: 0 auto 3mm;
+  }
+
+  .receipt-title {
+    font-size: 15px;
+    font-weight: 700;
+    margin-bottom: 1mm;
+  }
+
+  .receipt-divider {
+    border-top: 1px dashed #000;
+    margin: 3mm 0;
+  }
+
+  .receipt-section {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5mm;
+  }
+
+  .receipt-row {
+    display: flex;
+    justify-content: space-between;
+    gap: 4mm;
+  }
+
+  .receipt-row > :last-child {
+    text-align: right;
+  }
+
+  .receipt-heading {
+    font-weight: 700;
+    margin-bottom: 1mm;
+  }
+
+  .receipt-item {
+    margin-bottom: 3mm;
+  }
+
+  .receipt-item-name {
+    font-weight: 700;
+  }
+
+  .receipt-item-option {
+    font-size: 10px;
+  }
+
+  .receipt-total {
+    display: flex;
+    justify-content: space-between;
+    font-size: 14px;
+    font-weight: 700;
+    margin-top: 2mm;
+  }
+
+  .receipt-qr {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2mm;
+    text-align: center;
+    margin-top: 4mm;
+  }
+
+  .receipt-qr img {
+    width: 30mm;
+    height: 30mm;
+  }
+
+  .receipt-qr span {
+    max-width: 65mm;
+    word-break: break-all;
+    font-size: 8px;
+  }
+
+  .receipt-footer {
+    text-align: center;
+    margin-top: 5mm;
+    font-size: 9px;
   }
 }

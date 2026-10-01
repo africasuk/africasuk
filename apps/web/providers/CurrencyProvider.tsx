@@ -47,14 +47,13 @@ export function CurrencyProvider({
     setCurrencyState(value);
   };
 
-  const value =
-    useMemo(
-      () => ({
-        currency,
-        setCurrency,
-      }),
-      [currency],
-    );
+  const value = useMemo(
+    () => ({
+      currency,
+      setCurrency,
+    }),
+    [currency],
+  );
 
   return (
     <CurrencyContext.Provider
@@ -67,9 +66,7 @@ export function CurrencyProvider({
 
 export function useCurrency() {
   const context =
-    useContext(
-      CurrencyContext,
-    );
+    useContext(CurrencyContext);
 
   if (!context) {
     throw new Error(
