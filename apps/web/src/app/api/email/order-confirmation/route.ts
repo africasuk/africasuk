@@ -1,11 +1,44 @@
 import { NextResponse } from "next/server";
+
 import { sendEmail } from "@/lib/zeptomail";
 
-function formatSSP(value: number) {
-  return `${Number(value || 0).toLocaleString("en-US")} SSP`;
-}
+type OrderItem = {
+  productName?: string | null;
+  name?: string | null;
+  quantity?: number | null;
+  price?: number | null;
+};
 
-function escapeHtml(value: string | number | null | undefined) {
+type Order = {
+  id?: string | null;
+  orderNumber: string;
+  status?: string | null;
+  paymentStatus?: string | null;
+  paymentMethod?: string | null;
+  subtotal?: number | null;
+  total?: number | null;
+  currency?: string | null;
+  createdAt?: string | null;
+};
+
+type Customer = {
+  name?: string | null;
+  email: string;
+  phone?: string | null;
+};
+
+type RequestBody = {
+  order: Order;
+  customer: Customer;
+  items: OrderItem[];
+  exchangeRate?: number | null;
+};
+
+const DEFAULT_EXCHANGE_RATE = 7900;
+
+function escapeHtml(
+  value: string | number | null | undefined,
+) {
   return String(value ?? "")
     .replace(/&/g, "&amp;")
     .replace(/</g, "&lt;")
@@ -14,15 +47,43 @@ function escapeHtml(value: string | number | null | undefined) {
     .replace(/'/g, "&#039;");
 }
 
+function getExchangeRate(
+  exchangeRate: number | null | undefined,
+) {
+  const rate = Number(exchangeRate);
+
+  if (Number.isFinite(rate) && rate > 0) {
+    return rate;
+  }
+
+  return DEFAULT_EXCHANGE_RATE;
+}
+
+function formatSSPFromUSD(
+  value: number,
+  exchangeRate: number,
+) {
+  const ssp = Number(value || 0) * exchangeRate;
+
+  return `SSP ${ssp.toLocaleString("en-US", {
+    maximumFractionDigits: 0,
+  })}`;
+}
+
 export async function POST(request: Request) {
   try {
-    const body = await request.json();
+    const body = (await request.json()) as RequestBody;
 
     const {
       order,
       customer,
       items,
+      exchangeRate: requestedExchangeRate,
     } = body;
+
+    // --------------------------------------------------
+    // Validate request
+    // --------------------------------------------------
 
     if (!order?.orderNumber) {
       return NextResponse.json(
@@ -54,546 +115,710 @@ export async function POST(request: Request) {
       );
     }
 
-    const customerName =
+    // --------------------------------------------------
+    // Exchange rate
+    //
+    // Africa Suk uses:
+    //
+    // 1 USD = 7,900 SSP
+    //
+    // If the mobile app sends the current rate,
+    // that rate is used.
+    //
+    // Existing requests that don't send a rate
+    // fall back to 7,900.
+    // --------------------------------------------------
+
+    const exchangeRate = getExchangeRate(
+      requestedExchangeRate,
+    );
+
+    console.log(
+      "Order confirmation exchange rate:",
+      exchangeRate,
+    );
+
+    // --------------------------------------------------
+    // Customer
+    // --------------------------------------------------
+
+    const customerName = escapeHtml(
       customer.name?.trim() ||
-      customer.email.split("@")[0];
+        customer.email.split("@")[0],
+    );
+
+    const customerEmail = customer.email
+      .trim()
+      .toLowerCase();
+
+    // --------------------------------------------------
+    // Order items
+    // --------------------------------------------------
 
     const itemsHtml = items
-      .map(
-        (item: {
-          name: string;
-          price: number;
-          quantity: number;
-        }) => `
+      .map((item) => {
+        const productName = escapeHtml(
+          item.productName ||
+            item.name ||
+            "Product",
+        );
+
+        const quantity = Math.max(
+          1,
+          Number(item.quantity || 1),
+        );
+
+        const price = Number(item.price || 0);
+
+        const itemTotalUSD = price * quantity;
+
+        const itemTotalSSP =
+          formatSSPFromUSD(
+            itemTotalUSD,
+            exchangeRate,
+          );
+
+        return `
           <tr>
             <td
               style="
-                padding: 14px 0;
+                padding: 15px 0;
                 border-bottom: 1px solid #eeeeee;
                 color: #222222;
                 font-size: 14px;
+                line-height: 20px;
+                vertical-align: top;
               "
             >
-              ${escapeHtml(item.name)}
+              <strong>
+                ${productName}
+              </strong>
+
+              <div
+                style="
+                  margin-top: 4px;
+                  color: #777777;
+                  font-size: 13px;
+                "
+              >
+                Quantity: ${quantity}
+              </div>
             </td>
 
             <td
+              align="right"
               style="
-                padding: 14px 8px;
+                padding: 15px 0;
                 border-bottom: 1px solid #eeeeee;
-                text-align: center;
-                color: #666666;
-                font-size: 14px;
-              "
-            >
-              ${item.quantity}
-            </td>
-
-            <td
-              style="
-                padding: 14px 0;
-                border-bottom: 1px solid #eeeeee;
-                text-align: right;
                 color: #222222;
                 font-size: 14px;
                 font-weight: 600;
+                white-space: nowrap;
+                vertical-align: top;
               "
             >
-              ${formatSSP(item.price * item.quantity)}
+              ${itemTotalSSP}
             </td>
           </tr>
-        `,
-      )
+        `;
+      })
       .join("");
 
-    const trackingUrl = `https://www.africasuk.com/track/${encodeURIComponent(
+    // --------------------------------------------------
+    // Totals
+    // --------------------------------------------------
+
+    const subtotalUSD = Number(
+      order.subtotal || 0,
+    );
+
+    const totalUSD = Number(
+      order.total || 0,
+    );
+
+    const subtotalSSP = formatSSPFromUSD(
+      subtotalUSD,
+      exchangeRate,
+    );
+
+    const totalSSP = formatSSPFromUSD(
+      totalUSD,
+      exchangeRate,
+    );
+
+    // --------------------------------------------------
+    // Order information
+    // --------------------------------------------------
+
+    const orderNumber = escapeHtml(
       order.orderNumber,
-    )}`;
+    );
+
+    const paymentMethod = escapeHtml(
+      order.paymentMethod ||
+        "Cash on Delivery",
+    );
+
+    const paymentStatus = escapeHtml(
+      order.paymentStatus ||
+        "Pending",
+    );
+
+    const trackingUrl =
+      `https://www.africasuk.com/track/${encodeURIComponent(
+        order.orderNumber,
+      )}`;
+
+    // --------------------------------------------------
+    // Email
+    // --------------------------------------------------
 
     const htmlbody = `
-      <!DOCTYPE html>
+<!DOCTYPE html>
+<html lang="en">
 
-      <html>
-        <head>
-          <meta
-            name="viewport"
-            content="width=device-width, initial-scale=1.0"
-          />
-          <meta charset="UTF-8" />
-          <title>AfricaSuk Order Confirmation</title>
-        </head>
+<head>
+  <meta charset="UTF-8" />
 
-        <body
+  <meta
+    name="viewport"
+    content="width=device-width, initial-scale=1.0"
+  />
+
+  <title>
+    Africa Suk Order Confirmation
+  </title>
+</head>
+
+<body
+  style="
+    margin: 0;
+    padding: 0;
+    background: #f5f5f5;
+    font-family: Arial, Helvetica, sans-serif;
+    color: #222222;
+  "
+>
+
+  <table
+    width="100%"
+    cellpadding="0"
+    cellspacing="0"
+    border="0"
+    style="
+      width: 100%;
+      background: #f5f5f5;
+    "
+  >
+
+    <tr>
+      <td
+        align="center"
+        style="
+          padding: 30px 15px;
+        "
+      >
+
+        <table
+          width="100%"
+          cellpadding="0"
+          cellspacing="0"
+          border="0"
           style="
-            margin: 0;
-            padding: 0;
-            background: #f3f5f4;
-            font-family: Arial, Helvetica, sans-serif;
-            color: #222222;
+            width: 100%;
+            max-width: 600px;
+            background: #ffffff;
+            border-radius: 12px;
+            overflow: hidden;
           "
         >
 
-          <table
-            width="100%"
-            cellpadding="0"
-            cellspacing="0"
-            border="0"
-            style="
-              background: #f3f5f4;
-              padding: 32px 12px;
-            "
-          >
-            <tr>
-              <td align="center">
+          <!-- =========================================
+               LOGO
+          ========================================== -->
 
-                <table
-                  width="100%"
-                  cellpadding="0"
-                  cellspacing="0"
-                  border="0"
-                  style="
-                    max-width: 620px;
-                    background: #ffffff;
-                    border-radius: 14px;
-                    overflow: hidden;
-                  "
-                >
+          <tr>
+            <td
+              align="center"
+              style="
+                background: #ffffff;
+                padding: 28px 30px;
+                border-bottom: 1px solid #eeeeee;
+              "
+            >
 
-                  <!-- HEADER -->
+              <img
+                src="https://www.africasuk.com/Newlogo.png"
+                alt="Africa Suk"
+                width="160"
+                style="
+                  display: block;
+                  width: 160px;
+                  max-width: 160px;
+                  height: auto;
+                  margin: 0 auto;
+                  border: 0;
+                "
+              />
 
-                  <tr>
-                    <td
+            </td>
+          </tr>
+
+          <!-- =========================================
+               CONFIRMATION
+          ========================================== -->
+
+          <tr>
+            <td
+              align="center"
+              style="
+                padding: 32px 30px 20px;
+              "
+            >
+
+              <div
+                style="
+                  display: inline-block;
+                  padding: 7px 14px;
+                  background: #e8f5ee;
+                  color: #005c2e;
+                  border-radius: 20px;
+                  font-size: 12px;
+                  font-weight: bold;
+                  letter-spacing: 0.5px;
+                "
+              >
+                ORDER CONFIRMED
+              </div>
+
+              <h1
+                style="
+                  margin: 16px 0 0;
+                  color: #005c2e;
+                  font-size: 26px;
+                  line-height: 34px;
+                "
+              >
+                Thank you for your order!
+              </h1>
+
+              <p
+                style="
+                  margin: 10px 0 0;
+                  color: #666666;
+                  font-size: 15px;
+                  line-height: 24px;
+                "
+              >
+                Hi ${customerName}, your order
+                has been successfully placed.
+              </p>
+
+            </td>
+          </tr>
+
+          <!-- =========================================
+               ORDER NUMBER
+          ========================================== -->
+
+          <tr>
+            <td
+              style="
+                padding: 8px 30px 25px;
+              "
+            >
+
+              <table
+                width="100%"
+                cellpadding="0"
+                cellspacing="0"
+                border="0"
+                style="
+                  background: #f7f7f7;
+                  border-radius: 8px;
+                "
+              >
+
+                <tr>
+                  <td
+                    align="center"
+                    style="
+                      padding: 16px;
+                    "
+                  >
+
+                    <div
                       style="
-                        background: #005c2e;
-                        padding: 28px 30px;
-                        text-align: center;
+                        color: #777777;
+                        font-size: 11px;
+                        font-weight: 600;
+                        letter-spacing: 0.8px;
                       "
                     >
+                      ORDER NUMBER
+                    </div>
 
-                      <img
-                        src="https://www.africasuk.com/Newlogo.png"
-                        alt="AfricaSuk"
-                        width="150"
-                        style="
-                          display: block;
-                          margin: 0 auto;
-                          max-width: 150px;
-                          height: auto;
-                        "
-                      />
-
-                    </td>
-                  </tr>
-
-                  <!-- CONTENT -->
-
-                  <tr>
-                    <td
+                    <div
                       style="
-                        padding: 36px 30px;
+                        margin-top: 5px;
+                        color: #005c2e;
+                        font-size: 18px;
+                        font-weight: bold;
                       "
                     >
+                      #${orderNumber}
+                    </div>
 
-                      <!-- SUCCESS ICON -->
+                  </td>
+                </tr>
 
-                      <div
-                        style="
-                          width: 54px;
-                          height: 54px;
-                          margin: 0 auto 18px;
-                          background: #e8f5ed;
-                          border-radius: 50%;
-                          text-align: center;
-                          line-height: 54px;
-                          color: #005c2e;
-                          font-size: 26px;
-                          font-weight: bold;
-                        "
-                      >
-                        ✓
-                      </div>
+              </table>
 
-                      <h1
-                        style="
-                          margin: 0;
-                          text-align: center;
-                          color: #005c2e;
-                          font-size: 26px;
-                          line-height: 34px;
-                        "
-                      >
-                        Order Confirmed
-                      </h1>
+            </td>
+          </tr>
 
-                      <p
-                        style="
-                          margin: 10px 0 0;
-                          text-align: center;
-                          color: #666666;
-                          font-size: 15px;
-                          line-height: 24px;
-                        "
-                      >
-                        Thank you for shopping with AfricaSuk.
-                        We've received your order successfully.
-                      </p>
+          <!-- =========================================
+               ORDER DETAILS
+          ========================================== -->
 
-                      <!-- ORDER NUMBER -->
+          <tr>
+            <td
+              style="
+                padding: 0 30px 20px;
+              "
+            >
 
-                      <div
-                        style="
-                          margin: 28px 0;
-                          padding: 18px;
-                          background: #f5f8f6;
-                          border: 1px solid #e2ebe5;
-                          border-radius: 10px;
-                          text-align: center;
-                        "
-                      >
+              <table
+                width="100%"
+                cellpadding="0"
+                cellspacing="0"
+                border="0"
+              >
 
-                        <div
-                          style="
-                            color: #777777;
-                            font-size: 12px;
-                            text-transform: uppercase;
-                            letter-spacing: 1px;
-                          "
-                        >
-                          Order Number
-                        </div>
+                <tr>
 
-                        <div
-                          style="
-                            margin-top: 7px;
-                            color: #005c2e;
-                            font-size: 21px;
-                            font-weight: bold;
-                          "
-                        >
-                          #${escapeHtml(order.orderNumber)}
-                        </div>
+                  <td
+                    width="50%"
+                    style="
+                      padding: 0 10px 0 0;
+                      vertical-align: top;
+                    "
+                  >
 
-                      </div>
-
-                      <!-- CUSTOMER -->
-
-                      <h2
-                        style="
-                          margin: 0 0 12px;
-                          font-size: 17px;
-                          color: #222222;
-                        "
-                      >
-                        Hello ${escapeHtml(customerName)},
-                      </h2>
-
-                      <p
-                        style="
-                          margin: 0 0 24px;
-                          color: #555555;
-                          font-size: 14px;
-                          line-height: 23px;
-                        "
-                      >
-                        Your order has been received and is now
-                        being prepared. We'll keep you updated as
-                        your order moves through the process.
-                      </p>
-
-                      <!-- ITEMS -->
-
-                      <h2
-                        style="
-                          margin: 0 0 14px;
-                          font-size: 17px;
-                          color: #222222;
-                        "
-                      >
-                        Your Order
-                      </h2>
-
-                      <table
-                        width="100%"
-                        cellpadding="0"
-                        cellspacing="0"
-                        border="0"
-                        style="
-                          border-collapse: collapse;
-                        "
-                      >
-
-                        <thead>
-                          <tr>
-                            <th
-                              style="
-                                padding: 0 0 10px;
-                                text-align: left;
-                                color: #777777;
-                                font-size: 12px;
-                                font-weight: 600;
-                                text-transform: uppercase;
-                              "
-                            >
-                              Product
-                            </th>
-
-                            <th
-                              style="
-                                padding: 0 8px 10px;
-                                text-align: center;
-                                color: #777777;
-                                font-size: 12px;
-                                font-weight: 600;
-                                text-transform: uppercase;
-                              "
-                            >
-                              Qty
-                            </th>
-
-                            <th
-                              style="
-                                padding: 0 0 10px;
-                                text-align: right;
-                                color: #777777;
-                                font-size: 12px;
-                                font-weight: 600;
-                                text-transform: uppercase;
-                              "
-                            >
-                              Amount
-                            </th>
-                          </tr>
-                        </thead>
-
-                        <tbody>
-                          ${itemsHtml}
-                        </tbody>
-
-                      </table>
-
-                      <!-- TOTALS -->
-
-                      <table
-                        width="100%"
-                        cellpadding="0"
-                        cellspacing="0"
-                        border="0"
-                        style="
-                          margin-top: 18px;
-                        "
-                      >
-
-                        <tr>
-                          <td
-                            style="
-                              padding: 5px 0;
-                              color: #777777;
-                              font-size: 14px;
-                            "
-                          >
-                            Subtotal
-                          </td>
-
-                          <td
-                            style="
-                              padding: 5px 0;
-                              text-align: right;
-                              color: #333333;
-                              font-size: 14px;
-                            "
-                          >
-                            ${formatSSP(order.subtotal)}
-                          </td>
-                        </tr>
-
-                        <tr>
-                          <td
-                            style="
-                              padding: 5px 0;
-                              color: #777777;
-                              font-size: 14px;
-                            "
-                          >
-                            Shipping
-                          </td>
-
-                          <td
-                            style="
-                              padding: 5px 0;
-                              text-align: right;
-                              color: #333333;
-                              font-size: 14px;
-                            "
-                          >
-                            ${formatSSP(order.shipping)}
-                          </td>
-                        </tr>
-
-                        <tr>
-                          <td
-                            style="
-                              padding: 5px 0;
-                              color: #777777;
-                              font-size: 14px;
-                            "
-                          >
-                            Tax
-                          </td>
-
-                          <td
-                            style="
-                              padding: 5px 0;
-                              text-align: right;
-                              color: #333333;
-                              font-size: 14px;
-                            "
-                          >
-                            ${formatSSP(order.tax)}
-                          </td>
-                        </tr>
-
-                        <tr>
-                          <td
-                            colspan="2"
-                            style="
-                              padding-top: 14px;
-                              border-top: 1px solid #eeeeee;
-                            "
-                          ></td>
-                        </tr>
-
-                        <tr>
-                          <td
-                            style="
-                              color: #222222;
-                              font-size: 17px;
-                              font-weight: bold;
-                            "
-                          >
-                            Total
-                          </td>
-
-                          <td
-                            style="
-                              text-align: right;
-                              color: #005c2e;
-                              font-size: 20px;
-                              font-weight: bold;
-                            "
-                          >
-                            ${formatSSP(order.total)}
-                          </td>
-                        </tr>
-
-                      </table>
-
-                      <!-- TRACK BUTTON -->
-
-                      <div
-                        style="
-                          margin: 30px 0 10px;
-                          text-align: center;
-                        "
-                      >
-
-                        <a
-                          href="${trackingUrl}"
-                          style="
-                            display: inline-block;
-                            padding: 13px 25px;
-                            background: #005c2e;
-                            color: #ffffff;
-                            text-decoration: none;
-                            border-radius: 7px;
-                            font-size: 14px;
-                            font-weight: bold;
-                          "
-                        >
-                          Track Your Order
-                        </a>
-
-                      </div>
-
-                      <p
-                        style="
-                          margin: 18px 0 0;
-                          text-align: center;
-                          color: #888888;
-                          font-size: 12px;
-                          line-height: 20px;
-                        "
-                      >
-                        You can use your order number to check
-                        your order status anytime.
-                      </p>
-
-                    </td>
-                  </tr>
-
-                  <!-- FOOTER -->
-
-                  <tr>
-                    <td
+                    <div
                       style="
-                        padding: 24px 30px;
-                        background: #f7f8f7;
-                        border-top: 1px solid #eeeeee;
-                        text-align: center;
+                        color: #888888;
+                        font-size: 11px;
+                        margin-bottom: 5px;
                       "
                     >
+                      PAYMENT METHOD
+                    </div>
 
-                      <p
-                        style="
-                          margin: 0 0 6px;
-                          color: #005c2e;
-                          font-size: 15px;
-                          font-weight: bold;
-                        "
-                      >
-                        AfricaSuk
-                      </p>
+                    <div
+                      style="
+                        color: #222222;
+                        font-size: 13px;
+                        font-weight: 600;
+                        text-transform: capitalize;
+                      "
+                    >
+                      ${paymentMethod}
+                    </div>
 
-                      <p
-                        style="
-                          margin: 0;
-                          color: #888888;
-                          font-size: 12px;
-                          line-height: 20px;
-                        "
-                      >
-                        Shop with Confidence.
-                      </p>
+                  </td>
 
-                      <p
-                        style="
-                          margin: 12px 0 0;
-                          color: #aaaaaa;
-                          font-size: 11px;
-                        "
-                      >
-                        This is an automatic order confirmation
-                        email. Please do not reply to this email.
-                      </p>
+                  <td
+                    width="50%"
+                    align="right"
+                    style="
+                      padding: 0 0 0 10px;
+                      vertical-align: top;
+                    "
+                  >
 
-                    </td>
-                  </tr>
+                    <div
+                      style="
+                        color: #888888;
+                        font-size: 11px;
+                        margin-bottom: 5px;
+                      "
+                    >
+                      PAYMENT STATUS
+                    </div>
 
-                </table>
+                    <div
+                      style="
+                        color: #005c2e;
+                        font-size: 13px;
+                        font-weight: 600;
+                      "
+                    >
+                      ${paymentStatus}
+                    </div>
 
-              </td>
-            </tr>
-          </table>
+                  </td>
 
-        </body>
-      </html>
-    `;
+                </tr>
+
+              </table>
+
+            </td>
+          </tr>
+
+          <!-- =========================================
+               ITEMS
+          ========================================== -->
+
+          <tr>
+            <td
+              style="
+                padding: 0 30px;
+              "
+            >
+
+              <h2
+                style="
+                  margin: 0 0 10px;
+                  color: #222222;
+                  font-size: 18px;
+                  line-height: 24px;
+                "
+              >
+                Your Items
+              </h2>
+
+              <table
+                width="100%"
+                cellpadding="0"
+                cellspacing="0"
+                border="0"
+              >
+
+                ${itemsHtml}
+
+              </table>
+
+            </td>
+          </tr>
+
+          <!-- =========================================
+               TOTALS
+          ========================================== -->
+
+          <tr>
+            <td
+              style="
+                padding: 25px 30px 5px;
+              "
+            >
+
+              <table
+                width="100%"
+                cellpadding="0"
+                cellspacing="0"
+                border="0"
+              >
+
+                <tr>
+
+                  <td
+                    style="
+                      padding: 8px 0;
+                      color: #666666;
+                      font-size: 14px;
+                    "
+                  >
+                    Subtotal
+                  </td>
+
+                  <td
+                    align="right"
+                    style="
+                      padding: 8px 0;
+                      color: #222222;
+                      font-size: 14px;
+                      font-weight: 600;
+                    "
+                  >
+                    ${subtotalSSP}
+                  </td>
+
+                </tr>
+
+                <tr>
+
+                  <td
+                    style="
+                      padding: 15px 0 8px;
+                      border-top: 1px solid #dddddd;
+                      color: #222222;
+                      font-size: 17px;
+                      font-weight: bold;
+                    "
+                  >
+                    Total
+                  </td>
+
+                  <td
+                    align="right"
+                    style="
+                      padding: 15px 0 8px;
+                      border-top: 1px solid #dddddd;
+                      color: #005c2e;
+                      font-size: 18px;
+                      font-weight: bold;
+                      white-space: nowrap;
+                    "
+                  >
+                    ${totalSSP}
+                  </td>
+
+                </tr>
+
+              </table>
+
+            </td>
+          </tr>
+
+          <!-- =========================================
+               EXCHANGE RATE
+          ========================================== -->
+
+          <tr>
+            <td
+              align="right"
+              style="
+                padding: 5px 30px 25px;
+              "
+            >
+
+              <span
+                style="
+                  color: #999999;
+                  font-size: 11px;
+                "
+              >
+                1 USD = ${exchangeRate.toLocaleString(
+                  "en-US",
+                )} SSP
+              </span>
+
+            </td>
+          </tr>
+
+          <!-- =========================================
+               TRACK ORDER
+          ========================================== -->
+
+          <tr>
+            <td
+              align="center"
+              style="
+                padding: 5px 30px 35px;
+              "
+            >
+
+              <a
+                href="${trackingUrl}"
+                style="
+                  display: inline-block;
+                  padding: 13px 28px;
+                  background: #005c2e;
+                  color: #ffffff;
+                  text-decoration: none;
+                  border-radius: 7px;
+                  font-size: 14px;
+                  font-weight: bold;
+                "
+              >
+                Track Your Order
+              </a>
+
+              <p
+                style="
+                  margin: 16px 0 0;
+                  color: #888888;
+                  font-size: 12px;
+                  line-height: 20px;
+                "
+              >
+                You can use your order number
+                to check your order status anytime.
+              </p>
+
+            </td>
+          </tr>
+
+          <!-- =========================================
+               FOOTER
+          ========================================== -->
+
+          <tr>
+            <td
+              align="center"
+              style="
+                padding: 24px 30px;
+                background: #f7f8f7;
+                border-top: 1px solid #eeeeee;
+              "
+            >
+
+              <p
+                style="
+                  margin: 0 0 6px;
+                  color: #005c2e;
+                  font-size: 15px;
+                  font-weight: bold;
+                "
+              >
+                Africa Suk
+              </p>
+
+              <p
+                style="
+                  margin: 0;
+                  color: #888888;
+                  font-size: 12px;
+                  line-height: 20px;
+                "
+              >
+                Shop with Confidence.
+              </p>
+
+              <p
+                style="
+                  margin: 12px 0 0;
+                  color: #aaaaaa;
+                  font-size: 11px;
+                  line-height: 18px;
+                "
+              >
+                This is an automatic order
+                confirmation email.
+              </p>
+
+            </td>
+          </tr>
+
+        </table>
+
+      </td>
+    </tr>
+
+  </table>
+
+</body>
+</html>
+`;
+
+    // --------------------------------------------------
+    // Send
+    // --------------------------------------------------
 
     await sendEmail({
-      to: customer.email.trim().toLowerCase(),
-
-      subject:
-        `AfricaSuk Order Confirmed #${order.orderNumber}`,
-
+      to: customerEmail,
+      subject: `Africa Suk Order Confirmed #${order.orderNumber}`,
       htmlbody,
     });
 
