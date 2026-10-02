@@ -108,7 +108,7 @@ export async function placeOrder({
 
       price: item.price,
       quantity: item.quantity,
-    }))
+    })),
   );
 
   if (itemsError) {
@@ -118,6 +118,79 @@ export async function placeOrder({
       .eq("id", order.id);
 
     throw itemsError;
+  }
+
+  // Send order confirmation email
+  try {
+    const response = await fetch(
+      "https://www.africasuk.com/api/email/order-confirmation",
+      {
+        method: "POST",
+
+        headers: {
+          "Content-Type": "application/json",
+        },
+
+        body: JSON.stringify({
+          order: {
+            id: order.id,
+            orderNumber: order.order_number,
+            status: order.status,
+            paymentStatus: order.payment_status,
+            paymentMethod: order.payment_method,
+            subtotal: order.subtotal,
+            shipping: order.shipping,
+            tax: order.tax,
+            discount: order.discount,
+            total: order.total,
+            currency: order.currency,
+            createdAt: order.created_at,
+          },
+
+          customer: {
+            name: profile.fullName,
+            email: profile.email,
+            phone: profile.phone,
+          },
+
+          items: items.map((item) => ({
+            name: item.name,
+            image: item.image,
+            price: item.price,
+            quantity: item.quantity,
+          })),
+        }),
+      },
+    );
+
+    const responseText = await response.text();
+
+    console.log(
+      "Order confirmation API status:",
+      response.status,
+    );
+
+    console.log(
+      "Order confirmation API response:",
+      responseText,
+    );
+
+    if (!response.ok) {
+      console.error(
+        "Order confirmation email failed:",
+        responseText,
+      );
+    } else {
+      console.log(
+        "Order confirmation email sent:",
+        order.order_number,
+      );
+    }
+  } catch (emailError) {
+    console.error(
+      "Order confirmation email error:",
+      emailError,
+    );
   }
 
   return order;
