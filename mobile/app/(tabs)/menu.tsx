@@ -14,7 +14,6 @@ import {
   User,
   Package,
   Heart,
-  Bell,
   HelpCircle,
   Shield,
   FileText,
@@ -286,18 +285,6 @@ export default function MenuScreen() {
                   label="Wishlist"
                   onPress={() => router.push("/wishlist")}
                 />
-
-                <MenuRow
-                  icon={Bell}
-                  label="Notifications"
-                  onPress={() => {
-                    Alert.alert(
-                      "Coming Soon",
-                      "Notifications will be available soon."
-                    );
-                  }}
-                />
-
                 <CurrencySwitcher />
               </>
             )}

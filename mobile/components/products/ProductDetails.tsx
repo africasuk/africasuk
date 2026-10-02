@@ -1,22 +1,33 @@
-import { useState, useEffect } from "react";
 import {
-  View,
-  Text,
-  StyleSheet,
+  useEffect,
+  useRef,
+  useState,
+} from "react";
+
+import {
   ActivityIndicator,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  Text,
+  View,
 } from "react-native";
-import type { ProductWithDetails, Review } from "@africasuk/types";
+
+import type {
+  ProductWithDetails,
+  Review,
+} from "@africasuk/types";
 
 import { ProductGallery } from "./ProductGallery";
 import { ProductInfo } from "./ProductInfo";
 import { VariantSelector } from "./VariantSelector";
 import { RelatedProducts } from "./RelatedProducts";
 
-interface Props {
+type Props = {
   product: ProductWithDetails;
   selectedColorId?: string;
   relatedProducts?: ProductWithDetails[];
-}
+};
 
 interface Rating {
   averageRating: number;
@@ -25,23 +36,67 @@ interface Rating {
 
 const BRAND_COLOR = "#005c2e";
 
-function StarRating({ rating }: { rating: number }) {
+function StarRating({
+  rating,
+}: {
+  rating: number;
+}) {
   return (
     <View style={styles.stars}>
-      {Array.from({ length: 5 }).map((_, index) => (
-        <Text
-          key={index}
-          style={[
-            styles.star,
-            index < Math.round(rating)
-              ? styles.starFilled
-              : styles.starEmpty,
-          ]}
-        >
-          ★
-        </Text>
-      ))}
+      {Array.from({ length: 5 }).map(
+        (_, index) => (
+          <Text
+            key={index}
+            style={[
+              styles.star,
+              index < Math.round(rating)
+                ? styles.starFilled
+                : styles.starEmpty,
+            ]}
+          >
+            ★
+          </Text>
+        ),
+      )}
     </View>
+  );
+}
+
+function ProductRating({
+  rating,
+  onPress,
+}: {
+  rating: Rating;
+  onPress: () => void;
+}) {
+  const formattedRating = Number(
+    rating.averageRating || 0,
+  ).toFixed(1);
+
+  return (
+    <Pressable
+      onPress={onPress}
+      style={({ pressed }) => [
+        styles.productRating,
+        pressed && styles.productRatingPressed,
+      ]}
+    >
+      <StarRating
+        rating={rating.averageRating}
+      />
+
+      <Text style={styles.productRatingValue}>
+        {formattedRating}
+      </Text>
+
+      <Text style={styles.productRatingCount}>
+        ({rating.reviewCount}{" "}
+        {rating.reviewCount === 1
+          ? "review"
+          : "reviews"}
+        )
+      </Text>
+    </Pressable>
   );
 }
 
@@ -64,7 +119,9 @@ function ReviewsSection({
         {rating.reviewCount > 0 && (
           <Text style={styles.sectionSubtitle}>
             {rating.reviewCount}{" "}
-            {rating.reviewCount === 1 ? "review" : "reviews"}
+            {rating.reviewCount === 1
+              ? "review"
+              : "reviews"}
           </Text>
         )}
       </View>
@@ -73,14 +130,20 @@ function ReviewsSection({
       <View style={styles.ratingCard}>
         <View style={styles.ratingNumberBox}>
           <Text style={styles.ratingNumber}>
-            {Number(rating.averageRating || 0).toFixed(1)}
+            {Number(
+              rating.averageRating || 0,
+            ).toFixed(1)}
           </Text>
 
-          <Text style={styles.ratingMax}>/ 5.0</Text>
+          <Text style={styles.ratingMax}>
+            / 5.0
+          </Text>
         </View>
 
         <View style={styles.ratingMetaBox}>
-          <StarRating rating={rating.averageRating} />
+          <StarRating
+            rating={rating.averageRating}
+          />
 
           <Text style={styles.reviewCount}>
             {rating.reviewCount === 0
@@ -109,57 +172,79 @@ function ReviewsSection({
           </Text>
 
           <Text style={styles.emptyText}>
-            Be the first to share your thoughts about this item.
+            Be the first to share your thoughts
+            about this item.
           </Text>
         </View>
       ) : (
         <View style={styles.reviewList}>
-          {reviews.slice(0, 3).map((review) => (
-            <View
-              key={review.id}
-              style={styles.reviewCard}
-            >
-              <View style={styles.reviewTopRow}>
-                <StarRating rating={review.rating} />
+          {reviews.slice(0, 3).map(
+            (review) => (
+              <View
+                key={review.id}
+                style={styles.reviewCard}
+              >
+                <View style={styles.reviewTopRow}>
+                  <StarRating
+                    rating={review.rating}
+                  />
 
-                <Text style={styles.reviewDate}>
-                  {new Date(review.createdAt)
-                    .toISOString()
-                    .slice(0, 10)}
-                </Text>
-              </View>
+                  <Text style={styles.reviewDate}>
+                    {new Date(
+                      review.createdAt,
+                    )
+                      .toISOString()
+                      .slice(0, 10)}
+                  </Text>
+                </View>
 
-              <View style={styles.reviewerRow}>
-                <Text style={styles.reviewerName}>
-                  {(
-                    review as {
-                      reviewerName?: string;
-                    }
-                  ).reviewerName ?? "Verified Buyer"}
-                </Text>
+                <View style={styles.reviewerRow}>
+                  <Text
+                    style={styles.reviewerName}
+                  >
+                    {(
+                      review as Review & {
+                        reviewerName?: string;
+                      }
+                    ).reviewerName ??
+                      "Verified Buyer"}
+                  </Text>
 
-                {review.verifiedPurchase && (
-                  <View style={styles.verifiedBadge}>
-                    <Text style={styles.verifiedText}>
-                      ✓ Verified
-                    </Text>
-                  </View>
+                  {review.verifiedPurchase && (
+                    <View
+                      style={
+                        styles.verifiedBadge
+                      }
+                    >
+                      <Text
+                        style={
+                          styles.verifiedText
+                        }
+                      >
+                        ✓ Verified
+                      </Text>
+                    </View>
+                  )}
+                </View>
+
+                {review.title && (
+                  <Text
+                    style={styles.reviewTitle}
+                  >
+                    {review.title}
+                  </Text>
+                )}
+
+                {review.comment && (
+                  <Text
+                    style={styles.reviewComment}
+                  >
+                    {review.comment}
+                  </Text>
                 )}
               </View>
-
-              {review.title && (
-                <Text style={styles.reviewTitle}>
-                  {review.title}
-                </Text>
-              )}
-
-              {review.comment && (
-                <Text style={styles.reviewComment}>
-                  {review.comment}
-                </Text>
-              )}
-            </View>
-          ))}
+            ),
+          )}
         </View>
       )}
     </View>
@@ -171,27 +256,39 @@ export function ProductDetails({
   selectedColorId,
   relatedProducts = [],
 }: Props) {
-  const [selectedColor, setSelectedColor] = useState(
-    product.colors?.find(
-      (color) => color.id === selectedColorId
-    ) ?? product.colors?.[0]
-  );
+  const [selectedColor, setSelectedColor] =
+    useState(
+      product.colors?.find(
+        (color) =>
+          color.id === selectedColorId,
+      ) ?? product.colors?.[0],
+    );
 
-  const [reviews, setReviews] = useState<Review[]>([]);
+  const [reviews, setReviews] = useState<
+    Review[]
+  >([]);
 
-  const [rating, setRating] = useState<Rating>({
-    averageRating: 0,
-    reviewCount: 0,
-  });
+  const [rating, setRating] =
+    useState<Rating>({
+      averageRating: 0,
+      reviewCount: 0,
+    });
 
   const [reviewsLoading, setReviewsLoading] =
     useState(true);
+
+  const scrollViewRef =
+    useRef<ScrollView>(null);
+
+  const reviewsSectionRef =
+    useRef<View>(null);
 
   // Sync selected color
   useEffect(() => {
     const targetColor =
       product.colors?.find(
-        (color) => color.id === selectedColorId
+        (color) =>
+          color.id === selectedColorId,
       ) ?? product.colors?.[0];
 
     setSelectedColor(targetColor);
@@ -206,29 +303,34 @@ export function ProductDetails({
         setReviewsLoading(true);
 
         const response = await fetch(
-            `https://africasuk.com/api/reviews?productId=${product.id}`
-          );
+          `https://africasuk.com/api/reviews?productId=${product.id}`,
+        );
 
         if (!response.ok) {
-          throw new Error("Failed to fetch reviews");
+          throw new Error(
+            "Failed to fetch reviews",
+          );
         }
 
-        const data = await response.json();
+        const data =
+          await response.json();
 
         if (cancelled) return;
 
-        setReviews(data.reviews ?? []);
+        setReviews(
+          data.reviews ?? [],
+        );
 
         setRating(
           data.rating ?? {
             averageRating: 0,
             reviewCount: 0,
-          }
+          },
         );
       } catch (error) {
         console.error(
           "Mobile Reviews Error:",
-          error
+          error,
         );
 
         if (!cancelled) {
@@ -253,50 +355,84 @@ export function ProductDetails({
     };
   }, [product.id]);
 
-  const filteredRelated = relatedProducts.filter(
-    (item) => item.id !== product.id
-  );
+  const filteredRelated =
+    relatedProducts.filter(
+      (item) =>
+        item.id !== product.id,
+    );
+
+  const scrollToReviews = () => {
+    reviewsSectionRef.current?.measureLayout(
+      scrollViewRef.current as any,
+      (_x, y) => {
+        scrollViewRef.current?.scrollTo({
+          y,
+          animated: true,
+        });
+      },
+      () => {},
+    );
+  };
 
   return (
-    <View style={styles.container}>
+    <ScrollView
+      ref={scrollViewRef}
+      style={styles.container}
+      contentContainerStyle={
+        styles.contentContainer
+      }
+      showsVerticalScrollIndicator={false}
+    >
       {/* Product Gallery */}
-      <View style={styles.galleryWrapper}>
+      <View
+        style={styles.galleryWrapper}
+      >
         <ProductGallery
-          images={selectedColor?.images ?? []}
+          images={
+            selectedColor?.images ?? []
+          }
         />
       </View>
 
       {/* Product Information */}
       <View style={styles.infoWrapper}>
         <ProductInfo product={product} />
-      </View>
 
-      {/* Variant Selector */}
-      <View style={styles.sectionDivider} />
-
-      <View style={styles.variantWrapper}>
-        <VariantSelector
-          product={product}
-          onColorChange={setSelectedColor}
+        {/* Product Rating */}
+        <ProductRating
+          rating={rating}
+          onPress={scrollToReviews}
         />
       </View>
 
-      {/* Reviews */}
-      <ReviewsSection
-        reviews={reviews}
-        rating={rating}
-        loading={reviewsLoading}
-      />
+      {/* Divider */}
+      <View style={styles.sectionDivider} />
+
+      {/* Variant Selector */}
+      <View style={styles.variantWrapper}>
+        <VariantSelector
+          product={product}
+          onColorChange={
+            setSelectedColor
+          }
+        />
+      </View>
 
       {/* Related Products */}
       {filteredRelated.length > 0 && (
         <View style={styles.section}>
-          <View style={styles.sectionHeader}>
-            <Text style={styles.sectionTitle}>
+          <View
+            style={styles.sectionHeader}
+          >
+            <Text
+              style={styles.sectionTitle}
+            >
               Recommended For You
             </Text>
 
-            <Text style={styles.sectionSubtitle}>
+            <Text
+              style={styles.sectionSubtitle}
+            >
               Similar styles
             </Text>
           </View>
@@ -306,13 +442,28 @@ export function ProductDetails({
           />
         </View>
       )}
-    </View>
+
+      {/* Customer Reviews */}
+      <View
+        ref={reviewsSectionRef}
+      >
+        <ReviewsSection
+          reviews={reviews}
+          rating={rating}
+          loading={reviewsLoading}
+        />
+      </View>
+    </ScrollView>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
     backgroundColor: "#ffffff",
+    flex: 1,
+  },
+
+  contentContainer: {
     paddingBottom: 40,
     paddingTop: 50,
   },
@@ -323,6 +474,29 @@ const styles = StyleSheet.create({
 
   infoWrapper: {
     paddingHorizontal: 16,
+  },
+
+  productRating: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+    marginTop: 14,
+    paddingVertical: 4,
+  },
+
+  productRatingPressed: {
+    opacity: 0.6,
+  },
+
+  productRatingValue: {
+    fontSize: 14,
+    fontWeight: "600",
+    color: "#111827",
+  },
+
+  productRatingCount: {
+    fontSize: 12,
+    color: "#9ca3af",
   },
 
   sectionDivider: {

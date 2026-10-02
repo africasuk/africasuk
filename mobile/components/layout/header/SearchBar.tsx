@@ -12,6 +12,7 @@ import {
   ViewStyle,
   TextStyle,
   ImageStyle,
+  useWindowDimensions,
 } from "react-native";
 import { Image } from "expo-image";
 import { useRouter } from "expo-router";
@@ -33,6 +34,14 @@ export default function SearchBar({
 }: SearchBarProps) {
   const router = useRouter();
   const inputRef = useRef<TextInput>(null);
+  const { width } = useWindowDimensions();
+
+  // Responsive breakpoints for compact screens
+  const isSmallDevice = width < 380;
+  const responsiveFontSize = isSmallDevice ? 11.5 : 13;
+  const defaultPlaceholder = isSmallDevice
+    ? "Search products..."
+    : "Search products, categories...";
 
   const [query, setQuery] = useState("");
   const [suggestions, setSuggestions] = useState<ProductWithDetails[]>([]);
@@ -113,7 +122,7 @@ export default function SearchBar({
         ]}
       >
         <Search
-          size={18}
+          size={isSmallDevice ? 16 : 18}
           color={isFocused ? "#002b15" : "#9ca3af"}
           style={styles.searchIcon}
         />
@@ -125,10 +134,12 @@ export default function SearchBar({
           onFocus={() => setIsFocused(true)}
           onBlur={() => setIsFocused(false)}
           onSubmitEditing={handleSearchSubmit}
-          placeholder={placeholder ?? "Search products, categories..."}
+          placeholder={placeholder ?? defaultPlaceholder}
           placeholderTextColor="#9ca3af"
           returnKeyType="search"
-          style={styles.input}
+          multiline={false}
+          numberOfLines={1}
+          style={[styles.input, { fontSize: responsiveFontSize }]}
           autoCapitalize="none"
           autoCorrect={false}
           autoFocus={autoFocus}
@@ -152,21 +163,31 @@ export default function SearchBar({
               hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
               style={styles.clearButton}
             >
-              <X size={14} color="#6b7280" />
+              <X size={13} color="#6b7280" />
             </TouchableOpacity>
           )}
 
           <TouchableOpacity
             onPress={handleSearchSubmit}
             activeOpacity={0.85}
-            style={styles.submitButton}
+            style={[
+              styles.submitButton,
+              isSmallDevice && styles.submitButtonSmall,
+            ]}
           >
-            <Text style={styles.submitButtonText}>Search</Text>
+            <Text
+              style={[
+                styles.submitButtonText,
+                isSmallDevice && styles.submitButtonTextSmall,
+              ]}
+            >
+              Search
+            </Text>
           </TouchableOpacity>
         </View>
       </View>
 
-      {/* Modern Suggestion Dropdown */}
+      {/* Suggestion Dropdown */}
       {suggestions.length > 0 && (
         <View style={styles.dropdownContainer}>
           <FlatList
@@ -176,18 +197,15 @@ export default function SearchBar({
             style={styles.suggestionsList}
             contentContainerStyle={styles.suggestionsContent}
             renderItem={({ item }) => {
-              // Safely extract category image property without TypeScript errors
               const categoryWithImage = item.category as
                 | (Category & { imageUrl?: string; image_url?: string })
                 | undefined;
 
-              // Extract main product image if available
               const imageUrl =
                 item.colors?.[0]?.images?.[0]?.imageUrl ??
                 categoryWithImage?.imageUrl ??
                 categoryWithImage?.image_url;
 
-              // Extract minimum price option
               const price = item.colors?.[0]?.variants?.[0]?.price;
 
               return (
@@ -198,7 +216,6 @@ export default function SearchBar({
                     pressed && styles.suggestionItemPressed,
                   ]}
                 >
-                  {/* Thumbnail Preview */}
                   <View style={styles.imageWrapper}>
                     {imageUrl ? (
                       <Image
@@ -213,7 +230,6 @@ export default function SearchBar({
                     )}
                   </View>
 
-                  {/* Content Meta */}
                   <View style={styles.textContainer}>
                     <Text style={styles.productName} numberOfLines={1}>
                       {item.name}
@@ -254,7 +270,9 @@ type Styles = {
   loader: ViewStyle;
   clearButton: ViewStyle;
   submitButton: ViewStyle;
+  submitButtonSmall: ViewStyle;
   submitButtonText: TextStyle;
+  submitButtonTextSmall: TextStyle;
   dropdownContainer: ViewStyle;
   suggestionsList: ViewStyle;
   suggestionsContent: ViewStyle;
@@ -283,7 +301,7 @@ const styles = StyleSheet.create<Styles>({
     borderWidth: 1.5,
     borderColor: "#e5e7eb",
     borderRadius: 21,
-    paddingLeft: 12,
+    paddingLeft: 10,
     paddingRight: 4,
   },
   inputWrapperFocused: {
@@ -291,27 +309,27 @@ const styles = StyleSheet.create<Styles>({
     backgroundColor: "#ffffff",
   },
   searchIcon: {
-    marginRight: 8,
+    marginRight: 6,
   },
   input: {
     flex: 1,
     height: "100%",
-    fontSize: 13,
     fontWeight: "500",
     color: "#111827",
+    paddingVertical: 0,
   },
   actionsRight: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 6,
+    gap: 4,
   },
   loader: {
     marginRight: 2,
   },
   clearButton: {
-    width: 22,
-    height: 22,
-    borderRadius: 11,
+    width: 20,
+    height: 20,
+    borderRadius: 10,
     backgroundColor: "#e5e7eb",
     alignItems: "center",
     justifyContent: "center",
@@ -319,16 +337,24 @@ const styles = StyleSheet.create<Styles>({
   submitButton: {
     height: 34,
     backgroundColor: "#002b15",
-    paddingHorizontal: 14,
+    paddingHorizontal: 12,
     borderRadius: 17,
     alignItems: "center",
     justifyContent: "center",
+  },
+  submitButtonSmall: {
+    height: 32,
+    paddingHorizontal: 10,
+    borderRadius: 16,
   },
   submitButtonText: {
     color: "#ffffff",
     fontSize: 12,
     fontWeight: "700",
     letterSpacing: 0.2,
+  },
+  submitButtonTextSmall: {
+    fontSize: 11,
   },
   dropdownContainer: {
     position: "absolute",

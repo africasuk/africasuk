@@ -27,12 +27,12 @@ const CurrencyContext =
 interface CurrencyProviderProps {
   children: React.ReactNode;
 
-  initialCurrency: Currency;
+  initialCurrency?: Currency;
 }
 
 export function CurrencyProvider({
   children,
-  initialCurrency,
+  initialCurrency = "SSP",
 }: CurrencyProviderProps) {
   const [currency, setCurrencyState] =
     useState<Currency>(

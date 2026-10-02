@@ -36,10 +36,33 @@ export async function POST(request: Request) {
         orderService,
       );
 
+    // Place order
     const result =
-      await paymentService.checkout(
-        body,
+      await paymentService.checkout(body);
+
+    // Send confirmation email using the same email API
+    try {
+      await fetch(
+        `${new URL(request.url).origin}/api/email/order-confirmation`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            order: result.order,
+            customer: body.customer,
+            items: body.items ?? [],
+            exchangeRate: body.exchangeRate,
+          }),
+        },
       );
+    } catch (emailError) {
+      console.error(
+        "Order confirmation email failed:",
+        emailError,
+      );
+    }
 
     return NextResponse.json(result, {
       status: 201,

@@ -35,7 +35,7 @@ const STORAGE_KEY =
 
 export function CurrencyProvider({
   children,
-  initialCurrency = "USD",
+  initialCurrency = "SSP",
 }: CurrencyProviderProps) {
   const [currency, setCurrencyState] =
     useState<Currency>(

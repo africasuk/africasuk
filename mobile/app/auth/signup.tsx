@@ -53,12 +53,41 @@ export default function SignupPage() {
         password: data.password,
       });
 
-      if (error) {
-        Alert.alert("Error", error.message);
-        return;
+if (error) {
+  Alert.alert("Error", error.message);
+  return;
+}
+
+// Send welcome email
+try {
+  const response = await fetch(
+    "https://www.africasuk.com/api/email/signup",
+    {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        email: data.email,
+        name: data.fullName,
+      }),
+    },
+  );
+
+        const text = await response.text();
+
+        console.log("Signup email API status:", response.status);
+        console.log("Signup email API response:", text);
+      } catch (emailError) {
+        // Do not block account creation if email fails
+        console.error("Signup email error:", emailError);
       }
 
-      Alert.alert("Success", dictionary.auth.welcomeToAfricaSuk);
+      Alert.alert(
+        "Success",
+        dictionary.auth.welcomeToAfricaSuk,
+      );
+
       reset();
       router.push("/");
     } catch (err: any) {

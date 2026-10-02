@@ -30,14 +30,21 @@ export default function CheckoutContactDialog({
 }: CheckoutContactDialogProps) {
   const [loading, setLoading] = useState(false);
   const [fullName, setFullName] = useState(profile?.fullName ?? "");
-  const [phone, setPhone] = useState(profile?.phone ?? "");
+  const DEFAULT_COUNTRY_CODE = "+211";
+
+    const [phone, setPhone] = useState(
+      profile?.phone || DEFAULT_COUNTRY_CODE,
+    );
   const [nameFocused, setNameFocused] = useState(false);
   const [phoneFocused, setPhoneFocused] = useState(false);
 
   useEffect(() => {
     if (open) {
       setFullName(profile?.fullName ?? "");
-      setPhone(profile?.phone ?? "");
+      setPhone(
+        profile?.phone?.trim() ||
+          DEFAULT_COUNTRY_CODE,
+      );
     }
   }, [open, profile]);
 
@@ -145,7 +152,7 @@ export default function CheckoutContactDialog({
                 <TextInput
                   value={fullName}
                   editable={!loading}
-                  placeholder="e.g. George Kasmiro"
+                  placeholder="e.g. John Deng+"
                   placeholderTextColor="#a1a1aa"
                   onChangeText={setFullName}
                   onFocus={() => setNameFocused(true)}
@@ -170,7 +177,7 @@ export default function CheckoutContactDialog({
                   value={phone}
                   editable={!loading}
                   keyboardType="phone-pad"
-                  placeholder="+211 912 345 678"
+                  placeholder="+211 920 000 00"
                   placeholderTextColor="#a1a1aa"
                   onChangeText={setPhone}
                   onFocus={() => setPhoneFocused(true)}

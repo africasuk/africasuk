@@ -27,6 +27,7 @@ import type { Order } from "@africasuk/types";
 import { Price } from "@/components/currency/Price";
 import { ReviewForm } from "@/components/products/ReviewForm";
 import * as WebBrowser from "expo-web-browser";
+import { DownloadReceiptButton } from "@/components/orders/DownloadReceiptButton";
 
 type OrderItemRow = {
   id: string;
@@ -449,44 +450,100 @@ export default function OrderDetailsScreen() {
               )}
             </View>
 
-            {/* Payment Summary */}
-            <View style={styles.card}>
-              <View style={styles.cardHeaderWithIcon}>
-                <View style={styles.iconTile}>
-                  <CreditCard size={14} color="#18181b" strokeWidth={1.8} />
-                </View>
-                <Text style={styles.cardHeading}>Payment Summary</Text>
+          {/* Payment Summary */}
+          <View style={styles.card}>
+            <View style={styles.cardHeaderWithIcon}>
+              <View style={styles.iconTile}>
+                <CreditCard
+                  size={14}
+                  color="#18181b"
+                  strokeWidth={1.8}
+                />
               </View>
 
-              <View style={styles.summaryList}>
-                <View style={styles.summaryRow}>
-                  <Text style={styles.summaryLabel}>Subtotal</Text>
-                  <Price price={order.subtotal} style={styles.summaryValue} />
-                </View>
+              <Text style={styles.cardHeading}>
+                Payment Summary
+              </Text>
+            </View>
 
-                <View style={styles.summaryRow}>
-                  <Text style={styles.summaryLabel}>Shipping Fee</Text>
-                  <Price price={order.shipping} style={styles.summaryValue} />
-                </View>
+            <View style={styles.summaryList}>
+              <View style={styles.summaryRow}>
+                <Text style={styles.summaryLabel}>
+                  Subtotal
+                </Text>
 
-                <View style={styles.summaryRow}>
-                  <Text style={styles.summaryLabel}>Estimated Tax</Text>
-                  <Price price={order.tax} style={styles.summaryValue} />
-                </View>
+                <Price
+                  price={order.subtotal}
+                  style={styles.summaryValue}
+                />
+              </View>
 
-                <View style={[styles.summaryRow, styles.totalRow]}>
-                  <Text style={styles.totalLabel}>Total Payable</Text>
-                  <Price price={order.total} style={styles.totalValue} />
-                </View>
+              <View style={styles.summaryRow}>
+                <Text style={styles.summaryLabel}>
+                  Shipping Fee
+                </Text>
 
-                <View style={styles.methodRow}>
-                  <Text style={styles.metaLabel}>Payment Method</Text>
-                  <View style={styles.methodChip}>
-                    <Text style={styles.methodChipText}>{paymentMethod}</Text>
-                  </View>
+                <Price
+                  price={order.shipping}
+                  style={styles.summaryValue}
+                />
+              </View>
+
+              <View style={styles.summaryRow}>
+                <Text style={styles.summaryLabel}>
+                  Estimated Tax
+                </Text>
+
+                <Price
+                  price={order.tax}
+                  style={styles.summaryValue}
+                />
+              </View>
+
+              <View
+                style={[
+                  styles.summaryRow,
+                  styles.totalRow,
+                ]}
+              >
+                <Text style={styles.totalLabel}>
+                  Total Payable
+                </Text>
+
+                <Price
+                  price={order.total}
+                  style={styles.totalValue}
+                />
+              </View>
+
+              <View style={styles.methodRow}>
+                <Text style={styles.metaLabel}>
+                  Payment Method
+                </Text>
+
+                <View style={styles.methodChip}>
+                  <Text style={styles.methodChipText}>
+                    {paymentMethod}
+                  </Text>
                 </View>
               </View>
             </View>
+          </View>
+
+              {/* Download Receipt */}
+              <View
+                style={{
+                  marginTop: 16,
+                  marginHorizontal: 20,
+                  marginBottom: 4,
+                }}
+              >
+                <DownloadReceiptButton
+                  order={order}
+                  items={items}
+                  exchangeRate={790}
+                />
+              </View>
           </View>
 
           {/* Order Items */}
@@ -575,6 +632,7 @@ export default function OrderDetailsScreen() {
                       </View>
                     </View>
 
+
                     {/* Dedicated Review Form when delivered */}
                     {isDelivered && (
                       <View style={styles.reviewFormWrapper}>
@@ -592,6 +650,7 @@ export default function OrderDetailsScreen() {
             </View>
           </View>
         </View>
+        
       </ScrollView>
     </SafeAreaView>
   );
