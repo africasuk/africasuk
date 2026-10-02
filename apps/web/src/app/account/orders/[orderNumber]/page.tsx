@@ -10,6 +10,9 @@ import {
 import { getOrder } from "@/actions/orders";
 import { createClient } from "@/lib/auth/server";
 
+import { ExchangeRateRepository } from "@africasuk/database";
+import { ExchangeRateService } from "@africasuk/api";
+
 import Container from "@/components/layout/Container";
 import Layout from "@/components/layout/Layout";
 import { Price } from "@/components/currency/Price";
@@ -55,17 +58,21 @@ export default async function OrderDetailsPage({
 
   const firstEntry = items[0];
 
-  /*
-   * Receipt exchange rate.
-   *
-   * Order values are stored in USD.
-   * PrintableReceipt converts them to SSP.
-   *
-   * Replace this temporary value with your
-   * existing exchange-rate server value when
-   * that value is available in this page.
-   */
-  const exchangeRate = 790;
+const exchangeRateService =
+  new ExchangeRateService(
+    new ExchangeRateRepository(supabase),
+  );
+
+const currentRate =
+  await exchangeRateService.getCurrent();
+
+if (!currentRate?.rate) {
+  throw new Error(
+    "Current exchange rate is not available.",
+  );
+}
+
+const exchangeRate = currentRate.rate;
 
   return (
     <Layout>

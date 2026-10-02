@@ -33,20 +33,23 @@ type RequestBody = {
   exchangeRate?: number | null;
 };
 
-const DEFAULT_EXCHANGE_RATE = 7900;
 
 function getExchangeRate(
   exchangeRate: number | null | undefined,
 ) {
   const rate = Number(exchangeRate);
 
-  if (Number.isFinite(rate) && rate > 0) {
-    return rate;
+  if (
+    !Number.isFinite(rate) ||
+    rate <= 0
+  ) {
+    throw new Error(
+      "A valid exchange rate is required.",
+    );
   }
 
-  return DEFAULT_EXCHANGE_RATE;
+  return rate;
 }
-
 function formatSSPFromUSD(
   value: number,
   exchangeRate: number,
