@@ -40,34 +40,34 @@ export async function POST(request: Request) {
     const result =
       await paymentService.checkout(body);
 
-    // Send confirmation email using the same email API
-    try {
-      await fetch(
-        `${new URL(request.url).origin}/api/email/order-confirmation`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            order: result.order,
-            customer: body.customer,
-            items: body.items ?? [],
-            exchangeRate: body.exchangeRate,
-          }),
+    // Send confirmation email
+    fetch(
+      "https://www.africasuk.com/api/email/order-confirmation",
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
         },
-      );
-    } catch (emailError) {
+        body: JSON.stringify({
+          order: result.order,
+          customer: body.customer,
+          items: body.items ?? [],
+          exchangeRate: body.exchangeRate,
+        }),
+      },
+    ).catch((error) => {
       console.error(
         "Order confirmation email failed:",
-        emailError,
+        error,
       );
-    }
+    });
 
     return NextResponse.json(result, {
       status: 201,
     });
   } catch (error) {
+    console.error("Order creation error:", error);
+
     return NextResponse.json(
       {
         message:
