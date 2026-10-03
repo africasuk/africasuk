@@ -13,7 +13,6 @@ import { createClient } from "@/lib/auth/server";
 
 import Categories from "@/components/home/Categories";
 import ContinueShopping from "@/components/home/ContinueShopping";
-import FeaturedBrands from "@/components/home/FeaturedBrands";
 import FeaturedProducts from "@/components/home/FeaturedProducts";
 import Hero from "@/components/home/Hero";
 import Layout from "@/components/layout/Layout";
@@ -38,7 +37,6 @@ export default async function HomePage() {
   const [
     rawCategories,
     products,
-    rawBrands,
   ] = await Promise.all([
     categoryRepository.getAll(),
     productService.getAll(),
@@ -61,19 +59,6 @@ export default async function HomePage() {
     },
   );
 
-  const brands = (rawBrands ?? []).map((brand) => {
-    const typedBrand =
-      brand as typeof brand & {
-        description?: string;
-      };
-
-    return {
-      ...brand,
-      description:
-        typedBrand.description ??
-        `Discover authentic products from the official ${brand.name} catalog.`,
-    };
-  });
 
   return (
     <Layout>
@@ -86,8 +71,6 @@ export default async function HomePage() {
       <Categories categories={categories} />
 
       <ButtonSection />
-      
-      <FeaturedBrands brands={brands} />
       
       <RequestProductSection />
       

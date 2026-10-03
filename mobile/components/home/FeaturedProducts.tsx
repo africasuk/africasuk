@@ -1,8 +1,22 @@
-import { useMemo } from "react";
-import { View, Text, TouchableOpacity, StyleSheet } from "react-native";
+import {
+  useEffect,
+  useMemo,
+  useState,
+} from "react";
+
+import {
+  View,
+  Text,
+  StyleSheet,
+  TouchableOpacity,
+} from "react-native";
+
 import { router } from "expo-router";
+
 import type { ProductWithDetails } from "@africasuk/types";
+
 import { ProductCard } from "../products/ProductCard";
+import { supabase } from "@/lib/supabase/client";
 
 interface Props {
   products: ProductWithDetails[];
@@ -10,63 +24,179 @@ interface Props {
 
 const BRAND_COLOR = "#005c2e";
 
-export default function FeaturedProducts({ products = [] }: Props) {
+type ProductRating = {
+  averageRating: number;
+  reviewCount: number;
+};
+
+type RatedProduct = ProductWithDetails & {
+  rating?: ProductRating;
+};
+
+type ColorProduct = RatedProduct & {
+  selectedColorId?: string;
+};
+
+export default function FeaturedProducts({
+  products = [],
+}: Props) {
+  const [ratings, setRatings] = useState<
+    Record<string, ProductRating>
+  >({});
+
+  /*
+   * Load approved ratings for the products.
+   */
+  useEffect(() => {
+    async function loadRatings() {
+      if (products.length === 0) {
+        setRatings({});
+        return;
+      }
+
+      try {
+        const productIds = products.map(
+          (product) => product.id
+        );
+
+        const { data, error } = await supabase
+          .from("reviews")
+          .select("product_id, rating")
+          .in("product_id", productIds)
+          .eq("status", "APPROVED");
+
+        if (error) {
+          console.error(
+            "Failed to load product ratings:",
+            error
+          );
+          return;
+        }
+
+        const ratingMap: Record<
+          string,
+          ProductRating
+        > = {};
+
+        for (const review of data ?? []) {
+          const productId = review.product_id;
+
+          if (!ratingMap[productId]) {
+            ratingMap[productId] = {
+              averageRating: 0,
+              reviewCount: 0,
+            };
+          }
+
+          ratingMap[productId].averageRating += Number(
+            review.rating
+          );
+
+          ratingMap[productId].reviewCount += 1;
+        }
+
+        for (const productId of Object.keys(
+          ratingMap
+        )) {
+          const rating = ratingMap[productId];
+
+          rating.averageRating = Number(
+            (
+              rating.averageRating /
+              rating.reviewCount
+            ).toFixed(1)
+          );
+        }
+
+        setRatings(ratingMap);
+      } catch (error) {
+        console.error(
+          "Failed to load product ratings:",
+          error
+        );
+      }
+    }
+
+    loadRatings();
+  }, [products]);
+
   const featured = useMemo(() => {
     return products.filter(
-      (product) => product.isActive && (product.colors?.length ?? 0) > 0
+      (product) =>
+        product.isActive &&
+        (product.colors?.length ?? 0) > 0
     );
   }, [products]);
 
   const featuredColorProducts = useMemo(() => {
-  type ColorProduct = ProductWithDetails & {
-    selectedColorId?: string;
-  };
+    const groupedProducts = featured.map(
+      (product) => {
+        return (product.colors ?? [])
+          .filter(
+            (color) =>
+              color.variants &&
+              color.variants.length > 0
+          )
+          .map((color) => ({
+            product,
+            color,
+          }));
+      }
+    );
 
-  const groupedProducts = featured.map((product) => {
-    return (product.colors ?? [])
-      .filter(
-        (color) =>
-          color.variants &&
-          color.variants.length > 0
+    const result: ColorProduct[] = [];
+
+    const maxColors = Math.max(
+      0,
+      ...groupedProducts.map(
+        (group) => group.length
       )
-      .map((color) => ({
-        product,
-        color,
-      }));
-  });
+    );
 
-  const result: ColorProduct[] = [];
+    /*
+     * Same ordering:
+     *
+     * Product A - Color 1
+     * Product B - Color 1
+     * Product C - Color 1
+     * Product A - Color 2
+     * Product B - Color 2
+     * Product C - Color 2
+     */
+    for (
+      let index = 0;
+      index < maxColors;
+      index++
+    ) {
+      for (const group of groupedProducts) {
+        const item = group[index];
 
-  const maxColors = Math.max(
-    0,
-    ...groupedProducts.map((group) => group.length)
-  );
+        if (!item) continue;
 
-  // Same logic as web:
-  // Product A - Color 1
-  // Product B - Color 1
-  // Product C - Color 1
-  // Product A - Color 2
-  // Product B - Color 2
-  // Product C - Color 2
-  for (let index = 0; index < maxColors; index++) {
-    for (const group of groupedProducts) {
-      const item = group[index];
+        const productRating =
+          ratings[item.product.id] ?? {
+            averageRating: 0,
+            reviewCount: 0,
+          };
 
-      if (!item) continue;
+        result.push({
+          ...item.product,
 
-      result.push({
-        ...item.product,
-        id: `${item.product.id}-${item.color.id}`,
-        name: `${item.product.name} - ${item.color.name}`,
-        selectedColorId: item.color.id,
-        colors: [item.color],
-      });
+          id: `${item.product.id}-${item.color.id}`,
+
+          name: `${item.product.name} - ${item.color.name}`,
+
+          selectedColorId: item.color.id,
+
+          colors: [item.color],
+
+          rating: productRating,
+        });
+      }
     }
-  }
 
-  return result.slice(0, 12);
-}, [featured]);
+    return result.slice(0, 12);
+  }, [featured, ratings]);
 
   if (featuredColorProducts.length === 0) {
     return null;
@@ -74,41 +204,60 @@ export default function FeaturedProducts({ products = [] }: Props) {
 
   return (
     <View style={styles.sectionContainer}>
-      {/* Header Section */}
+      {/* Header */}
       <View style={styles.header}>
         <View style={styles.textGroup}>
-          <Text style={styles.badge}>Curated Drops</Text>
-          <Text style={styles.title}>Featured Products</Text>
+          <Text style={styles.badge}>
+            Curated Drops
+          </Text>
+
+          <Text style={styles.title}>
+            Featured Products
+          </Text>
+
           <Text style={styles.subtitle}>
-            Explore products available from Africa Suk..
+            Explore products available from Africa Suk.
           </Text>
         </View>
 
         <TouchableOpacity
           style={styles.viewAllBtn}
-          onPress={() => router.push("/products" as never)}
+          onPress={() =>
+            router.push("/products" as never)
+          }
           activeOpacity={0.7}
         >
-          <Text style={styles.viewAllText}>View All</Text>
+          <Text style={styles.viewAllText}>
+            View All
+          </Text>
         </TouchableOpacity>
       </View>
 
-      {/* 2-Column Pinterest Grid (Zero VirtualizedList crashes) */}
+      {/* Products */}
       <View style={styles.grid}>
         {featuredColorProducts.map((item) => (
-          <View key={item.id} style={styles.cardWrapper}>
+          <View
+            key={item.id}
+            style={styles.cardWrapper}
+          >
             <ProductCard product={item} />
           </View>
         ))}
       </View>
 
-      {/* Clean Pinterest-Style Pill Button */}
+      {/* Explore All */}
       <TouchableOpacity
         style={styles.allProductsBtn}
         activeOpacity={0.85}
-        onPress={() => router.push("/products" as never)}
+        onPress={() =>
+          router.push("/products" as never)
+        }
       >
-        <Text style={styles.allProductsBtnText}>Explore All Products</Text>
+        <Text
+          style={styles.allProductsBtnText}
+        >
+          Explore All Products
+        </Text>
       </TouchableOpacity>
     </View>
   );

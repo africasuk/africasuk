@@ -47,9 +47,9 @@ export default function CheckoutSummary({ profile }: CheckoutSummaryProps) {
     0
   );
 
-  const shipping = 0;
-  const tax = 0;
-  const total = subtotal + shipping + tax;
+const shipping = 0;
+const tax = 0;
+const total = subtotal;
 
   async function handlePlaceOrder() {
     if (!selectedAddress) {
@@ -153,17 +153,29 @@ export default function CheckoutSummary({ profile }: CheckoutSummaryProps) {
             <Price price={subtotal} style={styles.rowValue} />
           </View>
 
-          <View style={styles.row}>
-            <Text style={styles.rowLabel}>Delivery</Text>
-            <View style={styles.neutralPill}>
-              <Text style={styles.neutralPillText}>FREE</Text>
-            </View>
-          </View>
+         <View style={styles.row}>
+              <Text style={styles.rowLabel}>
+                Delivery
+              </Text>
 
-          <View style={styles.row}>
-            <Text style={styles.rowLabel}>Estimated Tax</Text>
-            <Price price={tax} style={styles.rowValue} />
-          </View>
+              <View style={styles.neutralPill}>
+                <Text style={styles.neutralPillText}>
+                  CALCULATED AT CHECKOUT
+                </Text>
+              </View>
+            </View>
+
+            <View style={styles.row}>
+              <Text style={styles.rowLabel}>
+                Estimated Tax
+              </Text>
+
+              <View style={styles.neutralPill}>
+                <Text style={styles.neutralPillText}>
+                  CALCULATED AT CHECKOUT
+                </Text>
+              </View>
+            </View>
 
           <View style={styles.row}>
             <Text style={styles.rowLabel}>Payment Method</Text>

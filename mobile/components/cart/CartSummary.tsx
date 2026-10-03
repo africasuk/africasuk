@@ -1,5 +1,10 @@
 import React from "react";
-import { View, Text, StyleSheet, Pressable } from "react-native";
+import {
+  View,
+  Text,
+  StyleSheet,
+  Pressable,
+} from "react-native";
 import { useRouter } from "expo-router";
 import { ArrowRight } from "lucide-react-native";
 
@@ -11,47 +16,85 @@ export default function CartSummary() {
   const items = useCart((state) => state.items);
 
   const subtotal = items.reduce(
-    (total: number, item) =>
-      total + Number(item.price) * Number(item.quantity),
-    0
+    (total, item) =>
+      total +
+      Number(item.price) * Number(item.quantity),
+    0,
   );
 
-  const shipping = 0;
-  const total = subtotal + shipping;
   const isEmpty = items.length === 0;
 
   return (
     <View style={styles.container}>
-      {/* Total Price Hero - Prominent & Top */}
+      {/* Total Price Hero */}
       <View style={styles.priceHeroCard}>
         <View style={styles.priceHeroLeft}>
-          <Text style={styles.priceHeroLabel}>Subtotal Payable</Text>
-          <Text style={styles.taxInclusiveText}>Taxes calculated at checkout</Text>
+          <Text style={styles.priceHeroLabel}>
+            Items Total
+          </Text>
+
+          <Text style={styles.taxInclusiveText}>
+            Shipping and taxes calculated at checkout
+          </Text>
         </View>
-        <Price price={total} style={styles.priceHeroValue} />
+
+        <Price
+          price={subtotal}
+          style={styles.priceHeroValue}
+        />
       </View>
 
-      {/* Summary Breakdown Card */}
+      {/* Summary Breakdown */}
       <View style={styles.card}>
         <View style={styles.header}>
-          <Text style={styles.sectionTitle}>Order Breakdown</Text>
+          <Text style={styles.sectionTitle}>
+            Order Breakdown
+          </Text>
+
           <Text style={styles.headerCount}>
-            {items.length} {items.length === 1 ? "line item" : "line items"}
+            {items.length}{" "}
+            {items.length === 1
+              ? "line item"
+              : "line items"}
           </Text>
         </View>
 
         <View style={styles.body}>
-          {/* Subtotal */}
+          {/* Items Total */}
           <View style={styles.row}>
-            <Text style={styles.label}>Items Total</Text>
-            <Price price={subtotal} style={styles.valueText} />
+            <Text style={styles.label}>
+              Items Total
+            </Text>
+
+            <Price
+              price={subtotal}
+              style={styles.valueText}
+            />
           </View>
 
           {/* Shipping */}
           <View style={styles.row}>
-            <Text style={styles.label}>Estimated Delivery</Text>
+            <Text style={styles.label}>
+              Shipping Fee
+            </Text>
+
             <View style={styles.neutralPill}>
-              <Text style={styles.neutralPillText}>FREE</Text>
+              <Text style={styles.neutralPillText}>
+                CALCULATED AT CHECKOUT
+              </Text>
+            </View>
+          </View>
+
+          {/* Tax */}
+          <View style={styles.row}>
+            <Text style={styles.label}>
+              Tax
+            </Text>
+
+            <View style={styles.neutralPill}>
+              <Text style={styles.neutralPillText}>
+                CALCULATED AT CHECKOUT
+              </Text>
             </View>
           </View>
 
@@ -60,13 +103,24 @@ export default function CartSummary() {
             style={({ pressed }) => [
               styles.checkoutButton,
               isEmpty && styles.disabledButton,
-              pressed && !isEmpty && styles.pressedState,
+              pressed &&
+                !isEmpty &&
+                styles.pressedState,
             ]}
             disabled={isEmpty}
-            onPress={() => router.push("/checkout" as never)}
+            onPress={() =>
+              router.push("/checkout" as never)
+            }
           >
-            <Text style={styles.checkoutButtonText}>Proceed to Checkout</Text>
-            <ArrowRight size={14} color="#ffffff" strokeWidth={2} />
+            <Text style={styles.checkoutButtonText}>
+              Proceed to Checkout
+            </Text>
+
+            <ArrowRight
+              size={14}
+              color="#ffffff"
+              strokeWidth={2}
+            />
           </Pressable>
         </View>
       </View>
@@ -94,6 +148,8 @@ const styles = StyleSheet.create({
 
   priceHeroLeft: {
     gap: 2,
+    flex: 1,
+    paddingRight: 12,
   },
 
   priceHeroLabel: {
@@ -158,12 +214,14 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
+    gap: 10,
   },
 
   label: {
     fontSize: 13,
     fontWeight: "400",
     color: "#71717a",
+    flex: 1,
   },
 
   valueText: {
@@ -175,17 +233,17 @@ const styles = StyleSheet.create({
   neutralPill: {
     backgroundColor: "#f4f4f5",
     paddingHorizontal: 8,
-    paddingVertical: 2,
+    paddingVertical: 4,
     borderRadius: 6,
     borderWidth: 1,
     borderColor: "#e4e4e7",
   },
 
   neutralPillText: {
-    fontSize: 10,
+    fontSize: 9,
     fontWeight: "700",
     color: "#27272a",
-    letterSpacing: 0.4,
+    letterSpacing: 0.3,
   },
 
   checkoutButton: {

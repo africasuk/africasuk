@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+
 import {
   ScrollView,
   View,
@@ -7,23 +8,44 @@ import {
   ActivityIndicator,
   Pressable,
 } from "react-native";
-import { useLocalSearchParams, useRouter } from "expo-router";
+
+import {
+  useLocalSearchParams,
+  useRouter,
+} from "expo-router";
+
 import { Image } from "expo-image";
-import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
+
+import {
+  SafeAreaView,
+  useSafeAreaInsets,
+} from "react-native-safe-area-context";
+
 import { LinearGradient } from "expo-linear-gradient";
-import { ArrowLeft, Layers } from "lucide-react-native";
+
+import {
+  ArrowLeft,
+  Layers,
+} from "lucide-react-native";
 
 import { createClient } from "@/lib/auth/client";
-import FeaturedProducts from "@/components/home/FeaturedProducts";
+
+import { ProductCard } from "@/components/products/ProductCard";
 
 export default function CategoryScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
-  const { slug } = useLocalSearchParams<{ slug: string }>();
+
+  const { slug } =
+    useLocalSearchParams<{
+      slug: string;
+    }>();
 
   const [loading, setLoading] = useState(true);
-  const [category, setCategory] = useState<any>(null);
-  const [products, setProducts] = useState<any[]>([]);
+  const [category, setCategory] =
+    useState<any>(null);
+  const [products, setProducts] =
+    useState<any[]>([]);
 
   useEffect(() => {
     if (!slug) return;
@@ -33,165 +55,340 @@ export default function CategoryScreen() {
     async function load() {
       setLoading(true);
 
-      const supabase = createClient();
+      try {
+        const supabase = createClient();
 
-      const { data: rawCategory, error: categoryError } = await supabase
-        .from("categories")
-        .select("*")
-        .eq("slug", slug)
-        .maybeSingle();
+        // -----------------------------------------
+        // CATEGORY
+        // -----------------------------------------
 
-      if (categoryError) {
-        console.error("Failed to load category:", categoryError);
-      }
+        const {
+          data: rawCategory,
+          error: categoryError,
+        } = await supabase
+          .from("categories")
+          .select("*")
+          .eq("slug", slug)
+          .maybeSingle();
 
-      if (!rawCategory) {
+        if (categoryError) {
+          console.error(
+            "Failed to load category:",
+            categoryError,
+          );
+        }
+
+        if (!rawCategory) {
+          if (isMounted) {
+            setCategory(null);
+            setProducts([]);
+            setLoading(false);
+          }
+
+          return;
+        }
+
+        const formattedCategory = {
+          ...(rawCategory as any),
+
+          imageUrl:
+            (rawCategory as any).image_url,
+
+          isActive:
+            (rawCategory as any).is_active,
+
+          createdAt:
+            (rawCategory as any).created_at,
+
+          updatedAt:
+            (rawCategory as any).updated_at,
+        };
+
+        // -----------------------------------------
+        // PRODUCTS
+        // -----------------------------------------
+
+        const {
+          data: rawProducts,
+          error: productsError,
+        } = await supabase
+          .from("products")
+          .select(`
+            *,
+            category:categories(*),
+            brand:brands(*),
+            colors:product_colors(
+              *,
+              images:product_images(*),
+              variants:product_variants(*)
+            )
+          `)
+          .eq(
+            "category_id",
+            formattedCategory.id,
+          )
+          .order("created_at", {
+            ascending: false,
+          });
+
+        if (productsError) {
+          console.error(
+            "Failed to load category products:",
+            productsError,
+          );
+        }
+
+        // -----------------------------------------
+        // FORMAT PRODUCTS
+        // -----------------------------------------
+
+        const formattedProducts =
+          (rawProducts ?? []).map(
+            (product: any) => ({
+              ...product,
+
+              allowCod:
+                product.allow_cod,
+
+              allowOnlinePayment:
+                product.allow_online_payment,
+
+              categoryId:
+                product.category_id,
+
+              brandId:
+                product.brand_id,
+
+              isActive:
+                product.is_active,
+
+              createdAt:
+                product.created_at,
+
+              updatedAt:
+                product.updated_at,
+
+              category:
+                product.category
+                  ? {
+                      ...product.category,
+
+                      imageUrl:
+                        product.category
+                          .image_url,
+
+                      isActive:
+                        product.category
+                          .is_active,
+
+                      createdAt:
+                        product.category
+                          .created_at,
+
+                      updatedAt:
+                        product.category
+                          .updated_at,
+                    }
+                  : null,
+
+              brand:
+                product.brand
+                  ? {
+                      ...product.brand,
+
+                      logoUrl:
+                        product.brand.logo_url,
+
+                      isActive:
+                        product.brand.is_active,
+
+                      createdAt:
+                        product.brand.created_at,
+
+                      updatedAt:
+                        product.brand.updated_at,
+                    }
+                  : null,
+
+              colors: (
+                product.colors ?? []
+              ).map((color: any) => ({
+                ...color,
+
+                productId:
+                  color.product_id,
+
+                hexCode:
+                  color.hex_code,
+
+                createdAt:
+                  color.created_at,
+
+                updatedAt:
+                  color.updated_at,
+
+                images: (
+                  color.images ?? []
+                ).map(
+                  (image: any) => ({
+                    ...image,
+
+                    productColorId:
+                      image.product_color_id,
+
+                    imageUrl:
+                      image.image_url,
+
+                    sortOrder:
+                      image.sort_order,
+
+                    createdAt:
+                      image.created_at,
+                  }),
+                ),
+
+                variants: (
+                  color.variants ?? []
+                ).map(
+                  (variant: any) => ({
+                    ...variant,
+
+                    productColorId:
+                      variant.product_color_id,
+
+                    optionName:
+                      variant.option_name,
+
+                    optionValue:
+                      variant.option_value,
+
+                    isActive:
+                      variant.is_active,
+
+                    price: Number(
+                      variant.price ?? 0,
+                    ),
+
+                    stock:
+                      variant.stock,
+
+                    createdAt:
+                      variant.created_at,
+
+                    updatedAt:
+                      variant.updated_at,
+                  }),
+                ),
+              })),
+            }),
+          );
+
+        if (isMounted) {
+          setCategory(formattedCategory);
+          setProducts(formattedProducts);
+          setLoading(false);
+        }
+      } catch (error) {
+        console.error(
+          "Category loading error:",
+          error,
+        );
+
         if (isMounted) {
           setCategory(null);
           setProducts([]);
           setLoading(false);
         }
-        return;
-      }
-
-      const formattedCategory = {
-        ...(rawCategory as any),
-        imageUrl: (rawCategory as any).image_url,
-        isActive: (rawCategory as any).is_active,
-        createdAt: (rawCategory as any).created_at,
-        updatedAt: (rawCategory as any).updated_at,
-      };
-
-      const { data: rawProducts, error: productsError } = await supabase
-        .from("products")
-        .select(`
-          *,
-          category:categories(*),
-          brand:brands(*),
-          colors:product_colors(
-            *,
-            images:product_images(*),
-            variants:product_variants(*)
-          )
-        `)
-        .eq("category_id", formattedCategory.id)
-        .order("created_at", { ascending: false });
-
-      if (productsError) {
-        console.error("Failed to load category products:", productsError);
-      }
-
-      const formattedProducts = (rawProducts ?? []).map((product: any) => ({
-        ...product,
-        allowCod: product.allow_cod,
-        allowOnlinePayment: product.allow_online_payment,
-        categoryId: product.category_id,
-        brandId: product.brand_id,
-        isActive: product.is_active,
-        createdAt: product.created_at,
-        updatedAt: product.updated_at,
-        category: product.category
-          ? {
-              ...product.category,
-              imageUrl: product.category.image_url,
-              isActive: product.category.is_active,
-              createdAt: product.category.created_at,
-              updatedAt: product.category.updated_at,
-            }
-          : null,
-        brand: product.brand
-          ? {
-              ...product.brand,
-              logoUrl: product.brand.logo_url,
-              isActive: product.brand.is_active,
-              createdAt: product.brand.createdAt,
-              updatedAt: product.brand.updated_at,
-            }
-          : null,
-        colors: (product.colors ?? []).map((color: any) => ({
-          ...color,
-          productId: color.product_id,
-          hexCode: color.hex_code,
-          createdAt: color.created_at,
-          updatedAt: color.updated_at,
-          images: (color.images ?? []).map((image: any) => ({
-            ...image,
-            productColorId: image.product_color_id,
-            imageUrl: image.image_url,
-            sortOrder: image.sort_order,
-            createdAt: image.created_at,
-          })),
-          variants: (color.variants ?? []).map((variant: any) => ({
-            ...variant,
-            productColorId: variant.product_color_id,
-            optionName: variant.option_name,
-            optionValue: variant.option_value,
-            isActive: variant.is_active,
-            price: Number(variant.price),
-            stock: variant.stock,
-            createdAt: variant.created_at,
-            updatedAt: variant.updated_at,
-          })),
-        })),
-      }));
-
-      if (isMounted) {
-        setCategory(formattedCategory);
-        setProducts(formattedProducts ?? []);
-        setLoading(false);
       }
     }
 
-    load().catch((error) => {
-      console.error(error);
-      if (isMounted) setLoading(false);
-    });
+    load();
 
     return () => {
       isMounted = false;
     };
   }, [slug]);
 
+  // -----------------------------------------
+  // LOADING
+  // -----------------------------------------
+
   if (loading) {
     return (
       <View style={styles.center}>
-        <ActivityIndicator size="small" color="#18181b" />
+        <ActivityIndicator
+          size="small"
+          color="#18181b"
+        />
       </View>
     );
   }
 
+  // -----------------------------------------
+  // NOT FOUND
+  // -----------------------------------------
+
   if (!category) {
     return (
-      <SafeAreaView style={styles.center} edges={["top", "bottom"]}>
-        <Text style={styles.notFound}>Category not found.</Text>
+      <SafeAreaView
+        style={styles.center}
+        edges={["top", "bottom"]}
+      >
+        <Text style={styles.notFound}>
+          Category not found.
+        </Text>
       </SafeAreaView>
     );
   }
 
-  const bottomInset = insets.bottom > 0 ? insets.bottom : 16;
+  const bottomInset =
+    insets.bottom > 0
+      ? insets.bottom
+      : 16;
+
+  // -----------------------------------------
+  // SCREEN
+  // -----------------------------------------
 
   return (
-    <SafeAreaView style={styles.container} edges={["top", "left", "right"]}>
-      {/* Editorial Navigation Top Bar */}
+    <SafeAreaView
+      style={styles.container}
+      edges={["top", "left", "right"]}
+    >
+      {/* TOP BAR */}
+
       <View style={styles.topBar}>
         <Pressable
           style={({ pressed }) => [
             styles.backButton,
-            pressed && styles.backButtonPressed,
+            pressed &&
+              styles.backButtonPressed,
           ]}
           onPress={() => router.back()}
           hitSlop={8}
         >
-          <ArrowLeft size={18} color="#18181b" strokeWidth={2} />
+          <ArrowLeft
+            size={18}
+            color="#18181b"
+            strokeWidth={2}
+          />
         </Pressable>
 
-        <Text style={styles.topBarTitle} numberOfLines={1}>
+        <Text
+          style={styles.topBarTitle}
+          numberOfLines={1}
+        >
           {category.name}
         </Text>
 
         <View style={styles.countPill}>
-          <Text style={styles.countPillText}>
-            {products.length} {products.length === 1 ? "item" : "items"}
+          <Text
+            style={styles.countPillText}
+          >
+            {products.length}{" "}
+            {products.length === 1
+              ? "item"
+              : "items"}
           </Text>
         </View>
       </View>
@@ -200,69 +397,179 @@ export default function CategoryScreen() {
         showsVerticalScrollIndicator={false}
         contentContainerStyle={[
           styles.content,
-          { paddingBottom: bottomInset + 32 },
+          {
+            paddingBottom:
+              bottomInset + 32,
+          },
         ]}
       >
-        {/* Full-bleed Hero Card with Overlay Title & Subtitle Below */}
+        {/* CATEGORY HERO */}
+
         <View style={styles.heroCard}>
           <View style={styles.imageWrapper}>
             {category.imageUrl ? (
               <Image
-                source={{ uri: category.imageUrl }}
+                source={{
+                  uri: category.imageUrl,
+                }}
                 style={styles.heroImage}
                 contentFit="cover"
                 transition={200}
                 cachePolicy="memory-disk"
               />
             ) : (
-              <View style={styles.fallbackContainer}>
-                <Layers size={48} color="#71717a" strokeWidth={1.5} />
+              <View
+                style={
+                  styles.fallbackContainer
+                }
+              >
+                <Layers
+                  size={48}
+                  color="#71717a"
+                  strokeWidth={1.5}
+                />
               </View>
             )}
 
-            {/* Scrim Gradient for Readability */}
             <LinearGradient
-              colors={["rgba(0,0,0,0.05)", "rgba(0,0,0,0.72)"]}
+              colors={[
+                "rgba(0,0,0,0.05)",
+                "rgba(0,0,0,0.72)",
+              ]}
               style={styles.imageOverlay}
             />
 
-            {/* Badge & Title on Image */}
-            <View style={styles.overlayContent}>
-              <View style={styles.categoryBadge}>
-                <Text style={styles.categoryBadgeText}>COLLECTION</Text>
+            <View
+              style={styles.overlayContent}
+            >
+              <View
+                style={styles.categoryBadge}
+              >
+                <Text
+                  style={
+                    styles.categoryBadgeText
+                  }
+                >
+                  COLLECTION
+                </Text>
               </View>
-              <Text style={styles.heroTitle} numberOfLines={2}>
+
+              <Text
+                style={styles.heroTitle}
+                numberOfLines={2}
+              >
                 {category.name}
               </Text>
             </View>
           </View>
 
-          {/* Description Below Image */}
-          <View style={styles.descriptionSection}>
-            <Text style={styles.descriptionText}>
+          {/* DESCRIPTION */}
+
+          <View
+            style={styles.descriptionSection}
+          >
+            <Text
+              style={styles.descriptionText}
+            >
               {category.description ??
-                `Explore our handpicked curation of verified pieces in ${category.name.toLowerCase()}.`}
+                `Explore our handpicked curation of verified pieces in ${String(
+                  category.name ?? "",
+                ).toLowerCase()}.`}
             </Text>
           </View>
         </View>
 
-        {/* Section Header */}
-        <View style={styles.sectionHeaderRow}>
-          <Text style={styles.gridHeaderTitle}>Products</Text>
-          <View style={styles.dividerLine} />
+        {/* SECTION HEADER */}
+
+        <View
+          style={styles.sectionHeaderRow}
+        >
+          <Text
+            style={styles.gridHeaderTitle}
+          >
+            Products
+          </Text>
+
+          <View
+            style={styles.dividerLine}
+          />
         </View>
 
-        {/* Products Grid */}
+        {/* PRODUCTS */}
+
         {products.length > 0 ? (
-          <FeaturedProducts products={products} />
-        ) : (
-          <View style={styles.emptyContainer}>
-            <View style={styles.emptyIconCircle}>
-              <Layers size={22} color="#71717a" strokeWidth={1.75} />
+          <>
+            <View style={styles.productsGrid}>
+              {products.map(
+                (product: any) => (
+                  <View
+                    key={product.id}
+                    style={
+                      styles.productCardWrapper
+                    }
+                  >
+                    <ProductCard
+                      product={product}
+                    />
+                  </View>
+                ),
+              )}
             </View>
-            <Text style={styles.emptyTitle}>No products available</Text>
-            <Text style={styles.emptyText}>
-              We are currently sourcing new pieces for this category.
+
+            {/* ALL PRODUCTS */}
+
+            <Pressable
+              style={({ pressed }) => [
+                styles.allProductsButton,
+                pressed &&
+                  styles.allProductsButtonPressed,
+              ]}
+              onPress={() =>
+                router.push("/products")
+              }
+            >
+              <Text
+                style={
+                  styles.allProductsButtonText
+                }
+              >
+                All Products
+              </Text>
+
+              <Text
+                style={
+                  styles.allProductsArrow
+                }
+              >
+                →
+              </Text>
+            </Pressable>
+          </>
+        ) : (
+          <View
+            style={styles.emptyContainer}
+          >
+            <View
+              style={styles.emptyIconCircle}
+            >
+              <Layers
+                size={22}
+                color="#71717a"
+                strokeWidth={1.75}
+              />
+            </View>
+
+            <Text
+              style={styles.emptyTitle}
+            >
+              No products available
+            </Text>
+
+            <Text
+              style={styles.emptyText}
+            >
+              We are currently sourcing new
+              pieces for this category.
             </Text>
           </View>
         )}
@@ -386,11 +693,13 @@ const styles = StyleSheet.create({
 
   categoryBadge: {
     alignSelf: "flex-start",
-    backgroundColor: "rgba(255, 255, 255, 0.2)",
+    backgroundColor:
+      "rgba(255, 255, 255, 0.2)",
     borderWidth: 1,
-    borderColor: "rgba(255, 255, 255, 0.35)",
+    borderColor:
+      "rgba(255, 255, 255, 0.35)",
     paddingHorizontal: 8,
-    paddingVertical: 2.5,
+    paddingVertical: 3,
     borderRadius: 5,
   },
 
@@ -441,6 +750,44 @@ const styles = StyleSheet.create({
     flex: 1,
     height: 1,
     backgroundColor: "#f4f4f5",
+  },
+
+  productsGrid: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    justifyContent: "space-between",
+    rowGap: 14,
+  },
+
+  productCardWrapper: {
+    width: "48.5%",
+  },
+
+  allProductsButton: {
+    minHeight: 48,
+    borderRadius: 12,
+    backgroundColor: "#18181b",
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 8,
+    marginTop: 4,
+  },
+
+  allProductsButtonPressed: {
+    opacity: 0.85,
+  },
+
+  allProductsButtonText: {
+    color: "#ffffff",
+    fontSize: 14,
+    fontWeight: "700",
+  },
+
+  allProductsArrow: {
+    color: "#ffffff",
+    fontSize: 18,
+    fontWeight: "600",
   },
 
   emptyContainer: {

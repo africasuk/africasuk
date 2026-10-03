@@ -11,15 +11,17 @@ import { createClient } from "@/lib/auth/client";
 import Hero from "@/components/home/Hero";
 import Categories from "@/components/home/Categories";
 import FeaturedProducts from "@/components/home/FeaturedProducts";
-import FeaturedBrands from "@/components/home/FeaturedBrands";
 import ContinueShopping from "@/components/home/ContinueShopping";
 import RequestProductSection from "@/components/home/RequestProductSection";
 import HomeHeader from "@/components/home/HomeHeader";
 import LoadingScreen from "@/components/shared/LoadingScreen";
+import WomenBagsHero from "@/components/home/WomenBagsHero";
+import PerfumeHero from "@/components/home/PerfumeHero";
+import SSPCurrencyHero from "@/components/home/SSPCurrencyHero";
+import GiftDeliveryHero from "@/components/home/GiftDeliveryHero";
 
 export default function HomeScreen() {
   const [categories, setCategories] = useState<any[]>([]);
-  const [brands, setBrands] = useState<any[]>([]);
   const [products, setProducts] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -39,7 +41,7 @@ export default function HomeScreen() {
 
       const [
         { data: rawCategories, error: categoriesError },
-        { data: rawBrands, error: brandsError },
+        { error: brandsError },
         { data: rawProducts, error: productsError },
       ] = await Promise.all([
         supabase
@@ -86,16 +88,6 @@ export default function HomeScreen() {
         })
       );
 
-      const formattedBrands = (rawBrands ?? []).map((brand: any) => ({
-        ...brand,
-        logoUrl: brand.logo_url,
-        isActive: brand.is_active,
-        createdAt: brand.created_at,
-        updatedAt: brand.updated_at,
-        description:
-          brand.description ??
-          `Discover authentic products from the official ${brand.name} catalog.`,
-      }));
 
       const formattedProducts = (rawProducts ?? []).map(
         (product: any) => ({
@@ -162,7 +154,6 @@ export default function HomeScreen() {
       );
 
       setCategories(formattedCategories);
-      setBrands(formattedBrands);
       setProducts(formattedProducts);
 
       setLoading(false);
@@ -194,8 +185,11 @@ export default function HomeScreen() {
         <Hero categories={categories} />
         <Categories categories={categories} />
         <FeaturedProducts products={products} />
-        <FeaturedBrands brands={brands} />
+        <GiftDeliveryHero />
+        <WomenBagsHero />
+        <PerfumeHero />
         <RequestProductSection />
+        <SSPCurrencyHero />
         <ContinueShopping />
       </Animated.ScrollView>
     </SafeAreaView>

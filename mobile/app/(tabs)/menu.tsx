@@ -381,7 +381,7 @@ export default function MenuScreen() {
         {/* Footer */}
         <View style={styles.footer}>
           <Text style={styles.version}>
-            Africa Suk v1.0.4
+            Africa Suk v1.0.6
           </Text>
 
           <Text style={styles.footerText}>

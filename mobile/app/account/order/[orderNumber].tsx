@@ -28,6 +28,7 @@ import { Price } from "@/components/currency/Price";
 import { ReviewForm } from "@/components/products/ReviewForm";
 import * as WebBrowser from "expo-web-browser";
 import { DownloadReceiptButton } from "@/components/orders/DownloadReceiptButton";
+import { useExchangeRate } from "@/providers/ExchangeRateProvider";
 
 type OrderItemRow = {
   id: string;
@@ -55,6 +56,7 @@ export default function OrderDetailsScreen() {
   const { orderNumber } = useLocalSearchParams<{ orderNumber: string }>();
   const router = useRouter();
   const insets = useSafeAreaInsets();
+  const { rate } = useExchangeRate();
 
   const [order, setOrder] = useState<(Order & Record<string, any>) | null>(null);
   const [items, setItems] = useState<OrderItemRow[]>([]);
@@ -479,25 +481,17 @@ export default function OrderDetailsScreen() {
               </View>
 
               <View style={styles.summaryRow}>
-                <Text style={styles.summaryLabel}>
-                  Shipping Fee
+                <Text style={styles.summaryLabel}>Shipping Fee</Text>
+                <Text style={styles.summaryValue}>
+                  INCLUDED
                 </Text>
-
-                <Price
-                  price={order.shipping}
-                  style={styles.summaryValue}
-                />
               </View>
 
               <View style={styles.summaryRow}>
-                <Text style={styles.summaryLabel}>
-                  Estimated Tax
+                <Text style={styles.summaryLabel}>Estimated Tax</Text>
+                <Text style={styles.summaryValue}>
+                  INCLUDED
                 </Text>
-
-                <Price
-                  price={order.tax}
-                  style={styles.summaryValue}
-                />
               </View>
 
               <View
@@ -539,10 +533,10 @@ export default function OrderDetailsScreen() {
                 }}
               >
                 <DownloadReceiptButton
-                  order={order}
-                  items={items}
-                  exchangeRate={790}
-                />
+                    order={order}
+                    items={items}
+                    exchangeRate={rate}
+                  />
               </View>
           </View>
 
