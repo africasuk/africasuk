@@ -19,10 +19,9 @@ export class CategoryService {
     return this.repository.getById(id);
   }
 
-  async getBySlug(slug: string): Promise<Category> {
-    return this.repository.getBySlug(slug);
-  }
-
+async getBySlug(slug: string): Promise<Category | null> {
+  return this.repository.getBySlug(slug);
+}
   async create(
     data: CategoryFormData
   ): Promise<Category> {
