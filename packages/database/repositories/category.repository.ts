@@ -44,7 +44,7 @@ export class CategoryRepository {
     if (error) throw error;
 
     return (data ?? []).map((row) =>
-      this.mapCategory(row as CategoryRow)
+      this.mapCategory(row as CategoryRow),
     );
   }
 
@@ -60,14 +60,18 @@ export class CategoryRepository {
     return this.mapCategory(data as CategoryRow);
   }
 
-  async getBySlug(slug: string): Promise<Category> {
+  async getBySlug(slug: string): Promise<Category | null> {
     const { data, error } = await this.db
       .from("categories")
       .select("*")
       .eq("slug", slug)
-      .single();
+      .maybeSingle();
 
     if (error) throw error;
+
+    if (!data) {
+      return null;
+    }
 
     return this.mapCategory(data as CategoryRow);
   }
@@ -90,7 +94,7 @@ export class CategoryRepository {
     category: Omit<
       Category,
       "id" | "createdAt" | "updatedAt"
-    >
+    >,
   ): Promise<Category> {
     const { data, error } = await this.db
       .from("categories")
@@ -119,7 +123,7 @@ export class CategoryRepository {
         Category,
         "id" | "createdAt" | "updatedAt"
       >
-    >
+    >,
   ): Promise<Category> {
     const payload: Record<string, unknown> = {};
 
@@ -160,22 +164,22 @@ export class CategoryRepository {
   }
 
   async updateOrder(
-  items: {
-    id: string;
-    sortOrder: number;
-  }[]
-): Promise<void> {
-  for (const item of items) {
-    const { error } = await this.db
-      .from("categories")
-      .update({
-        sort_order: item.sortOrder,
-      })
-      .eq("id", item.id);
+    items: {
+      id: string;
+      sortOrder: number;
+    }[],
+  ): Promise<void> {
+    for (const item of items) {
+      const { error } = await this.db
+        .from("categories")
+        .update({
+          sort_order: item.sortOrder,
+        })
+        .eq("id", item.id);
 
-    if (error) throw error;
+      if (error) throw error;
+    }
   }
-}
 
   async delete(id: string): Promise<void> {
     const { error } = await this.db
