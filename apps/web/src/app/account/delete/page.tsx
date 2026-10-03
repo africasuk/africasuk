@@ -1,61 +1,143 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
-import { AlertTriangle, ArrowLeft } from "lucide-react";
+import { useEffect, useState } from "react";
+import {
+  AlertTriangle,
+  ArrowLeft,
+  Loader2,
+} from "lucide-react";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/auth/client";
 
 export default function DeleteAccountPage() {
   const router = useRouter();
+  const supabase = createClient();
 
   const [reason, setReason] = useState("");
   const [agreed, setAgreed] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [checkingAuth, setCheckingAuth] = useState(true);
+
+  useEffect(() => {
+    let mounted = true;
+
+    async function checkAuthentication() {
+      try {
+        const {
+          data: { user },
+        } = await supabase.auth.getUser();
+
+        if (!user) {
+          const redirectTo =
+            `${window.location.pathname}${window.location.search}`;
+
+          router.replace(
+            `/auth/login?redirect=${encodeURIComponent(redirectTo)}`
+          );
+
+          return;
+        }
+
+        if (mounted) {
+          setCheckingAuth(false);
+        }
+      } catch (error) {
+        console.error(
+          "Authentication check error:",
+          error,
+        );
+
+        const redirectTo =
+          `${window.location.pathname}${window.location.search}`;
+
+        router.replace(
+          `/auth/login?redirect=${encodeURIComponent(redirectTo)}`
+        );
+      }
+    }
+
+    checkAuthentication();
+
+    return () => {
+      mounted = false;
+    };
+  }, [router, supabase]);
 
   async function handleDelete() {
     if (!reason.trim()) {
-      toast.error("Please enter a reason for deleting your account.");
+      toast.error(
+        "Please enter a reason for deleting your account.",
+      );
       return;
     }
 
     if (!agreed) {
-      toast.error("Please confirm that you understand.");
+      toast.error(
+        "Please confirm that you understand.",
+      );
       return;
     }
 
     setLoading(true);
 
     try {
-      const response = await fetch("/api/account/delete", {
-        method: "DELETE",
-        headers: {
-          "Content-Type": "application/json",
+      const response = await fetch(
+        "/api/account/delete",
+        {
+          method: "DELETE",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            reason: reason.trim(),
+          }),
         },
-        body: JSON.stringify({
-          reason: reason.trim(),
-        }),
-      });
+      );
 
       const data = await response.json();
 
       if (!response.ok) {
+        if (response.status === 401) {
+          toast.error(
+            "Your session has expired. Please log in again.",
+          );
+
+          const redirectTo =
+            `${window.location.pathname}${window.location.search}`;
+
+          router.replace(
+            `/auth/login?redirect=${encodeURIComponent(
+              redirectTo,
+            )}`,
+          );
+
+          return;
+        }
+
         toast.error(
-          data.error || "Failed to delete your account.",
+          data.error ||
+            "Failed to delete your account.",
         );
+
         return;
       }
 
-      const supabase = createClient();
-
       await supabase.auth.signOut();
 
-      toast.success("Your account has been deleted.");
+      toast.success(
+        "Your account has been deleted.",
+      );
 
+      // Account no longer exists, so do not redirect
+      // back to the deletion page.
       router.replace("/auth/login");
     } catch (error) {
-      console.error("Delete account error:", error);
+      console.error(
+        "Delete account error:",
+        error,
+      );
 
       toast.error(
         "Something went wrong. Please try again.",
@@ -63,6 +145,17 @@ export default function DeleteAccountPage() {
     } finally {
       setLoading(false);
     }
+  }
+
+  if (checkingAuth) {
+    return (
+      <main className="flex min-h-screen items-center justify-center bg-muted/30 p-6">
+        <div className="flex items-center gap-3 text-sm text-muted-foreground">
+          <Loader2 className="size-5 animate-spin" />
+          Checking your account...
+        </div>
+      </main>
+    );
   }
 
   return (
@@ -80,7 +173,7 @@ export default function DeleteAccountPage() {
             </h1>
 
             <p className="mt-1 text-sm text-muted-foreground">
-              Permanently delete your AfricaSuk account.
+              Permanently delete your Africa Suk account.
             </p>
           </div>
         </div>
@@ -92,9 +185,9 @@ export default function DeleteAccountPage() {
           </p>
 
           <p className="mt-1 text-xs leading-5 text-rose-700">
-            Your account and eligible account data will be
-            permanently deleted. You will not be able to recover
-            your account after deletion.
+            Your account and eligible account data will
+            be permanently deleted. You will not be able
+            to recover your account after deletion.
           </p>
         </div>
 
@@ -110,7 +203,9 @@ export default function DeleteAccountPage() {
           <textarea
             id="deletion-reason"
             value={reason}
-            onChange={(e) => setReason(e.target.value)}
+            onChange={(e) =>
+              setReason(e.target.value)
+            }
             disabled={loading}
             rows={5}
             maxLength={500}
@@ -128,15 +223,17 @@ export default function DeleteAccountPage() {
           <input
             type="checkbox"
             checked={agreed}
-            onChange={(e) => setAgreed(e.target.checked)}
+            onChange={(e) =>
+              setAgreed(e.target.checked)
+            }
             disabled={loading}
             className="mt-1 size-4 cursor-pointer accent-[#004d26]"
           />
 
           <span className="text-sm leading-5 text-muted-foreground">
-            I understand that deleting my account is permanent
-            and that eligible account data may be permanently
-            deleted.
+            I understand that deleting my account is
+            permanent and that eligible account data may
+            be permanently deleted.
           </span>
         </label>
 
@@ -144,10 +241,21 @@ export default function DeleteAccountPage() {
         <button
           type="button"
           onClick={handleDelete}
-          disabled={!reason.trim() || !agreed || loading}
-          className="mt-6 w-full cursor-pointer rounded-xl bg-rose-600 py-3 text-sm font-bold text-white transition-colors hover:bg-rose-700 disabled:pointer-events-none disabled:opacity-50"
+          disabled={
+            !reason.trim() ||
+            !agreed ||
+            loading
+          }
+          className="mt-6 flex w-full cursor-pointer items-center justify-center gap-2 rounded-xl bg-rose-600 py-3 text-sm font-bold text-white transition-colors hover:bg-rose-700 disabled:pointer-events-none disabled:opacity-50"
         >
-          {loading ? "Deleting Account..." : "Permanently Delete Account"}
+          {loading ? (
+            <>
+              <Loader2 className="size-4 animate-spin" />
+              Deleting Account...
+            </>
+          ) : (
+            "Permanently Delete Account"
+          )}
         </button>
 
         {/* Back */}

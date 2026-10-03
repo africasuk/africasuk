@@ -20,6 +20,8 @@ import { RequestProductSection } from "@/components/home/RequestProductSection";
 import GenderSection from "@/components/home/GenderSection";
 import { ButtonSection } from "@/components/home/ButtonSection";
 import AppDownloadSection from "@/components/home/AppDownloadSection";
+// import GiftSomethingSection from "@/components/home/GiftSomethingSection";
+// import GreenSectionDivider from "@/components/home/GreenSectionDivider";
 
 export default async function HomePage() {
   const supabase = await createClient();
@@ -75,6 +77,10 @@ export default async function HomePage() {
       <RequestProductSection />
       
       <ContinueShopping />
+
+      {/* <GiftSomethingSection /> */}
+
+      {/* <GreenSectionDivider /> */}
 
       <AppDownloadSection />
       

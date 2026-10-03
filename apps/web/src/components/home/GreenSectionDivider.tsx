@@ -1,0 +1,50 @@
+export default function GreenSectionDivider() {
+  return (
+    <section
+      className="
+        relative
+        h-20
+        w-full
+        overflow-hidden
+        bg-[#015c3b]
+      "
+    >
+      <div
+        className="
+          absolute
+          inset-0
+          bg-linear-to-b
+          from-[#01442f]
+          via-[#01502f]
+          to-[#015c3b]
+        "
+      />
+
+      <div
+        className="
+          absolute
+          inset-x-0
+          top-0
+          h-10
+          bg-linear-to-b
+          from-[#01442f]
+          to-transparent
+          blur-[2px]
+        "
+      />
+
+      <div
+        className="
+          absolute
+          inset-x-0
+          bottom-0
+          h-10
+          bg-linear-to-b
+          from-transparent
+          to-[#015c3b]
+          blur-[2px]
+        "
+      />
+    </section>
+  );
+}

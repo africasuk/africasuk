@@ -8,7 +8,10 @@ import {
 } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Eye, EyeOff } from "lucide-react";
+import {
+  Eye,
+  EyeOff,
+} from "lucide-react";
 import { toast } from "sonner";
 
 import Logo from "@/components/layout/header/Logo";
@@ -23,24 +26,41 @@ import {
 
 export default function LoginForm() {
   const router = useRouter();
-
   const searchParams = useSearchParams();
-  const redirectTo = searchParams.get("redirect") ?? "/";
 
-  const { dictionary } = useTranslation();
+  const requestedRedirect =
+    searchParams.get("redirect");
 
-  const [showPassword, setShowPassword] = useState(false);
+  const redirectTo =
+    requestedRedirect?.startsWith("/") &&
+    !requestedRedirect.startsWith("//")
+      ? requestedRedirect
+      : "/";
+
+  const { dictionary } =
+    useTranslation();
+
+  const [showPassword, setShowPassword] =
+    useState(false);
 
   const {
     register,
     handleSubmit,
-    formState: { errors, isSubmitting },
+    formState: {
+      errors,
+      isSubmitting,
+    },
   } = useForm<LoginFormData>({
     resolver: zodResolver(loginSchema),
   });
 
-  const onSubmit = async (data: LoginFormData) => {
-    const { data: loginData, error } = await login({
+  const onSubmit = async (
+    data: LoginFormData,
+  ) => {
+    const {
+      data: loginData,
+      error,
+    } = await login({
       email: data.email,
       password: data.password,
     });
@@ -50,25 +70,34 @@ export default function LoginForm() {
       return;
     }
 
-    const user = loginData.user;
+    const user = loginData?.user;
 
     if (user?.email) {
-      await fetch("/api/email/login", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
+      await fetch(
+        "/api/email/login",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type":
+              "application/json",
+          },
+          body: JSON.stringify({
+            email: user.email,
+            name:
+              user.user_metadata
+                ?.full_name ||
+              user.user_metadata
+                ?.name ||
+              user.email.split("@")[0],
+          }),
         },
-        body: JSON.stringify({
-          email: user.email,
-          name:
-            user.user_metadata?.full_name ||
-            user.user_metadata?.name ||
-            user.email.split("@")[0],
-        }),
-      });
+      );
     }
 
-    toast.success(dictionary.auth.welcomeBackToast);
+    toast.success(
+      dictionary.auth.welcomeBackToast,
+    );
+
     router.replace(redirectTo);
     router.refresh();
   };
@@ -89,11 +118,16 @@ export default function LoginForm() {
         </p>
       </div>
 
-      <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+      <form
+        onSubmit={handleSubmit(onSubmit)}
+        className="space-y-4"
+      >
         <div>
           <input
             type="email"
-            placeholder={dictionary.auth.emailAddress}
+            placeholder={
+              dictionary.auth.emailAddress
+            }
             {...register("email")}
             className="w-full rounded-xl border border-muted bg-background p-3 text-sm shadow-sm outline-none transition-all duration-200 placeholder:text-muted-foreground/60 focus:border-[#004d26] focus:ring-1 focus:ring-[#004d26]"
           />
@@ -108,17 +142,31 @@ export default function LoginForm() {
         <div>
           <div className="relative">
             <input
-              type={showPassword ? "text" : "password"}
-              placeholder={dictionary.auth.password}
+              type={
+                showPassword
+                  ? "text"
+                  : "password"
+              }
+              placeholder={
+                dictionary.auth.password
+              }
               {...register("password")}
               className="w-full rounded-xl border border-muted bg-background p-3 pr-10 text-sm shadow-sm outline-none transition-all duration-200 placeholder:text-muted-foreground/60 focus:border-[#004d26] focus:ring-1 focus:ring-[#004d26]"
             />
 
             <button
               type="button"
-              onClick={() => setShowPassword((prev) => !prev)}
+              onClick={() =>
+                setShowPassword(
+                  (prev) => !prev,
+                )
+              }
               className="absolute inset-y-0 right-0 flex items-center pr-3 text-muted-foreground/70 transition-colors hover:text-foreground focus:outline-none"
-              aria-label={showPassword ? "Hide password" : "Show password"}
+              aria-label={
+                showPassword
+                  ? "Hide password"
+                  : "Show password"
+              }
             >
               {showPassword ? (
                 <EyeOff className="size-4.5 stroke-[1.75]" />
