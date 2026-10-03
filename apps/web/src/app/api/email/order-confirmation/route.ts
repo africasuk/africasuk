@@ -109,7 +109,8 @@ export async function POST(request: Request) {
       return NextResponse.json(
         {
           success: false,
-          message: "Order items are required.",
+          message:
+            "Order items are required.",
         },
         { status: 400 },
       );
@@ -140,20 +141,23 @@ export async function POST(request: Request) {
       );
     }
 
-    const exchangeRate = currentRate.rate;
+    const exchangeRate =
+      currentRate.rate;
 
-    const customerName = escapeHtml(
-      customer.name ||
-        customer.email.split("@")[0],
-    );
+    const customerName =
+      escapeHtml(
+        customer.name ||
+          customer.email.split("@")[0],
+      );
 
     const itemRows = items
       .map((item) => {
-        const productName = escapeHtml(
-          item.productName ||
-            item.name ||
-            "Product",
-        );
+        const productName =
+          escapeHtml(
+            item.productName ||
+              item.name ||
+              "Product",
+          );
 
         const quantity = Number(
           item.quantity || 1,
@@ -223,18 +227,6 @@ export async function POST(request: Request) {
         exchangeRate,
       );
 
-    const shippingSSP =
-      formatSSPFromUSD(
-        Number(order.shipping || 0),
-        exchangeRate,
-      );
-
-    const taxSSP =
-      formatSSPFromUSD(
-        Number(order.tax || 0),
-        exchangeRate,
-      );
-
     const trackingUrl =
       `https://www.africasuk.com/track/` +
       encodeURIComponent(
@@ -242,7 +234,9 @@ export async function POST(request: Request) {
       );
 
     await sendEmail({
-      to: customer.email.trim().toLowerCase(),
+      to: customer.email
+        .trim()
+        .toLowerCase(),
 
       subject:
         `Africa Suk Order Confirmed #${order.orderNumber}`,
@@ -464,6 +458,8 @@ export async function POST(request: Request) {
                       border-top:2px solid #005c2e;
                     "
                   >
+                    <!-- SUBTOTAL -->
+
                     <div
                       style="
                         display:flex;
@@ -490,6 +486,8 @@ export async function POST(request: Request) {
                       </strong>
                     </div>
 
+                    <!-- SHIPPING -->
+
                     <div
                       style="
                         display:flex;
@@ -508,13 +506,15 @@ export async function POST(request: Request) {
 
                       <strong
                         style="
-                          color:#222222;
+                          color:#005c2e;
                           font-size:14px;
                         "
                       >
-                        ${shippingSSP}
+                        Included
                       </strong>
                     </div>
+
+                    <!-- TAX -->
 
                     <div
                       style="
@@ -534,13 +534,15 @@ export async function POST(request: Request) {
 
                       <strong
                         style="
-                          color:#222222;
+                          color:#005c2e;
                           font-size:14px;
                         "
                       >
-                        ${taxSSP}
+                        Included
                       </strong>
                     </div>
+
+                    <!-- TOTAL -->
 
                     <div
                       style="
