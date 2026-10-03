@@ -5,11 +5,15 @@ import React, {
   useMemo,
   useState,
 } from "react";
+import { AppState } from "react-native";
+
+import { supabase } from "@/lib/supabase/client";
 
 interface ExchangeRateContextValue {
   rate: number;
   loading: boolean;
   setRate: (rate: number) => void;
+  refreshRate: () => Promise<void>;
 }
 
 const ExchangeRateContext =
@@ -19,23 +23,70 @@ const ExchangeRateContext =
 
 interface ExchangeRateProviderProps {
   children: React.ReactNode;
-  initialRate?: number;
 }
 
 export function ExchangeRateProvider({
   children,
-  initialRate = 1800, // Default SSP rate until loaded from API
 }: ExchangeRateProviderProps) {
-  const [rate, setRate] =
-    useState(initialRate);
+  const [rate, setRate] = useState(0);
+  const [loading, setLoading] = useState(true);
 
-  const [loading, setLoading] =
-    useState(true);
+  const refreshRate = async () => {
+    try {
+      setLoading(true);
+
+      const { data, error } = await supabase
+        .from("exchange_rates")
+        .select("rate")
+        .eq("base_currency", "USD")
+        .eq("target_currency", "SSP")
+        .order("effective_date", {
+          ascending: false,
+        })
+        .limit(1)
+        .maybeSingle();
+
+      if (error) {
+        throw error;
+      }
+
+      const currentRate = Number(data?.rate);
+
+      if (
+        !Number.isFinite(currentRate) ||
+        currentRate <= 0
+      ) {
+        throw new Error(
+          "No valid USD/SSP exchange rate found.",
+        );
+      }
+
+      setRate(currentRate);
+    } catch (error) {
+      console.error(
+        "Failed to load exchange rate:",
+        error,
+      );
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
-    // TODO:
-    // Replace this with a fetch from your backend/Supabase.
-    setLoading(false);
+    refreshRate();
+
+    const subscription = AppState.addEventListener(
+      "change",
+      (state) => {
+        if (state === "active") {
+          refreshRate();
+        }
+      },
+    );
+
+    return () => {
+      subscription.remove();
+    };
   }, []);
 
   const value = useMemo(
@@ -43,14 +94,13 @@ export function ExchangeRateProvider({
       rate,
       loading,
       setRate,
+      refreshRate,
     }),
     [rate, loading],
   );
 
   return (
-    <ExchangeRateContext.Provider
-      value={value}
-    >
+    <ExchangeRateContext.Provider value={value}>
       {children}
     </ExchangeRateContext.Provider>
   );

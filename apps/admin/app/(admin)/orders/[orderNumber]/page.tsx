@@ -1,11 +1,20 @@
 import { notFound } from "next/navigation";
 
+import {
+  ExchangeRateRepository,
+} from "@africasuk/database";
+
+import {
+  ExchangeRateService,
+} from "@africasuk/api";
+
 import { OrderDetails } from "@/components/orders/OrderDetails";
 import { PrintableReceipt } from "@/components/orders/PrintableReceipt";
 import PrintReceiptButton from "@/components/orders/PrintReceiptButton";
 import PageHeader from "@/components/shared/PageHeader";
 
 import { getOrder } from "@/app/actions/orders";
+import { createServerSupabaseClient } from "@/lib/supabase/server";
 
 interface Props {
   params: Promise<{
@@ -23,6 +32,20 @@ export default async function OrderPage({
   if (!result) {
     notFound();
   }
+
+  const supabase =
+    await createServerSupabaseClient();
+
+  const exchangeRateService =
+    new ExchangeRateService(
+      new ExchangeRateRepository(supabase),
+    );
+
+  const currentRate =
+    await exchangeRateService.getCurrent();
+
+  const exchangeRate =
+    currentRate?.rate ?? 0;
 
   return (
     <>
@@ -43,7 +66,7 @@ export default async function OrderPage({
       <PrintableReceipt
         order={result.order}
         items={result.items}
-        exchangeRate={790}
+        exchangeRate={exchangeRate}
       />
     </>
   );

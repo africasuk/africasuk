@@ -1,14 +1,17 @@
 import React, { useState } from "react";
 import {
-  View,
-  Text,
-  StyleSheet,
-  Pressable,
+  Image,
   Modal,
+  Pressable,
+  StyleSheet,
+  Text,
+  View,
 } from "react-native";
-import { Image } from "expo-image";
-import { DollarSign, Check, ChevronRight, X } from "lucide-react-native";
-
+import {
+  Check,
+  ChevronDown,
+  X,
+} from "lucide-react-native";
 import { useCurrency } from "@/providers/CurrencyProvider";
 
 const CURRENCIES = {
@@ -32,7 +35,10 @@ export function CurrencySwitcher() {
   const { currency, setCurrency } = useCurrency();
   const [modalVisible, setModalVisible] = useState(false);
 
-  const activeCode = (currency in CURRENCIES ? currency : "USD") as CurrencyCode;
+  const activeCode = (
+    currency in CURRENCIES ? currency : "SSP"
+  ) as CurrencyCode;
+
   const activeCurrency = CURRENCIES[activeCode];
 
   const handleSelect = (code: CurrencyCode) => {
@@ -42,34 +48,29 @@ export function CurrencySwitcher() {
 
   return (
     <>
-      {/* Menu Row Trigger */}
+      {/* Currency Trigger Button */}
       <Pressable
-        style={({ pressed }) => [
-          styles.rowTrigger,
-          pressed && styles.rowTriggerPressed,
-        ]}
         onPress={() => setModalVisible(true)}
+        style={({ pressed }) => [
+          styles.trigger,
+          pressed && styles.triggerPressed,
+        ]}
       >
-        <View style={styles.left}>
-          <View style={styles.iconSquare}>
-            <DollarSign size={16} color="#18181b" strokeWidth={1.8} />
-          </View>
-          <Text style={styles.rowText}>Currency</Text>
-        </View>
+        <Image
+          source={{ uri: activeCurrency.flagUrl }}
+          style={styles.flag}
+        />
 
-        <View style={styles.right}>
-          <Image
-            source={{ uri: activeCurrency.flagUrl }}
-            style={styles.flagIcon}
-            contentFit="cover"
-            transition={150}
-          />
-          <Text style={styles.activeCode}>{activeCurrency.label}</Text>
-          <ChevronRight size={16} color="#a1a1aa" strokeWidth={1.8} />
-        </View>
+        <Text style={styles.activeCode}>{activeCurrency.label}</Text>
+
+        <ChevronDown
+          size={14}
+          color="#737373"
+          strokeWidth={2}
+        />
       </Pressable>
 
-      {/* Currency Selection Modal */}
+      {/* Currency Modal */}
       <Modal
         visible={modalVisible}
         transparent
@@ -77,78 +78,103 @@ export function CurrencySwitcher() {
         statusBarTranslucent
         onRequestClose={() => setModalVisible(false)}
       >
-        <View style={styles.modalOverlay}>
+        <View style={styles.overlay}>
           <Pressable
             style={styles.backdrop}
             onPress={() => setModalVisible(false)}
           />
 
-          <View style={styles.modalContent}>
-            {/* Modal Header */}
+          <View style={styles.modal}>
+            {/* Header */}
             <View style={styles.modalHeader}>
               <View style={styles.titleGroup}>
-                <Text style={styles.modalTitle}>Select Currency</Text>
+                <Text style={styles.modalTitle}>Choose Currency</Text>
                 <Text style={styles.modalSubtitle}>
-                  Choose your preferred shopping currency
+                  Select how prices are displayed across the store.
                 </Text>
               </View>
 
               <Pressable
+                onPress={() => setModalVisible(false)}
+                hitSlop={8}
                 style={({ pressed }) => [
                   styles.closeButton,
                   pressed && styles.closeButtonPressed,
                 ]}
-                onPress={() => setModalVisible(false)}
-                hitSlop={8}
               >
-                <X size={15} color="#71717a" strokeWidth={2} />
+                <X size={16} color="#737373" strokeWidth={2} />
               </Pressable>
             </View>
 
-            {/* Currency Options */}
-            <View style={styles.optionsList}>
+            {/* Options */}
+            <View style={styles.options}>
               {(Object.keys(CURRENCIES) as CurrencyCode[]).map((code) => {
                 const item = CURRENCIES[code];
-                const isSelected = activeCode === code;
+                const selected = activeCode === code;
 
                 return (
                   <Pressable
                     key={code}
-                    style={({ pressed }) => [
-                      styles.optionRow,
-                      isSelected && styles.optionRowSelected,
-                      pressed && styles.optionRowPressed,
-                    ]}
                     onPress={() => handleSelect(code)}
+                    style={({ pressed }) => [
+                      styles.option,
+                      selected && styles.optionSelected,
+                      pressed && styles.optionPressed,
+                    ]}
                   >
                     <View style={styles.optionLeft}>
                       <View style={styles.flagWrapper}>
                         <Image
                           source={{ uri: item.flagUrl }}
                           style={styles.optionFlag}
-                          contentFit="cover"
-                          transition={150}
                         />
                       </View>
-                      <View style={styles.labelContainer}>
+
+                      <View style={styles.optionText}>
                         <View style={styles.codeRow}>
-                          <Text style={styles.optionLabel}>{item.label}</Text>
-                          <Text style={styles.symbolTag}>({item.symbol})</Text>
+                          <Text
+                            style={[
+                              styles.optionCode,
+                              selected && styles.optionCodeSelected,
+                            ]}
+                          >
+                            {item.label}
+                          </Text>
+
+                          <Text style={styles.symbol}>
+                            ({item.symbol})
+                          </Text>
                         </View>
-                        <Text style={styles.optionSublabel}>{item.fullName}</Text>
+
+                        <Text style={styles.optionName}>
+                          {item.fullName}
+                        </Text>
                       </View>
                     </View>
 
-                    {isSelected ? (
+                    {selected ? (
                       <View style={styles.checkCircle}>
-                        <Check size={12} color="#ffffff" strokeWidth={2.5} />
+                        <Check
+                          size={12}
+                          color="#FFFFFF"
+                          strokeWidth={2.5}
+                        />
                       </View>
                     ) : (
-                      <View style={styles.radioEmpty} />
+                      <View style={styles.radio} />
                     )}
                   </Pressable>
                 );
               })}
+            </View>
+
+            {/* Footer */}
+            <View style={styles.modalFooter}>
+              <Text style={styles.footerText}>Africa Suk</Text>
+              <Text style={styles.footerDot}>•</Text>
+              <Text style={styles.footerTextMuted}>
+                Shop with Confidence
+              </Text>
             </View>
           </View>
         </View>
@@ -158,170 +184,146 @@ export function CurrencySwitcher() {
 }
 
 const styles = StyleSheet.create({
-  rowTrigger: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    width: "100%",
-    paddingVertical: 10,
-    paddingHorizontal: 12,
-    borderRadius: 12,
-    backgroundColor: "#ffffff",
-    borderWidth: 1,
-    borderColor: "#e4e4e7",
-  },
-
-  rowTriggerPressed: {
-    backgroundColor: "#fafafa",
-  },
-
-  left: {
+  /* Trigger */
+  trigger: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 10,
-  },
-
-  iconSquare: {
-    width: 32,
-    height: 32,
+    paddingHorizontal: 10,
+    paddingVertical: 6,
     borderRadius: 8,
-    backgroundColor: "#f4f4f5",
-    borderWidth: 1,
-    borderColor: "#e4e4e7",
-    alignItems: "center",
-    justifyContent: "center",
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: "#E5E5E5",
+    backgroundColor: "#F5F5F5",
+    gap: 6,
   },
 
-  rowText: {
-    fontSize: 13,
-    fontWeight: "600",
-    color: "#18181b",
-    letterSpacing: -0.1,
+  triggerPressed: {
+    backgroundColor: "#E5E5E5",
   },
 
-  right: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 8,
-  },
-
-  flagIcon: {
-    width: 22,
-    height: 15,
-    borderRadius: 3,
-    borderWidth: 1,
-    borderColor: "#e4e4e7",
+  flag: {
+    width: 18,
+    height: 12,
+    borderRadius: 2,
+    backgroundColor: "#E5E5E5",
   },
 
   activeCode: {
     fontSize: 12,
-    fontWeight: "600",
-    color: "#71717a",
+    fontWeight: "700",
+    color: "#0A0A0A",
+    letterSpacing: 0.2,
   },
 
-  modalOverlay: {
+  /* Modal Overlay */
+  overlay: {
     flex: 1,
-    backgroundColor: "rgba(0, 0, 0, 0.4)",
-    justifyContent: "center",
     alignItems: "center",
+    justifyContent: "center",
     paddingHorizontal: 20,
+    backgroundColor: "rgba(0, 0, 0, 0.45)",
   },
 
   backdrop: {
     ...StyleSheet.absoluteFillObject,
   },
 
-  modalContent: {
+  modal: {
     width: "100%",
-    maxWidth: 380,
-    backgroundColor: "#ffffff",
+    maxWidth: 360,
+    overflow: "hidden",
     borderRadius: 16,
+    backgroundColor: "#FFFFFF",
     borderWidth: 1,
-    borderColor: "#f0f0f0",
-    padding: 16,
-    gap: 14,
+    borderColor: "#E5E5E5",
   },
 
   modalHeader: {
     flexDirection: "row",
+    alignItems: "flex-start",
     justifyContent: "space-between",
-    alignItems: "center",
-    paddingBottom: 10,
-    borderBottomWidth: 1,
-    borderBottomColor: "#f4f4f5",
+    paddingHorizontal: 18,
+    paddingTop: 18,
+    paddingBottom: 14,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: "#E5E5E5",
   },
 
   titleGroup: {
-    gap: 2,
+    flex: 1,
+    paddingRight: 12,
   },
 
   modalTitle: {
-    fontSize: 15,
+    fontSize: 16,
     fontWeight: "700",
-    color: "#18181b",
-    letterSpacing: -0.2,
+    color: "#0A0A0A",
+    letterSpacing: -0.3,
   },
 
   modalSubtitle: {
+    marginTop: 3,
     fontSize: 12,
-    color: "#71717a",
+    lineHeight: 16,
+    color: "#737373",
   },
 
   closeButton: {
-    width: 30,
-    height: 30,
-    borderRadius: 8,
-    backgroundColor: "#f4f4f5",
-    borderWidth: 1,
-    borderColor: "#e4e4e7",
+    width: 28,
+    height: 28,
+    borderRadius: 14,
     alignItems: "center",
     justifyContent: "center",
+    backgroundColor: "#F5F5F5",
   },
 
   closeButtonPressed: {
-    backgroundColor: "#e4e4e7",
+    backgroundColor: "#E5E5E5",
   },
 
-  optionsList: {
+  /* Options */
+  options: {
+    padding: 14,
     gap: 8,
   },
 
-  optionRow: {
+  option: {
+    minHeight: 58,
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-    paddingVertical: 12,
-    paddingHorizontal: 12,
+    paddingHorizontal: 14,
     borderRadius: 10,
     borderWidth: 1,
-    borderColor: "#e4e4e7",
-    backgroundColor: "#ffffff",
+    borderColor: "#E5E5E5",
+    backgroundColor: "#FFFFFF",
   },
 
-  optionRowSelected: {
-    backgroundColor: "#f4f4f5",
-    borderColor: "#18181b",
+  optionSelected: {
+    backgroundColor: "#FAFAFA",
+    borderColor: "#0A0A0A",
   },
 
-  optionRowPressed: {
-    opacity: 0.88,
+  optionPressed: {
+    backgroundColor: "#F5F5F5",
   },
 
   optionLeft: {
+    flex: 1,
+    minWidth: 0,
     flexDirection: "row",
     alignItems: "center",
-    gap: 12,
-    flex: 1,
   },
 
   flagWrapper: {
-    width: 30,
-    height: 20,
-    borderRadius: 4,
-    borderWidth: 1,
-    borderColor: "#e4e4e7",
+    width: 32,
+    height: 22,
     overflow: "hidden",
-    backgroundColor: "#f4f4f5",
+    borderRadius: 4,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: "#E5E5E5",
+    backgroundColor: "#F5F5F5",
+    marginRight: 12,
   },
 
   optionFlag: {
@@ -329,48 +331,81 @@ const styles = StyleSheet.create({
     height: "100%",
   },
 
-  labelContainer: {
-    gap: 2,
+  optionText: {
+    flex: 1,
+    minWidth: 0,
   },
 
   codeRow: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 4,
+    gap: 5,
   },
 
-  optionLabel: {
+  optionCode: {
     fontSize: 13,
     fontWeight: "700",
-    color: "#18181b",
-    letterSpacing: -0.1,
+    color: "#525252",
   },
 
-  symbolTag: {
+  optionCodeSelected: {
+    color: "#0A0A0A",
+  },
+
+  symbol: {
     fontSize: 12,
     fontWeight: "500",
-    color: "#71717a",
+    color: "#A3A3A3",
   },
 
-  optionSublabel: {
+  optionName: {
+    marginTop: 2,
     fontSize: 11,
-    color: "#71717a",
+    color: "#737373",
   },
 
   checkCircle: {
     width: 20,
     height: 20,
     borderRadius: 10,
-    backgroundColor: "#18181b",
     alignItems: "center",
     justifyContent: "center",
+    backgroundColor: "#0A0A0A",
+    marginLeft: 10,
   },
 
-  radioEmpty: {
-    width: 20,
-    height: 20,
-    borderRadius: 10,
+  radio: {
+    width: 18,
+    height: 18,
+    borderRadius: 9,
     borderWidth: 1.5,
-    borderColor: "#d4d4d8",
+    borderColor: "#D4D4D4",
+    marginLeft: 10,
+  },
+
+  /* Footer */
+  modalFooter: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    paddingHorizontal: 18,
+    paddingBottom: 14,
+    gap: 5,
+  },
+
+  footerText: {
+    fontSize: 11,
+    fontWeight: "600",
+    color: "#525252",
+  },
+
+  footerDot: {
+    fontSize: 10,
+    color: "#A3A3A3",
+  },
+
+  footerTextMuted: {
+    fontSize: 11,
+    color: "#A3A3A3",
   },
 });
