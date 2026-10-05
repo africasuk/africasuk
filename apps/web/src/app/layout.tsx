@@ -196,7 +196,9 @@ export default async function RootLayout({
     (cookieStore.get("locale")?.value as Locale) ?? defaultLocale;
 
   const currency =
-    cookieStore.get("currency")?.value === "SSP" ? "SSP" : "USD";
+      cookieStore.get("currency")?.value === "USD"
+        ? "USD"
+        : "SSP";
 
   const dir = getDirection(locale);
 
