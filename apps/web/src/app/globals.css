@@ -6,6 +6,7 @@
   0% {
     transform: translateX(0%);
   }
+
   100% {
     transform: translateX(-50%);
   }
@@ -24,12 +25,12 @@
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  
+
   /* High-end luxury typography pairing */
   --font-sans: "Geist", "Inter", system-ui, -apple-system, sans-serif;
   --font-mono: var(--font-geist-mono);
   --font-heading: "Geist", "Inter", system-ui, sans-serif;
-  
+
   --color-sidebar-ring: var(--sidebar-ring);
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
@@ -59,6 +60,7 @@
   --color-popover: var(--popover);
   --color-card-foreground: var(--card-foreground);
   --color-card: var(--card);
+
   --radius-sm: calc(var(--radius) * 0.6);
   --radius-md: calc(var(--radius) * 0.8);
   --radius-lg: var(--radius);
@@ -72,32 +74,32 @@
   /* Premium Pure Backgrounds */
   --background: oklch(0.99 0.002 60);
   --foreground: oklch(0.18 0.006 70);
-  
+
   /* Cards & Sheets */
   --card: oklch(1 0 0);
   --card-foreground: oklch(0.18 0.006 70);
   --popover: oklch(1 0 0);
   --popover-foreground: oklch(0.18 0.006 70);
-  
-  /* Brand Core: AfricaSuk Signature Premium Green (#004d26 converted perfectly to OKLCH) */
+
+  /* Brand Core: AfricaSuk Signature Premium Green */
   --primary: oklch(0.26 0.045 145);
   --primary-foreground: oklch(0.99 0.002 60);
-  
+
   /* Soft Brand Accents & Light Fills */
   --secondary: oklch(0.96 0.01 145);
   --secondary-foreground: oklch(0.26 0.045 145);
-  
+
   /* UI Elements & Minimalist Borders */
   --muted: oklch(0.96 0.004 70);
   --muted-foreground: oklch(0.52 0.015 70);
   --accent: oklch(0.96 0.01 145);
   --accent-foreground: oklch(0.26 0.045 145);
-  
+
   /* Clean Soft-Gray Outlines */
   --border: oklch(0.92 0.003 70);
   --input: oklch(0.92 0.003 70);
   --ring: oklch(0.26 0.045 145 / 30%);
-  
+
   /* System States */
   --destructive: oklch(0.55 0.18 25);
   --chart-1: oklch(0.26 0.045 145);
@@ -105,7 +107,7 @@
   --chart-3: oklch(0.65 0.025 145);
   --chart-4: oklch(0.75 0.02 145);
   --chart-5: oklch(0.85 0.015 145);
-  
+
   /* Modern clean radius token */
   --radius: 0.75rem;
 
@@ -124,10 +126,36 @@
   * {
     @apply border-border outline-ring/50;
   }
-  body {
-    @apply bg-background text-foreground antialiased selection:bg-[#004d26]/10 selection:text-[#004d26];
-  }
+
   html {
     @apply font-sans scroll-smooth;
+
+    width: 100%;
+    min-height: 100%;
+    overflow-x: hidden;
+  }
+
+  body {
+    @apply bg-background text-foreground antialiased selection:bg-[#004d26]/10 selection:text-[#004d26];
+
+    width: 100%;
+    min-height: 100%;
+    overflow-x: hidden;
+  }
+}
+
+/* Mobile web: behave more like an app */
+@media (max-width: 767px) {
+  html,
+  body {
+    overscroll-behavior-x: none;
+    touch-action: pan-y;
+  }
+
+  input,
+  textarea,
+  select,
+  button {
+    touch-action: manipulation;
   }
 }

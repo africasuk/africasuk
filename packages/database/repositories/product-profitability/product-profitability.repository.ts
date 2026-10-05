@@ -64,7 +64,7 @@ export interface ProductProfitabilityVariant {
 
   imageUrl: string | null;
 
-  /**
+  /*
    * For variant-level products this is the actual variant price.
    *
    * For color-level products this is the lowest active variant price.
@@ -72,7 +72,7 @@ export interface ProductProfitabilityVariant {
    */
   price: number;
 
-  /**
+  /*
    * Useful for grouped products where sizes/options may have
    * different prices.
    */
@@ -110,11 +110,19 @@ export interface UpsertProductProfitabilityCostInput {
 
 export class ProductProfitabilityRepository {
   constructor(
-    private readonly db: SupabaseClient
+    private readonly db: SupabaseClient,
   ) {}
 
   async getAll(): Promise<ProductProfitabilityVariant[]> {
-    const { data, error } = await this.db
+    /*
+     * Main product/variant query.
+     *
+     * IMPORTANT:
+     * Keep this query separate from product_costs.
+     * Costs are loaded once below instead of querying once
+     * for every color/variant.
+     */
+    const variantsQuery = this.db
       .from("product_variants")
       .select(`
         id,
@@ -152,13 +160,82 @@ export class ProductProfitabilityRepository {
       `)
       .order("created_at", { ascending: false });
 
+    /*
+     * Load ALL costs once.
+     *
+     * Previously:
+     *
+     *   await getColorCost(...)
+     *   await getVariantCost(...)
+     *
+     * happened inside loops, producing potentially hundreds
+     * of database requests.
+     *
+     * Now we make one additional database request.
+     */
+    const costsQuery = this.db
+      .from("product_costs")
+      .select("*");
+
+    const [
+      {
+        data,
+        error,
+      },
+      {
+        data: costData,
+        error: costError,
+      },
+    ] = await Promise.all([
+      variantsQuery,
+      costsQuery,
+    ]);
+
     if (error) {
       throw error;
     }
 
+    if (costError) {
+      throw costError;
+    }
+
     const variants = data ?? [];
 
-    /**
+    /*
+     * Build O(1) lookup maps for costs.
+     *
+     * color_id    -> color cost
+     * variant_id  -> variant cost
+     */
+    const colorCosts = new Map<
+      string,
+      ProductProfitabilityCost
+    >();
+
+    const variantCosts = new Map<
+      string,
+      ProductProfitabilityCost
+    >();
+
+    for (const costRow of costData ?? []) {
+      const cost = this.mapCost(costRow);
+
+      if (cost.colorId) {
+        colorCosts.set(
+          cost.colorId,
+          cost,
+        );
+      }
+
+      if (cost.variantId) {
+        variantCosts.set(
+          cost.variantId,
+          cost,
+        );
+      }
+    }
+
+    /*
      * Group all database variants by product color.
      *
      * Example:
@@ -168,7 +245,8 @@ export class ProductProfitabilityRepository {
      *   Size 32
      *   Size 34
      *
-     * becomes ONE profitability record.
+     * becomes ONE profitability record for color-level
+     * categories.
      */
     const colorGroups = new Map<
       string,
@@ -180,33 +258,46 @@ export class ProductProfitabilityRepository {
     >();
 
     for (const variant of variants) {
-            const color = Array.isArray(variant.product_colors)
-            ? variant.product_colors[0]
-            : variant.product_colors;
+      const color = Array.isArray(
+        variant.product_colors,
+      )
+        ? variant.product_colors[0]
+        : variant.product_colors;
 
-            const product = Array.isArray(color?.products)
-            ? color.products[0]
-            : color?.products;
+      const product = Array.isArray(
+        color?.products,
+      )
+        ? color.products[0]
+        : color?.products;
 
-            if (!color || !product) {
-            continue;
-            }
+      if (!color || !product) {
+        continue;
+      }
 
-            const colorId = color.id;
-      const existing = colorGroups.get(colorId);
+      const colorId = color.id;
+
+      const existing = colorGroups.get(
+        colorId,
+      );
 
       if (existing) {
-        existing.variants.push(variant);
+        existing.variants.push(
+          variant,
+        );
       } else {
-        colorGroups.set(colorId, {
-          color,
-          product,
-          variants: [variant],
-        });
+        colorGroups.set(
+          colorId,
+          {
+            color,
+            product,
+            variants: [variant],
+          },
+        );
       }
     }
 
-    const result: ProductProfitabilityVariant[] = [];
+    const result: ProductProfitabilityVariant[] =
+      [];
 
     for (const group of colorGroups.values()) {
       const {
@@ -215,42 +306,49 @@ export class ProductProfitabilityRepository {
         variants: colorVariants,
       } = group;
 
-      const category = product.categories;
+      const category =
+        product.categories;
 
       const categorySlug =
-        category?.slug?.toLowerCase() ?? null;
+        category?.slug?.toLowerCase() ??
+        null;
 
       const isColorLevel =
         categorySlug !== null &&
-        COLOR_PROFITABILITY_CATEGORIES.has(categorySlug);
+        COLOR_PROFITABILITY_CATEGORIES.has(
+          categorySlug,
+        );
 
-      const images = this.sortImages(
-        color?.product_images ?? []
-      );
+      const images =
+        this.sortImages(
+          color?.product_images ?? [],
+        );
 
       const imageUrl =
         images[0]?.image_url ?? null;
 
+      /*
+       * CLOTHING / SHOES
+       *
+       * One profitability record per product color.
+       *
+       * Cost is attached to color_id.
+       */
       if (isColorLevel) {
-        /**
-         * CLOTHING / SHOES
-         *
-         * One profitability record per product color.
-         *
-         * Example:
-         *
-         * Cargo Pants — Gray
-         * Sizes: 30, 32, 34, 36, 38, 40
-         *
-         * Cost is attached to color_id.
-         */
-        const activeVariants = colorVariants.filter(
-          (variant) => variant.is_active
-        );
+        const activeVariants =
+          colorVariants.filter(
+            (variant) =>
+              variant.is_active,
+          );
 
-        const prices = activeVariants
-          .map((variant) => Number(variant.price))
-          .filter((price) => Number.isFinite(price));
+        const prices =
+          activeVariants
+            .map((variant) =>
+              Number(variant.price),
+            )
+            .filter((price) =>
+              Number.isFinite(price),
+            );
 
         const minPrice =
           prices.length > 0
@@ -262,43 +360,64 @@ export class ProductProfitabilityRepository {
             ? Math.max(...prices)
             : 0;
 
-        const stock = colorVariants.reduce(
-          (total, variant) =>
-            total + Number(variant.stock ?? 0),
-          0
-        );
+        const stock =
+          colorVariants.reduce(
+            (total, variant) =>
+              total +
+              Number(
+                variant.stock ?? 0,
+              ),
+            0,
+          );
 
-        const isActive = colorVariants.some(
-          (variant) => variant.is_active
-        );
+        const isActive =
+          colorVariants.some(
+            (variant) =>
+              variant.is_active,
+          );
 
-        const sortedVariants = [...colorVariants].sort(
-          (a, b) => {
-            const aValue = String(
-              a.option_value ?? ""
-            );
+        const sortedVariants =
+          [...colorVariants].sort(
+            (a, b) => {
+              const aValue = String(
+                a.option_value ?? "",
+              );
 
-            const bValue = String(
-              b.option_value ?? ""
-            );
+              const bValue = String(
+                b.option_value ?? "",
+              );
 
-            return aValue.localeCompare(
-              bValue,
-              undefined,
-              {
-                numeric: true,
-                sensitivity: "base",
-              }
-            );
-          }
-        );
+              return aValue.localeCompare(
+                bValue,
+                undefined,
+                {
+                  numeric: true,
+                  sensitivity: "base",
+                },
+              );
+            },
+          );
 
         const firstVariant =
           sortedVariants[0] ?? null;
 
-        const cost = await this.getColorCost(
-          color.id
-        );
+        /*
+         * IMPORTANT:
+         *
+         * No database call here anymore.
+         *
+         * Previously:
+         *
+         * await this.getColorCost(color.id)
+         *
+         * Now:
+         *
+         * colorCosts.get(color.id)
+         */
+        const cost =
+          colorCosts.get(
+            color.id,
+          ) ?? null;
 
         result.push({
           id: color.id,
@@ -309,10 +428,13 @@ export class ProductProfitabilityRepository {
           productName: product.name,
 
           productColorId: color.id,
-          colorName: color.name ?? null,
+          colorName:
+            color.name ?? null,
 
           categoryId:
-            product.category_id ?? category?.id ?? null,
+            product.category_id ??
+            category?.id ??
+            null,
 
           categoryName:
             category?.name ?? null,
@@ -321,7 +443,7 @@ export class ProductProfitabilityRepository {
 
           imageUrl,
 
-          /**
+          /*
            * Conservative price used by the current
            * profitability calculations.
            */
@@ -335,23 +457,43 @@ export class ProductProfitabilityRepository {
           sku: null,
 
           optionName:
-            firstVariant?.option_name ?? null,
+            firstVariant?.option_name ??
+            null,
 
           optionValue: null,
 
           isActive,
 
-          variants: sortedVariants.map(
-            (variant) => ({
-              id: variant.id,
-              optionName: variant.option_name,
-              optionValue: variant.option_value,
-              price: Number(variant.price),
-              stock: Number(variant.stock ?? 0),
-              sku: variant.sku,
-              isActive: variant.is_active,
-            })
-          ),
+          variants:
+            sortedVariants.map(
+              (variant) => ({
+                id: variant.id,
+
+                optionName:
+                  variant.option_name ??
+                  "",
+
+                optionValue:
+                  variant.option_value ??
+                  "",
+
+                price: Number(
+                  variant.price,
+                ),
+
+                stock: Number(
+                  variant.stock ?? 0,
+                ),
+
+                sku:
+                  variant.sku ?? null,
+
+                isActive:
+                  Boolean(
+                    variant.is_active,
+                  ),
+              }),
+            ),
 
           cost,
         });
@@ -359,16 +501,30 @@ export class ProductProfitabilityRepository {
         continue;
       }
 
-      /**
+      /*
        * ELECTRONICS / PHONES / LAPTOPS / CAR / ETC.
        *
        * Every actual variant remains its own
        * profitability record.
        */
       for (const variant of colorVariants) {
-        const cost = await this.getVariantCost(
-          variant.id
-        );
+        /*
+         * IMPORTANT:
+         *
+         * No database call here anymore.
+         *
+         * Previously:
+         *
+         * await this.getVariantCost(variant.id)
+         *
+         * Now:
+         *
+         * variantCosts.get(variant.id)
+         */
+        const cost =
+          variantCosts.get(
+            variant.id,
+          ) ?? null;
 
         result.push({
           id: variant.id,
@@ -379,10 +535,13 @@ export class ProductProfitabilityRepository {
           productName: product.name,
 
           productColorId: color.id,
-          colorName: color.name ?? null,
+          colorName:
+            color.name ?? null,
 
           categoryId:
-            product.category_id ?? category?.id ?? null,
+            product.category_id ??
+            category?.id ??
+            null,
 
           categoryName:
             category?.name ?? null,
@@ -391,29 +550,65 @@ export class ProductProfitabilityRepository {
 
           imageUrl,
 
-          price: Number(variant.price),
+          price: Number(
+            variant.price,
+          ),
 
-          minPrice: Number(variant.price),
-          maxPrice: Number(variant.price),
+          minPrice: Number(
+            variant.price,
+          ),
 
-          stock: Number(variant.stock ?? 0),
+          maxPrice: Number(
+            variant.price,
+          ),
 
-          sku: variant.sku,
+          stock: Number(
+            variant.stock ?? 0,
+          ),
 
-          optionName: variant.option_name,
-          optionValue: variant.option_value,
+          sku:
+            variant.sku ?? null,
 
-          isActive: variant.is_active,
+          optionName:
+            variant.option_name ??
+            null,
+
+          optionValue:
+            variant.option_value ??
+            null,
+
+          isActive:
+            Boolean(
+              variant.is_active,
+            ),
 
           variants: [
             {
               id: variant.id,
-              optionName: variant.option_name,
-              optionValue: variant.option_value,
-              price: Number(variant.price),
-              stock: Number(variant.stock ?? 0),
-              sku: variant.sku,
-              isActive: variant.is_active,
+
+              optionName:
+                variant.option_name ??
+                "",
+
+              optionValue:
+                variant.option_value ??
+                "",
+
+              price: Number(
+                variant.price,
+              ),
+
+              stock: Number(
+                variant.stock ?? 0,
+              ),
+
+              sku:
+                variant.sku ?? null,
+
+              isActive:
+                Boolean(
+                  variant.is_active,
+                ),
             },
           ],
 
@@ -426,9 +621,12 @@ export class ProductProfitabilityRepository {
   }
 
   async getByVariantId(
-    variantId: string
+    variantId: string,
   ): Promise<ProductProfitabilityCost | null> {
-    const { data, error } = await this.db
+    const {
+      data,
+      error,
+    } = await this.db
       .from("product_costs")
       .select("*")
       .eq("variant_id", variantId)
@@ -438,13 +636,18 @@ export class ProductProfitabilityRepository {
       throw error;
     }
 
-    return data ? this.mapCost(data) : null;
+    return data
+      ? this.mapCost(data)
+      : null;
   }
 
   async getByColorId(
-    colorId: string
+    colorId: string,
   ): Promise<ProductProfitabilityCost | null> {
-    const { data, error } = await this.db
+    const {
+      data,
+      error,
+    } = await this.db
       .from("product_costs")
       .select("*")
       .eq("color_id", colorId)
@@ -454,64 +657,116 @@ export class ProductProfitabilityRepository {
       throw error;
     }
 
-    return data ? this.mapCost(data) : null;
-  }
-  
-async upsertCost(
-  input: UpsertProductProfitabilityCostInput
-): Promise<ProductProfitabilityCost> {
-  const hasColor = Boolean(input.colorId);
-  const hasVariant = Boolean(input.variantId);
-
-  if (hasColor === hasVariant) {
-    throw new Error(
-      "Exactly one of colorId or variantId must be provided."
-    );
+    return data
+      ? this.mapCost(data)
+      : null;
   }
 
-  const payload = {
-    color_id: input.colorId ?? null,
-    variant_id: input.variantId ?? null,
+  async upsertCost(
+    input: UpsertProductProfitabilityCostInput,
+  ): Promise<ProductProfitabilityCost> {
+    const hasColor =
+      Boolean(input.colorId);
 
-    wholesale_cost: input.wholesaleCost ?? null,
-    nairobi_handling: input.nairobiHandling ?? null,
-    transport_share: input.transportShare ?? null,
-    border_official_cost:
-      input.borderOfficialCost ?? null,
-    juba_handling: input.jubaHandling ?? null,
-    packaging_cost: input.packagingCost ?? null,
-    delivery_allowance:
-      input.deliveryAllowance ?? null,
+    const hasVariant =
+      Boolean(input.variantId);
 
-    notes: input.notes ?? null,
-    updated_by: input.updatedBy ?? null,
-    updated_at: new Date().toISOString(),
-  };
+    if (hasColor === hasVariant) {
+      throw new Error(
+        "Exactly one of colorId or variantId must be provided.",
+      );
+    }
 
-  const existingQuery = this.db
-    .from("product_costs")
-    .select("*");
+    const payload = {
+      color_id:
+        input.colorId ?? null,
 
-  const {
-    data: existing,
-    error: findError,
-  } = hasColor
-    ? await existingQuery
-        .eq("color_id", input.colorId!)
-        .maybeSingle()
-    : await existingQuery
-        .eq("variant_id", input.variantId!)
-        .maybeSingle();
+      variant_id:
+        input.variantId ?? null,
 
-  if (findError) {
-    throw findError;
-  }
+      wholesale_cost:
+        input.wholesaleCost ?? null,
 
-  if (existing) {
-    const { data, error } = await this.db
+      nairobi_handling:
+        input.nairobiHandling ?? null,
+
+      transport_share:
+        input.transportShare ?? null,
+
+      border_official_cost:
+        input.borderOfficialCost ??
+        null,
+
+      juba_handling:
+        input.jubaHandling ?? null,
+
+      packaging_cost:
+        input.packagingCost ?? null,
+
+      delivery_allowance:
+        input.deliveryAllowance ??
+        null,
+
+      notes:
+        input.notes ?? null,
+
+      updated_by:
+        input.updatedBy ?? null,
+
+      updated_at:
+        new Date().toISOString(),
+    };
+
+    const existingQuery =
+      this.db
+        .from("product_costs")
+        .select("*");
+
+    const {
+      data: existing,
+      error: findError,
+    } = hasColor
+      ? await existingQuery
+          .eq(
+            "color_id",
+            input.colorId!,
+          )
+          .maybeSingle()
+      : await existingQuery
+          .eq(
+            "variant_id",
+            input.variantId!,
+          )
+          .maybeSingle();
+
+    if (findError) {
+      throw findError;
+    }
+
+    if (existing) {
+      const {
+        data,
+        error,
+      } = await this.db
+        .from("product_costs")
+        .update(payload)
+        .eq("id", existing.id)
+        .select("*")
+        .single();
+
+      if (error) {
+        throw error;
+      }
+
+      return this.mapCost(data);
+    }
+
+    const {
+      data,
+      error,
+    } = await this.db
       .from("product_costs")
-      .update(payload)
-      .eq("id", existing.id)
+      .insert(payload)
       .select("*")
       .single();
 
@@ -522,49 +777,50 @@ async upsertCost(
     return this.mapCost(data);
   }
 
-  const { data, error } = await this.db
-    .from("product_costs")
-    .insert(payload)
-    .select("*")
-    .single();
-
-  if (error) {
-    throw error;
-  }
-
-  return this.mapCost(data);
-}
-
   async updateSellingPrice(
     variantId: string,
-    price: number
+    price: number,
   ): Promise<void> {
     if (
       !Number.isFinite(price) ||
       price < 0
     ) {
       throw new Error(
-        "Selling price must be a valid non-negative number."
+        "Selling price must be a valid non-negative number.",
       );
     }
 
-    const { error } = await this.db
-      .from("product_variants")
-      .update({
-        price,
-        updated_at: new Date().toISOString(),
-      })
-      .eq("id", variantId);
+    const { error } =
+      await this.db
+        .from("product_variants")
+        .update({
+          price,
+          updated_at:
+            new Date().toISOString(),
+        })
+        .eq(
+          "id",
+          variantId,
+        );
 
     if (error) {
       throw error;
     }
   }
 
+  /*
+   * Kept for other internal callers.
+   *
+   * getAll() no longer uses these methods,
+   * which removes the N+1 problem.
+   */
   private async getColorCost(
-    colorId: string
+    colorId: string,
   ): Promise<ProductProfitabilityCost | null> {
-    const { data, error } = await this.db
+    const {
+      data,
+      error,
+    } = await this.db
       .from("product_costs")
       .select("*")
       .eq("color_id", colorId)
@@ -574,13 +830,18 @@ async upsertCost(
       throw error;
     }
 
-    return data ? this.mapCost(data) : null;
+    return data
+      ? this.mapCost(data)
+      : null;
   }
 
   private async getVariantCost(
-    variantId: string
+    variantId: string,
   ): Promise<ProductProfitabilityCost | null> {
-    const { data, error } = await this.db
+    const {
+      data,
+      error,
+    } = await this.db
       .from("product_costs")
       .select("*")
       .eq("variant_id", variantId)
@@ -590,70 +851,93 @@ async upsertCost(
       throw error;
     }
 
-    return data ? this.mapCost(data) : null;
+    return data
+      ? this.mapCost(data)
+      : null;
   }
 
   private sortImages(
     images: Array<{
       image_url: string;
       sort_order?: number | null;
-    }>
+    }>,
   ) {
     return [...images].sort(
       (a, b) =>
         (a.sort_order ?? 0) -
-        (b.sort_order ?? 0)
+        (b.sort_order ?? 0),
     );
   }
 
   private mapCost(
-    data: any
+    data: any,
   ): ProductProfitabilityCost {
     return {
       id: data.id,
 
-      colorId: data.color_id ?? null,
-      variantId: data.variant_id ?? null,
+      colorId:
+        data.color_id ?? null,
+
+      variantId:
+        data.variant_id ?? null,
 
       wholesaleCost:
-        this.toNumberOrNull(data.wholesale_cost),
+        this.toNumberOrNull(
+          data.wholesale_cost,
+        ),
 
       nairobiHandling:
-        this.toNumberOrNull(data.nairobi_handling),
+        this.toNumberOrNull(
+          data.nairobi_handling,
+        ),
 
       transportShare:
-        this.toNumberOrNull(data.transport_share),
+        this.toNumberOrNull(
+          data.transport_share,
+        ),
 
       borderOfficialCost:
         this.toNumberOrNull(
-          data.border_official_cost
+          data.border_official_cost,
         ),
 
       jubaHandling:
-        this.toNumberOrNull(data.juba_handling),
+        this.toNumberOrNull(
+          data.juba_handling,
+        ),
 
       packagingCost:
         this.toNumberOrNull(
-          data.packaging_cost
+          data.packaging_cost,
         ),
 
       deliveryAllowance:
         this.toNumberOrNull(
-          data.delivery_allowance
+          data.delivery_allowance,
         ),
 
-      notes: data.notes ?? null,
+      notes:
+        data.notes ?? null,
 
-      createdBy: data.created_by ?? null,
-      updatedBy: data.updated_by ?? null,
+      createdBy:
+        data.created_by ?? null,
 
-      createdAt: data.created_at,
-      updatedAt: data.updated_at,
+      updatedBy:
+        data.updated_by ?? null,
+
+      createdAt:
+        data.created_at,
+
+      updatedAt:
+        data.updated_at,
     };
   }
 
   private toNumberOrNull(
-    value: number | string | null
+    value:
+      | number
+      | string
+      | null,
   ): number | null {
     return value === null
       ? null

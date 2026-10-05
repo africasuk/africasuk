@@ -141,14 +141,16 @@ export default function UserActions({
 
   return (
     <DropdownMenu>
-      <DropdownMenuTrigger>
+      <DropdownMenuTrigger
+        render={
           <Button
             size="icon"
             variant="ghost"
-          >
-            <MoreHorizontal className="h-4 w-4" />
-          </Button>
-        </DropdownMenuTrigger>
+          />
+        }
+      >
+        <MoreHorizontal className="h-4 w-4" />
+      </DropdownMenuTrigger>
 
       <DropdownMenuContent
         align="end"

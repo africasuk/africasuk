@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { cookies } from "next/headers";
 
 import {
@@ -19,6 +19,14 @@ import "./globals.css";
 
 import { CurrencyProvider } from "providers/CurrencyProvider";
 import { ExchangeRateProvider } from "providers/ExchangeRateProvider";
+
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  maximumScale: 1,
+  userScalable: false,
+  viewportFit: "cover",
+};
 
 export const metadata: Metadata = {
   metadataBase: new URL("https://africasuk.com"),
