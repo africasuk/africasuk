@@ -34,7 +34,7 @@ import { createClient } from "@/lib/auth/client";
 const PLAY_STORE_URL =
   "https://play.google.com/store/apps/details?id=com.africasuk.app";
 
-const APP_VERSION = "1.0.7";
+const APP_VERSION = "1.0.9";
 
 const openWebsite = async (url: string) => {
   try {

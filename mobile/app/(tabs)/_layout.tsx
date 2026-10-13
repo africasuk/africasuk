@@ -1,26 +1,37 @@
 import { Tabs } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import {
-  House,
   Grid2x2,
-  Package,
+  House,
   Menu,
+  Package,
 } from "lucide-react-native";
+import {
+  Platform,
+  StyleSheet,
+  Text,
+  View,
+} from "react-native";
 
-const BRAND = "#004d26";
+const BRAND = "#005c2e";
 const INACTIVE_COLOR = "#71717a";
+const BORDER = "#f0f0f0";
 
-// Fixed content height for the touchable bar area (excluding system insets)
-const TAB_CONTENT_HEIGHT = 52;
-const BASE_PADDING_BOTTOM = 6;
+const TAB_HEIGHT = 58;
+
+function TextLabel({ text }: { text: string }) {
+  return (
+    <View style={styles.labelWrapper}>
+      <Text style={styles.label}>{text}</Text>
+    </View>
+  );
+}
 
 export default function TabsLayout() {
   const insets = useSafeAreaInsets();
 
-  // If system provides an inset (iOS home indicator or Android gesture navigation),
-  // use it directly. If inset is 0 (Android 3-button navigation), fallback to standard padding.
-  const bottomInset = insets.bottom > 0 ? insets.bottom : BASE_PADDING_BOTTOM;
-  const totalBarHeight = TAB_CONTENT_HEIGHT + bottomInset;
+  const bottomInset = Math.max(insets.bottom, 0);
+  const totalBarHeight = TAB_HEIGHT + bottomInset;
 
   return (
     <Tabs
@@ -29,89 +40,167 @@ export default function TabsLayout() {
 
         tabBarActiveTintColor: BRAND,
         tabBarInactiveTintColor: INACTIVE_COLOR,
-        tabBarHideOnKeyboard: true, // Prevents Android navigation bar from shifting over keyboard
+
+        tabBarHideOnKeyboard: true,
 
         tabBarStyle: {
           height: totalBarHeight,
-          paddingTop: 6,
+          paddingTop: 5,
           paddingBottom: bottomInset,
-          borderTopWidth: 1,
-          borderTopColor: "#f4f4f5",
+
           backgroundColor: "#ffffff",
-          elevation: 0, // Eliminates Android gray drop shadow
-          shadowOpacity: 0, // Eliminates iOS card shadow
+
+          borderTopWidth: 1,
+          borderTopColor: BORDER,
+
+          elevation: 0,
+          shadowOpacity: 0,
+          shadowColor: "transparent",
+
+          ...(Platform.OS === "android" && {
+            elevation: 0,
+          }),
         },
 
         tabBarItemStyle: {
-          height: TAB_CONTENT_HEIGHT - 6,
-          justifyContent: "center",
+          height: TAB_HEIGHT - 5,
           alignItems: "center",
-          paddingVertical: 2,
+          justifyContent: "center",
+          paddingVertical: 3,
         },
 
-        tabBarLabelStyle: {
-          fontSize: 10,
-          fontWeight: "600",
-          letterSpacing: -0.1,
-          marginTop: 2,
-        },
+        tabBarAllowFontScaling: false,
       }}
     >
+      {/* HOME */}
       <Tabs.Screen
         name="index"
         options={{
           title: "Home",
+
+          tabBarLabel: ({ focused }) =>
+            focused ? (
+              <View style={styles.activeLine} />
+            ) : (
+              <TextLabel text="Home" />
+            ),
+
           tabBarIcon: ({ color, focused }) => (
-            <House
-              color={color}
-              size={20}
-              strokeWidth={focused ? 2.2 : 1.75}
-            />
+            <View style={styles.iconWrapper}>
+              <House
+                color={color}
+                size={23}
+                strokeWidth={focused ? 2.5 : 1.8}
+              />
+            </View>
           ),
         }}
       />
 
+      {/* CATEGORIES */}
       <Tabs.Screen
         name="categories"
         options={{
           title: "Categories",
+
+          tabBarLabel: ({ focused }) =>
+            focused ? (
+              <View style={styles.activeLine} />
+            ) : (
+              <TextLabel text="Categories" />
+            ),
+
           tabBarIcon: ({ color, focused }) => (
-            <Grid2x2
-              color={color}
-              size={20}
-              strokeWidth={focused ? 2.2 : 1.75}
-            />
+            <View style={styles.iconWrapper}>
+              <Grid2x2
+                color={color}
+                size={23}
+                strokeWidth={focused ? 2.5 : 1.8}
+              />
+            </View>
           ),
         }}
       />
 
+      {/* ORDERS */}
       <Tabs.Screen
         name="orders"
         options={{
           title: "Orders",
+
+          tabBarLabel: ({ focused }) =>
+            focused ? (
+              <View style={styles.activeLine} />
+            ) : (
+              <TextLabel text="Orders" />
+            ),
+
           tabBarIcon: ({ color, focused }) => (
-            <Package
-              color={color}
-              size={20}
-              strokeWidth={focused ? 2.2 : 1.75}
-            />
+            <View style={styles.iconWrapper}>
+              <Package
+                color={color}
+                size={23}
+                strokeWidth={focused ? 2.5 : 1.8}
+              />
+            </View>
           ),
         }}
       />
 
+      {/* MENU */}
       <Tabs.Screen
         name="menu"
         options={{
           title: "Menu",
+
+          tabBarLabel: ({ focused }) =>
+            focused ? (
+              <View style={styles.activeLine} />
+            ) : (
+              <TextLabel text="Menu" />
+            ),
+
           tabBarIcon: ({ color, focused }) => (
-            <Menu
-              color={color}
-              size={20}
-              strokeWidth={focused ? 2.2 : 1.75}
-            />
+            <View style={styles.iconWrapper}>
+              <Menu
+                color={color}
+                size={23}
+                strokeWidth={focused ? 2.5 : 1.8}
+              />
+            </View>
           ),
         }}
       />
     </Tabs>
   );
 }
+
+const styles = StyleSheet.create({
+  iconWrapper: {
+    width: 42,
+    height: 30,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+
+  labelWrapper: {
+    height: 16,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+
+  label: {
+    color: INACTIVE_COLOR,
+    fontSize: 10,
+    fontWeight: "600",
+    letterSpacing: -0.1,
+  },
+
+  activeLine: {
+    width: 28,
+    height: 3,
+    marginTop: 3,
+    borderRadius: 3,
+    backgroundColor: BRAND,
+  },
+});

@@ -41,7 +41,7 @@ export default function ProfileScreen() {
       } = await supabase.auth.getUser();
 
       if (!user) {
-        router.replace("/auth/login" as Href);
+        router.replace("/auth" as Href);
         return;
       }
 

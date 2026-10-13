@@ -1,49 +1,57 @@
 import React, {
+  useEffect,
   useRef,
   useState,
-  useEffect,
 } from "react";
+
 import {
-  View,
-  Text,
-  TextInput,
-  Pressable,
   ActivityIndicator,
-  StyleSheet,
   Alert,
+  Image,
+  ImageBackground,
+  Keyboard,
   KeyboardAvoidingView,
   Platform,
+  Pressable,
   ScrollView,
-  Keyboard,
+  StyleSheet,
+  Text,
+  TextInput,
+  View,
 } from "react-native";
+
+import { useSafeAreaInsets } from "react-native-safe-area-context";
+
 import {
-  useForm,
-  Controller,
-} from "react-hook-form";
-import {
-  zodResolver,
-} from "@hookform/resolvers/zod";
-import {
-  useRouter,
   useLocalSearchParams,
-  Href,
+  useRouter,
+  type Href,
 } from "expo-router";
+
 import * as Linking from "expo-linking";
+
 import {
   ArrowRight,
   Eye,
   EyeOff,
+  Home,
 } from "lucide-react-native";
+
+import {
+  Controller,
+  useForm,
+} from "react-hook-form";
+
+import { zodResolver } from "@hookform/resolvers/zod";
 
 import { createClient } from "@/lib/auth/client";
 import {
   loginSchema,
   type LoginFormData,
 } from "@/lib/validation/login";
-import Logo from "@/components/layout/header/Logo";
 
-
-const BRAND = "#004d26";
+const DARK_GREEN = "#005c2e";
+const YELLOW = "#000000";
 
 interface LoginFormProps {
   onSuccess?: () => void | Promise<void>;
@@ -53,46 +61,53 @@ export default function LoginForm({
   onSuccess,
 }: LoginFormProps) {
   const router = useRouter();
+  const insets = useSafeAreaInsets();
 
-  const scrollRef =
-    useRef<ScrollView>(null);
+  const scrollRef = useRef<ScrollView>(null);
+  const passwordInputRef =
+    useRef<TextInput>(null);
 
-  const [
-    isKeyboardVisible,
-    setKeyboardVisible,
-  ] = useState(false);
+  const [showPassword, setShowPassword] =
+    useState(false);
 
-  const [
-    showPassword,
-    setShowPassword,
-  ] = useState(false);
+  const [isKeyboardVisible, setKeyboardVisible] =
+    useState(false);
 
-  const { redirect } =
-    useLocalSearchParams<{
-      redirect?: string;
-    }>();
+  /**
+   * IMPORTANT:
+   * Preserve the exact page the user was
+   * originally trying to reach.
+   */
+  const params = useLocalSearchParams<{
+    redirect?: string | string[];
+  }>();
 
   const redirectTo =
-    redirect ?? "/";
+    typeof params.redirect === "string" &&
+    params.redirect.length > 0
+      ? params.redirect
+      : "/(tabs)";
 
   useEffect(() => {
-    const showSub =
-      Keyboard.addListener(
-        Platform.OS === "ios"
-          ? "keyboardWillShow"
-          : "keyboardDidShow",
-        () =>
-          setKeyboardVisible(true),
-      );
+    const showEvent =
+      Platform.OS === "ios"
+        ? "keyboardWillShow"
+        : "keyboardDidShow";
 
-    const hideSub =
-      Keyboard.addListener(
-        Platform.OS === "ios"
-          ? "keyboardWillHide"
-          : "keyboardDidHide",
-        () =>
-          setKeyboardVisible(false),
-      );
+    const hideEvent =
+      Platform.OS === "ios"
+        ? "keyboardWillHide"
+        : "keyboardDidHide";
+
+    const showSub = Keyboard.addListener(
+      showEvent,
+      () => setKeyboardVisible(true),
+    );
+
+    const hideSub = Keyboard.addListener(
+      hideEvent,
+      () => setKeyboardVisible(false),
+    );
 
     return () => {
       showSub.remove();
@@ -108,85 +123,72 @@ export default function LoginForm({
       isSubmitting,
     },
   } = useForm<LoginFormData>({
-    resolver:
-      zodResolver(loginSchema),
+    resolver: zodResolver(loginSchema),
     defaultValues: {
       email: "",
       password: "",
     },
+    mode: "onBlur",
   });
 
-  /*
-   * Send login notification through
-   * the same API used by the web app.
-   */
-const sendLoginEmail = async (
-  email: string,
-  name?: string | null,
-) => {
-  try {
-    console.log(
-      "Sending login email to:",
-      email,
-    );
+  const sendLoginEmail = async (
+    email: string,
+    name?: string | null,
+  ) => {
+    try {
+      const controller =
+        new AbortController();
 
-    const response = await fetch(
-      "https://www.africasuk.com/api/email/login",
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
+      const timeoutId = setTimeout(
+        () => controller.abort(),
+        6000,
+      );
+
+      await fetch(
+        "https://www.africasuk.com/api/email/login",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type":
+              "application/json",
+          },
+          signal: controller.signal,
+          body: JSON.stringify({
+            email: email
+              .trim()
+              .toLowerCase(),
+
+            name:
+              name ||
+              email.split("@")[0],
+          }),
         },
-        body: JSON.stringify({
-          email,
-          name:
-            name ||
-            email.split("@")[0],
-        }),
-      },
-    );
+      );
 
-    const text = await response.text();
-
-    console.log(
-      "Login email API status:",
-      response.status,
-    );
-
-    console.log(
-      "Login email API response:",
-      text,
-    );
-
-    if (!response.ok) {
-      throw new Error(
-        `Login email failed: ${response.status} ${text}`,
+      clearTimeout(timeoutId);
+    } catch (error) {
+      console.warn(
+        "Non-critical login notification error:",
+        error,
       );
     }
-  } catch (error) {
-    console.error(
-      "Login email error:",
-      error,
-    );
-  }
-};
+  };
 
-  const handleLoginSuccess =
-    async (
-      supabase: ReturnType<
-        typeof createClient
-      >,
-      fallbackEmail?: string,
-    ) => {
+  const handleLoginSuccess = async (
+    supabase: ReturnType<typeof createClient>,
+    fallbackEmail?: string,
+  ) => {
+    try {
       const {
         data: { user },
-      } =
-        await supabase.auth.getUser();
+      } = await supabase.auth.getUser();
 
-      if (user?.email || fallbackEmail) {
-        await sendLoginEmail(
-          user?.email ??
-            fallbackEmail!,
+      const userEmail =
+        user?.email ?? fallbackEmail;
+
+      if (userEmail) {
+        void sendLoginEmail(
+          userEmail,
           user?.user_metadata
             ?.full_name ??
             user?.user_metadata
@@ -195,6 +197,14 @@ const sendLoginEmail = async (
         );
       }
 
+      /**
+       * If a parent component supplied
+       * onSuccess, let it handle the transition.
+       *
+       * Otherwise return to the exact
+       * destination that brought the user
+       * to login.
+       */
       if (onSuccess) {
         await onSuccess();
       } else {
@@ -202,19 +212,28 @@ const sendLoginEmail = async (
           redirectTo as Href,
         );
       }
-    };
+    } catch (error) {
+      console.error(
+        "Success transition error:",
+        error,
+      );
+
+      router.replace(
+        redirectTo as Href,
+      );
+    }
+  };
 
   const onSubmit = async (
     data: LoginFormData,
   ) => {
     try {
-      const supabase =
-        createClient();
+      const supabase = createClient();
 
       const { error } =
         await supabase.auth.signInWithPassword(
           {
-            email: data.email,
+            email: data.email.trim(),
             password: data.password,
           },
         );
@@ -229,519 +248,638 @@ const sendLoginEmail = async (
 
       await handleLoginSuccess(
         supabase,
-        data.email,
+        data.email.trim(),
       );
-    } catch (err) {
+    } catch (error) {
       console.error(
-        "Login error:",
-        err,
+        "Login exception:",
+        error,
       );
 
       Alert.alert(
         "Error",
-        "An unexpected error occurred. Please try again.",
+        "An unexpected error occurred. Please check your connection and try again.",
       );
     }
   };
 
-
   return (
-    <KeyboardAvoidingView
-      behavior={
-        Platform.OS === "ios"
-          ? "padding"
-          : "height"
-      }
-      keyboardVerticalOffset={
-        Platform.OS === "ios"
-          ? 50
-          : 20
-      }
-      style={
-        styles.keyboardAvoid
-      }
-    >
-      <ScrollView
-        ref={scrollRef}
-        contentContainerStyle={[
-          styles.scrollContent,
-          {
-            justifyContent:
-              isKeyboardVisible
-                ? "flex-start"
-                : "center",
-          },
-        ]}
-        keyboardShouldPersistTaps="handled"
-        showsVerticalScrollIndicator={
-          false
-        }
-        bounces={false}
+    <View style={styles.screen}>
+      {/* Hero Header */}
+      <ImageBackground
+        source={require("@/assets/images/auth-bg-page.png")}
+        style={styles.hero}
+        resizeMode="cover"
+        imageStyle={styles.heroImage}
       >
-        <View
-          style={styles.container}
-        >
-          <View
-            style={styles.header}
-          >
-            <View
-              style={
-                styles.logoWrapper
-              }
-            >
-              <Logo />
-            </View>
+        <View style={styles.heroOverlay} />
 
-            <Text
-              style={styles.title}
-            >
-              Welcome back
+        {!isKeyboardVisible && (
+          <View style={styles.brandArea}>
+            <Text style={styles.brandText}>
+              AFRICA SUK
             </Text>
 
-            <Text
-              style={styles.subtitle}
-            >
-              Sign in to access your
-              orders, saved addresses,
-              and wishlist
+            <Text style={styles.tagline}>
+              SHOP WITH CONFIDENCE
             </Text>
           </View>
+        )}
+      </ImageBackground>
 
-          <View
-            style={styles.formGroup}
-          >
-            <View
-              style={
-                styles.inputContainer
-              }
-            >
-              <Text
-                style={styles.label}
-              >
-                Email Address
+      {/* Form Content */}
+      <KeyboardAvoidingView
+        behavior={
+          Platform.OS === "ios"
+            ? "padding"
+            : "height"
+        }
+        style={styles.formArea}
+        keyboardVerticalOffset={
+          Platform.OS === "ios" ? 10 : 0
+        }
+      >
+        <ScrollView
+          ref={scrollRef}
+          contentContainerStyle={[
+            styles.scrollContent,
+            {
+              paddingBottom: Math.max(
+                insets.bottom + 20,
+                36,
+              ),
+            },
+          ]}
+          keyboardShouldPersistTaps="handled"
+          keyboardDismissMode="on-drag"
+          showsVerticalScrollIndicator={false}
+        >
+          <View style={styles.formContent}>
+            {/* Title */}
+            <View style={styles.heading}>
+              <Text style={styles.title}>
+                Welcome Back
               </Text>
 
-              <Controller
-                control={control}
-                name="email"
-                render={({
-                  field: {
-                    onChange,
-                    onBlur,
-                    value,
-                  },
-                }) => (
-                  <TextInput
-                    style={[
-                      styles.input,
-                      errors.email &&
-                        styles.inputError,
-                    ]}
-                    placeholder="name@example.com"
-                    placeholderTextColor="#a1a1aa"
-                    keyboardType="email-address"
-                    autoCapitalize="none"
-                    autoCorrect={false}
-                    onBlur={onBlur}
-                    onChangeText={
-                      onChange
-                    }
-                    value={value}
-                    editable={
-                      !isSubmitting
-                    }
-                  />
-                )}
-              />
-
-              {errors.email && (
-                <Text
-                  style={
-                    styles.errorText
-                  }
-                >
-                  {
-                    errors.email
-                      .message
-                  }
-                </Text>
-              )}
+              <Text style={styles.subtitle}>
+                Sign in to continue shopping
+                with confidence.
+              </Text>
             </View>
 
-            <View
-              style={
-                styles.inputContainer
-              }
-            >
-              <View
-                style={
-                  styles.passwordHeader
-                }
-              >
-                <Text
-                  style={styles.label}
-                >
-                  Password
+            <View style={styles.form}>
+              {/* Email */}
+              <View style={styles.inputGroup}>
+                <Text style={styles.label}>
+                  Email
                 </Text>
 
-                <Pressable
-                  onPress={() =>
-                    Linking.openURL(
-                      "https://www.africasuk.com/auth/forgot-password",
-                    )
-                  }
-                  hitSlop={6}
-                >
-                  <Text
-                    style={
-                      styles.forgotText
-                    }
-                  >
-                    Forgot password?
-                  </Text>
-                </Pressable>
-              </View>
-
-              <Controller
-                control={control}
-                name="password"
-                render={({
-                  field: {
-                    onChange,
-                    onBlur,
-                    value,
-                  },
-                }) => (
-                  <View
-                    style={
-                      styles.passwordInputWrapper
-                    }
-                  >
+                <Controller
+                  control={control}
+                  name="email"
+                  render={({
+                    field: {
+                      onChange,
+                      onBlur,
+                      value,
+                    },
+                  }) => (
                     <TextInput
                       style={[
                         styles.input,
-                        styles.passwordInput,
-                        errors.password &&
+                        errors.email &&
                           styles.inputError,
                       ]}
-                      placeholder="Enter your password"
+                      placeholder="Enter your email"
                       placeholderTextColor="#a1a1aa"
-                      secureTextEntry={
-                        !showPassword
-                      }
-                      onFocus={() => {
-                        setTimeout(
-                          () => {
-                            scrollRef.current?.scrollToEnd(
-                              {
-                                animated:
-                                  true,
-                              },
-                            );
-                          },
-                          120,
-                        );
-                      }}
-                      onBlur={onBlur}
-                      onChangeText={
-                        onChange
-                      }
+                      keyboardType="email-address"
+                      autoCapitalize="none"
+                      autoCorrect={false}
+                      autoComplete="email"
+                      textContentType="emailAddress"
+                      returnKeyType="next"
                       value={value}
-                      editable={
-                        !isSubmitting
+                      onChangeText={onChange}
+                      onBlur={onBlur}
+                      onSubmitEditing={() =>
+                        passwordInputRef.current?.focus()
                       }
+                      editable={!isSubmitting}
                     />
-
-                    <Pressable
-                      onPress={() =>
-                        setShowPassword(
-                          (current) =>
-                            !current,
-                        )
-                      }
-                      disabled={
-                        isSubmitting
-                      }
-                      hitSlop={10}
-                      style={
-                        styles.passwordEye
-                      }
-                    >
-                      {showPassword ? (
-                        <EyeOff
-                          size={19}
-                          color="#71717a"
-                          strokeWidth={2}
-                        />
-                      ) : (
-                        <Eye
-                          size={19}
-                          color="#71717a"
-                          strokeWidth={2}
-                        />
-                      )}
-                    </Pressable>
-                  </View>
-                )}
-              />
-
-              {errors.password && (
-                <Text
-                  style={
-                    styles.errorText
-                  }
-                >
-                  {
-                    errors.password
-                      .message
-                  }
-                </Text>
-              )}
-            </View>
-
-            <Pressable
-              style={({
-                pressed,
-              }) => [
-                styles.submitButton,
-                pressed &&
-                  !isSubmitting &&
-                  styles.buttonPressed,
-                isSubmitting &&
-                  styles.disabled,
-              ]}
-              disabled={isSubmitting}
-              onPress={handleSubmit(
-                onSubmit,
-              )}
-            >
-              {isSubmitting ? (
-                <ActivityIndicator
-                  color="#ffffff"
-                  size="small"
+                  )}
                 />
-              ) : (
-                <>
-                  <Text
-                    style={
-                      styles.submitButtonText
-                    }
-                  >
-                    Sign In
+
+                {errors.email && (
+                  <Text style={styles.errorText}>
+                    {errors.email.message}
+                  </Text>
+                )}
+              </View>
+
+              {/* Password */}
+              <View style={styles.inputGroup}>
+                <View
+                  style={styles.passwordHeader}
+                >
+                  <Text style={styles.label}>
+                    Password
                   </Text>
 
-                  <ArrowRight
-                    size={14}
+                  <Pressable
+                    accessibilityRole="link"
+                    accessibilityLabel="Forgot Password"
+                    onPress={() =>
+                      Linking.openURL(
+                        "https://www.africasuk.com/auth/forgot-password",
+                      )
+                    }
+                    hitSlop={8}
+                  >
+                    <Text
+                      style={styles.forgotText}
+                    >
+                      Forgot Password?
+                    </Text>
+                  </Pressable>
+                </View>
+
+                <Controller
+                  control={control}
+                  name="password"
+                  render={({
+                    field: {
+                      onChange,
+                      onBlur,
+                      value,
+                    },
+                  }) => (
+                    <View
+                      style={
+                        styles.passwordWrapper
+                      }
+                    >
+                      <TextInput
+                        ref={passwordInputRef}
+                        style={[
+                          styles.input,
+                          styles.passwordInput,
+                          errors.password &&
+                            styles.inputError,
+                        ]}
+                        placeholder="Enter your password"
+                        placeholderTextColor="#a1a1aa"
+                        secureTextEntry={
+                          !showPassword
+                        }
+                        autoCapitalize="none"
+                        autoCorrect={false}
+                        autoComplete="password"
+                        textContentType="password"
+                        returnKeyType="done"
+                        value={value}
+                        onChangeText={onChange}
+                        onBlur={onBlur}
+                        onSubmitEditing={handleSubmit(
+                          onSubmit,
+                        )}
+                        onFocus={() => {
+                          setTimeout(() => {
+                            scrollRef.current?.scrollToEnd(
+                              {
+                                animated: true,
+                              },
+                            );
+                          }, 180);
+                        }}
+                        editable={!isSubmitting}
+                      />
+
+                      <Pressable
+                        accessibilityRole="button"
+                        accessibilityLabel={
+                          showPassword
+                            ? "Hide password"
+                            : "Show password"
+                        }
+                        style={
+                          styles.eyeButton
+                        }
+                        onPress={() =>
+                          setShowPassword(
+                            (prev) => !prev,
+                          )
+                        }
+                        hitSlop={10}
+                      >
+                        {showPassword ? (
+                          <EyeOff
+                            size={18}
+                            color="#71717a"
+                          />
+                        ) : (
+                          <Eye
+                            size={18}
+                            color="#71717a"
+                          />
+                        )}
+                      </Pressable>
+                    </View>
+                  )}
+                />
+
+                {errors.password && (
+                  <Text style={styles.errorText}>
+                    {
+                      errors.password
+                        .message
+                    }
+                  </Text>
+                )}
+              </View>
+
+              {/* Sign In */}
+              <Pressable
+                accessibilityRole="button"
+                accessibilityState={{
+                  disabled: isSubmitting,
+                }}
+                style={({ pressed }) => [
+                  styles.signInButton,
+                  pressed &&
+                    !isSubmitting &&
+                    styles.buttonPressed,
+                  isSubmitting &&
+                    styles.disabled,
+                ]}
+                disabled={isSubmitting}
+                onPress={handleSubmit(
+                  onSubmit,
+                )}
+              >
+                {isSubmitting ? (
+                  <ActivityIndicator
                     color="#ffffff"
-                    strokeWidth={2}
+                    size="small"
                   />
-                </>
-              )}
-            </Pressable>
-          </View>
+                ) : (
+                  <>
+                    <Text
+                      style={
+                        styles.signInText
+                      }
+                    >
+                      Sign In
+                    </Text>
 
-          <View
-            style={styles.footerRow}
-          >
-            <Text
-              style={styles.footerText}
-            >
-              Don&apos;t have an account?
-            </Text>
+                    <ArrowRight
+                      size={16}
+                      color="#ffffff"
+                      strokeWidth={2.4}
+                    />
+                  </>
+                )}
+              </Pressable>
+            </View>
 
-            <Pressable
-              onPress={() =>
-                router.push(
-                  "/auth/signup" as Href,
-                )
-              }
-              hitSlop={6}
+            {/* Create Account */}
+            <View style={styles.signupRow}>
+              <Text style={styles.signupText}>
+                Don&apos;t have an account?
+              </Text>
+
+              <Pressable
+                accessibilityRole="link"
+                accessibilityLabel="Create Account"
+                onPress={() =>
+                  router.push(
+                    `/auth/signup?redirect=${encodeURIComponent(
+                      redirectTo,
+                    )}` as Href,
+                  )
+                }
+                hitSlop={8}
+              >
+                <Text
+                  style={styles.signupLink}
+                >
+                  Create Account
+                </Text>
+              </Pressable>
+            </View>
+
+            {/* Bottom Logo + Home */}
+            <View
+              style={styles.bottomSection}
             >
-              <Text
+              <View
+                style={styles.logoContainer}
+              >
+                <Image
+                  source={require("@/assets/images/logo.png")}
+                  style={styles.logo}
+                  resizeMode="contain"
+                />
+              </View>
+
+              <View
                 style={
-                  styles.signUpText
+                  styles.homeButtonContainer
                 }
               >
-                Create Account
-              </Text>
-            </Pressable>
+                <Pressable
+                  accessibilityRole="button"
+                  accessibilityLabel="Back to Home"
+                  style={({ pressed }) => [
+                    styles.homeButton,
+                    pressed &&
+                      styles.buttonPressed,
+                  ]}
+                  onPress={() =>
+                    router.replace(
+                      "/(tabs)" as Href,
+                    )
+                  }
+                >
+                  <Home
+                    size={17}
+                    color="#ffffff"
+                    strokeWidth={2.2}
+                  />
+
+                  <Text
+                    style={
+                      styles.homeButtonText
+                    }
+                  >
+                    Back to Home
+                  </Text>
+                </Pressable>
+              </View>
+            </View>
           </View>
-        </View>
-      </ScrollView>
-    </KeyboardAvoidingView>
+        </ScrollView>
+      </KeyboardAvoidingView>
+    </View>
   );
 }
 
-const styles =
-  StyleSheet.create({
-    keyboardAvoid: {
-      flex: 1,
-      width: "100%",
-    },
+const styles = StyleSheet.create({
+  screen: {
+    flex: 1,
+    backgroundColor: "#f1f3f2",
+  },
 
-    scrollContent: {
-      flexGrow: 1,
-      alignItems: "center",
-      paddingVertical: 16,
-    },
+  hero: {
+    position: "absolute",
+    top: -30,
+    left: 0,
+    right: 0,
+    height: 355,
+    width: "100%",
+    justifyContent: "center",
+    alignItems: "center",
+    overflow: "hidden",
+    borderBottomLeftRadius: 32,
+    borderBottomRightRadius: 32,
+  },
 
-    container: {
-      width: "100%",
-      maxWidth: 400,
-      backgroundColor: "#ffffff",
-      borderRadius: 16,
-      borderWidth: 1,
-      borderColor: "#f0f0f0",
-      padding: 20,
-      gap: 20,
-    },
+  heroImage: {
+    transform: [{ translateY: 22 }],
+  },
 
-    header: {
-      alignItems: "center",
-      gap: 4,
-    },
+  heroOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor:
+      "rgba(0,92,46,0.55)",
+  },
 
-    logoWrapper: {
-      marginBottom: 8,
-      alignItems: "center",
-    },
+  brandArea: {
+    alignItems: "center",
+    marginTop: 25,
+  },
 
-    title: {
-      fontSize: 20,
-      fontWeight: "700",
-      color: "#18181b",
-      letterSpacing: -0.4,
-      textAlign: "center",
+  brandText: {
+    color: "#ffffff",
+    fontSize: 28,
+    lineHeight: 32,
+    fontWeight: "900",
+    letterSpacing: 1.5,
+    textShadowColor:
+      "rgba(0,0,0,0.35)",
+    textShadowOffset: {
+      width: 0,
+      height: 1,
     },
+    textShadowRadius: 4,
+  },
 
-    subtitle: {
-      fontSize: 12,
-      fontWeight: "400",
-      color: "#71717a",
-      textAlign: "center",
-      lineHeight: 17,
-      maxWidth: 280,
-    },
+  tagline: {
+    marginTop: 5,
+    color: "#f5c542",
+    fontSize: 16,
+    fontWeight: "900",
+    letterSpacing: 2,
+  },
 
-    formGroup: {
-      gap: 14,
-    },
+  formArea: {
+    flex: 1,
+    zIndex: 1,
+    elevation: 1,
+  },
 
-    inputContainer: {
-      width: "100%",
-      gap: 6,
-    },
+  scrollContent: {
+    flexGrow: 1,
+    justifyContent: "flex-start",
+    paddingTop: 335,
+    paddingBottom: 35,
+  },
 
-    label: {
-      fontSize: 12,
-      fontWeight: "600",
-      color: "#27272a",
-      letterSpacing: -0.1,
-    },
+  formContent: {
+    width: "91%",
+    maxWidth: 440,
+    alignSelf: "center",
+  },
 
-    passwordHeader: {
-      flexDirection: "row",
-      justifyContent:
-        "space-between",
-      alignItems: "center",
-    },
+  heading: {
+    alignItems: "center",
+    marginBottom: 24,
+  },
 
-    input: {
-      height: 44,
-      borderRadius: 10,
-      borderWidth: 1,
-      borderColor: "#e4e4e7",
-      backgroundColor: "#ffffff",
-      paddingHorizontal: 13,
-      fontSize: 13,
-      color: "#18181b",
-    },
+  title: {
+    color: "#111111",
+    fontSize: 23,
+    lineHeight: 28,
+    fontWeight: "800",
+    letterSpacing: -0.4,
+    textAlign: "center",
+  },
 
-    inputError: {
-      borderColor: "#fca5a5",
-      backgroundColor: "#fef2f2",
-    },
+  subtitle: {
+    marginTop: 6,
+    maxWidth: 280,
+    color: "#71717a",
+    fontSize: 12,
+    lineHeight: 18,
+    fontWeight: "400",
+    textAlign: "center",
+  },
 
-    errorText: {
-      fontSize: 11,
-      color: "#dc2626",
-      fontWeight: "500",
-    },
+  form: {
+    gap: 16,
+  },
 
-    forgotText: {
-      fontSize: 11,
-      fontWeight: "600",
-      color: "#71717a",
-    },
+  inputGroup: {
+    gap: 6,
+  },
 
-    submitButton: {
-      height: 44,
-      borderRadius: 10,
-      backgroundColor: BRAND,
-      flexDirection: "row",
-      alignItems: "center",
-      justifyContent: "center",
-      gap: 8,
-      marginTop: 4,
-    },
+  label: {
+    color: "#27272a",
+    fontSize: 12,
+    fontWeight: "700",
+  },
 
-    submitButtonText: {
-      fontSize: 13,
-      fontWeight: "600",
-      color: "#ffffff",
-      letterSpacing: -0.1,
-    },
+  input: {
+    width: "100%",
+    height: 50,
+    borderRadius: 14,
+    backgroundColor: "#ffffff",
+    borderWidth: 1.5,
+    borderColor: DARK_GREEN,
+    paddingHorizontal: 15,
+    color: "#111111",
+    fontSize: 14,
+  },
 
-    buttonPressed: {
-      opacity: 0.88,
-      transform: [
-        {
-          scale: 0.985,
-        },
-      ],
-    },
+  inputError: {
+    borderColor: "#ef4444",
+  },
 
-    disabled: {
-      opacity: 0.45,
-    },
+  errorText: {
+    color: "#dc2626",
+    fontSize: 11,
+    marginTop: 2,
+  },
 
-    footerRow: {
-      flexDirection: "row",
-      alignItems: "center",
-      justifyContent: "center",
-      gap: 5,
-      paddingTop: 4,
-    },
+  passwordHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+  },
 
-    footerText: {
-      fontSize: 12,
-      fontWeight: "400",
-      color: "#71717a",
-    },
+  forgotText: {
+    color: YELLOW,
+    fontSize: 11,
+    fontWeight: "700",
+  },
 
-    signUpText: {
-      fontSize: 12,
-      fontWeight: "700",
-      color: "#18181b",
-      letterSpacing: -0.1,
-    },
+  passwordWrapper: {
+    position: "relative",
+    justifyContent: "center",
+  },
 
-    passwordInputWrapper: {
-      position: "relative",
-      width: "100%",
-    },
+  passwordInput: {
+    paddingRight: 48,
+  },
 
-    passwordInput: {
-      paddingRight: 45,
-    },
+  eyeButton: {
+    position: "absolute",
+    right: 6,
+    width: 38,
+    height: 48,
+    alignItems: "center",
+    justifyContent: "center",
+  },
 
-    passwordEye: {
-      position: "absolute",
-      right: 13,
-      top: 0,
-      height: 44,
-      width: 30,
-      alignItems: "center",
-      justifyContent: "center",
+  signInButton: {
+    height: 50,
+    marginTop: 4,
+    borderRadius: 25,
+    backgroundColor: DARK_GREEN,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 8,
+    shadowColor: DARK_GREEN,
+    shadowOpacity: 0.22,
+    shadowRadius: 6,
+    shadowOffset: {
+      width: 0,
+      height: 3,
     },
-  });
+    elevation: 3,
+  },
+
+  signInText: {
+    color: "#ffffff",
+    fontSize: 14,
+    fontWeight: "800",
+  },
+
+  signupRow: {
+    marginTop: 20,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 5,
+  },
+
+  signupText: {
+    color: "#71717a",
+    fontSize: 12,
+  },
+
+  signupLink: {
+    color: YELLOW,
+    fontSize: 12,
+    fontWeight: "800",
+  },
+
+  bottomSection: {
+    width: "100%",
+    alignItems: "center",
+    marginTop: 30,
+  },
+
+  logoContainer: {
+    width: "100%",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+
+  logo: {
+    width: 125,
+    height: 55,
+  },
+
+  homeButtonContainer: {
+    alignItems: "center",
+    marginTop: 8,
+  },
+
+  homeButton: {
+    minHeight: 40,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 7,
+    paddingHorizontal: 18,
+    paddingVertical: 9,
+    borderRadius: 20,
+    backgroundColor: DARK_GREEN,
+  },
+
+  homeButtonText: {
+    fontSize: 12,
+    fontWeight: "700",
+    color: "#ffffff",
+  },
+
+  buttonPressed: {
+    opacity: 0.82,
+    transform: [{ scale: 0.98 }],
+  },
+
+  disabled: {
+    opacity: 0.6,
+  },
+});

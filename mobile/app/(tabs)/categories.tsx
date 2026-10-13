@@ -1,107 +1,102 @@
-import React, { useEffect, useState, useCallback, useMemo } from "react";
+
+import React, { useCallback, useEffect, useState } from "react";
 import {
-  SafeAreaView,
-  View,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  StyleSheet,
-  ActivityIndicator,
-  FlatList,
+  Pressable,
   RefreshControl,
+  StyleSheet,
+  Text,
+  View,
+  useWindowDimensions,
 } from "react-native";
-import { useRouter, Stack } from "expo-router";
 import { Image } from "expo-image";
-import { Search, X, ChevronRight, Layers } from "lucide-react-native";
+import { useRouter } from "expo-router";
+import { ArrowRight, RefreshCw } from "lucide-react-native";
+import Animated, {
+  useAnimatedScrollHandler,
+  useSharedValue,
+} from "react-native-reanimated";
 
-import type { Category } from "@africasuk/types";
 import { createClient } from "@/lib/auth/client";
+import LoadingScreen from "@/components/shared/LoadingScreen";
+import HomeHeader from "@/components/home/HomeHeader";
 
-const BRAND_COLOR = "#004d26";
-const BRAND_DARK = "#111827";
+type CategoryRow = {
+  id: string;
+  name: string;
+  slug: string;
+  description: string | null;
+  image_url: string | null;
+  is_active: boolean;
+  sort_order: number | null;
+  created_at: string;
+  updated_at: string;
+};
 
-// Standalone Header component with sharp inputs & unbolded headers
-function CategoriesHeader({
-  count,
-  searchQuery,
-  onSearchChange,
-}: {
-  count: number;
-  searchQuery: string;
-  onSearchChange: (text: string) => void;
-}) {
-  return (
-    <View style={styles.headerContainer}>
-      <View style={styles.titleRow}>
-        <View style={styles.titleTextWrapper}>
-          <Text style={styles.title}>Categories</Text>
-          <Text style={styles.subtitle}>
-            Browse all product categories and explore our complete collections.
-          </Text>
-        </View>
+type Category = CategoryRow & {
+  imageUrl: string | null;
+  isActive: boolean;
+  createdAt: string;
+  updatedAt: string;
+};
 
-        {/* Sharp Badge */}
-        <View style={styles.badge}>
-          <Text style={styles.badgeText}>
-            {count} {count === 1 ? "Category" : "Categories"}
-          </Text>
-        </View>
-      </View>
-
-      {/* Search Input Bar with Sharp Borders */}
-      <View style={styles.searchBar}>
-        <Search size={18} color="#9ca3af" style={styles.searchIcon} />
-        <TextInput
-          style={styles.searchInput}
-          placeholder="Search categories..."
-          placeholderTextColor="#9ca3af"
-          value={searchQuery}
-          onChangeText={onSearchChange}
-          autoCapitalize="none"
-          autoCorrect={false}
-          returnKeyType="search"
-        />
-        {searchQuery.length > 0 && (
-          <TouchableOpacity
-            onPress={() => onSearchChange("")}
-            hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-          >
-            <X size={18} color="#9ca3af" />
-          </TouchableOpacity>
-        )}
-      </View>
-    </View>
-  );
-}
+const BRAND = "#005c2e";
+const HORIZONTAL_PADDING = 16;
+const CARD_GAP = 12;
 
 export default function CategoriesScreen() {
   const router = useRouter();
+  const { width } = useWindowDimensions();
+  const scrollY = useSharedValue(0);
 
   const [categories, setCategories] = useState<Category[]>([]);
-  const [searchQuery, setSearchQuery] = useState("");
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
 
-  const fetchCategories = useCallback(async () => {
+  const cardWidth =
+    (width - HORIZONTAL_PADDING * 2 - CARD_GAP) / 2;
+  const wideCardWidth = width - HORIZONTAL_PADDING * 2;
+
+  const scrollHandler = useAnimatedScrollHandler({
+    onScroll: (event) => {
+      scrollY.value = event.contentOffset.y;
+    },
+  });
+
+  const loadCategories = useCallback(async (isRefresh = false) => {
     try {
+      if (isRefresh) {
+        setRefreshing(true);
+      } else {
+        setLoading(true);
+      }
+
+      setError(false);
+
       const supabase = createClient();
 
-      const { data, error } = await supabase
+      const { data, error: queryError } = await supabase
         .from("categories")
         .select("*")
         .eq("is_active", true)
         .order("sort_order", { ascending: true });
 
-      if (error) throw error;
+      if (queryError) throw queryError;
 
-      setCategories(
-        (data ?? []).map((item: any) => ({
-          ...item,
-          imageUrl: item.image_url,
-        })) as Category[]
+      const formatted: Category[] = ((data ?? []) as CategoryRow[]).map(
+        (category) => ({
+          ...category,
+          imageUrl: category.image_url,
+          isActive: category.is_active,
+          createdAt: category.created_at,
+          updatedAt: category.updated_at,
+        }),
       );
-    } catch (error) {
-      console.error("Error fetching categories:", error);
+
+      setCategories(formatted);
+    } catch (err) {
+      console.error("Failed to load categories:", err);
+      setError(true);
     } finally {
       setLoading(false);
       setRefreshing(false);
@@ -109,265 +104,328 @@ export default function CategoriesScreen() {
   }, []);
 
   useEffect(() => {
-    fetchCategories();
-  }, [fetchCategories]);
+    loadCategories();
+  }, [loadCategories]);
 
-  const handleRefresh = () => {
-    setRefreshing(true);
-    fetchCategories();
+  const openCategory = (category: Category) => {
+    router.push(`/categories/${category.slug}` as never);
   };
 
-  const filteredCategories = useMemo(() => {
-    if (!searchQuery.trim()) return categories;
-    const query = searchQuery.toLowerCase().trim();
-    return categories.filter(
-      (cat) =>
-        cat.name.toLowerCase().includes(query) ||
-        (cat.description && cat.description.toLowerCase().includes(query))
-    );
-  }, [categories, searchQuery]);
+  const renderCategoryCard = (
+    category: Category,
+    isWide: boolean,
+  ) => (
+    <Pressable
+      key={category.id}
+      onPress={() => openCategory(category)}
+      style={({ pressed }) => [
+        styles.card,
+        { width: isWide ? wideCardWidth : cardWidth },
+        pressed && styles.cardPressed,
+      ]}
+    >
+      {/* Every image is square, including the wide card */}
+      <View style={styles.imageWrapper}>
+        {category.imageUrl ? (
+          <Image
+            source={{ uri: category.imageUrl }}
+            style={StyleSheet.absoluteFillObject}
+            contentFit="cover"
+            transition={250}
+            cachePolicy="memory-disk"
+          />
+        ) : (
+          <View style={styles.imagePlaceholder}>
+            <Text style={styles.placeholderText}>
+              {category.name}
+            </Text>
+          </View>
+        )}
 
-  if (loading && !refreshing) {
+        <View style={styles.imageShade} />
+
+        <View style={styles.imageLabel}>
+          <Text style={styles.collectionLabel}>COLLECTION</Text>
+          <Text numberOfLines={2} style={styles.imageTitle}>
+            {category.name}
+          </Text>
+        </View>
+
+        <View style={styles.arrowButton}>
+          <ArrowRight size={17} color={BRAND} strokeWidth={2.4} />
+        </View>
+      </View>
+
+      <View style={styles.cardContent}>
+        <Text numberOfLines={2} style={styles.cardDescription}>
+          {category.description ||
+            `Explore our ${category.name.toLowerCase()} collection.`}
+        </Text>
+        <View style={styles.bottomAccent} />
+      </View>
+    </Pressable>
+  );
+
+  if (loading) {
+    return <LoadingScreen />;
+  }
+
+  if (error) {
     return (
-      <View style={styles.centered}>
-        <ActivityIndicator size="large" color={BRAND_COLOR} />
+      <View style={styles.stateContainer}>
+        <View style={styles.stateIcon}>
+          <RefreshCw size={26} color={BRAND} />
+        </View>
+
+        <Text style={styles.stateTitle}>
+          Couldn&apos;t load categories
+        </Text>
+        <Text style={styles.stateDescription}>
+          Check your connection and try again.
+        </Text>
+
+        <Pressable
+          onPress={() => loadCategories()}
+          style={styles.retryButton}
+        >
+          <Text style={styles.retryText}>Try again</Text>
+        </Pressable>
       </View>
     );
   }
 
-  return (
-    <SafeAreaView style={styles.container}>
-      <Stack.Screen
-        options={{
-          title: "Categories",
-          headerTitleStyle: { fontWeight: "500", color: BRAND_DARK },
-        }}
-      />
+  // Two small cards, followed by one wide card.
+  // Repeat this pattern for all categories.
+  const rows: Category[][] = [];
 
-      <FlatList
-        data={filteredCategories}
-        keyExtractor={(item) => item.id}
-        numColumns={2}
+  for (let i = 0; i < categories.length; i += 3) {
+    rows.push(categories.slice(i, i + 3));
+  }
+
+  return (
+    <View style={styles.container}>
+      <HomeHeader scrollY={scrollY} />
+
+      <Animated.ScrollView
+        onScroll={scrollHandler}
+        scrollEventThrottle={16}
+        showsVerticalScrollIndicator={false}
         contentContainerStyle={styles.listContent}
-        columnWrapperStyle={styles.columnWrapper}
-        ListHeaderComponent={
-          <CategoriesHeader
-            count={filteredCategories.length}
-            searchQuery={searchQuery}
-            onSearchChange={setSearchQuery}
-          />
-        }
         refreshControl={
           <RefreshControl
             refreshing={refreshing}
-            onRefresh={handleRefresh}
-            colors={[BRAND_COLOR]}
-            tintColor={BRAND_COLOR}
+            onRefresh={() => loadCategories(true)}
+            tintColor={BRAND}
+            colors={[BRAND]}
           />
         }
-        ListEmptyComponent={
-          <View style={styles.emptyCard}>
-            <Text style={styles.emptyTitle}>
-              {searchQuery ? "No matching categories" : "No Categories Found"}
-            </Text>
-            <Text style={styles.emptySubtitle}>
-              {searchQuery
-                ? `We couldn't find any categories matching "${searchQuery}".`
-                : "Categories will appear here once they are added."}
-            </Text>
-          </View>
-        }
-        renderItem={({ item }) => (
-          <TouchableOpacity
-            style={styles.card}
-            activeOpacity={0.85}
-            onPress={() => router.push(`/categories/${item.slug}` as never)}
-          >
-            {/* Big Image Section - Sharp Borders */}
-            <View style={styles.imageContainer}>
-              {item.imageUrl ? (
-                <Image
-                  source={{ uri: item.imageUrl }}
-                  style={styles.image}
-                  contentFit="cover"
-                />
-              ) : (
-                <View style={styles.placeholderContainer}>
-                  <Layers size={32} color={BRAND_COLOR} opacity={0.5} />
-                </View>
+      >
+        <View style={styles.headingContainer}>
+          <Text style={styles.eyebrow}>EXPLORE AFRICASUK</Text>
+          <Text style={styles.heading}>Shop by Category</Text>
+          <Text style={styles.subtitle}>
+            Find what you need, all in one place.
+          </Text>
+        </View>
+
+        {rows.map((row, rowIndex) => (
+          <View key={`category-row-${rowIndex}`}>
+            <View style={styles.row}>
+              {row.slice(0, 2).map((category) =>
+                renderCategoryCard(category, false),
               )}
             </View>
 
-            {/* Bottom Info Panel */}
-            <View style={styles.cardInfo}>
-              <View style={styles.cardHeaderRow}>
-                <Text style={styles.categoryName} numberOfLines={1}>
-                  {item.name}
-                </Text>
-                <ChevronRight size={14} color="#9ca3af" />
-              </View>
-              <Text style={styles.categoryCaption} numberOfLines={1}>
-                Explore items
-              </Text>
-            </View>
-          </TouchableOpacity>
+            {row[2] &&
+              renderCategoryCard(row[2], true)}
+          </View>
+        ))}
+
+        {categories.length === 0 && (
+          <View style={styles.emptyContainer}>
+            <Text style={styles.stateTitle}>No categories yet</Text>
+            <Text style={styles.stateDescription}>
+              Categories will appear here when available.
+            </Text>
+          </View>
         )}
-      />
-    </SafeAreaView>
+      </Animated.ScrollView>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#f4f4f4",
-    paddingTop: 60,
-  },
-  centered: {
-    flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
-    backgroundColor: "#f4f4f4",
+    backgroundColor: "#F8FAF8",
+    paddingTop: 100,
   },
   listContent: {
-    padding: 16,
-    paddingBottom: 32,
+    paddingHorizontal: HORIZONTAL_PADDING,
+    paddingTop: 18,
+    paddingBottom: 36,
   },
-  columnWrapper: {
-    gap: 12,
-    marginBottom: 12,
+  headingContainer: {
+    marginBottom: 24,
   },
-  headerContainer: {
-    marginBottom: 20,
+  eyebrow: {
+    color: BRAND,
+    fontSize: 10,
+    fontWeight: "800",
+    letterSpacing: 1.8,
+    marginBottom: 8,
   },
-  titleRow: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-  },
-  titleTextWrapper: {
-    flex: 1,
-  },
-  title: {
-    fontSize: 24,
-    fontWeight: "500", // Clean regular header weight
-    color: BRAND_DARK,
-    letterSpacing: 0.2,
+  heading: {
+    color: "#17251B",
+    fontSize: 27,
+    fontWeight: "800",
+    letterSpacing: -0.6,
   },
   subtitle: {
-    marginTop: 4,
-    fontSize: 12,
-    fontWeight: "400",
-    color: "#6b7280",
-    lineHeight: 18,
-  },
-  badge: {
-    backgroundColor: "#ffffff",
-    borderWidth: 1,
-    borderColor: "#e5e7eb",
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 0, // Sharp border
-  },
-  badgeText: {
-    fontSize: 12,
-    fontWeight: "400", // Non-bold
-    color: "#374151",
-  },
-  searchBar: {
-    flexDirection: "row",
-    alignItems: "center",
-    backgroundColor: "#ffffff",
-    borderWidth: 1,
-    borderColor: "#e5e7eb",
-    borderRadius: 0, // Sharp border
-    paddingHorizontal: 12,
-    height: 44,
-    marginTop: 16,
-  },
-  searchIcon: {
-    marginRight: 8,
-  },
-  searchInput: {
-    flex: 1,
+    color: "#717A73",
     fontSize: 13,
-    fontWeight: "400",
-    color: BRAND_DARK,
-    paddingVertical: 0,
+    lineHeight: 19,
+    marginTop: 7,
+  },
+  row: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    marginBottom: CARD_GAP,
   },
   card: {
-    flex: 1,
-    height: 210,
-    backgroundColor: "#ffffff",
-    borderRadius: 0, // Sharp border
+    backgroundColor: "#FFFFFF",
+    borderRadius: 18,
+    overflow: "hidden",
     borderWidth: 1,
-    borderColor: "#e5e7eb",
+    borderColor: "#E8EEE9",
+    marginBottom: CARD_GAP,
+    shadowColor: "#123C24",
+    shadowOpacity: 0.07,
+    shadowRadius: 12,
+    shadowOffset: { width: 0, height: 5 },
+    elevation: 3,
+  },
+  cardPressed: {
+    opacity: 0.92,
+    transform: [{ scale: 0.985 }],
+  },
+  imageWrapper: {
+    width: "100%",
+    aspectRatio: 1,
+    backgroundColor: "#EDF1ED",
     overflow: "hidden",
   },
-  imageContainer: {
-    flex: 1,
-    width: "100%",
-    backgroundColor: "#f3f4f6",
-    alignItems: "center",
+  imagePlaceholder: {
+    ...StyleSheet.absoluteFillObject,
     justifyContent: "center",
-  },
-  image: {
-    width: "100%",
-    height: "100%",
-    borderRadius: 0,
-  },
-  placeholderContainer: {
-    flex: 1,
-    width: "100%",
     alignItems: "center",
-    justifyContent: "center",
-    backgroundColor: "rgba(0, 77, 38, 0.05)",
+    padding: 12,
+    backgroundColor: "#E8F0E9",
   },
-  cardInfo: {
-    paddingHorizontal: 12,
-    paddingVertical: 10,
-    backgroundColor: "#ffffff",
-    borderTopWidth: 1,
-    borderTopColor: "#f3f4f6",
-  },
-  cardHeaderRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-  },
-  categoryName: {
-    fontSize: 14,
-    fontWeight: "500", // Clean regular weight
-    color: BRAND_DARK,
-    flex: 1,
-    marginRight: 4,
-  },
-  categoryCaption: {
-    fontSize: 11,
-    fontWeight: "400",
-    color: "#6b7280",
-    marginTop: 2,
-  },
-  emptyCard: {
-    backgroundColor: "#ffffff",
-    borderRadius: 0, // Sharp border
-    borderWidth: 1,
-    borderColor: "#e5e7eb",
-    paddingVertical: 40,
-    paddingHorizontal: 20,
-    alignItems: "center",
-    marginTop: 16,
-  },
-  emptyTitle: {
-    fontSize: 15,
-    fontWeight: "500", // Non-bold
-    color: BRAND_DARK,
-  },
-  emptySubtitle: {
-    fontSize: 13,
-    fontWeight: "400",
-    color: "#6b7280",
+  placeholderText: {
+    color: BRAND,
+    fontSize: 16,
+    fontWeight: "700",
     textAlign: "center",
-    marginTop: 4,
+  },
+  imageShade: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: "rgba(0,0,0,0.16)",
+  },
+  imageLabel: {
+    position: "absolute",
+    left: 13,
+    right: 42,
+    bottom: 14,
+  },
+  collectionLabel: {
+    color: "#E4F6E9",
+    fontSize: 8,
+    fontWeight: "800",
+    letterSpacing: 1.5,
+    marginBottom: 5,
+  },
+  imageTitle: {
+    color: "#FFFFFF",
+    fontSize: 19,
+    lineHeight: 23,
+    fontWeight: "800",
+    textShadowColor: "rgba(0,0,0,0.3)",
+    textShadowRadius: 5,
+    textShadowOffset: { width: 0, height: 1 },
+  },
+  arrowButton: {
+    position: "absolute",
+    right: 10,
+    bottom: 12,
+    width: 30,
+    height: 30,
+    borderRadius: 15,
+    backgroundColor: "#FFFFFF",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  cardContent: {
+    paddingHorizontal: 12,
+    paddingTop: 11,
+    paddingBottom: 12,
+    minHeight: 58,
+  },
+  cardDescription: {
+    color: "#737B75",
+    fontSize: 11,
+    lineHeight: 16,
+  },
+  bottomAccent: {
+    width: 26,
+    height: 3,
+    borderRadius: 2,
+    backgroundColor: "#D6EADD",
+    marginTop: 9,
+  },
+  stateContainer: {
+    flex: 1,
+    backgroundColor: "#FFFFFF",
+    alignItems: "center",
+    justifyContent: "center",
+    padding: 28,
+  },
+  stateIcon: {
+    width: 58,
+    height: 58,
+    borderRadius: 29,
+    backgroundColor: "#EDF7F0",
+    alignItems: "center",
+    justifyContent: "center",
+    marginBottom: 18,
+  },
+  stateTitle: {
+    fontSize: 18,
+    fontWeight: "800",
+    color: "#17251B",
+    textAlign: "center",
+  },
+  stateDescription: {
+    color: "#717A73",
+    fontSize: 13,
+    lineHeight: 19,
+    textAlign: "center",
+    marginTop: 8,
+  },
+  retryButton: {
+    backgroundColor: BRAND,
+    borderRadius: 12,
+    paddingHorizontal: 25,
+    paddingVertical: 12,
+    marginTop: 20,
+  },
+  retryText: {
+    color: "#FFFFFF",
+    fontSize: 14,
+    fontWeight: "700",
+  },
+  emptyContainer: {
+    paddingTop: 80,
+    alignItems: "center",
   },
 });

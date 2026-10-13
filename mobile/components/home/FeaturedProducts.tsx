@@ -16,6 +16,7 @@ import { router } from "expo-router";
 import type { ProductWithDetails } from "@africasuk/types";
 
 import { ProductCard } from "../products/ProductCard";
+import SouthSudanCtaButton from "../home/SouthSudanCtaButton";
 import { supabase } from "@/lib/supabase/client";
 
 interface Props {
@@ -155,7 +156,6 @@ export default function FeaturedProducts({
 
     /*
      * Same ordering:
-     *
      * Product A - Color 1
      * Product B - Color 1
      * Product C - Color 1
@@ -181,15 +181,10 @@ export default function FeaturedProducts({
 
         result.push({
           ...item.product,
-
           id: `${item.product.id}-${item.color.id}`,
-
-          name: `${item.product.name} - ${item.color.name}`,
-
+          name: `${item.product.name} ${item.color.name}`,
           selectedColorId: item.color.id,
-
           colors: [item.color],
-
           rating: productRating,
         });
       }
@@ -233,7 +228,7 @@ export default function FeaturedProducts({
         </TouchableOpacity>
       </View>
 
-      {/* Products */}
+      {/* Products Grid */}
       <View style={styles.grid}>
         {featuredColorProducts.map((item) => (
           <View
@@ -245,20 +240,10 @@ export default function FeaturedProducts({
         ))}
       </View>
 
-      {/* Explore All */}
-      <TouchableOpacity
-        style={styles.allProductsBtn}
-        activeOpacity={0.85}
-        onPress={() =>
-          router.push("/products" as never)
-        }
-      >
-        <Text
-          style={styles.allProductsBtnText}
-        >
-          Explore All Products
-        </Text>
-      </TouchableOpacity>
+      {/* Premium South Sudan Banner Button replacing Explore All Products */}
+      <View style={styles.bottomCtaWrapper}>
+        <SouthSudanCtaButton />
+      </View>
     </View>
   );
 }
@@ -332,22 +317,8 @@ const styles = StyleSheet.create({
     width: "49%",
   },
 
-  allProductsBtn: {
-    width: "100%",
-    height: 46,
-    backgroundColor: "#ffffff",
-    borderWidth: 1.5,
-    borderColor: BRAND_COLOR,
-    borderRadius: 23,
-    justifyContent: "center",
-    alignItems: "center",
-    marginTop: 18,
-  },
-
-  allProductsBtnText: {
-    color: BRAND_COLOR,
-    fontSize: 13,
-    fontWeight: "700",
-    letterSpacing: -0.2,
+  bottomCtaWrapper: {
+    marginTop: 10,
+    marginHorizontal: -4,
   },
 });

@@ -1,32 +1,207 @@
-import React from "react";
-import { View, Text, StyleSheet, Pressable } from "react-native";
+import React, {
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+} from "react";
+import {
+  View,
+  Text,
+  StyleSheet,
+  Animated,
+  PanResponder,
+  Platform,
+} from "react-native";
 import { Image } from "expo-image";
-import { useRouter, Href } from "expo-router";
-import { Camera, ArrowRight } from "lucide-react-native";
+import { useFocusEffect, useRouter, type Href } from "expo-router";
+import {
+  Camera,
+  ArrowRight,
+  Check,
+} from "lucide-react-native";
+import * as Haptics from "expo-haptics";
+import { LinearGradient } from "expo-linear-gradient";
+
+const BRAND_GREEN = "#005c2e";
+const BRAND_DARK = "#004421";
+const BRAND_GOLD = "#f4c542";
+
+const TRACK_HEIGHT = 62;
+const THUMB_SIZE = 48;
+const TRACK_PADDING = 6;
 
 export default function RequestProductSection() {
   const router = useRouter();
 
+  const [trackWidth, setTrackWidth] = useState(0);
+  const [completed, setCompleted] = useState(false);
+
+  const dragX = useRef(new Animated.Value(0)).current;
+  const hintX = useRef(new Animated.Value(0)).current;
+  const navigating = useRef(false);
+
+  // Keep a mutable ref so panResponder always reads the latest drag bounds
+  const maxDrag = Math.max(0, trackWidth - THUMB_SIZE - TRACK_PADDING * 2);
+  const maxDragRef = useRef(maxDrag);
+  maxDragRef.current = maxDrag;
+
+  // Reset slider state when screen comes into focus
+  useFocusEffect(
+    useCallback(() => {
+      navigating.current = false;
+      setCompleted(false);
+      dragX.setValue(0);
+      hintX.setValue(0);
+
+      return () => {
+        navigating.current = false;
+      };
+    }, [dragX, hintX])
+  );
+
+  // Bouncing hint animation
+  useEffect(() => {
+    if (completed) {
+      hintX.stopAnimation();
+      hintX.setValue(0);
+      return;
+    }
+
+    const animation = Animated.loop(
+      Animated.sequence([
+        Animated.timing(hintX, {
+          toValue: 6,
+          duration: 650,
+          useNativeDriver: true,
+        }),
+        Animated.timing(hintX, {
+          toValue: 0,
+          duration: 650,
+          useNativeDriver: true,
+        }),
+      ])
+    );
+
+    animation.start();
+    return () => animation.stop();
+  }, [completed, hintX]);
+
+  const resetSlider = useCallback(() => {
+    Animated.spring(dragX, {
+      toValue: 0,
+      useNativeDriver: true,
+      speed: 24,
+      bounciness: 4,
+    }).start();
+  }, [dragX]);
+
+  const completeRequest = useCallback(() => {
+    const limit = maxDragRef.current;
+    if (navigating.current || limit <= 0) return;
+
+    navigating.current = true;
+    setCompleted(true);
+
+    if (Platform.OS !== "web") {
+      Haptics.notificationAsync(
+        Haptics.NotificationFeedbackType.Success
+      ).catch(() => {});
+    }
+
+    Animated.spring(dragX, {
+      toValue: limit,
+      useNativeDriver: true,
+      speed: 20,
+      bounciness: 0,
+    }).start(({ finished }) => {
+      if (finished) {
+        router.push("/request-product" as Href);
+      }
+    });
+  }, [dragX, router]);
+
+  // Pan responder with responsive boundary clamping
+  const panResponder = useRef(
+    PanResponder.create({
+      onStartShouldSetPanResponder: () => !navigating.current,
+      onStartShouldSetPanResponderCapture: () => !navigating.current,
+
+      onMoveShouldSetPanResponder: (_, gesture) => {
+        return (
+          !navigating.current &&
+          Math.abs(gesture.dx) > 3 &&
+          Math.abs(gesture.dx) > Math.abs(gesture.dy)
+        );
+      },
+      onMoveShouldSetPanResponderCapture: (_, gesture) => {
+        return (
+          !navigating.current &&
+          Math.abs(gesture.dx) > 3 &&
+          Math.abs(gesture.dx) > Math.abs(gesture.dy)
+        );
+      },
+
+      onPanResponderGrant: () => {
+        hintX.stopAnimation();
+        hintX.setValue(0);
+      },
+
+      onPanResponderMove: (_, gesture) => {
+        if (navigating.current) return;
+        const currentMax = maxDragRef.current;
+        if (currentMax <= 0) return;
+
+        const clampedX = Math.max(0, Math.min(gesture.dx, currentMax));
+        dragX.setValue(clampedX);
+      },
+
+      onPanResponderRelease: (_, gesture) => {
+        if (navigating.current) return;
+        const currentMax = maxDragRef.current;
+        const finalDistance = Math.max(0, Math.min(gesture.dx, currentMax));
+
+        if (currentMax > 0 && finalDistance >= currentMax * 0.75) {
+          completeRequest();
+        } else {
+          resetSlider();
+        }
+      },
+
+      onPanResponderTerminate: () => {
+        if (!navigating.current) {
+          resetSlider();
+        }
+      },
+    })
+  ).current;
+
+  // Fade out label as thumb slides across
+  const textOpacity = dragX.interpolate({
+    inputRange: [0, Math.max(1, maxDrag * 0.5)],
+    outputRange: [1, 0.15],
+    extrapolate: "clamp",
+  });
+
   return (
     <View style={styles.section}>
       <View style={styles.container}>
-        {/* Top Kicker */}
-        <Text style={styles.kicker}>Looking for Something?</Text>
+        <View style={styles.topRow}>
+          <View style={styles.goldAccent} />
+          <Text style={styles.kicker}>CAN&apos;T FIND WHAT YOU NEED?</Text>
+        </View>
 
-        {/* Headline */}
         <Text style={styles.heading}>
-          Can&apos;t find it?{"\n"}
-          <Text style={styles.headingGreen}>Just ask us.</Text>
+          Looking for something?
+          {"\n"}
+          <Text style={styles.headingGreen}>We&apos;ll find it for you.</Text>
         </Text>
 
-        {/* Content */}
         <View style={styles.middleRow}>
           <Text style={styles.description}>
-            Send us a photo, product link, or details about what you&apos;re
-            looking for. We&apos;ll check if we can source it for you.
+            Send us a photo, product link, or details of what you&apos;re looking for.
+            We&apos;ll help you find it.
           </Text>
 
-          {/* Subtle Brand Logo */}
           <View style={styles.logoStage}>
             <Image
               source={require("@/assets/images/logo.png")}
@@ -37,38 +212,94 @@ export default function RequestProductSection() {
           </View>
         </View>
 
-        {/* CTA */}
-        <Pressable
-          style={({ pressed }) => [
-            styles.ctaButton,
-            pressed && styles.ctaButtonPressed,
-          ]}
-          onPress={() =>
-            router.push("/request-product" as Href)
-          }
-          accessibilityRole="button"
-          accessibilityLabel="Request a product"
-        >
-          <View style={styles.ctaLeft}>
-            <Camera
-              size={15}
-              color="#ffffff"
-              strokeWidth={2}
-            />
+        {/* Draggable request slider */}
+        <View style={styles.sliderShadow}>
+          <LinearGradient
+            colors={[BRAND_GREEN, BRAND_DARK]}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 1 }}
+            style={styles.sliderTrack}
+            onLayout={(event) => {
+              const measuredWidth = event.nativeEvent.layout.width;
+              if (measuredWidth > 0 && measuredWidth !== trackWidth) {
+                setTrackWidth(measuredWidth);
+              }
+            }}
+          >
+            {/* Left Camera Icon */}
+            <View style={styles.sliderIcon}>
+              <Camera size={19} color="#FFFFFF" strokeWidth={2.2} />
+            </View>
 
-            <Text style={styles.ctaText}>
-              Request a Product
-            </Text>
-          </View>
+            {/* Slider Center Text */}
+            <Animated.View
+              pointerEvents="none"
+              style={[
+                styles.sliderLabelContainer,
+                { opacity: completed ? 1 : textOpacity },
+              ]}
+            >
+              <Text style={styles.sliderTitle}>
+                {completed ? "Requesting..." : "Slide to request"}
+              </Text>
+              <Text style={styles.sliderSubtitle}>
+                {completed ? "Opening request page" : "Drag the gold arrow →"}
+              </Text>
+            </Animated.View>
 
-          <View style={styles.arrowCircle}>
-            <ArrowRight
-              size={13}
-              color="#ffffff"
-              strokeWidth={2.2}
-            />
-          </View>
-        </Pressable>
+            {/* Arrow pulse indicator */}
+            {!completed && (
+              <Animated.View
+                pointerEvents="none"
+                style={[
+                  styles.dragHint,
+                  {
+                    transform: [{ translateX: hintX }],
+                    opacity: textOpacity,
+                  },
+                ]}
+              >
+                <ArrowRight
+                  size={18}
+                  color="rgba(255,255,255,0.4)"
+                  strokeWidth={2.5}
+                />
+              </Animated.View>
+            )}
+
+            {/* Draggable Thumb Button */}
+            <Animated.View
+              {...panResponder.panHandlers}
+              hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+              style={[
+                styles.thumb,
+                {
+                  transform: [{ translateX: dragX }],
+                },
+              ]}
+            >
+              {completed ? (
+                <Check
+                  size={22}
+                  color={BRAND_GREEN}
+                  strokeWidth={3}
+                />
+              ) : (
+                <ArrowRight
+                  size={22}
+                  color={BRAND_GREEN}
+                  strokeWidth={2.8}
+                />
+              )}
+            </Animated.View>
+          </LinearGradient>
+        </View>
+
+        <Text style={styles.footerNote}>
+          {completed
+            ? "PLEASE WAIT..."
+            : "DRAG THE GOLD ARROW TO CONTINUE"}
+        </Text>
       </View>
     </View>
   );
@@ -76,104 +307,137 @@ export default function RequestProductSection() {
 
 const styles = StyleSheet.create({
   section: {
-    backgroundColor: "#ffffff",
+    backgroundColor: "#FFFFFF",
     paddingVertical: 24,
     paddingHorizontal: 16,
     borderTopWidth: 1,
     borderBottomWidth: 1,
-    borderColor: "#f4f4f5",
+    borderColor: "#E9F0EA",
   },
-
   container: {
-    gap: 14,
+    gap: 13,
   },
-
+  topRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 7,
+  },
+  goldAccent: {
+    width: 19,
+    height: 3,
+    borderRadius: 2,
+    backgroundColor: BRAND_GOLD,
+  },
   kicker: {
-    fontSize: 11,
-    fontWeight: "700",
-    textTransform: "uppercase",
-    letterSpacing: 1.4,
-    color: "#008744",
+    fontSize: 10,
+    fontWeight: "800",
+    letterSpacing: 1.1,
+    color: BRAND_GREEN,
   },
-
   heading: {
-    fontSize: 28,
+    fontSize: 25,
     fontWeight: "900",
-    color: "#09090b",
-    letterSpacing: -0.8,
-    lineHeight: 33,
+    color: "#17231B",
+    letterSpacing: -0.7,
+    lineHeight: 31,
   },
-
   headingGreen: {
-    color: "#008744",
+    color: BRAND_GREEN,
   },
-
   middleRow: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-    gap: 16,
-    paddingVertical: 4,
+    gap: 12,
   },
-
   description: {
     flex: 1,
     fontSize: 13,
-    lineHeight: 20,
-    color: "#52525b",
+    lineHeight: 19,
+    color: "#606B63",
     letterSpacing: -0.1,
   },
-
   logoStage: {
-    width: 68,
-    height: 34,
+    width: 62,
+    height: 42,
     alignItems: "center",
     justifyContent: "center",
-    opacity: 0.85,
   },
-
   logoImage: {
     width: "100%",
     height: "100%",
   },
-
-  ctaButton: {
-    height: 48,
-    borderRadius: 24,
-    backgroundColor: "#09090b",
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    paddingLeft: 18,
-    paddingRight: 8,
+  sliderShadow: {
     marginTop: 4,
+    borderRadius: 16,
+    elevation: 4,
+    shadowColor: BRAND_GREEN,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.22,
+    shadowRadius: 8,
   },
-
-  ctaButtonPressed: {
-    backgroundColor: "#008744",
-    opacity: 0.95,
-    transform: [{ scale: 0.99 }],
-  },
-
-  ctaLeft: {
+  sliderTrack: {
+    height: TRACK_HEIGHT,
+    borderRadius: 16,
+    paddingHorizontal: TRACK_PADDING,
     flexDirection: "row",
     alignItems: "center",
-    gap: 10,
+    position: "relative",
   },
-
-  ctaText: {
-    color: "#ffffff",
-    fontSize: 13,
-    fontWeight: "600",
-    letterSpacing: 0.1,
-  },
-
-  arrowCircle: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
-    backgroundColor: "rgba(255, 255, 255, 0.18)",
+  sliderIcon: {
+    width: 36,
+    height: 36,
     alignItems: "center",
     justifyContent: "center",
+    marginLeft: 2,
+    zIndex: 1,
+  },
+  sliderLabelContainer: {
+    position: "absolute",
+    left: 48,
+    right: 48,
+    alignItems: "center",
+    justifyContent: "center",
+    zIndex: 1,
+  },
+  sliderTitle: {
+    color: "#FFFFFF",
+    fontSize: 13,
+    fontWeight: "800",
+    letterSpacing: 0.2,
+  },
+  sliderSubtitle: {
+    color: "#D5E8D9",
+    fontSize: 10,
+    marginTop: 2,
+    fontWeight: "600",
+  },
+  dragHint: {
+    position: "absolute",
+    right: 56,
+    zIndex: 1,
+  },
+  thumb: {
+    width: THUMB_SIZE,
+    height: THUMB_SIZE,
+    borderRadius: 14,
+    backgroundColor: BRAND_GOLD,
+    alignItems: "center",
+    justifyContent: "center",
+    elevation: 4,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 3,
+    zIndex: 10,
+    ...(Platform.OS === "web" ? ({ cursor: "pointer" } as any) : {}),
+  },
+  footerNote: {
+    textAlign: "center",
+    color: "#89958C",
+    fontSize: 9,
+    fontWeight: "700",
+    letterSpacing: 1.2,
+    marginTop: 1,
   },
 });

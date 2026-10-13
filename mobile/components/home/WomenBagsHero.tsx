@@ -1,3 +1,4 @@
+
 import React from "react";
 import {
   View,
@@ -8,6 +9,10 @@ import {
 } from "react-native";
 import { useRouter } from "expo-router";
 import { ArrowRight } from "lucide-react-native";
+import { LinearGradient } from "expo-linear-gradient";
+
+const BRAND_GREEN = "#005c2e";
+const BRAND_GOLD = "#F4C542";
 
 export default function WomenBagsHero() {
   const router = useRouter();
@@ -18,38 +23,47 @@ export default function WomenBagsHero() {
         source={require("@/assets/images/women-bags.jpg")}
         style={styles.hero}
         imageStyle={styles.image}
+        resizeMode="cover"
       >
-        <View style={styles.overlay} />
-
-        {/* Headline */}
-        <View style={styles.titleContainer}>
-          <Text style={styles.title}>
-            Your Style,
-            {"\n"}
-            Your Bag
-          </Text>
-        </View>
-
-        {/* Button */}
-        <View style={styles.buttonContainer}>
-          <Pressable
-            style={({ pressed }) => [
-              styles.button,
-              pressed && styles.buttonPressed,
-            ]}
-            onPress={() => router.push("/categories/women-bags")}
-          >
-            <Text style={styles.buttonText}>
-              Explore Women’s Bags
+        <LinearGradient
+          colors={[
+            "rgba(0,0,0,0.02)",
+            "rgba(0,0,0,0.08)",
+            "rgba(0,0,0,0.55)",
+          ]}
+          locations={[0, 0.45, 1]}
+          style={styles.overlay}
+        >
+          <View style={styles.titleContainer}>
+            <Text style={styles.title}>
+              Your Style,{"\n"}Your Bag
             </Text>
+          </View>
 
-            <ArrowRight
-              size={17}
-              color="#ffffff"
-              strokeWidth={2}
-            />
-          </Pressable>
-        </View>
+          <View style={styles.buttonContainer}>
+            <Pressable
+              style={({ pressed }) => [
+                styles.button,
+                pressed && styles.buttonPressed,
+              ]}
+              onPress={() =>
+                router.push("/categories/womens-luxury-bags" as never)
+              }
+            >
+              <Text style={styles.buttonText}>
+                Explore Women’s Bags
+              </Text>
+
+              <View style={styles.arrowContainer}>
+                <ArrowRight
+                  size={18}
+                  color={BRAND_GREEN}
+                  strokeWidth={2.5}
+                />
+              </View>
+            </Pressable>
+          </View>
+        </LinearGradient>
       </ImageBackground>
     </View>
   );
@@ -59,23 +73,26 @@ const styles = StyleSheet.create({
   container: {
     marginHorizontal: 16,
     marginTop: 16,
-    borderRadius: 18,
+    borderRadius: 20,
     overflow: "hidden",
   },
 
   hero: {
     height: 520,
     width: "100%",
-    position: "relative",
+    justifyContent: "flex-end",
+    backgroundColor: "#E8E8E8",
   },
 
   image: {
     resizeMode: "cover",
+    borderRadius: 20,
   },
 
   overlay: {
     ...StyleSheet.absoluteFillObject,
-    backgroundColor: "rgba(0, 0, 0, 0.08)",
+    justifyContent: "flex-end",
+    paddingBottom: 30,
   },
 
   titleContainer: {
@@ -88,49 +105,54 @@ const styles = StyleSheet.create({
   },
 
   title: {
-    color: "#ffffff",
+    color: "#FFFFFF",
     fontFamily: "Georgia",
-    fontSize: 30,
-    lineHeight: 37,
+    fontSize: 32,
+    lineHeight: 39,
     fontWeight: "700",
     textAlign: "center",
     letterSpacing: 0.2,
-    textShadowColor: "rgba(0, 0, 0, 0.45)",
-    textShadowOffset: {
-      width: 0,
-      height: 1,
-    },
-    textShadowRadius: 5,
+    textShadowColor: "rgba(0,0,0,0.45)",
+    textShadowOffset: { width: 0, height: 2 },
+    textShadowRadius: 6,
   },
 
+
+
   buttonContainer: {
-    position: "absolute",
-    bottom: 28,
-    left: 0,
-    right: 0,
     alignItems: "center",
+    paddingHorizontal: 16,
   },
 
   button: {
-    height: 46,
-    paddingHorizontal: 20,
-    borderRadius: 13,
-    backgroundColor: "#18181b",
-    borderWidth: 1,
-    borderColor: "#D4A84F",
+    minHeight: 52,
+    paddingLeft: 22,
+    paddingRight: 6,
+    borderRadius: 14,
+    backgroundColor: BRAND_GREEN,
     flexDirection: "row",
     alignItems: "center",
-    justifyContent: "center",
-    gap: 8,
+    justifyContent: "space-between",
+    gap: 16,
   },
 
   buttonPressed: {
-    opacity: 0.82,
+    opacity: 0.85,
+    transform: [{ scale: 0.98 }],
   },
 
   buttonText: {
-    color: "#ffffff",
+    color: "#FFFFFF",
     fontSize: 13,
-    fontWeight: "600",
+    fontWeight: "700",
+  },
+
+  arrowContainer: {
+    width: 40,
+    height: 40,
+    borderRadius: 10,
+    backgroundColor: BRAND_GOLD,
+    alignItems: "center",
+    justifyContent: "center",
   },
 });

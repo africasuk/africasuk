@@ -26,6 +26,16 @@ import { createClient } from "@/lib/auth/client";
 import SearchProductList from "@/components/search/SearchProductList";
 import SearchEmptyState from "@/components/search/SearchEmptyState";
 
+import SearchFilters from "@/components/search/SearchFilters";
+
+type SearchFilterProduct = ProductWithDetails & {
+  selectedColorId?: string;
+  rating?: {
+    averageRating: number;
+    reviewCount: number;
+  };
+};
+
 const BRAND_COLOR = "#005c2e";
 
 /* -------------------------------------------------------------------------- */
@@ -43,9 +53,20 @@ function shuffleArray<T>(array: T[]): T[] {
   return result;
 }
 
-type ColorProduct = ProductWithDetails & {
+type ProductRating = {
+  averageRating: number;
+  reviewCount: number;
+};
+
+type RatedProduct = ProductWithDetails & {
+  rating?: ProductRating;
+};
+
+type ColorProduct = RatedProduct & {
   selectedColorId?: string;
 };
+
+
 
 function createColorProducts(
   products: ProductWithDetails[]
@@ -107,6 +128,18 @@ export default function SearchScreen() {
   const params = useLocalSearchParams<{
     q?: string;
   }>();
+  const [filteredProducts, setFilteredProducts] =
+  useState<SearchFilterProduct[]>([]);
+
+  const handleFilteredProductsChange = useCallback(
+  (filtered: SearchFilterProduct[]) => {
+    setFilteredProducts(filtered as ColorProduct[]);
+  },
+  []
+);
+
+  
+  
 
   const initialQuery = params.q ?? "";
 
@@ -119,52 +152,119 @@ export default function SearchScreen() {
   /* Search Logic                                                             */
   /* ------------------------------------------------------------------------ */
 
-  const fetchSearchResults = useCallback(async (searchTerm: string) => {
-    const trimmed = searchTerm.trim();
+  
+const fetchSearchResults = useCallback(async (searchTerm: string) => {
+  const trimmed = searchTerm.trim();
 
-    if (!trimmed) {
+  if (!trimmed) {
+    setProducts([]);
+    setLoading(false);
+    return;
+  }
+
+  try {
+    setLoading(true);
+    Keyboard.dismiss();
+
+    const supabase = createClient();
+
+    // Fetch matching products and their related data.
+    const { data, error } = await supabase
+      .from("products")
+      .select(`
+        *,
+        brand:brands(*),
+        category:categories(*),
+        colors:product_colors(
+          *,
+          images:product_images(*),
+          variants:product_variants(*)
+        )
+      `)
+      .or(`name.ilike.%${trimmed}%,description.ilike.%${trimmed}%`);
+
+    if (error) {
+      throw error;
+    }
+
+    const fetchedProducts = (data ?? []) as ProductWithDetails[];
+
+    if (fetchedProducts.length === 0) {
       setProducts([]);
       return;
     }
 
-    try {
-      setLoading(true);
-      Keyboard.dismiss();
+    // Fetch approved reviews for the matching products.
+    const productIds = fetchedProducts.map((product) => product.id);
 
-      const supabase = createClient();
+type ReviewRatingRow = {
+  product_id: string;
+  rating: number | string;
+};
 
-      const { data, error } = await supabase
-        .from("products")
-        .select(`
-          *,
-          brand:brands(*),
-          category:categories(*),
-          colors:product_colors(
-            *,
-            images:product_images(*),
-            variants:product_variants(*)
-          )
-        `)
-        .or(
-          `name.ilike.%${trimmed}%,description.ilike.%${trimmed}%`
-        );
+const { data: reviewsData, error: reviewsError } = await supabase
+  .from("reviews")
+  .select("product_id, rating")
+  .in("product_id", productIds)
+  .eq("status", "APPROVED");
 
-      if (error) {
-        throw error;
+if (reviewsError) {
+  throw reviewsError;
+}
+
+const reviews = (reviewsData ?? []) as ReviewRatingRow[];
+
+    if (reviewsError) {
+      throw reviewsError;
+    }
+
+    // Calculate average rating and review count per product.
+    const ratingMap: Record<
+      string,
+      { total: number; count: number }
+    > = {};
+
+    for (const review of reviews ?? []) {
+      const productId = String(review.product_id);
+      const score = Number(review.rating);
+
+      if (!Number.isFinite(score) || score < 1 || score > 5) {
+        continue;
       }
 
-      const formattedProducts = createColorProducts(
-        (data as ProductWithDetails[]) ?? []
-      );
+      if (!ratingMap[productId]) {
+        ratingMap[productId] = { total: 0, count: 0 };
+      }
 
-      setProducts(formattedProducts);
-    } catch (error) {
-      console.error("Search error:", error);
-      setProducts([]);
-    } finally {
-      setLoading(false);
+      ratingMap[productId].total += score;
+      ratingMap[productId].count += 1;
     }
-  }, []);
+
+    // Attach ratings before creating color-specific search results.
+    const ratedProducts: RatedProduct[] = fetchedProducts.map((product) => {
+      const stats = ratingMap[String(product.id)];
+
+      return {
+        ...product,
+        rating: {
+          averageRating: stats
+            ? Number((stats.total / stats.count).toFixed(1))
+            : 0,
+          reviewCount: stats?.count ?? 0,
+        },
+      };
+    });
+
+    const formattedProducts = createColorProducts(ratedProducts);
+
+    setProducts(formattedProducts);
+  } catch (error) {
+    console.error("Search error:", error);
+    setProducts([]);
+  } finally {
+    setLoading(false);
+  }
+}, []);
 
   /* ------------------------------------------------------------------------ */
   /* URL query watcher                                                        */
@@ -263,24 +363,37 @@ export default function SearchScreen() {
         </View>
 
         {/* Results Metadata Bar */}
+       
+        {/* Results Metadata Bar */}
         {activeQuery.length > 0 && !loading && (
           <View style={styles.resultHeader}>
             <View style={styles.resultTitleGroup}>
               <Text style={styles.resultLabel}>Results for</Text>
-              <Text style={styles.queryHighlight} numberOfLines={1}>
+              <Text
+                style={styles.queryHighlight}
+                numberOfLines={1}
+              >
                 &ldquo;{activeQuery}&rdquo;
               </Text>
             </View>
 
             {products.length > 0 && (
-              <View style={styles.countBadge}>
-                <Text style={styles.resultCount}>
-                  {products.length} {products.length === 1 ? "item" : "items"}
-                </Text>
+              <View style={styles.resultActions}>
+               <SearchFilters
+                  products={products}
+                  onFilteredProductsChange={handleFilteredProductsChange}
+                />
+
+                <View style={styles.countBadge}>
+                  <Text style={styles.resultCount}>
+                    {filteredProducts.length} items
+                  </Text>
+                </View>
               </View>
             )}
           </View>
         )}
+
 
         {/* Content States */}
         {loading ? (
@@ -288,10 +401,10 @@ export default function SearchScreen() {
             <ActivityIndicator size="small" color={BRAND_COLOR} />
             <Text style={styles.loadingText}>Searching catalog...</Text>
           </View>
-        ) : activeQuery.trim() && products.length === 0 ? (
+        ) : activeQuery.trim() && filteredProducts.length === 0 ? (
           <SearchEmptyState query={activeQuery} />
-        ) : products.length > 0 ? (
-          <SearchProductList products={products} />
+        ) : filteredProducts.length > 0 ? (
+          <SearchProductList products={filteredProducts} />
         ) : (
           <View style={styles.initialState}>
             <View style={styles.initialIcon}>
@@ -462,4 +575,9 @@ const styles = StyleSheet.create({
     color: "#6b7280",
     textAlign: "center",
   },
+  resultActions: {
+  flexDirection: "row",
+  alignItems: "center",
+  gap: 8,
+},
 });

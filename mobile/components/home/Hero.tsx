@@ -1,4 +1,9 @@
-import React, { useState, useEffect, useRef, useCallback } from "react";
+import React, {
+  useState,
+  useEffect,
+  useRef,
+  useCallback,
+} from "react";
 import {
   View,
   Text,
@@ -12,11 +17,20 @@ import {
 import { Image } from "expo-image";
 import { router } from "expo-router";
 import { ArrowUpRight, ArrowRight } from "lucide-react-native";
+import { LinearGradient } from "expo-linear-gradient";
+import * as Haptics from "expo-haptics";
 import type { Category } from "@africasuk/types";
+import SouthSudanButtonBackground from "./SouthSudanButtonBackground";
+import SouthSudanCtaButton from "./SouthSudanButtonBackground";
+
+
+
+// Dynamic background loader integration
+
 
 const { width: SCREEN_WIDTH } = Dimensions.get("window");
-const CARD_PADDING = 16;
-const CARD_WIDTH = SCREEN_WIDTH - CARD_PADDING * 2;
+
+const HERO_HEIGHT = 340;
 const AUTO_PLAY_INTERVAL = 5500;
 
 interface Props {
@@ -25,22 +39,28 @@ interface Props {
 
 export default function Hero({ categories = [] }: Props) {
   const [activeIndex, setActiveIndex] = useState(0);
+
   const flatListRef = useRef<FlatList>(null);
   const isInteracting = useRef(false);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   const startTimer = useCallback(() => {
     if (categories.length <= 1) return;
-    if (timerRef.current) clearInterval(timerRef.current);
+
+    if (timerRef.current) {
+      clearInterval(timerRef.current);
+    }
 
     timerRef.current = setInterval(() => {
       if (!isInteracting.current) {
         setActiveIndex((prevIndex) => {
           const nextIndex = (prevIndex + 1) % categories.length;
+
           flatListRef.current?.scrollToOffset({
             offset: nextIndex * SCREEN_WIDTH,
             animated: true,
           });
+
           return nextIndex;
         });
       }
@@ -56,7 +76,9 @@ export default function Hero({ categories = [] }: Props) {
 
   useEffect(() => {
     startTimer();
-    return () => stopTimer();
+    return () => {
+      stopTimer();
+    };
   }, [startTimer, stopTimer]);
 
   const handleScrollBegin = () => {
@@ -75,7 +97,12 @@ export default function Hero({ categories = [] }: Props) {
     (event: NativeSyntheticEvent<NativeScrollEvent>) => {
       const offsetX = event.nativeEvent.contentOffset.x;
       const index = Math.round(offsetX / SCREEN_WIDTH);
-      if (index !== activeIndex && index >= 0 && index < categories.length) {
+
+      if (
+        index !== activeIndex &&
+        index >= 0 &&
+        index < categories.length
+      ) {
         setActiveIndex(index);
       }
     },
@@ -90,7 +117,10 @@ export default function Hero({ categories = [] }: Props) {
     });
   };
 
-  if (!categories || categories.length === 0) return null;
+
+  if (!categories || categories.length === 0) {
+    return null;
+  }
 
   return (
     <View style={styles.container}>
@@ -118,9 +148,10 @@ export default function Hero({ categories = [] }: Props) {
                 styles.cardPressable,
                 pressed && styles.pressedState,
               ]}
-              onPress={() => router.push(`/categories/${item.slug}` as never)}
+              onPress={() =>
+                router.push(`/categories/${item.slug}` as never)
+              }
             >
-              {/* 1:1 Pixel-Locked Canvas */}
               <View style={styles.imageStage}>
                 {item.imageUrl ? (
                   <Image
@@ -133,19 +164,40 @@ export default function Hero({ categories = [] }: Props) {
                 ) : (
                   <View style={styles.placeholder} />
                 )}
-              </View>
 
-              {/* Editorial Lower Meta Bar */}
-              <View style={styles.metaRow}>
-                <View style={styles.textStack}>
-                  <Text style={styles.kicker}>Curated Collection</Text>
-                  <Text numberOfLines={1} style={styles.title}>
-                    {item.name}
-                  </Text>
-                </View>
+                {/* Bottom readability overlay */}
+                <LinearGradient
+                  colors={[
+                    "rgba(0,0,0,0)",
+                    "rgba(0,0,0,0.14)",
+                    "rgba(0,0,0,0.52)",
+                    "rgba(0,0,0,0.72)",
+                  ]}
+                  locations={[0, 0.38, 0.74, 1]}
+                  style={styles.bottomOverlay}
+                />
 
-                <View style={styles.actionCircle}>
-                  <ArrowUpRight size={15} color="#18181b" strokeWidth={2} />
+                {/* Hero content */}
+                <View style={styles.heroContent}>
+                  <View style={styles.textStack}>
+                    <Text style={styles.kicker}>Curated Collection</Text>
+
+                    <Text numberOfLines={2} style={styles.title}>
+                      {item.name}
+                    </Text>
+
+                    <Text numberOfLines={2} style={styles.subtitle}>
+                      Discover something{"\n"}special for you.
+                    </Text>
+                  </View>
+
+                  <View style={styles.actionCircle}>
+                    <ArrowUpRight
+                      size={18}
+                      color="#18181b"
+                      strokeWidth={2.2}
+                    />
+                  </View>
                 </View>
               </View>
             </Pressable>
@@ -153,11 +205,12 @@ export default function Hero({ categories = [] }: Props) {
         )}
       />
 
-      {/* Fluid Pill Indicators */}
+      {/* Pagination indicators */}
       {categories.length > 1 && (
         <View style={styles.indicatorContainer}>
           {categories.map((_, idx) => {
             const isActive = idx === activeIndex;
+
             return (
               <Pressable
                 key={idx}
@@ -165,7 +218,9 @@ export default function Hero({ categories = [] }: Props) {
                 hitSlop={8}
                 style={[
                   styles.indicator,
-                  isActive ? styles.indicatorActive : styles.indicatorInactive,
+                  isActive
+                    ? styles.indicatorActive
+                    : styles.indicatorInactive,
                 ]}
               />
             );
@@ -173,50 +228,32 @@ export default function Hero({ categories = [] }: Props) {
         </View>
       )}
 
-      {/* Start Shopping Button */}
-      <View style={styles.ctaContainer}>
-        <Pressable
-          style={({ pressed }) => [
-            styles.startShoppingBtn,
-            pressed && styles.ctaPressedState,
-          ]}
-          onPress={() => router.push("/products" as never)}
-        >
-          <Text style={styles.startShoppingText}>Start Shopping</Text>
-          <ArrowRight size={15} color="#ffffff" strokeWidth={2} />
-        </Pressable>
-      </View>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
+    width: "100%",
     backgroundColor: "#ffffff",
-    paddingTop: 8,
-    paddingBottom: 16,
+    paddingBottom: 14,
   },
 
   slideFrame: {
     width: SCREEN_WIDTH,
-    alignItems: "center",
-    justifyContent: "center",
-    paddingHorizontal: CARD_PADDING,
   },
 
   cardPressable: {
-    width: CARD_WIDTH,
-    gap: 12,
+    width: SCREEN_WIDTH,
   },
 
   imageStage: {
-    width: CARD_WIDTH,
-    height: CARD_WIDTH,
-    borderRadius: 16,
+    width: SCREEN_WIDTH,
+    height: HERO_HEIGHT,
     backgroundColor: "#f4f4f5",
     overflow: "hidden",
-    borderWidth: 1,
-    borderColor: "#f0f0f0",
+    borderBottomLeftRadius: 28,
+    borderBottomRightRadius: 28,
   },
 
   image: {
@@ -229,43 +266,75 @@ const styles = StyleSheet.create({
     backgroundColor: "#f4f4f5",
   },
 
-  metaRow: {
+  bottomOverlay: {
+    position: "absolute",
+    left: 0,
+    right: 0,
+    bottom: 0,
+    height: 220,
+  },
+
+  heroContent: {
+    position: "absolute",
+    left: 20,
+    right: 20,
+    bottom: 24,
     flexDirection: "row",
-    alignItems: "center",
+    alignItems: "flex-end",
     justifyContent: "space-between",
-    paddingHorizontal: 2,
-    gap: 12,
   },
 
   textStack: {
     flex: 1,
-    gap: 2,
+    paddingRight: 16,
   },
 
   kicker: {
     fontSize: 10,
-    fontWeight: "600",
-    color: "#71717a",
-    letterSpacing: 0.8,
+    fontWeight: "800",
+    color: "#ffffff",
+    letterSpacing: 1.2,
     textTransform: "uppercase",
+    marginBottom: 4,
+    textShadowColor: "rgba(0,0,0,0.6)",
+    textShadowOffset: { width: 0, height: 1 },
+    textShadowRadius: 3,
   },
 
   title: {
-    fontSize: 18,
-    fontWeight: "700",
-    color: "#18181b",
-    letterSpacing: -0.3,
+    fontSize: 27,
+    lineHeight: 31,
+    fontWeight: "800",
+    color: "#ffffff",
+    letterSpacing: -0.6,
+    textShadowColor: "rgba(0,0,0,0.7)",
+    textShadowOffset: { width: 0, height: 2 },
+    textShadowRadius: 4,
+  },
+
+  subtitle: {
+    marginTop: 6,
+    fontSize: 12,
+    lineHeight: 17,
+    fontWeight: "500",
+    color: "rgba(255,255,255,0.92)",
+    textShadowColor: "rgba(0,0,0,0.6)",
+    textShadowOffset: { width: 0, height: 1 },
+    textShadowRadius: 3,
   },
 
   actionCircle: {
-    width: 34,
-    height: 34,
-    borderRadius: 17,
-    backgroundColor: "#f4f4f5",
-    borderWidth: 1,
-    borderColor: "#e4e4e7",
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: "#ffffff",
     alignItems: "center",
     justifyContent: "center",
+    shadowColor: "#000000",
+    shadowOpacity: 0.14,
+    shadowRadius: 6,
+    shadowOffset: { width: 0, height: 2 },
+    elevation: 3,
   },
 
   indicatorContainer: {
@@ -282,7 +351,7 @@ const styles = StyleSheet.create({
   },
 
   indicatorActive: {
-    width: 20,
+    width: 22,
     backgroundColor: "#18181b",
   },
 
@@ -291,36 +360,77 @@ const styles = StyleSheet.create({
     backgroundColor: "#e4e4e7",
   },
 
+  /* Enhanced Flag CTA Area */
   ctaContainer: {
-    paddingHorizontal: CARD_PADDING,
-    marginTop: 14,
+    paddingHorizontal: 16,
+    marginTop: 18,
   },
 
-  startShoppingBtn: {
+  ctaWrapper: {
     width: "100%",
-    height: 48,
-    backgroundColor: "#18181b",
-    borderRadius: 12,
+    height: 64, // Firm height to enforce proper flex padding and shape
+    borderRadius: 16,
+    overflow: "hidden",
+    shadowColor: "#005c2e",
+    shadowOpacity: 0.18,
+    shadowRadius: 10,
+    shadowOffset: { width: 0, height: 5 },
+    elevation: 3,
+  },
+
+  ctaContent: {
+    flex: 1,
     flexDirection: "row",
     alignItems: "center",
-    justifyContent: "center",
-    gap: 8,
+    justifyContent: "space-between",
+    paddingVertical: 12,
+    paddingHorizontal: 20,
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: "rgba(255, 255, 255, 0.15)",
   },
 
-  startShoppingText: {
+  ctaTextGroup: {
+    justifyContent: "center",
+  },
+
+  ctaHeading: {
     color: "#ffffff",
-    fontSize: 14,
+    fontSize: 16,
+    fontWeight: "800",
+    letterSpacing: -0.15,
+    textShadowColor: "rgba(0,0,0,0.4)",
+    textShadowOffset: { width: 0, height: 1 },
+    textShadowRadius: 2,
+  },
+
+  ctaSubtext: {
+    color: "rgba(255,255,255,0.92)", // Enhanced high-contrast ivory overlay
+    fontSize: 11,
     fontWeight: "600",
-    letterSpacing: -0.2,
+    marginTop: 2,
+    textShadowColor: "rgba(0,0,0,0.3)",
+    textShadowOffset: { width: 0, height: 1 },
+    textShadowRadius: 1,
+  },
+
+  ctaIconBadge: {
+    width: 34,
+    height: 34,
+    borderRadius: 17,
+    backgroundColor: "rgba(255,255,255,0.22)",
+    borderWidth: 1,
+    borderColor: "rgba(255,255,255,0.18)",
+    alignItems: "center",
+    justifyContent: "center",
   },
 
   pressedState: {
-    opacity: 0.92,
-    transform: [{ scale: 0.992 }],
+    opacity: 0.96,
   },
 
   ctaPressedState: {
-    opacity: 0.88,
-    transform: [{ scale: 0.985 }],
+    opacity: 0.92,
+    transform: [{ scale: 0.988 }],
   },
 });

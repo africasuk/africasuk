@@ -12,11 +12,13 @@ import {
 } from "react-native";
 import { Image } from "expo-image";
 import { useRouter } from "expo-router";
+
 import type { ProductWithDetails } from "@africasuk/types";
 
 import { WishlistButton } from "@/components/products/WishlistButton";
 import { AddToCartButton } from "@/components/products/AddToCartButton";
 import type { CartItem } from "@/types/cart";
+import { Price } from "../currency/Price";
 
 type SearchProduct = ProductWithDetails & {
   selectedColorId?: string;
@@ -33,6 +35,10 @@ export default function SearchProductList({
 }: SearchProductListProps) {
   const router = useRouter();
 
+  /*
+   * Flatten products by color while preserving
+   * the order supplied by SearchScreen.
+   */
   const items = useMemo(() => {
     return products.flatMap((product) =>
       (product.colors ?? []).map((color) => ({
@@ -48,9 +54,14 @@ export default function SearchProductList({
     router.push(`/products/${slug}?color=${colorId}` as const);
   };
 
-  const renderItem: ListRenderItem<(typeof items)[number]> = ({ item }) => {
+  const renderItem: ListRenderItem<(typeof items)[number]> = ({
+    item,
+  }) => {
     const image = item.color.images?.[0] as
-      | { imageUrl?: string; image_url?: string }
+      | {
+          imageUrl?: string;
+          image_url?: string;
+        }
       | undefined;
 
     const imageUrl =
@@ -60,6 +71,17 @@ export default function SearchProductList({
 
     const variant = item.variant;
     const stock = variant?.stock ?? 0;
+
+    /*
+     * Match the rating structure used by ProductCard.
+     */
+    const averageRating = Number(
+      item.rating?.averageRating ?? 0
+    );
+
+    const reviewCount = Number(
+      item.rating?.reviewCount ?? 0
+    );
 
     const originalProductId = item.selectedColorId
       ? item.id.replace(`-${item.selectedColorId}`, "")
@@ -99,11 +121,14 @@ export default function SearchProductList({
           pressed && styles.cardPressed,
         ]}
         onPress={() =>
-          handleNavigate(item.slug, item.color.id.toString())
+          handleNavigate(
+            item.slug,
+            item.color.id.toString()
+          )
         }
       >
         <View style={styles.topRow}>
-          {/* Product Image + Floating Wishlist Badge */}
+          {/* Product image and wishlist */}
           <View style={styles.imageContainer}>
             <Image
               source={{ uri: imageUrl }}
@@ -111,62 +136,115 @@ export default function SearchProductList({
               contentFit="contain"
               transition={150}
             />
+
             <View style={styles.wishlistBadge}>
               <WishlistButton item={cartItem} />
             </View>
           </View>
 
-          {/* Product Details */}
+          {/* Product details */}
           <View style={styles.details}>
             <View>
-              <Text style={styles.title} numberOfLines={2}>
+              <Text
+                style={styles.title}
+                numberOfLines={2}
+              >
                 {item.name}
               </Text>
 
+              {/* Product rating */}
+              <View style={styles.ratingRow}>
+                <View style={styles.stars}>
+                  {Array.from({ length: 5 }).map(
+                    (_, index) => (
+                      <Text
+                        key={index}
+                        style={[
+                          styles.star,
+                          index < Math.round(averageRating)
+                            ? styles.filledStar
+                            : styles.emptyStar,
+                        ]}
+                      >
+                        ★
+                      </Text>
+                    )
+                  )}
+                </View>
+
+                {reviewCount > 0 ? (
+                  <Text style={styles.ratingText}>
+                    {averageRating.toFixed(1)} ({reviewCount})
+                  </Text>
+                ) : (
+                  <Text style={styles.noReviewsText}>
+                    No reviews
+                  </Text>
+                )}
+              </View>
+
+              {/* Brand and category */}
               {(item.brand || item.category) && (
                 <View style={styles.metaRow}>
                   {item.brand && (
-                    <Text style={styles.metaText} numberOfLines={1}>
+                    <Text
+                      style={styles.metaText}
+                      numberOfLines={1}
+                    >
                       {item.brand.name}
                     </Text>
                   )}
+
                   {item.brand && item.category && (
                     <Text style={styles.dot}>•</Text>
                   )}
+
                   {item.category && (
-                    <Text style={styles.metaText} numberOfLines={1}>
+                    <Text
+                      style={styles.metaText}
+                      numberOfLines={1}
+                    >
                       {item.category.name}
                     </Text>
                   )}
                 </View>
               )}
 
+              {/* Selected color */}
               <View style={styles.colorRow}>
                 <View style={styles.colorDot} />
-                <Text style={styles.colorText} numberOfLines={1}>
+
+                <Text
+                  style={styles.colorText}
+                  numberOfLines={1}
+                >
                   {item.color.name}
                 </Text>
               </View>
             </View>
 
-            {/* Price & Stock */}
+            {/* Price and stock */}
             <View style={styles.priceRow}>
-              <Text style={styles.price}>
-                ${(variant?.price ?? 0).toFixed(2)}
-              </Text>
+              <Price
+                price={Number(variant?.price ?? 0)}
+                style={styles.price}
+              />
+
               <Text
                 style={[
                   styles.stockText,
                   stock <= 0 && styles.outOfStockText,
                 ]}
               >
-                {stock > 0 ? `${stock} in stock` : "Out of stock"}
+                {stock > 0
+                  ? `${stock} in stock`
+                  : "Out of stock"}
               </Text>
             </View>
           </View>
         </View>
 
-        {/* Full-width dual CTA row */}
+        {/* Add to cart */}
         <View style={styles.actionsRow}>
           <AddToCartButton item={cartItem} />
         </View>
@@ -204,6 +282,13 @@ type Styles = {
   wishlistBadge: ViewStyle;
   details: ViewStyle;
   title: TextStyle;
+  ratingRow: ViewStyle;
+  stars: ViewStyle;
+  star: TextStyle;
+  filledStar: TextStyle;
+  emptyStar: TextStyle;
+  ratingText: TextStyle;
+  noReviewsText: TextStyle;
   metaRow: ViewStyle;
   metaText: TextStyle;
   dot: TextStyle;
@@ -285,6 +370,45 @@ const styles = StyleSheet.create<Styles>({
     color: "#111827",
   },
 
+  /* Rating */
+  ratingRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 4,
+    marginTop: 4,
+  },
+
+  stars: {
+    flexDirection: "row",
+    alignItems: "center",
+  },
+
+  star: {
+    fontSize: 12,
+    lineHeight: 14,
+  },
+
+  filledStar: {
+    color: "#f59e0b",
+  },
+
+  emptyStar: {
+    color: "#e4e4e7",
+  },
+
+  ratingText: {
+    fontSize: 11,
+    fontWeight: "600",
+    color: "#71717a",
+  },
+
+  noReviewsText: {
+    fontSize: 11,
+    fontWeight: "500",
+    color: "#a1a1aa",
+  },
+
+  /* Brand and category */
   metaRow: {
     flexDirection: "row",
     alignItems: "center",
@@ -302,6 +426,7 @@ const styles = StyleSheet.create<Styles>({
     color: "#9ca3af",
   },
 
+  /* Color */
   colorRow: {
     flexDirection: "row",
     alignItems: "center",
@@ -322,9 +447,11 @@ const styles = StyleSheet.create<Styles>({
     fontWeight: "500",
   },
 
+  /* Price and stock */
   priceRow: {
     flexDirection: "row",
     alignItems: "baseline",
+    flexWrap: "wrap",
     gap: 6,
     marginTop: 4,
   },
@@ -346,6 +473,7 @@ const styles = StyleSheet.create<Styles>({
     color: "#dc2626",
   },
 
+  /* Actions */
   actionsRow: {
     width: "100%",
     marginTop: 10,

@@ -1,11 +1,25 @@
-import React from "react";
-import { View, Text, Pressable, StyleSheet } from "react-native";
+
+import React, { useState } from "react";
+import {
+  View,
+  Text,
+  Pressable,
+  StyleSheet,
+  Platform,
+  ActivityIndicator,
+} from "react-native";
 import { useRouter, Href } from "expo-router";
-import { ShoppingBag, ArrowRight } from "lucide-react-native";
+import { ShoppingBag, ArrowRight, Check } from "lucide-react-native";
+import { LinearGradient } from "expo-linear-gradient";
+import * as Haptics from "expo-haptics";
 
 import { createClient } from "@/lib/auth/client";
 import { useCart } from "../../store/cart";
 import type { CartItem } from "../../types/cart";
+
+const GREEN = "#005c2e";
+const DARK_GREEN = "#00401f";
+const GOLD = "#F4C542";
 
 interface Props {
   item: CartItem;
@@ -13,66 +27,143 @@ interface Props {
 
 export function AddToCartButton({ item }: Props) {
   const router = useRouter();
+
+  const [buying, setBuying] = useState(false);
+  const [adding, setAdding] = useState(false);
+  const [added, setAdded] = useState(false);
+
   const addItem = useCart((state) => state.addItem);
   const buyNow = useCart((state) => state.buyNow);
   const quantity = useCart((state) => state.getQuantity(item.variantId));
 
   const isOutOfStock = item.stock <= 0;
 
-  const handleBuyNow = async () => {
-    const supabase = createClient();
-
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
-
-    if (!user) {
-      router.push("/auth/login" as Href);
-      return;
+  const triggerHaptic = () => {
+    if (Platform.OS !== "web") {
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(
+        () => {}
+      );
     }
+  };
 
-    buyNow(item);
-    router.push("/checkout" as Href);
+  const handleBuyNow = async () => {
+    if (isOutOfStock || buying) return;
+
+    setBuying(true);
+    triggerHaptic();
+
+    try {
+      const supabase = createClient();
+      const {
+        data: { user },
+        error,
+      } = await supabase.auth.getUser();
+
+      if (error || !user) {
+        router.push("/auth" as Href);
+        return;
+      }
+
+      buyNow(item);
+      router.push("/checkout" as Href);
+    } catch (error) {
+      console.error("Buy now failed:", error);
+    } finally {
+      setBuying(false);
+    }
+  };
+
+  const handleAddToCart = () => {
+    if (isOutOfStock || adding) return;
+
+    setAdding(true);
+    triggerHaptic();
+
+    try {
+      addItem(item);
+      setAdded(true);
+
+      setTimeout(() => {
+        setAdded(false);
+      }, 1200);
+    } finally {
+      setAdding(false);
+    }
   };
 
   return (
     <View style={styles.container}>
-      {/* Primary: Add to Cart */}
+      {/* Buy Now */}
       <Pressable
-        onPress={() => addItem(item)}
-        disabled={isOutOfStock}
+        onPress={handleBuyNow}
+        disabled={isOutOfStock || buying}
+        accessibilityRole="button"
+        accessibilityLabel={
+          isOutOfStock ? "Out of stock" : "Buy now"
+        }
         style={({ pressed }) => [
-          styles.primaryBtn,
-          isOutOfStock && styles.disabledBtn,
-          pressed && !isOutOfStock && styles.pressedState,
+          styles.buyNowButton,
+          pressed && styles.pressed,
+          isOutOfStock && styles.disabled,
         ]}
       >
-        <ShoppingBag size={14} color="#ffffff" strokeWidth={2} />
-        <Text style={styles.primaryBtnText} numberOfLines={1}>
-          {isOutOfStock ? "Sold Out" : "Add to Cart"}
+        <LinearGradient
+          colors={[GREEN, DARK_GREEN]}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 1 }}
+          style={styles.buyNowGradient}
+        >
+          {buying ? (
+            <ActivityIndicator size="small" color="#FFFFFF" />
+          ) : (
+            <>
+              <Text style={styles.buyNowText}>
+                {isOutOfStock ? "Out of Stock" : "Buy Now"}
+              </Text>
+
+              {!isOutOfStock && (
+                <ArrowRight
+                  size={16}
+                  color={GOLD}
+                  strokeWidth={2.5}
+                />
+              )}
+            </>
+          )}
+        </LinearGradient>
+      </Pressable>
+
+      {/* Add to Cart */}
+      <Pressable
+        onPress={handleAddToCart}
+        disabled={isOutOfStock || adding}
+        accessibilityRole="button"
+        accessibilityLabel="Add to cart"
+        style={({ pressed }) => [
+          styles.addToCartButton,
+          pressed && styles.pressed,
+          isOutOfStock && styles.disabled,
+        ]}
+      >
+        {adding ? (
+          <ActivityIndicator size="small" color={GREEN} />
+        ) : added ? (
+          <Check size={17} color={GREEN} strokeWidth={2.5} />
+        ) : (
+          <ShoppingBag size={17} color={GREEN} strokeWidth={2} />
+        )}
+
+        <Text style={styles.addToCartText}>
+          {added ? "Added" : "Add to Cart"}
         </Text>
 
         {quantity > 0 && (
-          <View style={styles.counterBadge}>
-            <Text style={styles.counterBadgeText}>{quantity}</Text>
+          <View style={styles.quantityBadge}>
+            <Text style={styles.quantityText}>
+              {quantity > 99 ? "99+" : quantity}
+            </Text>
           </View>
         )}
-      </Pressable>
-
-      {/* Secondary: Buy Now */}
-      <Pressable
-        onPress={handleBuyNow}
-        disabled={isOutOfStock}
-        style={({ pressed }) => [
-          styles.secondaryBtn,
-          isOutOfStock && styles.disabledBtn,
-          pressed && !isOutOfStock && styles.pressedState,
-        ]}
-      >
-        <Text style={styles.secondaryBtnText} numberOfLines={1}>
-          Buy Now
-        </Text>
-        <ArrowRight size={13} color="#111827" strokeWidth={2} />
       </Pressable>
     </View>
   );
@@ -86,69 +177,72 @@ const styles = StyleSheet.create({
     width: "100%",
   },
 
-  primaryBtn: {
-    flex: 1.25,
-    height: 38,
-    backgroundColor: "#111827",
-    borderRadius: 8,
-    paddingHorizontal: 12,
+  buyNowButton: {
+    flex: 1,
+    minWidth: 0,
+    minHeight: 44,
+    borderRadius: 10,
+    overflow: "hidden",
+  },
+
+  buyNowGradient: {
+    flex: 1,
+    minHeight: 44,
+    paddingHorizontal: 10,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 7,
+  },
+
+  buyNowText: {
+    color: "#FFFFFF",
+    fontSize: 14,
+    fontWeight: "700",
+  },
+
+  addToCartButton: {
+    flex: 1,
+    minWidth: 0,
+    minHeight: 44,
+    borderWidth: 1,
+    borderColor: GREEN,
+    borderRadius: 10,
+    paddingHorizontal: 8,
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
     gap: 6,
+    backgroundColor: "#FFFFFF",
   },
 
-  primaryBtnText: {
-    color: "#ffffff",
-    fontSize: 12,
+  addToCartText: {
+    color: GREEN,
+    fontSize: 13,
     fontWeight: "600",
-    letterSpacing: -0.1,
   },
 
-  counterBadge: {
-    backgroundColor: "#004d26",
-    minWidth: 16,
-    height: 16,
-    borderRadius: 8,
+  quantityBadge: {
+    minWidth: 19,
+    height: 19,
     paddingHorizontal: 4,
+    borderRadius: 10,
+    backgroundColor: GOLD,
     alignItems: "center",
     justifyContent: "center",
   },
 
-  counterBadgeText: {
-    color: "#ffffff",
-    fontSize: 9,
+  quantityText: {
+    color: DARK_GREEN,
+    fontSize: 10,
     fontWeight: "700",
   },
 
-  secondaryBtn: {
-    flex: 0.95,
-    height: 38,
-    paddingHorizontal: 10,
-    borderRadius: 8,
-    backgroundColor: "#f3f4f6",
-    borderWidth: 1,
-    borderColor: "#e5e7eb",
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    gap: 4,
+  pressed: {
+    opacity: 0.82,
   },
 
-  secondaryBtnText: {
-    color: "#111827",
-    fontSize: 12,
-    fontWeight: "600",
-    letterSpacing: -0.1,
-  },
-
-  disabledBtn: {
-    opacity: 0.4,
-    backgroundColor: "#9ca3af",
-  },
-
-  pressedState: {
-    opacity: 0.85,
-    transform: [{ scale: 0.985 }],
+  disabled: {
+    opacity: 0.5,
   },
 });

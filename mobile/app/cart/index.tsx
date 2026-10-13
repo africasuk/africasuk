@@ -1,17 +1,42 @@
 import React from "react";
-import { StyleSheet, ScrollView, View } from "react-native";
+import {
+  StyleSheet,
+  View,
+} from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import Animated, {
+  useAnimatedScrollHandler,
+  useSharedValue,
+} from "react-native-reanimated";
+
 
 import CartHeader from "@/components/cart/CartHeader";
 import CartList from "@/components/cart/CartList";
 import CartSummary from "@/components/cart/CartSummary";
+import HomeHeader from "@/components/home/HomeHeader";
 
 export default function CartScreen() {
+  const scrollY = useSharedValue(0);
+
+  const scrollHandler = useAnimatedScrollHandler({
+    onScroll: (event) => {
+      scrollY.value = event.contentOffset.y;
+    },
+  });
+
   return (
-    <SafeAreaView style={styles.safeArea} edges={["top", "bottom"]}>
-      <ScrollView
+    <SafeAreaView
+      style={styles.safeArea}
+      edges={["top", "bottom"]}
+    >
+      {/* Same header used on Home and Products */}
+      <HomeHeader scrollY={scrollY} />
+
+      <Animated.ScrollView
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
+        onScroll={scrollHandler}
+        scrollEventThrottle={16}
       >
         <View style={styles.container}>
           {/* Cart Section Header */}
@@ -26,7 +51,7 @@ export default function CartScreen() {
             <CartSummary />
           </View>
         </View>
-      </ScrollView>
+      </Animated.ScrollView>
     </SafeAreaView>
   );
 }
@@ -36,14 +61,18 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: "#ffffff",
   },
+
   scrollContent: {
     flexGrow: 1,
-    paddingVertical: 20,
+    paddingTop: 80,
+    paddingBottom: 20,
     paddingHorizontal: 16,
   },
+
   container: {
     flex: 1,
   },
+
   contentStack: {
     marginTop: 24,
     gap: 24,

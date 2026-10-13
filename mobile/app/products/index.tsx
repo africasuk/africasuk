@@ -1,22 +1,29 @@
-import { useEffect, useMemo, useState, useCallback } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
+
 import {
-  View,
-  Text,
-  FlatList,
   ActivityIndicator,
-  StyleSheet,
   RefreshControl,
+  StyleSheet,
+  Text,
   TouchableOpacity,
+  View,
 } from "react-native";
-import { Stack, useRouter } from "expo-router";
+
+import Animated, {
+  useAnimatedScrollHandler,
+  useSharedValue,
+} from "react-native-reanimated";
+
+import { useRouter } from "expo-router";
+
 import type { ProductWithDetails } from "@africasuk/types";
 
-import { ProductCard } from "@/components/products/ProductCard";
-import SearchBar from "@/components/layout/header/SearchBar";
 
+import { ProductCard } from "@/components/products/ProductCard";
 import { ProductRepository } from "@/repositories/ProductRepository";
 import { ProductQueryService } from "@/services/ProductQueryService";
 import { supabase } from "@/lib/supabase/client";
+import HomeHeader from "@/components/home/HomeHeader";
 
 const BRAND_COLOR = "#005c2e";
 
@@ -31,14 +38,40 @@ export default function ProductsPage() {
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
 
+  /**
+   * Same scroll value used by the Home header.
+   */
+  const scrollY = useSharedValue(0);
+
+  const scrollHandler = useAnimatedScrollHandler({
+    onScroll: (event) => {
+      scrollY.value = event.contentOffset.y;
+    },
+  });
+
+  /**
+   * Same product service used by the working Products page.
+   *
+   * This keeps:
+   * - images
+   * - colors
+   * - variants
+   * - prices
+   * - product details
+   * - rating data
+   */
   const service = useMemo(
-    () => new ProductQueryService(new ProductRepository(supabase)),
-    []
+    () =>
+      new ProductQueryService(
+        new ProductRepository(supabase),
+      ),
+    [],
   );
 
   const fetchProducts = useCallback(async () => {
     try {
       const data = await service.getAll();
+
       setProducts(data ?? []);
     } catch (err) {
       console.error("Error loading products:", err);
@@ -57,7 +90,7 @@ export default function ProductsPage() {
     fetchProducts();
   };
 
-  /*
+  /**
    * Same color ordering logic as the web.
    *
    * Product A - Color 1
@@ -68,37 +101,37 @@ export default function ProductsPage() {
    * Product C - Color 2
    */
   const colorProducts = useMemo<ColorProduct[]>(() => {
-    type ProductColor = ProductWithDetails["colors"][number];
+    type ProductColor =
+      ProductWithDetails["colors"][number];
 
     type GroupedColorProduct = {
       product: ProductWithDetails;
       color: ProductColor;
     };
 
-    const groupedProducts: GroupedColorProduct[][] = (
-      products ?? []
-    ).map((product) => {
-      const colors = product.colors ?? [];
+    const groupedProducts: GroupedColorProduct[][] =
+      (products ?? []).map((product) => {
+        const colors = product.colors ?? [];
 
-      return colors
-        .filter(
-          (color) =>
-            color.variants &&
-            color.variants.length > 0
-        )
-        .map((color) => ({
-          product,
-          color,
-        }));
-    });
+        return colors
+          .filter(
+            (color) =>
+              color.variants &&
+              color.variants.length > 0,
+          )
+          .map((color) => ({
+            product,
+            color,
+          }));
+      });
 
     const result: ColorProduct[] = [];
 
     const maxColors = Math.max(
       0,
       ...groupedProducts.map(
-        (group) => group.length
-      )
+        (group) => group.length,
+      ),
     );
 
     // Interleave colors across products.
@@ -117,6 +150,13 @@ export default function ProductsPage() {
           id: `${item.product.id}-${item.color.id}`,
           name: `${item.product.name} - ${item.color.name}`,
           selectedColorId: item.color.id,
+
+          /**
+           * Keep only the selected color.
+           *
+           * ProductCard will therefore use the
+           * correct color images and variants.
+           */
           colors: [item.color],
         });
       }
@@ -124,14 +164,6 @@ export default function ProductsPage() {
 
     return result;
   }, [products]);
-
-  /*
-   * Search the already-prepared color products.
-   *
-   * SearchBar handles the actual search UI/navigation.
-   * This list can be extended later if SearchBar exposes
-   * its query value directly.
-   */
 
   if (loading && !refreshing) {
     return (
@@ -146,21 +178,10 @@ export default function ProductsPage() {
 
   return (
     <View style={styles.container}>
-      <Stack.Screen
-        options={{
-          title: "Products",
-          headerTitleStyle: {
-            fontWeight: "700",
-            color: "#111827",
-          },
-          headerShadowVisible: false,
-          headerStyle: {
-            backgroundColor: "#ffffff",
-          },
-        }}
-      />
+      {/* Same header used on Home */}
+      <HomeHeader scrollY={scrollY} />
 
-      <FlatList
+      <Animated.FlatList
         key="products-grid-2-col"
         data={colorProducts}
         keyExtractor={(item) => item.id}
@@ -171,7 +192,9 @@ export default function ProductsPage() {
         initialNumToRender={8}
         maxToRenderPerBatch={8}
         windowSize={7}
-        removeClippedSubviews={true}
+        removeClippedSubviews
+        onScroll={scrollHandler}
+        scrollEventThrottle={16}
         refreshControl={
           <RefreshControl
             refreshing={refreshing}
@@ -182,14 +205,6 @@ export default function ProductsPage() {
         }
         ListHeaderComponent={
           <View style={styles.header}>
-            {/* Search */}
-            <View style={styles.searchContainer}>
-              <SearchBar
-                placeholder="Search products, brands, styles..."
-              />
-            </View>
-
-            {/* Heading */}
             <View style={styles.headingSection}>
               <View style={styles.titleGroup}>
                 <Text style={styles.badge}>
@@ -217,10 +232,14 @@ export default function ProductsPage() {
                 style={styles.requestBtn}
                 activeOpacity={0.85}
                 onPress={() =>
-                  router.push("/requests" as never)
+                  router.push(
+                    "/requests" as never,
+                  )
                 }
               >
-                <Text style={styles.requestBtnText}>
+                <Text
+                  style={styles.requestBtnText}
+                >
                   Can&apos;t Find a Product? Request It
                 </Text>
               </TouchableOpacity>
@@ -253,7 +272,6 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: "#ffffff",
-    paddingTop: 50,
   },
 
   centerContainer: {
@@ -265,7 +283,15 @@ const styles = StyleSheet.create({
 
   listContent: {
     paddingHorizontal: 8,
-    paddingTop: 12,
+
+    /*
+     * Space for the HomeHeader.
+     *
+     * The header is absolute and sits above
+     * the list.
+     */
+    paddingTop: 120,
+
     paddingBottom: 40,
   },
 
@@ -275,10 +301,6 @@ const styles = StyleSheet.create({
     paddingBottom: 12,
     borderBottomWidth: 1,
     borderBottomColor: "#f3f4f6",
-  },
-
-  searchContainer: {
-    marginBottom: 16,
   },
 
   headingSection: {
@@ -339,6 +361,7 @@ const styles = StyleSheet.create({
     borderColor: BRAND_COLOR,
     alignItems: "center",
     justifyContent: "center",
+
     shadowColor: BRAND_COLOR,
     shadowOffset: {
       width: 0,

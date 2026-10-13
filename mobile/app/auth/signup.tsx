@@ -1,34 +1,89 @@
-import React from "react";
+import React, {
+  useEffect,
+  useRef,
+  useState,
+} from "react";
+
 import {
-  View,
+  ActivityIndicator,
+  Alert,
+  Image,
+  ImageBackground,
+  Keyboard,
+  KeyboardAvoidingView,
+  Platform,
+  Pressable,
+  ScrollView,
+  StyleSheet,
   Text,
   TextInput,
-  Pressable,
-  ActivityIndicator,
-  StyleSheet,
-  Alert,
-  KeyboardAvoidingView,
-  ScrollView,
-  Platform,
+  View,
 } from "react-native";
-import { useForm, Controller } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { useRouter, Href } from "expo-router";
-import { ArrowRight, Eye, EyeOff } from "lucide-react-native";
 
-import Logo from "@/components/layout/header/Logo";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
+
+import { Controller, useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+
+import { useRouter, type Href } from "expo-router";
+
+import {
+  ArrowRight,
+  Eye,
+  EyeOff,
+  Home,
+} from "lucide-react-native";
+
 import { useTranslation } from "@/components/providers/LanguageProvider";
+
 import {
   signupSchema,
   type SignupFormData,
 } from "@/lib/validation/signup";
+
 import { signUp } from "@/lib/auth/signup";
+
+const DARK_GREEN = "#005c2e";
+const YELLOW = "#000000";
 
 export default function SignupPage() {
   const router = useRouter();
+  const insets = useSafeAreaInsets();
   const { dictionary } = useTranslation();
-  const [showPassword, setShowPassword] = React.useState(false);
-  const [showConfirmPassword, setShowConfirmPassword] = React.useState(false);
+
+  const scrollRef = useRef<ScrollView>(null);
+  const emailInputRef = useRef<TextInput>(null);
+  const passwordInputRef = useRef<TextInput>(null);
+  const confirmPasswordInputRef = useRef<TextInput>(null);
+
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [isKeyboardVisible, setKeyboardVisible] = useState(false);
+
+  useEffect(() => {
+    const showEvent =
+      Platform.OS === "ios"
+        ? "keyboardWillShow"
+        : "keyboardDidShow";
+
+    const hideEvent =
+      Platform.OS === "ios"
+        ? "keyboardWillHide"
+        : "keyboardDidHide";
+
+    const showSub = Keyboard.addListener(showEvent, () =>
+      setKeyboardVisible(true),
+    );
+
+    const hideSub = Keyboard.addListener(hideEvent, () =>
+      setKeyboardVisible(false),
+    );
+
+    return () => {
+      showSub.remove();
+      hideSub.remove();
+    };
+  }, []);
 
   const {
     control,
@@ -43,167 +98,327 @@ export default function SignupPage() {
       password: "",
       confirmPassword: "",
     },
+    mode: "onBlur",
   });
+
+  const sendSignupEmail = async (
+    email: string,
+    name: string,
+  ) => {
+    try {
+      const controller = new AbortController();
+
+      const timeoutId = setTimeout(
+        () => controller.abort(),
+        6000,
+      );
+
+      await fetch(
+        "https://www.africasuk.com/api/email/signup",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          signal: controller.signal,
+          body: JSON.stringify({
+            email: email.trim().toLowerCase(),
+            name: name.trim(),
+          }),
+        },
+      );
+
+      clearTimeout(timeoutId);
+    } catch (emailError) {
+      console.warn(
+        "Non-critical signup email error:",
+        emailError,
+      );
+    }
+  };
 
   const onSubmit = async (data: SignupFormData) => {
     try {
       const { error } = await signUp({
-        fullName: data.fullName,
-        email: data.email,
+        fullName: data.fullName.trim(),
+        email: data.email.trim().toLowerCase(),
         password: data.password,
       });
 
-if (error) {
-  Alert.alert("Error", error.message);
-  return;
-}
-
-// Send welcome email
-try {
-  const response = await fetch(
-    "https://www.africasuk.com/api/email/signup",
-    {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        email: data.email,
-        name: data.fullName,
-      }),
-    },
-  );
-
-        const text = await response.text();
-
-        console.log("Signup email API status:", response.status);
-        console.log("Signup email API response:", text);
-      } catch (emailError) {
-        // Do not block account creation if email fails
-        console.error("Signup email error:", emailError);
+      if (error) {
+        Alert.alert(
+          "Registration Failed",
+          error.message,
+        );
+        return;
       }
+
+      void sendSignupEmail(
+        data.email,
+        data.fullName,
+      );
 
       Alert.alert(
         "Success",
-        dictionary.auth.welcomeToAfricaSuk,
+        dictionary.auth?.welcomeToAfricaSuk ??
+          "Welcome to Africa Suk!",
+        [
+          {
+            text: "Continue",
+            onPress: () => {
+              reset();
+              router.replace("/(tabs)" as Href);
+            },
+          },
+        ],
       );
+    } catch (err: unknown) {
+      const message =
+        err instanceof Error
+          ? err.message
+          : "An unexpected error occurred.";
 
-      reset();
-      router.push("/");
-    } catch (err: any) {
-      Alert.alert("Error", err.message || "An unexpected error occurred.");
+      Alert.alert("Error", message);
     }
   };
 
   return (
-    <KeyboardAvoidingView
-      style={styles.container}
-      behavior={Platform.OS === "ios" ? "padding" : undefined}
-    >
-      <ScrollView
-        contentContainerStyle={styles.scrollContent}
-        showsVerticalScrollIndicator={false}
-        keyboardShouldPersistTaps="handled"
+    <View style={styles.screen}>
+      {/* Hero Header */}
+      <ImageBackground
+        source={require("@/assets/images/auth-bg-page.png")}
+        style={styles.hero}
+        resizeMode="cover"
+        imageStyle={styles.heroImage}
       >
-        {/* Card Container */}
-        <View style={styles.card}>
-          {/* Header */}
-          <View style={styles.header}>
-            <View style={styles.logoWrapper}>
-              <Logo />
-            </View>
-            <Text style={styles.title}>{dictionary.auth.signupTitle}</Text>
-            <Text style={styles.subtitle}>{dictionary.auth.signupSubtitle}</Text>
+        <View style={styles.heroOverlay} />
+
+        {/* Brand Header */}
+        {!isKeyboardVisible && (
+          <View style={styles.brandArea}>
+            <Text style={styles.brandText}>
+              Welcome to Africa Suk
+            </Text>
+
+            <Text style={styles.tagline}>
+              CREATE AN ACCOUNT TO START ORDERING
+            </Text>
           </View>
+        )}
+      </ImageBackground>
 
-          {/* Form Group */}
-          <View style={styles.formGroup}>
-            {/* Full Name */}
-            <View style={styles.inputContainer}>
-              <Text style={styles.label}>{dictionary.auth.fullName}</Text>
-              <Controller
-                control={control}
-                name="fullName"
-                render={({ field: { onChange, onBlur, value } }) => (
-                  <TextInput
-                    style={[styles.input, errors.fullName && styles.inputError]}
-                    placeholder="Enter your full name"
-                    placeholderTextColor="#a1a1aa"
-                    onBlur={onBlur}
-                    onChangeText={onChange}
-                    value={value}
-                    autoCapitalize="words"
-                    editable={!isSubmitting}
-                  />
+      {/* Form Area */}
+      <KeyboardAvoidingView
+        behavior={
+          Platform.OS === "ios"
+            ? "padding"
+            : "height"
+        }
+        style={styles.formArea}
+        keyboardVerticalOffset={
+          Platform.OS === "ios" ? 10 : 0
+        }
+      >
+        <ScrollView
+          ref={scrollRef}
+          contentContainerStyle={[
+            styles.scrollContent,
+            {
+              paddingBottom: Math.max(
+                insets.bottom + 20,
+                36,
+              ),
+            },
+          ]}
+          keyboardShouldPersistTaps="handled"
+          keyboardDismissMode="on-drag"
+          showsVerticalScrollIndicator={false}
+        >
+          <View style={styles.formContent}>
+         
+
+            <View style={styles.form}>
+              {/* Full Name */}
+              <View style={styles.inputGroup}>
+                <Text style={styles.label}>
+                  {dictionary.auth?.fullName ??
+                    "Full Name"}
+                </Text>
+
+                <Controller
+                  control={control}
+                  name="fullName"
+                  render={({
+                    field: {
+                      onChange,
+                      onBlur,
+                      value,
+                    },
+                  }) => (
+                    <TextInput
+                      style={[
+                        styles.input,
+                        errors.fullName &&
+                          styles.inputError,
+                      ]}
+                      placeholder="Enter your full name"
+                      placeholderTextColor="#a1a1aa"
+                      onBlur={onBlur}
+                      onChangeText={onChange}
+                      value={value}
+                      autoCapitalize="words"
+                      autoComplete="name"
+                      textContentType="name"
+                      returnKeyType="next"
+                      onSubmitEditing={() =>
+                        emailInputRef.current?.focus()
+                      }
+                      editable={!isSubmitting}
+                    />
+                  )}
+                />
+
+                {errors.fullName && (
+                  <Text style={styles.errorText}>
+                    {errors.fullName.message}
+                  </Text>
                 )}
-              />
-              {errors.fullName && (
-                <Text style={styles.errorText}>{errors.fullName.message}</Text>
-              )}
-            </View>
+              </View>
 
-            {/* Email Address */}
-            <View style={styles.inputContainer}>
-              <Text style={styles.label}>{dictionary.auth.emailAddress}</Text>
-              <Controller
-                control={control}
-                name="email"
-                render={({ field: { onChange, onBlur, value } }) => (
-                  <TextInput
-                    style={[styles.input, errors.email && styles.inputError]}
-                    placeholder="name@example.com"
-                    placeholderTextColor="#a1a1aa"
-                    onBlur={onBlur}
-                    onChangeText={onChange}
-                    value={value}
-                    keyboardType="email-address"
-                    autoCapitalize="none"
-                    autoCorrect={false}
-                    editable={!isSubmitting}
-                  />
+              {/* Email */}
+              <View style={styles.inputGroup}>
+                <Text style={styles.label}>
+                  {dictionary.auth?.emailAddress ??
+                    "Email"}
+                </Text>
+
+                <Controller
+                  control={control}
+                  name="email"
+                  render={({
+                    field: {
+                      onChange,
+                      onBlur,
+                      value,
+                    },
+                  }) => (
+                    <TextInput
+                      ref={emailInputRef}
+                      style={[
+                        styles.input,
+                        errors.email &&
+                          styles.inputError,
+                      ]}
+                      placeholder="Enter your email"
+                      placeholderTextColor="#a1a1aa"
+                      onBlur={onBlur}
+                      onChangeText={onChange}
+                      value={value}
+                      keyboardType="email-address"
+                      autoCapitalize="none"
+                      autoCorrect={false}
+                      autoComplete="email"
+                      textContentType="emailAddress"
+                      returnKeyType="next"
+                      onSubmitEditing={() =>
+                        passwordInputRef.current?.focus()
+                      }
+                      editable={!isSubmitting}
+                    />
+                  )}
+                />
+
+                {errors.email && (
+                  <Text style={styles.errorText}>
+                    {errors.email.message}
+                  </Text>
                 )}
-              />
-              {errors.email && (
-                <Text style={styles.errorText}>{errors.email.message}</Text>
-              )}
-            </View>
+              </View>
 
-
-           {/* Password */}
-              <View style={styles.inputContainer}>
-                <Text style={styles.label}>{dictionary.auth.password}</Text>
+              {/* Password */}
+              <View style={styles.inputGroup}>
+                <Text style={styles.label}>
+                  {dictionary.auth?.password ??
+                    "Password"}
+                </Text>
 
                 <Controller
                   control={control}
                   name="password"
-                  render={({ field: { onChange, onBlur, value } }) => (
-                    <View style={styles.passwordInputWrapper}>
+                  render={({
+                    field: {
+                      onChange,
+                      onBlur,
+                      value,
+                    },
+                  }) => (
+                    <View
+                      style={
+                        styles.passwordWrapper
+                      }
+                    >
                       <TextInput
+                        ref={passwordInputRef}
                         style={[
                           styles.input,
                           styles.passwordInput,
-                          errors.password && styles.inputError,
+                          errors.password &&
+                            styles.inputError,
                         ]}
                         placeholder="Create a strong password"
                         placeholderTextColor="#a1a1aa"
-                        secureTextEntry={!showPassword}
+                        secureTextEntry={
+                          !showPassword
+                        }
                         onBlur={onBlur}
                         onChangeText={onChange}
                         value={value}
                         autoCapitalize="none"
+                        autoCorrect={false}
+                        autoComplete="password-new"
+                        textContentType="newPassword"
+                        returnKeyType="next"
+                        onSubmitEditing={() =>
+                          confirmPasswordInputRef.current?.focus()
+                        }
+                        onFocus={() => {
+                          setTimeout(() => {
+                            scrollRef.current?.scrollToEnd(
+                              {
+                                animated: true,
+                              },
+                            );
+                          }, 180);
+                        }}
                         editable={!isSubmitting}
                       />
 
                       <Pressable
-                        onPress={() => setShowPassword((current) => !current)}
+                        accessibilityRole="button"
+                        accessibilityLabel={
+                          showPassword
+                            ? "Hide password"
+                            : "Show password"
+                        }
+                        style={styles.eyeButton}
+                        onPress={() =>
+                          setShowPassword(
+                            (prev) => !prev,
+                          )
+                        }
+                        hitSlop={8}
                         disabled={isSubmitting}
-                        hitSlop={10}
-                        style={styles.passwordEye}
                       >
                         {showPassword ? (
-                          <EyeOff size={19} color="#71717a" strokeWidth={2} />
+                          <EyeOff
+                            size={18}
+                            color="#71717a"
+                          />
                         ) : (
-                          <Eye size={19} color="#71717a" strokeWidth={2} />
+                          <Eye
+                            size={18}
+                            color="#71717a"
+                          />
                         )}
                       </Pressable>
                     </View>
@@ -211,47 +426,98 @@ try {
                 />
 
                 {errors.password && (
-                  <Text style={styles.errorText}>{errors.password.message}</Text>
+                  <Text style={styles.errorText}>
+                    {errors.password.message}
+                  </Text>
                 )}
               </View>
 
-                          {/* Confirm Password */}
-              <View style={styles.inputContainer}>
-                <Text style={styles.label}>{dictionary.auth.confirmPassword}</Text>
+              {/* Confirm Password */}
+              <View style={styles.inputGroup}>
+                <Text style={styles.label}>
+                  {dictionary.auth?.confirmPassword ??
+                    "Confirm Password"}
+                </Text>
 
                 <Controller
                   control={control}
                   name="confirmPassword"
-                  render={({ field: { onChange, onBlur, value } }) => (
-                    <View style={styles.passwordInputWrapper}>
+                  render={({
+                    field: {
+                      onChange,
+                      onBlur,
+                      value,
+                    },
+                  }) => (
+                    <View
+                      style={
+                        styles.passwordWrapper
+                      }
+                    >
                       <TextInput
+                        ref={
+                          confirmPasswordInputRef
+                        }
                         style={[
                           styles.input,
                           styles.passwordInput,
-                          errors.confirmPassword && styles.inputError,
+                          errors.confirmPassword &&
+                            styles.inputError,
                         ]}
                         placeholder="Re-enter your password"
                         placeholderTextColor="#a1a1aa"
-                        secureTextEntry={!showConfirmPassword}
+                        secureTextEntry={
+                          !showConfirmPassword
+                        }
                         onBlur={onBlur}
                         onChangeText={onChange}
                         value={value}
                         autoCapitalize="none"
+                        autoCorrect={false}
+                        autoComplete="password-new"
+                        textContentType="newPassword"
+                        returnKeyType="done"
+                        onSubmitEditing={handleSubmit(
+                          onSubmit,
+                        )}
+                        onFocus={() => {
+                          setTimeout(() => {
+                            scrollRef.current?.scrollToEnd(
+                              {
+                                animated: true,
+                              },
+                            );
+                          }, 180);
+                        }}
                         editable={!isSubmitting}
                       />
 
                       <Pressable
-                        onPress={() =>
-                          setShowConfirmPassword((current) => !current)
+                        accessibilityRole="button"
+                        accessibilityLabel={
+                          showConfirmPassword
+                            ? "Hide confirm password"
+                            : "Show confirm password"
                         }
+                        style={styles.eyeButton}
+                        onPress={() =>
+                          setShowConfirmPassword(
+                            (prev) => !prev,
+                          )
+                        }
+                        hitSlop={8}
                         disabled={isSubmitting}
-                        hitSlop={10}
-                        style={styles.passwordEye}
                       >
                         {showConfirmPassword ? (
-                          <EyeOff size={19} color="#71717a" strokeWidth={2} />
+                          <EyeOff
+                            size={18}
+                            color="#71717a"
+                          />
                         ) : (
-                          <Eye size={19} color="#71717a" strokeWidth={2} />
+                          <Eye
+                            size={18}
+                            color="#71717a"
+                          />
                         )}
                       </Pressable>
                     </View>
@@ -260,208 +526,372 @@ try {
 
                 {errors.confirmPassword && (
                   <Text style={styles.errorText}>
-                    {errors.confirmPassword.message}
+                    {
+                      errors.confirmPassword
+                        .message
+                    }
                   </Text>
                 )}
               </View>
 
-            {/* Submit Button */}
-            <Pressable
-              onPress={handleSubmit(onSubmit)}
-              disabled={isSubmitting}
-              style={({ pressed }) => [
-                styles.submitButton,
-                pressed && !isSubmitting && styles.buttonPressed,
-                isSubmitting && styles.disabled,
-              ]}
-            >
-              {isSubmitting ? (
-                <ActivityIndicator color="#ffffff" size="small" />
-              ) : (
-                <>
-                  <Text style={styles.submitButtonText}>
-                    {dictionary.auth.createAccount}
-                  </Text>
-                  <ArrowRight size={14} color="#ffffff" strokeWidth={2} />
-                </>
-              )}
-            </Pressable>
-          </View>
+              {/* Submit */}
+              <Pressable
+                accessibilityRole="button"
+                accessibilityState={{
+                  disabled: isSubmitting,
+                }}
+                style={({ pressed }) => [
+                  styles.submitButton,
+                  pressed &&
+                    !isSubmitting &&
+                    styles.buttonPressed,
+                  isSubmitting &&
+                    styles.disabled,
+                ]}
+                disabled={isSubmitting}
+                onPress={handleSubmit(onSubmit)}
+              >
+                {isSubmitting ? (
+                  <ActivityIndicator
+                    color="#ffffff"
+                    size="small"
+                  />
+                ) : (
+                  <>
+                    <Text
+                      style={
+                        styles.submitButtonText
+                      }
+                    >
+                      {dictionary.auth
+                        ?.createAccount ??
+                        "Create Account"}
+                    </Text>
 
-          {/* Footer */}
-          <View style={styles.footerRow}>
-            <Text style={styles.footerText}>
-              {dictionary.auth.alreadyHaveAccount}{" "}
-            </Text>
-            <Pressable
-              onPress={() => router.push("/auth/login" as Href)}
-              hitSlop={6}
-            >
-              <Text style={styles.loginLink}>{dictionary.auth.login}</Text>
-            </Pressable>
+                    <ArrowRight
+                      size={16}
+                      color="#ffffff"
+                      strokeWidth={2}
+                    />
+                  </>
+                )}
+              </Pressable>
+            </View>
+
+            {/* Back to Login */}
+            <View style={styles.loginRow}>
+              <Text style={styles.loginRowText}>
+                {dictionary.auth
+                  ?.alreadyHaveAccount ??
+                  "Already have an account?"}
+              </Text>
+
+              <Pressable
+                accessibilityRole="link"
+                accessibilityLabel="Go to Login"
+                onPress={() =>
+                  router.push(
+                    "/auth/login" as Href,
+                  )
+                }
+                hitSlop={6}
+              >
+                <Text style={styles.loginLink}>
+                  {dictionary.auth?.login ??
+                    "Sign In"}
+                </Text>
+              </Pressable>
+            </View>
+
+            {/* Bottom Logo + Home */}
+            <View style={styles.bottomSection}>
+              <View style={styles.logoContainer}>
+                <Image
+                  source={require("@/assets/images/logo.png")}
+                  style={styles.logo}
+                  resizeMode="contain"
+                />
+              </View>
+
+              <View
+                style={styles.homeButtonContainer}
+              >
+                <Pressable
+                  accessibilityRole="button"
+                  accessibilityLabel="Back to Home"
+                  style={({ pressed }) => [
+                    styles.homeButton,
+                    pressed &&
+                      styles.buttonPressed,
+                  ]}
+                  onPress={() =>
+                    router.replace(
+                      "/(tabs)" as Href,
+                    )
+                  }
+                >
+                  <Home
+                    size={17}
+                    color="#ffffff"
+                    strokeWidth={2.2}
+                  />
+
+                  <Text
+                    style={styles.homeButtonText}
+                  >
+                    Back to Home
+                  </Text>
+                </Pressable>
+              </View>
+            </View>
           </View>
-        </View>
-      </ScrollView>
-    </KeyboardAvoidingView>
+        </ScrollView>
+      </KeyboardAvoidingView>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
+  screen: {
     flex: 1,
-    backgroundColor: "#ffffff",
+    backgroundColor: "#f1f3f2",
+  },
+
+  hero: {
+    position: "absolute",
+    top: -30,
+    left: 0,
+    right: 0,
+    height: 325,
+    width: "100%",
+    justifyContent: "center",
+    alignItems: "center",
+    overflow: "hidden",
+    borderBottomLeftRadius: 32,
+    borderBottomRightRadius: 32,
+  },
+
+  heroImage: {
+    transform: [{ translateY: 22 }],
+  },
+
+  heroOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: "rgba(0,92,46,0.55)",
+  },
+
+  brandArea: {
+    alignItems: "center",
+    marginTop: 25,
+  },
+
+  brandText: {
+    color: "#ffffff",
+    fontSize: 28,
+    lineHeight: 32,
+    fontWeight: "900",
+    letterSpacing: 1.5,
+    textShadowColor: "rgba(0,0,0,0.35)",
+    textShadowOffset: {
+      width: 0,
+      height: 1,
+    },
+    textShadowRadius: 4,
+  },
+
+  tagline: {
+    marginTop: 5,
+    color: "#FFC000",
+    fontSize: 15,
+    fontWeight: "900",
+    letterSpacing: 2,
+  },
+
+  formArea: {
+    flex: 1,
+    zIndex: 10,
+    elevation: 10,
   },
 
   scrollContent: {
     flexGrow: 1,
-    justifyContent: "center",
-    alignItems: "center",
-    paddingHorizontal: 16,
-    paddingVertical: 24,
+    justifyContent: "flex-start",
+    paddingTop: 335,
   },
 
-  card: {
-    width: "100%",
-    maxWidth: 400,
-    backgroundColor: "#ffffff",
-    borderRadius: 16,
-    padding: 20,
-    borderWidth: 1,
-    borderColor: "#f0f0f0",
-    gap: 20,
+  formContent: {
+    width: "91%",
+    alignSelf: "center",
   },
 
-  header: {
+  heading: {
     alignItems: "center",
-    gap: 4,
-  },
-
-  logoWrapper: {
-    marginBottom: 8,
-    alignItems: "center",
+    marginBottom: 23,
   },
 
   title: {
-    fontSize: 20,
-    fontWeight: "700",
-    color: "#18181b",
+    color: "#111111",
+    fontSize: 23,
+    lineHeight: 28,
+    fontWeight: "800",
     letterSpacing: -0.4,
     textAlign: "center",
   },
 
   subtitle: {
-    fontSize: 12,
-    fontWeight: "400",
-    color: "#71717a",
-    textAlign: "center",
-    lineHeight: 17,
+    marginTop: 7,
     maxWidth: 280,
+    color: "#71717a",
+    fontSize: 11,
+    lineHeight: 17,
+    fontWeight: "400",
+    textAlign: "center",
   },
 
-  formGroup: {
-    gap: 14,
-    width: "100%",
+  form: {
+    gap: 16,
   },
 
-  inputContainer: {
-    width: "100%",
-    gap: 6,
+  inputGroup: {
+    gap: 7,
   },
 
   label: {
-    fontSize: 12,
-    fontWeight: "600",
     color: "#27272a",
-    letterSpacing: -0.1,
+    fontSize: 11,
+    fontWeight: "700",
   },
 
   input: {
-    height: 44,
     width: "100%",
-    borderRadius: 10,
-    borderWidth: 1,
-    borderColor: "#e4e4e7",
+    height: 50,
+    borderRadius: 16,
     backgroundColor: "#ffffff",
-    paddingHorizontal: 13,
+    borderWidth: 1.5,
+    borderColor: DARK_GREEN,
+    paddingHorizontal: 15,
+    color: "#111111",
     fontSize: 13,
-    color: "#18181b",
   },
 
   inputError: {
-    borderColor: "#fca5a5",
-    backgroundColor: "#fef2f2",
+    borderColor: "#ef4444",
   },
 
   errorText: {
-    fontSize: 11,
     color: "#dc2626",
-    fontWeight: "500",
+    fontSize: 10,
+    marginTop: -2,
+  },
+
+  passwordWrapper: {
+    position: "relative",
+  },
+
+  passwordInput: {
+    paddingRight: 48,
+  },
+
+  eyeButton: {
+    position: "absolute",
+    right: 9,
+    top: 5,
+    width: 38,
+    height: 40,
+    alignItems: "center",
+    justifyContent: "center",
   },
 
   submitButton: {
-    height: 44,
-    width: "100%",
-    borderRadius: 10,
-    backgroundColor: "#18181b",
+    height: 50,
+    marginTop: 3,
+    borderRadius: 25,
+    backgroundColor: DARK_GREEN,
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
-    gap: 8,
-    marginTop: 4,
+    gap: 7,
+    shadowColor: DARK_GREEN,
+    shadowOpacity: 0.18,
+    shadowRadius: 7,
+    shadowOffset: {
+      width: 0,
+      height: 3,
+    },
+    elevation: 3,
   },
 
   submitButtonText: {
-    fontSize: 13,
-    fontWeight: "600",
     color: "#ffffff",
-    letterSpacing: -0.1,
+    fontSize: 13,
+    fontWeight: "800",
   },
 
-  buttonPressed: {
-    opacity: 0.88,
-    transform: [{ scale: 0.985 }],
-  },
-
-  disabled: {
-    opacity: 0.45,
-  },
-
-  footerRow: {
+  loginRow: {
+    marginTop: 21,
     flexDirection: "row",
-    justifyContent: "center",
     alignItems: "center",
+    justifyContent: "center",
     gap: 5,
-    paddingTop: 4,
   },
 
-  footerText: {
-    fontSize: 12,
-    fontWeight: "400",
+  loginRowText: {
     color: "#71717a",
+    fontSize: 10,
   },
 
   loginLink: {
+    color: YELLOW,
+    fontSize: 10,
+    fontWeight: "800",
+  },
+
+  bottomSection: {
+    width: "100%",
+    alignItems: "center",
+    marginTop: 30,
+  },
+
+  logoContainer: {
+    width: "100%",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+
+  logo: {
+    width: 125,
+    height: 55,
+  },
+
+  homeButtonContainer: {
+    alignItems: "center",
+    marginTop: 8,
+  },
+
+  homeButton: {
+    minHeight: 40,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 7,
+    paddingHorizontal: 18,
+    paddingVertical: 9,
+    borderRadius: 20,
+    backgroundColor: DARK_GREEN,
+  },
+
+  homeButtonText: {
     fontSize: 12,
     fontWeight: "700",
-    color: "#18181b",
-    letterSpacing: -0.1,
+    color: "#ffffff",
   },
-  passwordInputWrapper: {
-  position: "relative",
-  width: "100%",
-},
 
-passwordInput: {
-  paddingRight: 45,
-},
+  buttonPressed: {
+    opacity: 0.82,
+    transform: [{ scale: 0.98 }],
+  },
 
-passwordEye: {
-  position: "absolute",
-  right: 13,
-  top: 0,
-  width: 30,
-  height: 44,
-  alignItems: "center",
-  justifyContent: "center",
-},
+  disabled: {
+    opacity: 0.55,
+  },
 });

@@ -253,7 +253,7 @@ export default function CheckoutSummary({
             {paymentMethod === "COD" ? (
               <>
                 <Wallet className="h-3 w-3 text-neutral-400" />
-                Cash on Delivery
+                Order with Cash
               </>
             ) : (
               <>

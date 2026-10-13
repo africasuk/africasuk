@@ -1,4 +1,9 @@
-import { useState, useEffect, useCallback, useRef } from "react";
+import {
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+} from "react";
 import {
   View,
   Text,
@@ -11,7 +16,16 @@ import {
   NativeScrollEvent,
 } from "react-native";
 import { Image } from "expo-image";
-import { ChevronLeft, ChevronRight, X, Maximize2 } from "lucide-react-native";
+import {
+  ChevronLeft,
+  ChevronRight,
+  X,
+  Maximize2,
+  ArrowLeft,
+} from "lucide-react-native";
+import { useRouter } from "expo-router";
+import { LinearGradient } from "expo-linear-gradient";
+import { StatusBar } from "expo-status-bar";
 
 interface Props {
   images: {
@@ -20,11 +34,13 @@ interface Props {
   }[];
 }
 
-const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get("window");
-const STAGE_WIDTH = SCREEN_WIDTH - 32; // Exact card width with 16px screen margins
-const BRAND_COLOR = "#005c2e";
+const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } =
+  Dimensions.get("window");
 
+const BRAND_COLOR = "#005c2e";
 export function ProductGallery({ images }: Props) {
+  const router = useRouter();
+
   const [selectedIndex, setSelectedIndex] = useState(0);
   const [isLightboxOpen, setIsLightboxOpen] = useState(false);
 
@@ -35,16 +51,28 @@ export function ProductGallery({ images }: Props) {
 
   useEffect(() => {
     setSelectedIndex(0);
-    scrollViewRef.current?.scrollTo({ x: 0, animated: false });
+
+    scrollViewRef.current?.scrollTo({
+      x: 0,
+      animated: false,
+    });
   }, [images]);
 
   const handleScroll = useCallback(
     (event: NativeSyntheticEvent<NativeScrollEvent>) => {
       const contentOffsetX = event.nativeEvent.contentOffset.x;
       const viewSizeWidth = event.nativeEvent.layoutMeasurement.width;
+
       if (viewSizeWidth > 0) {
-        const newIndex = Math.round(contentOffsetX / viewSizeWidth);
-        if (newIndex !== selectedIndex && newIndex >= 0 && newIndex < imagesCount) {
+        const newIndex = Math.round(
+          contentOffsetX / viewSizeWidth
+        );
+
+        if (
+          newIndex !== selectedIndex &&
+          newIndex >= 0 &&
+          newIndex < imagesCount
+        ) {
           setSelectedIndex(newIndex);
         }
       }
@@ -54,19 +82,28 @@ export function ProductGallery({ images }: Props) {
 
   const scrollToImage = useCallback((index: number) => {
     setSelectedIndex(index);
+
     scrollViewRef.current?.scrollTo({
-      x: index * STAGE_WIDTH,
+      x: index * SCREEN_WIDTH,
       animated: true,
     });
   }, []);
 
   const handlePrev = useCallback(() => {
-    const nextIndex = selectedIndex === 0 ? imagesCount - 1 : selectedIndex - 1;
+    const nextIndex =
+      selectedIndex === 0
+        ? imagesCount - 1
+        : selectedIndex - 1;
+
     scrollToImage(nextIndex);
   }, [selectedIndex, imagesCount, scrollToImage]);
 
   const handleNext = useCallback(() => {
-    const nextIndex = selectedIndex === imagesCount - 1 ? 0 : selectedIndex + 1;
+    const nextIndex =
+      selectedIndex === imagesCount - 1
+        ? 0
+        : selectedIndex + 1;
+
     scrollToImage(nextIndex);
   }, [selectedIndex, imagesCount, scrollToImage]);
 
@@ -78,12 +115,28 @@ export function ProductGallery({ images }: Props) {
     );
   }
 
-  const safeIndex = selectedIndex >= images.length ? 0 : selectedIndex;
+  const safeIndex =
+    selectedIndex >= images.length ? 0 : selectedIndex;
+return (
+  <>
+    <StatusBar style="light" backgroundColor="#0b0b0b" />
 
-  return (
     <View style={styles.container}>
-      {/* 1:1 Pinterest Square Display Stage */}
+      {/* Full-width Hero Image */}
       <View style={styles.mainImageCard}>
+        {/* Back Button */}
+        <Pressable
+          onPress={() => router.back()}
+          style={styles.backButton}
+          hitSlop={10}
+        >
+          <ArrowLeft
+            size={20}
+            color="#111827"
+            strokeWidth={2.2}
+          />
+        </Pressable>
+
         <ScrollView
           ref={scrollViewRef}
           horizontal
@@ -95,13 +148,14 @@ export function ProductGallery({ images }: Props) {
         >
           {images.map((img, idx) => {
             const src =
-              img?.imageUrl && img.imageUrl.startsWith("http")
+              img?.imageUrl &&
+              img.imageUrl.startsWith("http")
                 ? img.imageUrl
                 : "https://via.placeholder.com/600";
 
             return (
               <Pressable
-                key={img.id ?? idx}
+                key={img?.id ?? idx}
                 onPress={() => setIsLightboxOpen(true)}
                 style={styles.slideFrame}
               >
@@ -117,6 +171,18 @@ export function ProductGallery({ images }: Props) {
           })}
         </ScrollView>
 
+          {/* Smooth fade from white into the gray image */}
+           <LinearGradient
+              colors={[
+                "rgba(0,0,0,0.45)",
+                "rgba(0,0,0,0.18)",
+                "rgba(0,0,0,0)",
+              ]}
+              locations={[0, 0.45, 1]}
+              style={styles.topFade}
+              pointerEvents="none"
+            />
+
         {/* Floating Top Indicators */}
         <View style={styles.topBarOverlay}>
           <View style={styles.counterBadge}>
@@ -130,25 +196,42 @@ export function ProductGallery({ images }: Props) {
             style={styles.zoomButton}
             hitSlop={8}
           >
-            <Maximize2 size={13} color="#111827" />
+            <Maximize2
+              size={13}
+              color="#111827"
+            />
           </Pressable>
         </View>
 
-        {/* Subtle Navigation Overlay Arrows */}
+        {/* Image Navigation Arrows */}
         {images.length > 1 && (
           <View style={styles.navOverlay}>
-            <Pressable onPress={handlePrev} style={styles.navButton} hitSlop={6}>
-              <ChevronLeft size={16} color="#111827" />
+            <Pressable
+              onPress={handlePrev}
+              style={styles.navButton}
+              hitSlop={6}
+            >
+              <ChevronLeft
+                size={16}
+                color="#111827"
+              />
             </Pressable>
 
-            <Pressable onPress={handleNext} style={styles.navButton} hitSlop={6}>
-              <ChevronRight size={16} color="#111827" />
+            <Pressable
+              onPress={handleNext}
+              style={styles.navButton}
+              hitSlop={6}
+            >
+              <ChevronRight
+                size={16}
+                color="#111827"
+              />
             </Pressable>
           </View>
         )}
       </View>
 
-      {/* 1:1 Thumbnail Strip */}
+      {/* Thumbnail Strip */}
       {images.length > 1 && (
         <View style={styles.thumbnailSection}>
           <ScrollView
@@ -158,19 +241,22 @@ export function ProductGallery({ images }: Props) {
           >
             {images.map((image, index) => {
               const thumbnailSrc =
-                image.imageUrl && image.imageUrl.startsWith("http")
+                image?.imageUrl &&
+                image.imageUrl.startsWith("http")
                   ? image.imageUrl
                   : "https://via.placeholder.com/150";
 
-              const isSelected = index === safeIndex;
+              const isSelected =
+                index === safeIndex;
 
               return (
                 <Pressable
-                  key={image.id ?? index}
+                  key={image?.id ?? index}
                   onPress={() => scrollToImage(index)}
                   style={[
                     styles.thumbnailItem,
-                    isSelected && styles.selectedThumbnailItem,
+                    isSelected &&
+                      styles.selectedThumbnailItem,
                   ]}
                 >
                   <Image
@@ -187,12 +273,14 @@ export function ProductGallery({ images }: Props) {
         </View>
       )}
 
-      {/* Full-Screen Lightbox Modal */}
+      {/* Full-Screen Lightbox */}
       <Modal
         visible={isLightboxOpen}
         transparent
         animationType="fade"
-        onRequestClose={() => setIsLightboxOpen(false)}
+        onRequestClose={() =>
+          setIsLightboxOpen(false)
+        }
       >
         <View style={styles.lightboxOverlay}>
           {/* Header Controls */}
@@ -204,11 +292,16 @@ export function ProductGallery({ images }: Props) {
             </View>
 
             <Pressable
-              onPress={() => setIsLightboxOpen(false)}
+              onPress={() =>
+                setIsLightboxOpen(false)
+              }
               style={styles.lightboxCloseButton}
               hitSlop={8}
             >
-              <X size={18} color="#ffffff" />
+              <X
+                size={18}
+                color="#ffffff"
+              />
             </Pressable>
           </View>
 
@@ -223,12 +316,16 @@ export function ProductGallery({ images }: Props) {
             >
               {images.map((img, idx) => {
                 const src =
-                  img?.imageUrl && img.imageUrl.startsWith("http")
+                  img?.imageUrl &&
+                  img.imageUrl.startsWith("http")
                     ? img.imageUrl
                     : "https://via.placeholder.com/1000";
 
                 return (
-                  <View key={img.id ?? idx} style={styles.lightboxSlide}>
+                  <View
+                    key={img?.id ?? idx}
+                    style={styles.lightboxSlide}
+                  >
                     <Image
                       source={{ uri: src }}
                       style={styles.lightboxImage}
@@ -244,21 +341,20 @@ export function ProductGallery({ images }: Props) {
         </View>
       </Modal>
     </View>
-  );
+  </>
+);
 }
 
 const styles = StyleSheet.create({
   container: {
     width: "100%",
-    paddingHorizontal: 16,
     gap: 12,
   },
 
   emptyContainer: {
-    width: STAGE_WIDTH,
-    aspectRatio: 1,
+    width: "100%",
+    height: 430,
     alignSelf: "center",
-    borderRadius: 20,
     backgroundColor: "#f9fafb",
     borderWidth: 1,
     borderColor: "#e5e7eb",
@@ -272,31 +368,21 @@ const styles = StyleSheet.create({
     color: "#9ca3af",
   },
 
-  /* 1:1 Pinterest Square Main Card */
-  mainImageCard: {
-    position: "relative",
-    width: STAGE_WIDTH,
-    aspectRatio: 1,
-    alignSelf: "center",
-    borderRadius: 20,
-    backgroundColor: "#f5f5f5",
-    overflow: "hidden",
-    borderWidth: 1,
-    borderColor: "#f0f0f0",
-    shadowColor: "#000000",
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.05,
-    shadowRadius: 10,
-    elevation: 2,
-  },
-
+  /* Full-width Hero */
+mainImageCard: {
+  position: "relative",
+  width: "100%",
+  height: 430,
+  backgroundColor: "#0b0b0b",
+  overflow: "hidden",
+},
   stageScrollView: {
     width: "100%",
     height: "100%",
   },
 
   slideFrame: {
-    width: STAGE_WIDTH,
+    width: SCREEN_WIDTH,
     height: "100%",
   },
 
@@ -305,12 +391,34 @@ const styles = StyleSheet.create({
     height: "100%",
   },
 
-  /* Floating UI Overlays */
+  /* Back Button */
+  backButton: {
+    position: "absolute",
+    top: 52,
+    left: 16,
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: "rgba(255,255,255,0.94)",
+    alignItems: "center",
+    justifyContent: "center",
+    zIndex: 20,
+    elevation: 4,
+    shadowColor: "#000000",
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.12,
+    shadowRadius: 5,
+  },
+
+  /* Floating UI */
   topBarOverlay: {
     position: "absolute",
-    top: 12,
-    left: 12,
-    right: 12,
+    top: 52,
+    left: 16,
+    right: 16,
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
@@ -318,6 +426,7 @@ const styles = StyleSheet.create({
   },
 
   counterBadge: {
+    marginLeft: 48,
     backgroundColor: "rgba(255, 255, 255, 0.9)",
     paddingHorizontal: 9,
     paddingVertical: 4,
@@ -325,7 +434,10 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: "rgba(0, 0, 0, 0.06)",
     shadowColor: "#000000",
-    shadowOffset: { width: 0, height: 1 },
+    shadowOffset: {
+      width: 0,
+      height: 1,
+    },
     shadowOpacity: 0.08,
     shadowRadius: 3,
     elevation: 2,
@@ -348,7 +460,10 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: "rgba(0, 0, 0, 0.06)",
     shadowColor: "#000000",
-    shadowOffset: { width: 0, height: 1 },
+    shadowOffset: {
+      width: 0,
+      height: 1,
+    },
     shadowOpacity: 0.08,
     shadowRadius: 3,
     elevation: 2,
@@ -356,8 +471,8 @@ const styles = StyleSheet.create({
 
   navOverlay: {
     position: "absolute",
-    bottom: 12,
-    right: 12,
+    bottom: 16,
+    right: 16,
     flexDirection: "row",
     alignItems: "center",
     gap: 8,
@@ -373,15 +488,19 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: "rgba(0, 0, 0, 0.06)",
     shadowColor: "#000000",
-    shadowOffset: { width: 0, height: 1 },
+    shadowOffset: {
+      width: 0,
+      height: 1,
+    },
     shadowOpacity: 0.1,
     shadowRadius: 4,
     elevation: 2,
   },
 
-  /* 1:1 Thumbnail Rail */
+  /* Thumbnail Rail */
   thumbnailSection: {
     width: "100%",
+    paddingHorizontal: 16,
   },
 
   thumbnailList: {
@@ -461,4 +580,13 @@ const styles = StyleSheet.create({
     width: SCREEN_WIDTH - 24,
     height: "100%",
   },
+
+  topFade: {
+  position: "absolute",
+  top: 0,
+  left: 0,
+  right: 0,
+  height: 40,
+  zIndex: 2,
+},
 });

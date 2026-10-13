@@ -85,7 +85,7 @@ export default function CheckoutPaymentMethod({ products }: Props) {
 
             {/* Description */}
             <View style={styles.optionContent}>
-              <Text style={styles.optionTitle}>Cash on Delivery</Text>
+              <Text style={styles.optionTitle}>Order with Cash</Text>
               <Text style={styles.optionDescription}>
                 Pay in cash or mobile money upon receiving your order
               </Text>

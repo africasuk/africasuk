@@ -76,7 +76,7 @@ export default function OrderDetailsScreen() {
 
       if (!user) {
         router.replace(
-          `/auth/login?redirect=/account/orders/${orderNumber}` as Href
+          `/auth?redirect=/account/orders/${orderNumber}` as Href
         );
         return;
       }

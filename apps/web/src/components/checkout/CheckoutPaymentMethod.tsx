@@ -118,7 +118,7 @@ export default function CheckoutPaymentMethod({
 
             <div>
               <p className="font-medium">
-                Cash on Delivery
+                Order with Cash
               </p>
 
               <p className="text-sm text-muted-foreground">

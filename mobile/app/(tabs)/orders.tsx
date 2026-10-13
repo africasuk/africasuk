@@ -1,15 +1,14 @@
-import React, { useEffect, useState, useCallback } from "react";
+import React, { useState, useCallback } from "react";
 import {
   View,
   Text,
   FlatList,
   StyleSheet,
-  ActivityIndicator,
   Pressable,
   RefreshControl,
 } from "react-native";
 import { Image } from "expo-image";
-import { useRouter, Href } from "expo-router";
+import { useFocusEffect, useRouter, Href } from "expo-router";
 import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
 import {
   ShoppingBag,
@@ -22,6 +21,7 @@ import {
 import { createClient } from "@/lib/auth/client";
 import type { Order } from "@africasuk/types";
 import { Price } from "@/components/currency/Price";
+import LoadingScreen from "@/components/shared/LoadingScreen";
 
 type OrderWithImage = Order & {
   image?: string | null;
@@ -47,7 +47,7 @@ export default function OrdersScreen() {
       } = await supabase.auth.getUser();
 
       if (!user) {
-        router.replace("/auth/login" as Href);
+        router.replace("/auth" as Href);
         return;
       }
 
@@ -80,9 +80,11 @@ export default function OrdersScreen() {
     }
   }, [router]);
 
-  useEffect(() => {
+useFocusEffect(
+  useCallback(() => {
     fetchOrders();
-  }, [fetchOrders]);
+  }, [fetchOrders]),
+);
 
   const onRefresh = () => {
     setRefreshing(true);
@@ -182,11 +184,7 @@ export default function OrdersScreen() {
   };
 
   if (loading && !refreshing) {
-    return (
-      <View style={styles.centerContainer}>
-        <ActivityIndicator size="small" color="#18181b" />
-      </View>
-    );
+    return <LoadingScreen />;
   }
 
   if (error) {

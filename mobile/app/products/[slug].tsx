@@ -2,7 +2,6 @@ import { useEffect, useMemo, useState } from "react";
 import {
   View,
   Text,
-  ActivityIndicator,
   StyleSheet,
   ScrollView,
 } from "react-native";
@@ -14,6 +13,8 @@ import { ProductQueryService } from "@/services/ProductQueryService";
 import { supabase } from "@/lib/supabase/client";
 
 import { ProductDetails } from "@/components/products/ProductDetails";
+
+import LoadingScreen from "@/components/shared/LoadingScreen";
 
 type ExtendedProduct = ProductWithDetails & {
   relatedProducts: ProductWithDetails[];
@@ -80,15 +81,9 @@ export default function MobileProductDetailsPage() {
 
     loadProduct();
   }, [slug, color, service]);
-
-  if (loading) {
-    return (
-      <View style={styles.centerContainer}>
-        <ActivityIndicator size="large" color="#005c2e" />
-      </View>
-    );
-  }
-
+if (loading) {
+  return <LoadingScreen />;
+}
   if (error || !product) {
     return (
       <View style={styles.centerContainer}>

@@ -118,9 +118,9 @@ export default function CheckoutScreen() {
     );
   }
 
-  if (!isAuthenticated) {
-    return <Redirect href={"/auth/login?redirect=/checkout" as Href} />;
-  }
+if (!isAuthenticated) {
+  return <Redirect href={"/auth?redirect=/checkout" as Href} />;
+}
 
   // Exact bottom system bar clearance
   const bottomInset = insets.bottom > 0 ? insets.bottom : 16;

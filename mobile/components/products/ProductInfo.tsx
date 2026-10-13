@@ -67,9 +67,11 @@ export function ProductInfo({ product }: Props) {
           )}
         </View>
 
-        {/* Action Pills */}
+        {/* Action Buttons */}
         <View style={styles.actionsGroup}>
           <Pressable
+            accessibilityRole="button"
+            accessibilityLabel="Share product link"
             onPress={handleNativeShare}
             style={({ pressed }) => [
               styles.actionPill,
@@ -77,11 +79,13 @@ export function ProductInfo({ product }: Props) {
             ]}
             hitSlop={6}
           >
-            <Share2 size={13} color="#4b5563" />
+            <Share2 size={13} color="#52525b" strokeWidth={2} />
             <Text style={styles.actionPillText}>Share</Text>
           </Pressable>
 
           <Pressable
+            accessibilityRole="button"
+            accessibilityLabel={copied ? "Link copied" : "Copy product link"}
             onPress={handleCopyLink}
             style={({ pressed }) => [
               styles.actionPill,
@@ -92,12 +96,12 @@ export function ProductInfo({ product }: Props) {
           >
             {copied ? (
               <>
-                <Check size={13} color="#ffffff" strokeWidth={2.5} />
+                <Check size={13} color="#ffffff" strokeWidth={2.4} />
                 <Text style={styles.copiedPillText}>Copied</Text>
               </>
             ) : (
               <>
-                <Copy size={13} color="#4b5563" />
+                <Copy size={13} color="#52525b" strokeWidth={2} />
                 <Text style={styles.actionPillText}>Copy</Text>
               </>
             )}
@@ -118,8 +122,10 @@ export function ProductInfo({ product }: Props) {
             {product.description}
           </Text>
 
-          {product.description && product.description.length > 140 && (
+          {product.description && product.description.length > 130 && (
             <Pressable
+              accessibilityRole="button"
+              accessibilityLabel={isExpanded ? "Show less description" : "Read more description"}
               onPress={() => setIsExpanded((prev) => !prev)}
               style={styles.readMoreTrigger}
               hitSlop={8}
@@ -137,44 +143,46 @@ export function ProductInfo({ product }: Props) {
 
 const styles = StyleSheet.create({
   container: {
-    gap: 8,
+    paddingVertical: 14,
+    gap: 10,
   },
 
   topRow: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-    gap: 8,
+    gap: 12,
   },
 
   badgeRow: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 6,
+    gap: 8,
     flexShrink: 1,
   },
 
+  /* Muted neutral brand badge instead of bright/neon green box */
   brandPill: {
-    backgroundColor: "#ecfdf5",
+    backgroundColor: "#f4f4f5",
     paddingHorizontal: 8,
-    paddingVertical: 3,
-    borderRadius: 8,
+    paddingVertical: 4,
+    borderRadius: 6,
     borderWidth: 1,
-    borderColor: "#d1fae5",
+    borderColor: "#e4e4e7",
   },
 
   brandText: {
     fontSize: 11,
     fontWeight: "700",
-    color: BRAND_COLOR,
-    letterSpacing: 0.4,
+    color: "#18181b",
+    letterSpacing: 0.3,
     textTransform: "uppercase",
   },
 
   categoryText: {
     fontSize: 12,
     fontWeight: "500",
-    color: "#6b7280",
+    color: "#71717a",
     textTransform: "capitalize",
   },
 
@@ -189,11 +197,11 @@ const styles = StyleSheet.create({
     alignItems: "center",
     gap: 5,
     paddingHorizontal: 10,
-    paddingVertical: 6,
-    borderRadius: 14,
-    backgroundColor: "#f9fafb",
+    paddingVertical: 5,
+    borderRadius: 20,
+    backgroundColor: "#f4f4f5",
     borderWidth: 1,
-    borderColor: "#e5e7eb",
+    borderColor: "#e4e4e7",
   },
 
   copiedPill: {
@@ -203,13 +211,13 @@ const styles = StyleSheet.create({
 
   pressedState: {
     opacity: 0.75,
-    transform: [{ scale: 0.98 }],
+    transform: [{ scale: 0.97 }],
   },
 
   actionPillText: {
     fontSize: 11,
     fontWeight: "600",
-    color: "#4b5563",
+    color: "#3f3f46",
   },
 
   copiedPillText: {
@@ -219,28 +227,28 @@ const styles = StyleSheet.create({
   },
 
   title: {
-    fontSize: 22,
+    fontSize: 20,
     fontWeight: "800",
-    color: "#111827",
-    letterSpacing: -0.4,
-    lineHeight: 28,
+    color: "#18181b",
+    letterSpacing: -0.3,
+    lineHeight: 26,
     marginTop: 2,
   },
 
   descriptionBlock: {
-    marginTop: 4,
+    marginTop: 2,
   },
 
   descriptionText: {
     fontSize: 13,
     lineHeight: 20,
-    color: "#4b5563",
+    color: "#52525b",
     fontWeight: "400",
   },
 
   readMoreTrigger: {
     alignSelf: "flex-start",
-    marginTop: 6,
+    marginTop: 4,
   },
 
   readMoreText: {

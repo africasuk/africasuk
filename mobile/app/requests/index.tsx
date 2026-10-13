@@ -167,7 +167,7 @@ export default function MyRequestsScreen() {
       } = await supabase.auth.getSession();
 
       if (!session) {
-        router.replace("/auth/login");
+        router.replace("/auth");
         return;
       }
 

@@ -51,81 +51,91 @@ const shipping = 0;
 const tax = 0;
 const total = subtotal;
 
-  async function handlePlaceOrder() {
-    if (!selectedAddress) {
-      Alert.alert(
-        "Delivery Address",
-        "Please add or select a delivery address."
-      );
-      return;
-    }
-
-    if (!profile || !profile.fullName?.trim()) {
-      setContactDialogOpen(true);
-      return;
-    }
-
-    const phone = profile.phone?.trim() ?? "";
-
-    if (!phone) {
-      setContactDialogOpen(true);
-      return;
-    }
-
-    const phoneRegex = /^\+?[0-9]{6,15}$/;
-
-    if (!phoneRegex.test(phone)) {
-      setContactDialogOpen(true);
-      return;
-    }
-
-    if (!selectedAddress.street?.trim()) {
-      Alert.alert("Street Address", "Please enter your street address.");
-      return;
-    }
-
-    if (!selectedAddress.city?.trim()) {
-      Alert.alert("City", "Please enter your city.");
-      return;
-    }
-
-    if (!selectedAddress.country?.trim()) {
-      Alert.alert("Country", "Please enter your country.");
-      return;
-    }
-
-    try {
-      setPlacingOrder(true);
-
-      const order = await placeOrder({
-        profile,
-        selectedAddress,
-        items,
-        paymentMethod,
-        subtotal,
-        shipping,
-        tax,
-        total,
-      });
-
-      clear();
-
-      if (paymentMethod === "COD") {
-        Alert.alert("Success", "Order placed successfully.");
-        router.replace(`/account/order/${order.id}` as Href);
-      } else {
-        Alert.alert("Success", "Order created.");
-      }
-    } catch (error) {
-      console.error("Place Order Error:", error);
-      Alert.alert(
-        "Order Failed",
-        error instanceof Error ? error.message : "Failed to place order."
-      );
-    } finally {
-      setPlacingOrder(false);
-    }
+async function handlePlaceOrder() {
+  if (!selectedAddress) {
+    Alert.alert(
+      "Delivery Address",
+      "Please add or select a delivery address."
+    );
+    return;
   }
+
+  if (!profile || !profile.fullName?.trim()) {
+    setContactDialogOpen(true);
+    return;
+  }
+
+  const phone = profile.phone?.trim() ?? "";
+
+  if (!phone) {
+    setContactDialogOpen(true);
+    return;
+  }
+
+  const phoneRegex = /^\+?[0-9]{6,15}$/;
+
+  if (!phoneRegex.test(phone)) {
+    setContactDialogOpen(true);
+    return;
+  }
+
+  if (!selectedAddress.street?.trim()) {
+    Alert.alert(
+      "Street Address",
+      "Please enter your street address."
+    );
+    return;
+  }
+
+  if (!selectedAddress.city?.trim()) {
+    Alert.alert(
+      "City",
+      "Please enter your city."
+    );
+    return;
+  }
+
+  if (!selectedAddress.country?.trim()) {
+    Alert.alert(
+      "Country",
+      "Please enter your country."
+    );
+    return;
+  }
+
+  try {
+    setPlacingOrder(true);
+
+    const order = await placeOrder({
+      profile,
+      selectedAddress,
+      items,
+      paymentMethod,
+      subtotal,
+      shipping,
+      tax,
+      total,
+    });
+
+    clear();
+
+    // Go directly to the animated success page.
+    router.replace(
+  `/order-success?orderNumber=${encodeURIComponent(order.orderNumber)}` as Href
+);
+  } catch (error) {
+    console.error("Place Order Error:", error);
+
+    Alert.alert(
+      "Order Failed",
+      error instanceof Error
+        ? error.message
+        : "Failed to place order."
+    );
+  } finally {
+    setPlacingOrder(false);
+  }
+}
 
   return (
     <View style={styles.container}>
@@ -183,7 +193,7 @@ const total = subtotal;
               {paymentMethod === "COD" ? (
                 <>
                   <Wallet size={13} color="#27272a" strokeWidth={2} />
-                  <Text style={styles.paymentMethodText}>Cash on Delivery</Text>
+                  <Text style={styles.paymentMethodText}>Order with Cash</Text>
                 </>
               ) : (
                 <>

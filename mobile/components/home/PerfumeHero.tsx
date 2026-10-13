@@ -1,3 +1,6 @@
+
+"use client";
+
 import React from "react";
 import {
   View,
@@ -8,6 +11,10 @@ import {
 } from "react-native";
 import { useRouter } from "expo-router";
 import { ArrowRight } from "lucide-react-native";
+import { LinearGradient } from "expo-linear-gradient";
+
+const BRAND_GREEN = "#005c2e";
+const BRAND_GOLD = "#F4C542";
 
 export default function PerfumeHero() {
   const router = useRouter();
@@ -18,30 +25,59 @@ export default function PerfumeHero() {
         source={require("@/assets/images/yara-perfume-hero.jpg")}
         style={styles.hero}
         imageStyle={styles.image}
+        resizeMode="cover"
       >
-        <View style={styles.overlay} />
+        <LinearGradient
+          colors={[
+            "rgba(0,0,0,0.02)",
+            "rgba(0,0,0,0.08)",
+            "rgba(0,0,0,0.76)",
+          ]}
+          locations={[0, 0.38, 1]}
+          style={styles.overlay}
+        >
+          <View style={styles.content}>
+            <View style={styles.textContainer}>
+              <Text style={styles.eyebrow}>YOUR SIGNATURE SCENT</Text>
 
-        <View style={styles.buttonContainer}>
-          <Pressable
-            style={({ pressed }) => [
-              styles.button,
-              pressed && styles.buttonPressed,
-            ]}
-            onPress={() =>
-              router.push("/categories/fragrance")
-            }
-          >
-            <Text style={styles.buttonText}>
-              Explore Fragrances
-            </Text>
+              <Text style={styles.title}>
+                Find Your{"\n"}Signature Scent
+              </Text>
 
-            <ArrowRight
-              size={17}
-              color="#ffffff"
-              strokeWidth={2}
-            />
-          </Pressable>
-        </View>
+              <Text style={styles.description}>
+                Discover fragrances that leave a lasting impression.
+              </Text>
+            </View>
+
+            <Pressable
+              onPress={() =>
+                router.push("/categories/fragrance" as never)
+              }
+              style={({ pressed }) => [
+                styles.button,
+                pressed && styles.buttonPressed,
+              ]}
+            >
+              <Text style={styles.buttonText}>Shop Fragrances</Text>
+
+              <View style={styles.arrowContainer}>
+                <ArrowRight
+                  size={19}
+                  color={BRAND_GREEN}
+                  strokeWidth={2.5}
+                />
+              </View>
+            </Pressable>
+
+            <View style={styles.footer}>
+              <View style={styles.footerLine} />
+              <Text style={styles.footerText}>
+                SHOP WITH CONFIDENCE
+              </Text>
+              <View style={styles.footerLine} />
+            </View>
+          </View>
+        </LinearGradient>
       </ImageBackground>
     </View>
   );
@@ -51,53 +87,107 @@ const styles = StyleSheet.create({
   container: {
     marginHorizontal: 16,
     marginTop: 16,
-    borderRadius: 20,
-    overflow: "hidden",
+    marginBottom: 8,
   },
 
   hero: {
-    height: 540,
-    width: "100%",
-    position: "relative",
+    height: 500,
+    justifyContent: "flex-end",
+    overflow: "hidden",
+    backgroundColor: "#E8E8E8",
   },
 
   image: {
-    resizeMode: "cover",
+    borderRadius: 20,
   },
 
   overlay: {
-    ...StyleSheet.absoluteFillObject,
-    backgroundColor: "rgba(20, 0, 10, 0.04)",
+    flex: 1,
+    justifyContent: "flex-end",
+    paddingHorizontal: 22,
+    paddingTop: 28,
+    paddingBottom: 20,
+    borderRadius: 20,
   },
 
-  buttonContainer: {
-    position: "absolute",
-    bottom: 28,
-    left: 0,
-    right: 0,
-    alignItems: "center",
+  content: {
+    gap: 22,
+  },
+
+  textContainer: {
+    gap: 10,
+  },
+
+  eyebrow: {
+    color: BRAND_GOLD,
+    fontSize: 11,
+    fontWeight: "700",
+    letterSpacing: 2,
+  },
+
+  title: {
+    color: "#FFFFFF",
+    fontSize: 35,
+    lineHeight: 41,
+    fontWeight: "800",
+    letterSpacing: -0.8,
+  },
+
+  description: {
+    color: "rgba(255,255,255,0.88)",
+    fontSize: 14,
+    lineHeight: 21,
+    maxWidth: 270,
   },
 
   button: {
-    height: 46,
-    paddingHorizontal: 21,
+    minHeight: 58,
+    paddingLeft: 20,
+    paddingRight: 7,
     borderRadius: 14,
-    backgroundColor: "#18181b",
-    borderWidth: 1,
-    borderColor: "#D4A84F",
+    backgroundColor: BRAND_GREEN,
     flexDirection: "row",
     alignItems: "center",
-    justifyContent: "center",
-    gap: 8,
+    justifyContent: "space-between",
   },
 
   buttonPressed: {
-    opacity: 0.82,
+    opacity: 0.88,
+    transform: [{ scale: 0.99 }],
   },
 
   buttonText: {
-    color: "#ffffff",
-    fontSize: 13,
+    color: "#FFFFFF",
+    fontSize: 15,
     fontWeight: "700",
+  },
+
+  arrowContainer: {
+    width: 44,
+    height: 44,
+    borderRadius: 11,
+    backgroundColor: BRAND_GOLD,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+
+  footer: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 10,
+  },
+
+  footerLine: {
+    height: 1,
+    flex: 1,
+    backgroundColor: "rgba(255,255,255,0.4)",
+  },
+
+  footerText: {
+    color: "#FFFFFF",
+    fontSize: 9,
+    fontWeight: "700",
+    letterSpacing: 2,
   },
 });

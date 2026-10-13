@@ -1,4 +1,5 @@
-import React, { useEffect, useState } from "react";
+
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import { StatusBar } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import Animated, {
@@ -7,14 +8,17 @@ import Animated, {
 } from "react-native-reanimated";
 
 import { createClient } from "@/lib/auth/client";
+import { ProductRepository } from "@/repositories/ProductRepository";
+import { ProductQueryService } from "@/services/ProductQueryService";
+import type { ProductWithDetails } from "@africasuk/types";
 
+import LoadingScreen from "@/components/shared/LoadingScreen";
 import Hero from "@/components/home/Hero";
 import Categories from "@/components/home/Categories";
 import FeaturedProducts from "@/components/home/FeaturedProducts";
 import ContinueShopping from "@/components/home/ContinueShopping";
 import RequestProductSection from "@/components/home/RequestProductSection";
 import HomeHeader from "@/components/home/HomeHeader";
-import LoadingScreen from "@/components/shared/LoadingScreen";
 import WomenBagsHero from "@/components/home/WomenBagsHero";
 import PerfumeHero from "@/components/home/PerfumeHero";
 import SSPCurrencyHero from "@/components/home/SSPCurrencyHero";
@@ -22,169 +26,130 @@ import GiftDeliveryHero from "@/components/home/GiftDeliveryHero";
 
 export default function HomeScreen() {
   const [categories, setCategories] = useState<any[]>([]);
-  const [products, setProducts] = useState<any[]>([]);
+  const [products, setProducts] = useState<ProductWithDetails[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(false);
 
-  // Shared scroll position value for Reanimated
+  const scrollViewRef = useRef<Animated.ScrollView>(null);
   const scrollY = useSharedValue(0);
 
-  // Scroll event handler to track scroll position on UI thread
   const scrollHandler = useAnimatedScrollHandler({
     onScroll: (event) => {
       scrollY.value = event.contentOffset.y;
     },
   });
 
-  useEffect(() => {
-    async function load() {
-      const supabase = createClient();
-
-      const [
-        { data: rawCategories, error: categoriesError },
-        { error: brandsError },
-        { data: rawProducts, error: productsError },
-      ] = await Promise.all([
-        supabase
-          .from("categories")
-          .select("*")
-          .order("sort_order", { ascending: true }),
-
-        supabase
-          .from("brands")
-          .select("*")
-          .order("name"),
-
-        supabase
-          .from("products")
-          .select(`
-            *,
-            category:categories(*),
-            brand:brands(*),
-            colors:product_colors(
-              *,
-              images:product_images(*),
-              variants:product_variants(*)
-            )
-          `)
-          .order("created_at", {
-            ascending: false,
-          }),
-      ]);
-
-      if (categoriesError) throw categoriesError;
-      if (brandsError) throw brandsError;
-      if (productsError) throw productsError;
-
-      const formattedCategories = (rawCategories ?? []).map(
-        (category: any) => ({
-          ...category,
-          imageUrl: category.image_url,
-          isActive: category.is_active,
-          createdAt: category.created_at,
-          updatedAt: category.updated_at,
-          description:
-            category.description ??
-            `Explore our handpicked collections in ${category.name.toLowerCase()}.`,
-        })
-      );
-
-
-      const formattedProducts = (rawProducts ?? []).map(
-        (product: any) => ({
-          ...product,
-
-          allowCod: product.allow_cod,
-          allowOnlinePayment: product.allow_online_payment,
-
-          categoryId: product.category_id,
-          brandId: product.brand_id,
-          isActive: product.is_active,
-          createdAt: product.created_at,
-          updatedAt: product.updated_at,
-
-          category: product.category
-            ? {
-                ...product.category,
-                imageUrl: product.category.image_url,
-                isActive: product.category.is_active,
-                createdAt: product.category.created_at,
-                updatedAt: product.category.updated_at,
-              }
-            : null,
-
-          brand: product.brand
-            ? {
-                ...product.brand,
-                logoUrl: product.brand.logo_url,
-                isActive: product.brand.is_active,
-                createdAt: product.brand.created_at,
-                updatedAt: product.brand.updated_at,
-              }
-            : null,
-
-          colors: (product.colors ?? []).map((color: any) => ({
-            ...color,
-
-            productId: color.product_id,
-            hexCode: color.hex_code,
-            createdAt: color.created_at,
-            updatedAt: color.updated_at,
-
-            images: (color.images ?? []).map((image: any) => ({
-              ...image,
-              productColorId: image.product_color_id,
-              imageUrl: image.image_url,
-              sortOrder: image.sort_order,
-              createdAt: image.created_at,
-            })),
-
-            variants: (color.variants ?? []).map((variant: any) => ({
-              ...variant,
-              productColorId: variant.product_color_id,
-              optionName: variant.option_name,
-              optionValue: variant.option_value,
-              isActive: variant.is_active,
-              price: Number(variant.price),
-              stock: variant.stock,
-              createdAt: variant.created_at,
-              updatedAt: variant.updated_at,
-            })),
-          })),
-        })
-      );
-
-      setCategories(formattedCategories);
-      setProducts(formattedProducts);
-
-      setLoading(false);
-    }
-
-    load()
-      .catch(console.error)
-      .finally(() => setLoading(false));
+  const productService = useMemo(() => {
+    const supabase = createClient();
+    return new ProductQueryService(new ProductRepository(supabase));
   }, []);
 
-  if (loading) {
-      return <LoadingScreen />;
+  // Always start the home screen at the top.
+  useEffect(() => {
+    scrollY.value = 0;
+
+    requestAnimationFrame(() => {
+      scrollViewRef.current?.scrollTo({
+        y: 0,
+        animated: false,
+      });
+    });
+  }, );
+
+  useEffect(() => {
+    let mounted = true;
+
+    async function loadHome() {
+      setLoading(true);
+      setError(false);
+
+      try {
+        const supabase = createClient();
+
+        const [categoriesResult, productsResult] = await Promise.all([
+          supabase
+            .from("categories")
+            .select("*")
+            .eq("is_active", true)
+            .order("sort_order", { ascending: true }),
+
+          productService.getAll(),
+        ]);
+
+        if (categoriesResult.error) {
+          throw categoriesResult.error;
+        }
+
+        if (!mounted) return;
+
+        const formattedCategories = (categoriesResult.data ?? []).map(
+          (category: any) => ({
+            ...category,
+            imageUrl: category.image_url,
+            isActive: category.is_active,
+            createdAt: category.created_at,
+            updatedAt: category.updated_at,
+            description:
+              category.description ??
+              `Explore our handpicked collections in ${
+                category.name?.toLowerCase() ?? ""
+              }.`,
+          })
+        );
+
+        setCategories(formattedCategories);
+        setProducts(productsResult ?? []);
+      } catch (err) {
+        console.error("Home loading error:", err);
+        if (mounted) setError(true);
+      } finally {
+        if (mounted) setLoading(false);
+      }
+    }
+
+    loadHome();
+
+    return () => {
+      mounted = false;
+    };
+  }, [productService]);
+
+  // Keep the initial loading screen while home data loads.
+  if (loading || error) {
+    return <LoadingScreen />;
   }
 
   return (
-    <SafeAreaView edges={["top"]} style={{ flex: 1, backgroundColor: "#fff" }}>
-      <StatusBar backgroundColor="#fff" barStyle="dark-content" />
+    <SafeAreaView
+      edges={[]}
+      style={{
+        flex: 1,
+        backgroundColor: "#ffffff",
+      }}
+    >
+      <StatusBar
+        backgroundColor="transparent"
+        translucent
+        barStyle="light-content"
+      />
 
-      {/* Sticky Header receiving scroll position */}
       <HomeHeader scrollY={scrollY} />
 
-      {/* Animated ScrollView capturing scroll events */}
       <Animated.ScrollView
+        ref={scrollViewRef}
         onScroll={scrollHandler}
         scrollEventThrottle={16}
         showsVerticalScrollIndicator={false}
-        contentContainerStyle={{ paddingBottom: 20 }}
+        bounces
+        contentOffset={{ x: 0, y: 0 }}
+        contentContainerStyle={{
+          paddingBottom: 20,
+        }}
       >
         <Hero categories={categories} />
         <Categories categories={categories} />
         <FeaturedProducts products={products} />
+
         <GiftDeliveryHero />
         <WomenBagsHero />
         <PerfumeHero />
