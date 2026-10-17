@@ -1,7 +1,9 @@
+
+import type { FulfillmentMethod } from "./order";
+
 export interface PlaceOrderItem {
   productId: string;
   variantId: string;
-
   quantity: number;
 }
 
@@ -23,10 +25,10 @@ export interface PlaceOrderRequest {
   userId?: string;
 
   customer: PlaceOrderCustomer;
-
   items: PlaceOrderItem[];
 
   paymentMethod: string;
-
   currency: string;
+
+  fulfillmentMethod?: FulfillmentMethod;
 }

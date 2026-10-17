@@ -224,6 +224,8 @@ export class OrderCommandService {
 
         trackingNumber: null,
         adminNotes: null,
+        
+        fulfillmentMethod: request.fulfillmentMethod ?? "DELIVERY",
       });
 
     // Create order items
@@ -273,11 +275,10 @@ export class OrderCommandService {
       estimatedDeliveryEnd?: string | null;
       trackingNumber?: string | null;
       adminNotes?: string | null;
+      shipping?: number;
+      total?: number;
     },
   ): Promise<void> {
-    await this.orderRepository.update(
-      orderId,
-      input,
-    );
+    await this.orderRepository.update(orderId, input);
   }
 }

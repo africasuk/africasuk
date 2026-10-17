@@ -287,39 +287,55 @@ export function ProductVariantList({
               />
             )}
           </div>
-            {/* Price Input */}
-              <div>
-                <Label>Price</Label>
-                <Input
-                  type="number"
-                  value={variant.price === 0 ? 10 : variant.price}
-                  onChange={(e) =>
-                    updateVariantField(
-                      colorIndex,
-                      variantIndex,
-                      "price",
-                      Number(e.target.value)
-                    )
-                  }
-                />
-              </div>
+            
+          {/* Price Input */}
+          <div>
+            <Label>Price</Label>
+            <Input
+              type="number"
+              min="0"
+              step="0.01"
+              value={variant.price === 0 ? "" : variant.price}
+              onChange={(e) =>
+                updateVariantField(
+                  colorIndex,
+                  variantIndex,
+                  "price",
+                  e.target.value === "" ? 0 : Number(e.target.value)
+                )
+              }
+              placeholder="Enter price"
+            />
+          </div>
 
-              {/* Stock Input */}
-              <div>
-                <Label>Stock</Label>
-                <Input
-                  type="number"
-                  value={variant.stock === 0 ? 6 : variant.stock}
-                  onChange={(e) =>
-                    updateVariantField(
-                      colorIndex,
-                      variantIndex,
-                      "stock",
-                      Number(e.target.value)
-                    )
-                  }
-                />
-              </div>
+
+              
+          {/* Stock Selector */}
+          <div>
+            <Label>Stock</Label>
+            <Select
+              value={String(variant.stock)}
+              onValueChange={(value) =>
+                updateVariantField(
+                  colorIndex,
+                  variantIndex,
+                  "stock",
+                  Number(value)
+                )
+              }
+            >
+            <SelectTrigger>
+              <SelectValue placeholder="Select stock" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="3">3 items</SelectItem>
+              <SelectItem value="5">5 items</SelectItem>
+              <SelectItem value="10">10 items</SelectItem>
+              <SelectItem value="25">25 items</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+
 
             {/* Auto-Generated Read-Only SKU */}
             <div>

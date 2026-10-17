@@ -16,6 +16,8 @@ export type PaymentStatus =
   | "FAILED"
   | "REFUNDED";
 
+export type FulfillmentMethod = "PICKUP" | "DELIVERY";
+
 export interface Order {
   id: string;
 
@@ -57,6 +59,8 @@ export interface Order {
 
   createdAt: string;
   updatedAt: string;
+
+  fulfillmentMethod: FulfillmentMethod;
 }
 
 export interface OrderItem {

@@ -144,66 +144,97 @@ const exchangeRate = currentRate.rate;
               />
             </div>
           </div>
+{/* ORDER META */}
+<div className="mb-8 border-y border-zinc-200 py-5">
+  <div className="grid grid-cols-2 gap-x-6 gap-y-5 text-xs sm:grid-cols-3 lg:grid-cols-5">
+    {/* Shipping Address */}
+    <div className="min-w-0">
+      <span className="mb-1 block text-zinc-500">
+        Shipping Address
+      </span>
 
-          {/* ORDER META */}
-          <div className="mb-8 border-b border-t border-zinc-200 py-3">
-            <div className="grid grid-cols-2 gap-4 text-xs sm:grid-cols-4">
-              <div>
-                <span className="block text-zinc-500">
-                  Shipping Address
-                </span>
+      <span className="block font-semibold text-black">
+        {order.customerName}
+      </span>
 
-                <span className="mt-0.5 block font-semibold text-black">
-                  {order.customerName}
-                </span>
+      <span className="mt-0.5 block leading-relaxed text-zinc-600">
+        {order.address}, {order.city}
+      </span>
+    </div>
 
-                <span className="block text-zinc-600">
-                  {order.address}, {order.city}
-                </span>
-              </div>
+    {/* Payment Method */}
+    <div className="min-w-0">
+      <span className="mb-1 block text-zinc-500">
+        Payment Method
+      </span>
 
-              <div>
-                <span className="block text-zinc-500">
-                  Payment Method
-                </span>
+      <span className="block wrap-break-word font-semibold uppercase text-black">
+        {order.paymentMethod || "Cash on Delivery"}
+      </span>
 
-                <span className="mt-0.5 block font-semibold uppercase text-black">
-                  {order.paymentMethod ||
-                    "Cash on Delivery"}
-                </span>
+      <span className="mt-1 block text-zinc-500">
+        Status: {order.paymentStatus}
+      </span>
+    </div>
 
-                <span className="block text-zinc-500">
-                  Status: {order.paymentStatus}
-                </span>
-              </div>
+    {/* Fulfillment Method */}
+    <div className="min-w-0">
+      <span className="mb-2 block text-zinc-500">
+        Fulfillment Method
+      </span>
 
-              <div>
-                <span className="block text-zinc-500">
-                  Order Summary
-                </span>
+      <span
+        className={`inline-flex rounded-full px-2.5 py-1 text-xs font-semibold ${
+          order.fulfillmentMethod === "PICKUP"
+            ? "bg-emerald-100 text-emerald-800"
+            : "bg-amber-100 text-amber-800"
+        }`}
+      >
+        {order.fulfillmentMethod === "PICKUP"
+          ? "Office Pickup"
+          : order.fulfillmentMethod === "DELIVERY"
+            ? "Home Delivery"
+            : "Not specified"}
+      </span>
 
-                <span className="block text-zinc-600">
-                  Items:{" "}
-                  <Price price={order.subtotal} />
-                </span>
+      <span className="mt-2 block font-semibold text-black">
+        {order.fulfillmentMethod === "PICKUP"
+          ? "FREE"
+          : order.fulfillmentMethod === "DELIVERY"
+            ? Number(order.shipping ?? 0) > 0
+              ? "Delivery fee applied"
+              : "Delivery fee pending"
+            : "Awaiting confirmation"}
+      </span>
+    </div>
 
-                <span className="block text-zinc-600">
-                  Shipping:{" "}
-                  <Price price={order.shipping} />
-                </span>
-              </div>
+    {/* Order Summary */}
+    <div className="min-w-0">
+      <span className="mb-1 block text-zinc-500">
+        Order Summary
+      </span>
 
-              <div className="text-left sm:text-right">
-                <span className="block text-zinc-500">
-                  Grand Total
-                </span>
+      <span className="block leading-relaxed text-zinc-600">
+        Items: <Price price={order.subtotal} />
+      </span>
 
-                <span className="mt-0.5 block text-base font-extrabold text-black">
-                  <Price price={order.total} />
-                </span>
-              </div>
-            </div>
-          </div>
+      <span className="block leading-relaxed text-zinc-600">
+        Shipping: <Price price={order.shipping} />
+      </span>
+    </div>
+
+    {/* Grand Total */}
+    <div className="min-w-0 text-left sm:text-right">
+      <span className="mb-1 block text-zinc-500">
+        Grand Total
+      </span>
+
+      <span className="block text-base font-extrabold text-black">
+        <Price price={order.total} />
+      </span>
+    </div>
+  </div>
+</div>
 
           {/* MAIN CONTENT */}
           <div className="grid grid-cols-1 items-start gap-10 lg:grid-cols-12">

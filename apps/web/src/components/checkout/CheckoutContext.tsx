@@ -8,79 +8,65 @@ import {
 } from "react";
 
 import type { Address } from "@africasuk/database";
+import type { FulfillmentMethod } from "@africasuk/types";
 
-export type PaymentMethod =
-  | "COD"
-  | "ONLINE";
+export type PaymentMethod = "COD" | "ONLINE";
 
 type CheckoutContextValue = {
   paymentMethod: PaymentMethod;
-  setPaymentMethod: (
-    method: PaymentMethod,
-  ) => void;
+  setPaymentMethod: (method: PaymentMethod) => void;
 
   selectedAddress: Address | null;
-  setSelectedAddress: (
-    address: Address | null,
-  ) => void;
+  setSelectedAddress: (address: Address | null) => void;
+
+  fulfillmentMethod: FulfillmentMethod | null;
+  setFulfillmentMethod: (method: FulfillmentMethod | null) => void;
 };
 
-const CheckoutContext =
-  createContext<
-    CheckoutContextValue | undefined
-  >(undefined);
+const CheckoutContext = createContext<
+  CheckoutContextValue | undefined
+>(undefined);
 
 export function CheckoutProvider({
   children,
 }: {
   children: React.ReactNode;
 }) {
-  const [
-    paymentMethod,
-    setPaymentMethod,
-  ] = useState<PaymentMethod>(
-    "COD",
-  );
+  const [paymentMethod, setPaymentMethod] =
+    useState<PaymentMethod>("COD");
 
-  const [
-    selectedAddress,
-    setSelectedAddress,
-  ] = useState<Address | null>(
-    null,
-  );
+  const [selectedAddress, setSelectedAddress] =
+    useState<Address | null>(null);
+
+  // No default selection: the customer must choose.
+  const [fulfillmentMethod, setFulfillmentMethod] =
+    useState<FulfillmentMethod | null>(null);
 
   const value = useMemo(
     () => ({
       paymentMethod,
       setPaymentMethod,
-
       selectedAddress,
       setSelectedAddress,
+      fulfillmentMethod,
+      setFulfillmentMethod,
     }),
-    [
-      paymentMethod,
-      selectedAddress,
-      setPaymentMethod,
-      setSelectedAddress,
-    ],
+    [paymentMethod, selectedAddress, fulfillmentMethod],
   );
 
   return (
-    <CheckoutContext.Provider
-      value={value}
-    >
+    <CheckoutContext.Provider value={value}>
       {children}
     </CheckoutContext.Provider>
   );
 }
 
 export function useCheckout() {
-  const context =
-    useContext(CheckoutContext);
+  const context = useContext(CheckoutContext);
 
   if (!context) {
     throw new Error(
-      "useCheckout must be used inside CheckoutProvider."
+      "useCheckout must be used inside CheckoutProvider.",
     );
   }
 

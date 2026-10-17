@@ -19,11 +19,8 @@ import {
 
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 
-export async function placeOrder(
-  request: PlaceOrderRequest,
-) {
-  const supabase =
-    await createServerSupabaseClient();
+export async function placeOrder(request: PlaceOrderRequest) {
+  const supabase = await createServerSupabaseClient();
 
   const {
     data: { user },
@@ -33,46 +30,50 @@ export async function placeOrder(
     throw new Error("You must be signed in.");
   }
 
-  // Get the exchange rate currently set by admin
-  const exchangeRateService =
-    new ExchangeRateService(
-      new ExchangeRateRepository(supabase),
+  // Require an explicit fulfillment selection.
+  if (
+    request.fulfillmentMethod !== "PICKUP" &&
+    request.fulfillmentMethod !== "DELIVERY"
+  ) {
+    throw new Error(
+      "Please select Office Pickup or Home Delivery before placing your order.",
     );
+  }
 
-  const currentRate =
-    await exchangeRateService.getCurrent();
+  // Get the exchange rate currently set by admin.
+  const exchangeRateService = new ExchangeRateService(
+    new ExchangeRateRepository(supabase),
+  );
+
+  const currentRate = await exchangeRateService.getCurrent();
 
   if (!currentRate?.rate) {
-    throw new Error(
-      "Current exchange rate is not available.",
-    );
+    throw new Error("Current exchange rate is not available.");
   }
 
   const exchangeRate = currentRate.rate;
 
-  const orderService =
-    new OrderCommandService(
-      new OrderRepository(supabase),
-      new OrderItemRepository(supabase),
-      new ProductRepository(supabase),
-      new ProductVariantRepository(supabase),
-    );
+  const orderService = new OrderCommandService(
+    new OrderRepository(supabase),
+    new OrderItemRepository(supabase),
+    new ProductRepository(supabase),
+    new ProductVariantRepository(supabase),
+  );
 
-  const paymentService =
-    new PaymentService(
-      new PaymentRepository(supabase),
-      orderService,
-    );
+  const paymentService = new PaymentService(
+    new PaymentRepository(supabase),
+    orderService,
+  );
 
-  // Place order
-  const result =
-    await paymentService.checkout({
-      ...request,
-      userId: user.id,
-    });
+  // Preserve the selected fulfillment method when creating the order.
+  const result = await paymentService.checkout({
+    ...request,
+    fulfillmentMethod: request.fulfillmentMethod,
+    userId: user.id,
+  });
 
-  // Send confirmation email using the current admin rate
-  fetch(
+  // Send confirmation email using the current admin exchange rate.
+  void fetch(
     "https://www.africasuk.com/api/email/order-confirmation",
     {
       method: "POST",
@@ -87,10 +88,7 @@ export async function placeOrder(
       }),
     },
   ).catch((error) => {
-    console.error(
-      "Order confirmation email failed:",
-      error,
-    );
+    console.error("Order confirmation email failed:", error);
   });
 
   return result;

@@ -13,17 +13,11 @@ function formatReceiptDate(value: string) {
   const date = new Date(value);
 
   const day = String(date.getDate()).padStart(2, "0");
-  const month = String(
-    date.getMonth() + 1,
-  ).padStart(2, "0");
+  const month = String(date.getMonth() + 1).padStart(2, "0");
   const year = date.getFullYear();
 
   let hours = date.getHours();
-
-  const minutes = String(
-    date.getMinutes(),
-  ).padStart(2, "0");
-
+  const minutes = String(date.getMinutes()).padStart(2, "0");
   const period = hours >= 12 ? "PM" : "AM";
 
   hours = hours % 12 || 12;
@@ -36,32 +30,40 @@ export function PrintableReceipt({
   items,
   exchangeRate,
 }: Props) {
-  const trackingUrl =
-    `https://www.africasuk.com/track/${order.orderNumber}`;
+  const trackingUrl = `https://www.africasuk.com/track/${order.orderNumber}`;
 
-  const qrCodeUrl =
-    `https://api.qrserver.com/v1/create-qr-code/?size=200x200&margin=0&data=${encodeURIComponent(
-      trackingUrl,
-    )}`;
+  const qrCodeUrl = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&margin=0&data=${encodeURIComponent(
+    trackingUrl,
+  )}`;
 
-  const convertToSSP = (price: number) => {
-    return price * exchangeRate;
-  };
+  const convertToSSP = (price: number) => price * exchangeRate;
 
-  const formatSSP = (price: number) => {
-    return `SSP ${convertToSSP(
-      price,
-    ).toLocaleString("en-US", {
+  const formatSSP = (price: number) =>
+    `SSP ${convertToSSP(price).toLocaleString("en-US", {
       minimumFractionDigits: 2,
       maximumFractionDigits: 2,
     })}`;
-  };
+
+  const isPickup = order.fulfillmentMethod === "PICKUP";
+  const isDelivery = order.fulfillmentMethod === "DELIVERY";
+  const shippingFee = Number(order.shipping ?? 0);
+
+  const fulfillmentLabel = isPickup
+    ? "Office Pickup"
+    : isDelivery
+      ? "Home Delivery"
+      : "Not specified";
+
+  const fulfillmentFeeLabel = isPickup
+    ? "FREE"
+    : isDelivery
+      ? shippingFee > 0
+        ? formatSSP(shippingFee)
+        : "Delivery fee pending"
+      : "Awaiting confirmation";
 
   return (
-    <div
-      id="africasuk-receipt"
-      className="hidden"
-    >
+    <div id="africasuk-receipt" className="hidden">
       <div className="receipt-inner">
         {/* Logo */}
         {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -71,81 +73,69 @@ export function PrintableReceipt({
           className="receipt-logo"
         />
 
-        <div className="receipt-title">
-          ORDER RECEIPT
-        </div>
+        <div className="receipt-title">ORDER RECEIPT</div>
 
         <div className="receipt-divider" />
 
-        {/* Order */}
+        {/* Order Details */}
         <div className="receipt-row">
           <span>Order</span>
-
-          <strong>
-            {order.orderNumber}
-          </strong>
+          <strong>{order.orderNumber}</strong>
         </div>
 
         <div className="receipt-row">
           <span>Date</span>
-
-          <span>
-            {formatReceiptDate(
-              order.createdAt,
-            )}
-          </span>
+          <span>{formatReceiptDate(order.createdAt)}</span>
         </div>
 
         <div className="receipt-divider" />
 
         {/* Customer */}
-        <div className="receipt-section-title">
-          CUSTOMER
+        <div className="receipt-section-title">CUSTOMER</div>
+
+        <div>{order.customerName}</div>
+
+        {order.customerPhone && <div>{order.customerPhone}</div>}
+
+        <div>{order.customerEmail}</div>
+
+        <div className="receipt-divider" />
+
+        {/* Fulfillment */}
+        <div className="receipt-section-title">FULFILLMENT</div>
+
+        <div className="receipt-row">
+          <span>Delivery Method</span>
+          <strong>{fulfillmentLabel}</strong>
         </div>
 
-        <div>
-          {order.customerName}
+        <div className="receipt-row">
+          <span>{isPickup ? "Pickup Fee" : "Delivery Fee"}</span>
+          <strong>{fulfillmentFeeLabel}</strong>
         </div>
 
-        {order.customerPhone && (
-          <div>
-            {order.customerPhone}
+        {isDelivery && shippingFee === 0 && (
+          <div className="receipt-item-meta">
+            Your delivery fee will be confirmed by our team.
           </div>
         )}
-
-        <div>
-          {order.customerEmail}
-        </div>
 
         <div className="receipt-divider" />
 
         {/* Items */}
-        <div className="receipt-section-title">
-          ITEMS
-        </div>
+        <div className="receipt-section-title">ITEMS</div>
 
         {items.map(({ item, variant }) => {
-          const unitPrice =
-            convertToSSP(item.price);
-
-          const lineTotal =
-            convertToSSP(
-              item.price * item.quantity,
-            );
+          const unitPrice = convertToSSP(item.price);
+          const lineTotal = convertToSSP(item.price * item.quantity);
 
           return (
-            <div
-              key={item.id}
-              className="receipt-item"
-            >
-              <div className="receipt-item-name">
-                {item.name}
-              </div>
+            <div key={item.id} className="receipt-item">
+              <div className="receipt-item-name">{item.name}</div>
 
               {variant && (
                 <div className="receipt-item-meta">
-                  {variant.optionName &&
-                    `${variant.optionName}: `}
+                  {variant.optionName && `${variant.optionName}: `}
                   {variant.optionValue}
                 </div>
               )}
@@ -153,23 +143,17 @@ export function PrintableReceipt({
               <div className="receipt-row">
                 <span>
                   {item.quantity} ×{" "}
-                  {unitPrice.toLocaleString(
-                    "en-US",
-                    {
-                      minimumFractionDigits: 2,
-                      maximumFractionDigits: 2,
-                    },
-                  )}
+                  {unitPrice.toLocaleString("en-US", {
+                    minimumFractionDigits: 2,
+                    maximumFractionDigits: 2,
+                  })}
                 </span>
 
                 <strong>
-                  {lineTotal.toLocaleString(
-                    "en-US",
-                    {
-                      minimumFractionDigits: 2,
-                      maximumFractionDigits: 2,
-                    },
-                  )}
+                  {lineTotal.toLocaleString("en-US", {
+                    minimumFractionDigits: 2,
+                    maximumFractionDigits: 2,
+                  })}
                 </strong>
               </div>
             </div>
@@ -181,37 +165,27 @@ export function PrintableReceipt({
         {/* Summary */}
         <div className="receipt-row">
           <span>Subtotal</span>
-
-          <span>
-            {formatSSP(order.subtotal)}
-          </span>
+          <span>{formatSSP(order.subtotal)}</span>
         </div>
 
         <div className="receipt-row">
           <span>Shipping</span>
-
           <span>
-            {formatSSP(order.shipping)}
+            {isPickup ? "FREE" : formatSSP(order.shipping)}
           </span>
         </div>
 
         {order.tax > 0 && (
           <div className="receipt-row">
             <span>Tax</span>
-
-            <span>
-              {formatSSP(order.tax)}
-            </span>
+            <span>{formatSSP(order.tax)}</span>
           </div>
         )}
 
         {order.discount > 0 && (
           <div className="receipt-row">
             <span>Discount</span>
-
-            <span>
-              -{formatSSP(order.discount)}
-            </span>
+            <span>-{formatSSP(order.discount)}</span>
           </div>
         )}
 
@@ -220,30 +194,25 @@ export function PrintableReceipt({
         {/* Total */}
         <div className="receipt-total">
           <span>TOTAL</span>
-
-          <strong>
-            {formatSSP(order.total)}
-          </strong>
+          <strong>{formatSSP(order.total)}</strong>
         </div>
 
         <div className="receipt-divider" />
 
         {/* Payment */}
-        <div className="receipt-row">
-          <span>Payment</span>
+        <div className="receipt-section-title">PAYMENT</div>
 
-          <span>
-            {order.paymentMethod ?? "N/A"}
-          </span>
+        <div className="receipt-row">
+          <span>Payment Method</span>
+          <span>{order.paymentMethod ?? "N/A"}</span>
         </div>
 
         <div className="receipt-row">
-          <span>Status</span>
-
-          <span>
-            {order.paymentStatus}
-          </span>
+          <span>Payment Status</span>
+          <span>{order.paymentStatus}</span>
         </div>
+
+        <div className="receipt-divider" />
 
         {/* Tracking */}
         <div className="receipt-qr">
@@ -254,9 +223,7 @@ export function PrintableReceipt({
             className="receipt-qr-image"
           />
 
-          <div>
-            Scan to track your order
-          </div>
+          <div>Scan to track your order</div>
         </div>
 
         <div className="receipt-divider" />
@@ -264,14 +231,8 @@ export function PrintableReceipt({
         {/* Footer */}
         <div className="receipt-footer">
           <strong>AfricaSuk</strong>
-
-          <span>
-            Shop with Confidence
-          </span>
-
-          <span>
-            Thank you for shopping with us.
-          </span>
+          <span>Shop with Confidence</span>
+          <span>Thank you for shopping with us.</span>
         </div>
       </div>
     </div>

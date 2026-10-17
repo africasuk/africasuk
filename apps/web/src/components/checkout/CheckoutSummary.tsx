@@ -8,13 +8,14 @@ import {
   Wallet,
 } from "lucide-react";
 import { toast } from "sonner";
+
 import { Button } from "@/components/ui/button";
 import { useCart } from "@/store/cart";
 import { Price } from "@/components/currency/Price";
 
 import AddAddressDialog from "./AddAddressDialog";
 import { useCheckout } from "./CheckoutContext";
-import type { Profile } from "@africasuk/types";
+import type { Profile, FulfillmentMethod } from "@africasuk/types";
 import CheckoutContactDialog from "./CheckoutContactDialog";
 import { placeOrder } from "@/actions/order";
 import { useCurrency } from "providers/CurrencyProvider";
@@ -26,11 +27,8 @@ interface CheckoutSummaryProps {
 export default function CheckoutSummary({
   profile,
 }: CheckoutSummaryProps) {
-  const [placingOrder, setPlacingOrder] =
-    useState(false);
-
-  const [contactDialogOpen, setContactDialogOpen] =
-    useState(false);
+  const [placingOrder, setPlacingOrder] = useState(false);
+  const [contactDialogOpen, setContactDialogOpen] = useState(false);
 
   const router = useRouter();
   const { currency } = useCurrency();
@@ -38,50 +36,43 @@ export default function CheckoutSummary({
   const {
     paymentMethod,
     selectedAddress,
+    fulfillmentMethod,
   } = useCheckout();
 
-  const items = useCart(
-    (state) => state.items,
-  );
+  const items = useCart((state) => state.items);
+  const clear = useCart((state) => state.clear);
 
-  const clear = useCart(
-    (state) => state.clear,
-  );
-
-  const hasAddress =
-    selectedAddress !== null;
+  const hasAddress = selectedAddress !== null;
 
   const totalItems = items.reduce(
-    (sum, item) =>
-      sum + Number(item.quantity),
+    (sum, item) => sum + Number(item.quantity),
     0,
   );
 
   const subtotal = items.reduce(
     (sum, item) =>
-      sum +
-      Number(item.price) *
-        Number(item.quantity),
+      sum + Number(item.price) * Number(item.quantity),
     0,
   );
 
-  // Included pricing
-  const TAX_RATE = 0.10;
+  // Product prices already include tax and shipping.
+  const TAX_RATE = 0.1;
   const SHIPPING_RATE = 0.15;
 
   const tax = subtotal * TAX_RATE;
-  const shipping =
-    subtotal * SHIPPING_RATE;
-
-  // Tax and shipping are already included
-  // in the product price.
+  const shipping = subtotal * SHIPPING_RATE;
   const total = subtotal;
 
   async function handlePlaceOrder() {
-    if (!selectedAddress) {
+    if (!fulfillmentMethod) {
       toast.error(
-        "Please add or select a delivery address.",
+        "Please select Office Pickup or Home Delivery before continuing.",
       );
+      return;
+    }
+
+    if (!selectedAddress) {
+      toast.error("Please add or select a delivery address.");
       return;
     }
 
@@ -90,46 +81,32 @@ export default function CheckoutSummary({
       return;
     }
 
-    const phone =
-      profile.phone?.trim() ?? "";
+    const phone = profile.phone?.trim() ?? "";
 
     if (!phone) {
       setContactDialogOpen(true);
       return;
     }
 
-    const phoneRegex =
-      /^\+?[0-9]{6,15}$/;
+    const phoneRegex = /^\+?[0-9]{6,15}$/;
 
     if (!phoneRegex.test(phone)) {
       setContactDialogOpen(true);
       return;
     }
 
-    if (
-      !selectedAddress.street?.trim()
-    ) {
-      toast.error(
-        "Please enter your street address.",
-      );
+    if (!selectedAddress.street?.trim()) {
+      toast.error("Please enter your street address.");
       return;
     }
 
-    if (
-      !selectedAddress.city?.trim()
-    ) {
-      toast.error(
-        "Please enter your city.",
-      );
+    if (!selectedAddress.city?.trim()) {
+      toast.error("Please enter your city.");
       return;
     }
 
-    if (
-      !selectedAddress.country?.trim()
-    ) {
-      toast.error(
-        "Please enter your country.",
-      );
+    if (!selectedAddress.country?.trim()) {
+      toast.error("Please enter your country.");
       return;
     }
 
@@ -140,20 +117,12 @@ export default function CheckoutSummary({
         customer: {
           name: profile.fullName,
           email: profile.email,
-          phone:
-            profile.phone ?? undefined,
-          country:
-            selectedAddress.country,
-          state:
-            selectedAddress.state ??
-            undefined,
-          city:
-            selectedAddress.city,
-          address:
-            selectedAddress.street,
-          postalCode:
-            selectedAddress.postalCode ??
-            undefined,
+          phone: profile.phone ?? undefined,
+          country: selectedAddress.country,
+          state: selectedAddress.state ?? undefined,
+          city: selectedAddress.city,
+          address: selectedAddress.street,
+          postalCode: selectedAddress.postalCode ?? undefined,
         },
 
         items: items.map((item) => ({
@@ -163,15 +132,14 @@ export default function CheckoutSummary({
         })),
 
         paymentMethod,
+        fulfillmentMethod: fulfillmentMethod as FulfillmentMethod,
         currency,
       });
 
       clear();
 
       if (paymentMethod === "COD") {
-        toast.success(
-          "Order placed successfully.",
-        );
+        toast.success("Order placed successfully.");
 
         router.push(
           `/account/orders/${result.order.orderNumber}`,
@@ -208,17 +176,13 @@ export default function CheckoutSummary({
         </div>
 
         <span className="text-[10px] font-bold tracking-wide text-neutral-400">
-          {totalItems}{" "}
-          {totalItems === 1
-            ? "item"
-            : "items"}
+          {totalItems} {totalItems === 1 ? "item" : "items"}
         </span>
       </div>
 
       <div className="space-y-3 text-xs font-medium text-neutral-500 sm:text-sm">
         <div className="flex items-center justify-between">
           <span>Subtotal</span>
-
           <div className="text-neutral-800">
             <Price price={subtotal} />
           </div>
@@ -226,7 +190,6 @@ export default function CheckoutSummary({
 
         <div className="flex items-center justify-between">
           <span>Shipping</span>
-
           <div className="text-neutral-800">
             <Price price={shipping} />
             <span className="ml-1 text-[10px] font-bold uppercase text-emerald-600">
@@ -237,13 +200,30 @@ export default function CheckoutSummary({
 
         <div className="flex items-center justify-between">
           <span>Estimated Tax</span>
-
           <div className="text-neutral-800">
             <Price price={tax} />
             <span className="ml-1 text-[10px] font-bold uppercase text-emerald-600">
               Included
             </span>
           </div>
+        </div>
+
+        <div className="flex items-center justify-between pt-0.5">
+          <span>Delivery Method</span>
+
+          <span
+            className={`text-right text-[11px] font-semibold ${
+              fulfillmentMethod
+                ? "text-neutral-700"
+                : "text-red-600"
+            }`}
+          >
+            {!fulfillmentMethod
+              ? "Selection required"
+              : fulfillmentMethod === "PICKUP"
+                ? "Office Pickup (FREE)"
+                : "Home Delivery (PAID)"}
+          </span>
         </div>
 
         <div className="flex items-center justify-between pt-0.5">
@@ -266,21 +246,37 @@ export default function CheckoutSummary({
 
         <div className="mt-2 border-t border-neutral-100 pt-3.5">
           <div className="flex items-baseline justify-between text-neutral-950">
-            <span className="text-xs font-bold">
-              Total Amount
-            </span>
+            <span className="text-xs font-bold">Total Amount</span>
 
             <div className="text-xl font-extrabold tracking-tight">
               <Price price={total} />
             </div>
           </div>
+
+          {fulfillmentMethod === "DELIVERY" && (
+            <p className="mt-2 text-xs leading-relaxed text-amber-700">
+              Home delivery fee will be determined by our team based on
+              the delivery distance and added to your order.
+            </p>
+          )}
         </div>
 
         {!hasAddress && (
           <div className="mt-4 rounded-lg border border-amber-200 bg-amber-50 p-3">
             <p className="text-xs font-semibold leading-normal text-amber-800">
-              Please add or select a delivery
-              address before continuing.
+              Please add or select a delivery address before continuing.
+            </p>
+          </div>
+        )}
+
+        {!fulfillmentMethod && (
+          <div
+            role="alert"
+            className="mt-4 rounded-lg border border-amber-200 bg-amber-50 p-3"
+          >
+            <p className="text-xs font-semibold leading-normal text-amber-800">
+              Please select your delivery method: Office Pickup (FREE)
+              or Home Delivery (PAID).
             </p>
           </div>
         )}
@@ -294,7 +290,8 @@ export default function CheckoutSummary({
             size="lg"
             disabled={
               items.length === 0 ||
-              placingOrder
+              placingOrder ||
+              !fulfillmentMethod
             }
             onClick={handlePlaceOrder}
             className="mt-4 h-10 w-full rounded-xl bg-[#004d26] text-xs font-bold tracking-wider text-white transition-all duration-200 hover:bg-[#003b1d] active:scale-[0.99]"
