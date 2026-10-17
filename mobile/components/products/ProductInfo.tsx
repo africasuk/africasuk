@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   View,
   Text,
@@ -22,6 +22,12 @@ export function ProductInfo({ product }: Props) {
   const [isExpanded, setIsExpanded] = useState(false);
 
   const productUrl = `https://africasuk.com/products/${product.slug}`;
+
+  // Reset the expanded description when the product changes.
+  useEffect(() => {
+    setIsExpanded(false);
+    setCopied(false);
+  }, [product.id]);
 
   const handleCopyLink = async () => {
     try {
@@ -54,14 +60,20 @@ export function ProductInfo({ product }: Props) {
         <View style={styles.badgeRow}>
           {product.brand && (
             <View style={styles.brandPill}>
-              <Text style={styles.brandText} numberOfLines={1}>
+              <Text
+                style={styles.brandText}
+                numberOfLines={1}
+              >
                 {product.brand.name}
               </Text>
             </View>
           )}
 
           {product.category && (
-            <Text style={styles.categoryText} numberOfLines={1}>
+            <Text
+              style={styles.categoryText}
+              numberOfLines={1}
+            >
               {product.category.name}
             </Text>
           )}
@@ -79,13 +91,19 @@ export function ProductInfo({ product }: Props) {
             ]}
             hitSlop={6}
           >
-            <Share2 size={13} color="#52525b" strokeWidth={2} />
+            <Share2
+              size={13}
+              color="#52525b"
+              strokeWidth={2}
+            />
             <Text style={styles.actionPillText}>Share</Text>
           </Pressable>
 
           <Pressable
             accessibilityRole="button"
-            accessibilityLabel={copied ? "Link copied" : "Copy product link"}
+            accessibilityLabel={
+              copied ? "Link copied" : "Copy product link"
+            }
             onPress={handleCopyLink}
             style={({ pressed }) => [
               styles.actionPill,
@@ -96,13 +114,25 @@ export function ProductInfo({ product }: Props) {
           >
             {copied ? (
               <>
-                <Check size={13} color="#ffffff" strokeWidth={2.4} />
-                <Text style={styles.copiedPillText}>Copied</Text>
+                <Check
+                  size={13}
+                  color="#ffffff"
+                  strokeWidth={2.4}
+                />
+                <Text style={styles.copiedPillText}>
+                  Copied
+                </Text>
               </>
             ) : (
               <>
-                <Copy size={13} color="#52525b" strokeWidth={2} />
-                <Text style={styles.actionPillText}>Copy</Text>
+                <Copy
+                  size={13}
+                  color="#52525b"
+                  strokeWidth={2}
+                />
+                <Text style={styles.actionPillText}>
+                  Copy
+                </Text>
               </>
             )}
           </Pressable>
@@ -110,31 +140,36 @@ export function ProductInfo({ product }: Props) {
       </View>
 
       {/* Product Title */}
-      <Text style={styles.title}>{product.name}</Text>
+      <Text style={styles.title}>
+        {product.name}
+      </Text>
 
       {/* Product Description */}
       {hasDescription && (
         <View style={styles.descriptionBlock}>
           <Text
-            numberOfLines={isExpanded ? undefined : 3}
+            numberOfLines={isExpanded ? undefined : 1}
             style={styles.descriptionText}
           >
             {product.description}
           </Text>
 
-          {product.description && product.description.length > 130 && (
-            <Pressable
-              accessibilityRole="button"
-              accessibilityLabel={isExpanded ? "Show less description" : "Read more description"}
-              onPress={() => setIsExpanded((prev) => !prev)}
-              style={styles.readMoreTrigger}
-              hitSlop={8}
-            >
-              <Text style={styles.readMoreText}>
-                {isExpanded ? "Show less" : "Read more"}
-              </Text>
-            </Pressable>
-          )}
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel={
+              isExpanded
+                ? "Show less description"
+                : "Read more description"
+            }
+            accessibilityState={{ expanded: isExpanded }}
+            onPress={() => setIsExpanded((prev) => !prev)}
+            style={styles.readMoreTrigger}
+            hitSlop={8}
+          >
+            <Text style={styles.readMoreText}>
+              {isExpanded ? "Show less" : "Read more"}
+            </Text>
+          </Pressable>
         </View>
       )}
     </View>
@@ -161,7 +196,6 @@ const styles = StyleSheet.create({
     flexShrink: 1,
   },
 
-  /* Muted neutral brand badge instead of bright/neon green box */
   brandPill: {
     backgroundColor: "#f4f4f5",
     paddingHorizontal: 8,
@@ -169,6 +203,7 @@ const styles = StyleSheet.create({
     borderRadius: 6,
     borderWidth: 1,
     borderColor: "#e4e4e7",
+    flexShrink: 1,
   },
 
   brandText: {
@@ -184,12 +219,14 @@ const styles = StyleSheet.create({
     fontWeight: "500",
     color: "#71717a",
     textTransform: "capitalize",
+    flexShrink: 1,
   },
 
   actionsGroup: {
     flexDirection: "row",
     alignItems: "center",
     gap: 6,
+    flexShrink: 0,
   },
 
   actionPill: {

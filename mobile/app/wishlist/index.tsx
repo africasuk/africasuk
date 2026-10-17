@@ -2,28 +2,37 @@ import React, { useState, useCallback } from "react";
 import {
   View,
   StyleSheet,
-  ScrollView,
   RefreshControl,
   SafeAreaView,
 } from "react-native";
 import { Stack } from "expo-router";
+import Animated, {
+  useSharedValue,
+  useAnimatedScrollHandler,
+} from "react-native-reanimated";
 
+import HomeHeader from "@/components/home/HomeHeader";
 import WishlistHeader from "@/components/wishlist/WishlistHeader";
 import WishlistList from "@/components/wishlist/WishlistList";
 
-const BRAND_DARK = "#002b15";
 const BRAND_GREEN = "#005c2e";
 
 export default function WishlistScreen() {
   const [refreshing, setRefreshing] = useState(false);
   const [refreshKey, setRefreshKey] = useState(0);
 
+  const scrollY = useSharedValue(0);
+
+  const scrollHandler = useAnimatedScrollHandler({
+    onScroll: (event) => {
+      scrollY.value = event.contentOffset.y;
+    },
+  });
+
   const handleRefresh = useCallback(() => {
     setRefreshing(true);
-    // Force re-fetch trigger down to children
     setRefreshKey((prev) => prev + 1);
 
-    // Simulate brief pull-to-refresh delay
     setTimeout(() => {
       setRefreshing(false);
     }, 600);
@@ -31,15 +40,13 @@ export default function WishlistScreen() {
 
   return (
     <SafeAreaView style={styles.safeArea}>
-      <Stack.Screen
-        options={{
-          title: "My Wishlist",
-          headerTitleStyle: { fontWeight: "500", color: BRAND_DARK },
-          headerShadowVisible: false,
-        }}
-      />
+      <Stack.Screen options={{ headerShown: false }} />
 
-      <ScrollView
+      <HomeHeader scrollY={scrollY} />
+
+      <Animated.ScrollView
+        onScroll={scrollHandler}
+        scrollEventThrottle={16}
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
         refreshControl={
@@ -58,7 +65,7 @@ export default function WishlistScreen() {
             <WishlistList key={refreshKey} />
           </View>
         </View>
-      </ScrollView>
+      </Animated.ScrollView>
     </SafeAreaView>
   );
 }
@@ -73,7 +80,7 @@ const styles = StyleSheet.create({
   },
   container: {
     paddingHorizontal: 16,
-    paddingTop: 60,
+    paddingTop: 100,
   },
   listContainer: {
     marginTop: 16,

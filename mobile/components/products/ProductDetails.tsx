@@ -374,15 +374,10 @@ export function ProductDetails({
     );
   };
 
-  return (
-    <ScrollView
-      ref={scrollViewRef}
-      style={styles.container}
-      contentContainerStyle={
-        styles.contentContainer
-      }
-      showsVerticalScrollIndicator={false}
-    >
+return (
+  <View
+    style={[styles.container, styles.contentContainer]}
+  >
       {/* Product Gallery */}
       <View
         style={styles.galleryWrapper}
@@ -453,7 +448,7 @@ export function ProductDetails({
           loading={reviewsLoading}
         />
       </View>
-    </ScrollView>
+    </View>
   );
 }
 
@@ -464,23 +459,22 @@ const styles = StyleSheet.create({
   },
 
   contentContainer: {
-    paddingBottom: 40,
-    paddingTop: 50,
+    paddingBottom: 24,
   },
 
   galleryWrapper: {
-    marginBottom: 16,
+    marginBottom: 10,
   },
 
   infoWrapper: {
-    paddingHorizontal: 16,
+    paddingHorizontal: 8,
   },
 
   productRating: {
     flexDirection: "row",
     alignItems: "center",
     gap: 8,
-    marginTop: 14,
+    marginTop: 10,
     paddingVertical: 4,
   },
 
@@ -502,25 +496,25 @@ const styles = StyleSheet.create({
   sectionDivider: {
     height: 1,
     backgroundColor: "#f3f4f6",
-    marginHorizontal: 16,
-    marginVertical: 20,
+    marginHorizontal: 8,
+    marginVertical: 16,
   },
 
   variantWrapper: {
-    paddingHorizontal: 16,
+    paddingHorizontal: 8,
     marginBottom: 8,
   },
 
   section: {
-    marginTop: 28,
-    paddingHorizontal: 16,
+    marginTop: 24,
+    paddingHorizontal: 8,
   },
 
   sectionHeader: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "baseline",
-    marginBottom: 14,
+    marginBottom: 12,
   },
 
   sectionTitle: {
@@ -539,13 +533,13 @@ const styles = StyleSheet.create({
   ratingCard: {
     flexDirection: "row",
     alignItems: "center",
-    padding: 16,
+    padding: 12,
     backgroundColor: "#f9fafb",
-    borderRadius: 16,
+    borderRadius: 14,
     borderWidth: 1,
     borderColor: "#f0f0f0",
-    gap: 16,
-    marginBottom: 14,
+    gap: 12,
+    marginBottom: 12,
   },
 
   ratingNumberBox: {
@@ -599,14 +593,14 @@ const styles = StyleSheet.create({
   },
 
   loadingContainer: {
-    paddingVertical: 24,
+    paddingVertical: 20,
     alignItems: "center",
     justifyContent: "center",
   },
 
   emptyCard: {
-    padding: 24,
-    borderRadius: 16,
+    padding: 20,
+    borderRadius: 14,
     backgroundColor: "#fafafa",
     borderWidth: 1,
     borderColor: "#f0f0f0",
@@ -627,13 +621,13 @@ const styles = StyleSheet.create({
   },
 
   reviewList: {
-    gap: 10,
+    gap: 8,
   },
 
   reviewCard: {
-    padding: 14,
+    padding: 12,
     backgroundColor: "#ffffff",
-    borderRadius: 16,
+    borderRadius: 14,
     borderWidth: 1,
     borderColor: "#f0f0f0",
     shadowColor: "#000",
@@ -642,7 +636,7 @@ const styles = StyleSheet.create({
       height: 1,
     },
     shadowOpacity: 0.03,
-    shadowRadius: 4,
+    shadowRadius: 3,
     elevation: 1,
   },
 

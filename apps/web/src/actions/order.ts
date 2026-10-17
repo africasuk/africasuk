@@ -36,9 +36,9 @@ export async function placeOrder(request: PlaceOrderRequest) {
     request.fulfillmentMethod !== "DELIVERY"
   ) {
     throw new Error(
-      "Please select Office Pickup or Home Delivery before placing your order.",
+      "Please select Home Delivery or Meet at an Agreed Location before placing your order.",
     );
-  }
+}
 
   // Get the exchange rate currently set by admin.
   const exchangeRateService = new ExchangeRateService(

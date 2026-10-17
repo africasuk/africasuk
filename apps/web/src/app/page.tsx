@@ -1,11 +1,9 @@
 import {
-  BrandRepository,
   CategoryRepository,
   ProductRepository,
 } from "@africasuk/database";
 
 import {
-  BrandService,
   ProductQueryService,
 } from "@africasuk/api";
 
@@ -28,22 +26,19 @@ export default async function HomePage() {
 
   const categoryRepository = new CategoryRepository(supabase);
 
-  const brandService = new BrandService(
-    new BrandRepository(supabase),
-  );
+
 
   const productService = new ProductQueryService(
     new ProductRepository(supabase)
   );
 
-  const [
-    rawCategories,
-    products,
-  ] = await Promise.all([
-    categoryRepository.getAll(),
-    productService.getAll(),
-    brandService.getAll(),
-  ]);
+const [
+  rawCategories,
+  products,
+] = await Promise.all([
+  categoryRepository.getAll(),
+  productService.getAll(),
+]);
 
   const categories = (rawCategories ?? []).map(
     (category) => {

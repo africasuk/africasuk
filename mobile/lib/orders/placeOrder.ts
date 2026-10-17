@@ -1,9 +1,13 @@
+
 import { createClient } from "@/lib/auth/client";
 
 import type {
   Address,
   Profile,
 } from "@africasuk/types";
+
+type FulfillmentMethod = "PICKUP" | "DELIVERY";
+type PaymentMethod = "COD" | "ONLINE";
 
 interface CartItem {
   productId: string;
@@ -18,7 +22,8 @@ interface PlaceOrderParams {
   profile: Profile;
   selectedAddress: Address;
   items: CartItem[];
-  paymentMethod: string;
+  paymentMethod: PaymentMethod;
+  fulfillmentMethod: FulfillmentMethod;
   subtotal: number;
   shipping: number;
   tax: number;
@@ -30,11 +35,10 @@ export async function placeOrder({
   selectedAddress,
   items,
   paymentMethod,
+  fulfillmentMethod,
   subtotal,
   shipping,
-  tax,
-  total,
-}: PlaceOrderParams) {
+  tax}: PlaceOrderParams) {
   const supabase = createClient();
 
   const {
@@ -44,6 +48,27 @@ export async function placeOrder({
   if (!user) {
     throw new Error("Please login again.");
   }
+
+  if (
+    fulfillmentMethod !== "PICKUP" &&
+    fulfillmentMethod !== "DELIVERY"
+  ) {
+    throw new Error("Please select a delivery method.");
+  }
+
+  if (paymentMethod !== "COD" && paymentMethod !== "ONLINE") {
+    throw new Error("Please select a valid payment method.");
+  }
+
+  if (!items.length) {
+    throw new Error("Your cart is empty.");
+  }
+
+  // Pickup is always free. Home delivery fees are entered by the admin.
+  const finalShipping =
+    fulfillmentMethod === "PICKUP" ? 0 : shipping;
+
+  const finalTotal = subtotal + finalShipping + tax;
 
   const orderNumber = `AS-${Date.now()}`;
 
@@ -57,14 +82,15 @@ export async function placeOrder({
 
       status: "PENDING",
       payment_status: "PENDING",
-
       payment_method: paymentMethod,
 
+      fulfillment_method: fulfillmentMethod,
+
       subtotal,
-      shipping,
+      shipping: finalShipping,
       tax,
       discount: 0,
-      total,
+      total: finalTotal,
 
       currency: "USD",
 
@@ -112,25 +138,29 @@ export async function placeOrder({
   );
 
   if (itemsError) {
-    // Roll back order if item insertion fails
-    await (supabase.from("orders") as any)
+    // Roll back the order if inserting its items fails.
+    const { error: rollbackError } = await (
+      supabase.from("orders") as any
+    )
       .delete()
       .eq("id", order.id);
+
+    if (rollbackError) {
+      console.error("Order rollback failed:", rollbackError);
+    }
 
     throw itemsError;
   }
 
-  // Send order confirmation email
+  // Send order confirmation email.
   try {
     const response = await fetch(
       "https://www.africasuk.com/api/email/order-confirmation",
       {
         method: "POST",
-
         headers: {
           "Content-Type": "application/json",
         },
-
         body: JSON.stringify({
           order: {
             id: order.id,
@@ -138,6 +168,9 @@ export async function placeOrder({
             status: order.status,
             paymentStatus: order.payment_status,
             paymentMethod: order.payment_method,
+
+            fulfillmentMethod: order.fulfillment_method,
+
             subtotal: order.subtotal,
             shipping: order.shipping,
             tax: order.tax,
@@ -170,11 +203,6 @@ export async function placeOrder({
       response.status,
     );
 
-    console.log(
-      "Order confirmation API response:",
-      responseText,
-    );
-
     if (!response.ok) {
       console.error(
         "Order confirmation email failed:",
@@ -187,6 +215,7 @@ export async function placeOrder({
       );
     }
   } catch (emailError) {
+    // Email failure should not undo a successfully created order.
     console.error(
       "Order confirmation email error:",
       emailError,

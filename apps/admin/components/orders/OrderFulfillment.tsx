@@ -106,118 +106,124 @@ export function OrderFulfillment({ order }: Props) {
         )}
       </CardHeader>
 
-      <CardContent className="space-y-4">
-        {!editing ? (
-          <>
-            {/* Saved fulfillment method */}
-            <div className="flex items-center gap-3 rounded-lg border p-3">
-              <div
-                className={`flex size-10 shrink-0 items-center justify-center rounded-full ${
-                  isPickup
-                    ? "bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-300"
-                    : "bg-emerald-100 text-emerald-700 dark:bg-emerald-900 dark:text-emerald-300"
-                }`}
-              >
-                {isPickup ? (
-                  <PackageCheck className="size-5" />
-                ) : (
-                  <Truck className="size-5" />
-                )}
-              </div>
+    <CardContent className="space-y-4">
+  {!editing ? (
+    <>
+      {/* Saved fulfillment method */}
+      <div className="flex items-center gap-3 rounded-lg border p-3">
+        <div
+          className={`flex size-10 shrink-0 items-center justify-center rounded-full ${
+            isPickup
+              ? "bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-300"
+              : "bg-emerald-100 text-emerald-700 dark:bg-emerald-900 dark:text-emerald-300"
+          }`}
+        >
+          {isPickup ? (
+            <PackageCheck className="size-5" />
+          ) : (
+            <Truck className="size-5" />
+          )}
+        </div>
 
-              <div className="min-w-0 flex-1">
-                <Label>Fulfillment method</Label>
-                <p className="mt-1 text-sm font-semibold">
-                  {isPickup ? "Office Pickup — FREE" : "Home Delivery"}
-                </p>
-              </div>
+        <div className="min-w-0 flex-1">
+          <Label>Fulfillment method</Label>
+          <p className="mt-1 text-sm font-semibold">
+            {isPickup
+              ? "Meet at an Agreed Location — FREE"
+              : "Home Delivery"}
+          </p>
+        </div>
 
-              <span
-                className={`shrink-0 rounded-full px-3 py-1 text-xs font-semibold ${
-                  isPickup
-                    ? "bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-300"
-                    : "bg-emerald-100 text-emerald-700 dark:bg-emerald-900 dark:text-emerald-300"
-                }`}
-              >
-                {isPickup ? "OFFICE PICKUP" : "HOME DELIVERY"}
-              </span>
-            </div>
+        <span
+          className={`shrink-0 rounded-full px-3 py-1 text-xs font-semibold ${
+            isPickup
+              ? "bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-300"
+              : "bg-emerald-100 text-emerald-700 dark:bg-emerald-900 dark:text-emerald-300"
+          }`}
+        >
+          {isPickup ? "AGREED LOCATION" : "HOME DELIVERY"}
+        </span>
+      </div>
 
-            {/* Fee or collection method */}
-            <div className="flex items-center justify-between gap-4 rounded-md bg-muted/50 p-3">
-              <span className="flex items-center gap-2 text-sm text-muted-foreground">
-                <MapPin className="size-4 shrink-0" />
-                {isPickup ? "Collection method" : "Delivery fee"}
-              </span>
+      {/* Fee or collection method */}
+      <div className="flex items-center justify-between gap-4 rounded-md bg-muted/50 p-3">
+        <span className="flex items-center gap-2 text-sm text-muted-foreground">
+          <MapPin className="size-4 shrink-0" />
+          {isPickup ? "Meeting arrangement" : "Delivery fee"}
+        </span>
 
-              <span className="text-right text-sm font-semibold">
-                {isPickup
-                  ? "Office Pickup — FREE"
-                  : `${currency} ${Number(order.shipping ?? 0).toFixed(2)}`}
-              </span>
-            </div>
-          </>
-        ) : (
-          <>
-            <div className="space-y-2">
-              <Label>Fulfillment method</Label>
+        <span className="text-right text-sm font-semibold">
+          {isPickup
+            ? "Meet at an Agreed Location — FREE"
+            : `${currency} ${Number(order.shipping ?? 0).toFixed(2)}`}
+        </span>
+      </div>
+    </>
+  ) : (
+    <>
+      <div className="space-y-2">
+        <Label>Fulfillment method</Label>
 
-              <div className="grid gap-2 sm:grid-cols-2">
-                <Button
-                  type="button"
-                  variant={isPickup ? "default" : "outline"}
-                  onClick={() => {
-                    setMethod("PICKUP");
-                    setFee("0");
-                  }}
-                >
-                  <PackageCheck className="mr-2 size-4" />
-                  Office Pickup — FREE
-                </Button>
+        <div className="grid gap-2 sm:grid-cols-2">
+          <Button
+            type="button"
+            variant={isPickup ? "default" : "outline"}
+            onClick={() => {
+              setMethod("PICKUP");
+              setFee("0");
+            }}
+          >
+            <PackageCheck className="mr-2 size-4" />
+            Meet at an Agreed Location — FREE
+          </Button>
 
-                <Button
-                  type="button"
-                  variant={!isPickup ? "default" : "outline"}
-                  onClick={() => {
-                    setMethod("DELIVERY");
-                    if (Number(fee) === 0) setFee("");
-                  }}
-                >
-                  <Truck className="mr-2 size-4" />
-                  Home Delivery — PAID
-                </Button>
-              </div>
-            </div>
+          <Button
+            type="button"
+            variant={!isPickup ? "default" : "outline"}
+            onClick={() => {
+              setMethod("DELIVERY");
+              if (Number(fee) === 0) setFee("");
+            }}
+          >
+            <Truck className="mr-2 size-4" />
+            Home Delivery — PAID
+          </Button>
+        </div>
+      </div>
 
-            {!isPickup && (
-              <div className="space-y-2">
-                <Label>Delivery fee ({currency})</Label>
-                <Input
-                  type="number"
-                  min="0"
-                  step="0.01"
-                  value={fee}
-                  onChange={(event) => setFee(event.target.value)}
-                  placeholder="Enter delivery fee"
-                />
-              </div>
-            )}
+      {!isPickup && (
+        <div className="space-y-2">
+          <Label>Delivery fee ({currency})</Label>
+          <Input
+            type="number"
+            min="0"
+            step="0.01"
+            value={fee}
+            onChange={(event) => setFee(event.target.value)}
+            placeholder="Enter delivery fee"
+          />
+          <p className="text-sm text-muted-foreground">
+            Confirm the delivery fee based on the customer&apos;s delivery distance.
+          </p>
+        </div>
+      )}
 
-            <div className="flex flex-wrap gap-2">
-              <Button onClick={handleSave} disabled={saving}>
-                {saving ? "Saving..." : "Save Changes"}
-              </Button>
+      <div className="flex flex-wrap gap-2">
+        <Button onClick={handleSave} disabled={saving}>
+          {saving ? "Saving..." : "Save Changes"}
+        </Button>
 
-              <Button
-                variant="outline"
-                onClick={handleCancel}
-                disabled={saving}
-              >
-                Cancel
-              </Button>
-            </div>
-          </>
-        )}
+        <Button
+          variant="outline"
+          onClick={handleCancel}
+          disabled={saving}
+        >
+          Cancel
+        </Button>
+      </div>
+    </>
+  )}
+
 
         {/* Customer address */}
         <div>

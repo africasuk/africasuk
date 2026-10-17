@@ -11,16 +11,17 @@ const options: {
 }[] = [
   {
     value: "PICKUP",
-    title: "Office Pickup",
-    description: "Collect your order from our pickup point.",
-    feeLabel: "FREE",
+    title: "Meet at an Agreed Location",
+    description:
+      "Meet our team at a mutually agreed location when available.",
+    feeLabel: "ARRANGED",
   },
   {
     value: "DELIVERY",
     title: "Home Delivery",
     description:
-      "Our team will determine the delivery fee based on the distance.",
-    feeLabel: "PAID",
+      "Our team will confirm the delivery fee after your order is placed.",
+    feeLabel: "CONFIRMED AFTER ORDER",
   },
 ];
 

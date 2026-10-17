@@ -30,11 +30,12 @@ import { useRouter } from "expo-router";
 
 import { CurrencySwitcher } from "@/components/CurrencySwitcher";
 import { createClient } from "@/lib/auth/client";
+import Constants from "expo-constants";
 
 const PLAY_STORE_URL =
   "https://play.google.com/store/apps/details?id=com.africasuk.app";
 
-const APP_VERSION = "1.0.9";
+const APP_VERSION = Constants.expoConfig?.version ?? "1.0.0";
 
 const openWebsite = async (url: string) => {
   try {

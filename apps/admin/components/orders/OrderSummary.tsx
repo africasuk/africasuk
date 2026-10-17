@@ -54,16 +54,16 @@ export function OrderSummary({ order }: Props) {
             )}
           </div>
 
-          <div className="min-w-0 flex-1">
-            <p className="font-semibold">
-              {isPickup ? "Office Pickup" : "Home Delivery"}
-            </p>
-            <p className="text-sm text-muted-foreground">
-              {isPickup
-                ? "Customer collects the order"
-                : "Order delivered to the customer's address"}
-            </p>
-          </div>
+<div className="min-w-0 flex-1">
+  <p className="font-semibold">
+    {isPickup ? "Meet at an Agreed Location" : "Home Delivery"}
+  </p>
+  <p className="text-sm text-muted-foreground">
+    {isPickup
+      ? "Meet our team at a mutually agreed location when available"
+      : "Delivery to your address. The delivery fee will be confirmed by our team based on the delivery distance."}
+  </p>
+</div>
 
           <Badge
             variant={isPickup ? "secondary" : "default"}
@@ -82,7 +82,7 @@ export function OrderSummary({ order }: Props) {
 
           <span className="text-right font-semibold">
             {isPickup
-              ? "Office Pickup — FREE"
+              ? "Meet at an Agreed Location — FREE"
               : formatMoney(shipping, currency)}
           </span>
         </div>

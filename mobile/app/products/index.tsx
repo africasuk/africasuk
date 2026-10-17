@@ -1,5 +1,5 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
 
+import { useCallback, useEffect, useMemo, useState } from "react";
 import {
   ActivityIndicator,
   RefreshControl,
@@ -8,16 +8,13 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
-
 import Animated, {
   useAnimatedScrollHandler,
   useSharedValue,
 } from "react-native-reanimated";
-
 import { useRouter } from "expo-router";
 
 import type { ProductWithDetails } from "@africasuk/types";
-
 
 import { ProductCard } from "@/components/products/ProductCard";
 import { ProductRepository } from "@/repositories/ProductRepository";
@@ -26,6 +23,7 @@ import { supabase } from "@/lib/supabase/client";
 import HomeHeader from "@/components/home/HomeHeader";
 
 const BRAND_COLOR = "#005c2e";
+const BRAND_DARK = "#002b15";
 
 type ColorProduct = ProductWithDetails & {
   selectedColorId?: string;
@@ -37,10 +35,8 @@ export default function ProductsPage() {
   const [products, setProducts] = useState<ProductWithDetails[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
+  const [loadError, setLoadError] = useState(false);
 
-  /**
-   * Same scroll value used by the Home header.
-   */
   const scrollY = useSharedValue(0);
 
   const scrollHandler = useAnimatedScrollHandler({
@@ -49,32 +45,26 @@ export default function ProductsPage() {
     },
   });
 
-  /**
-   * Same product service used by the working Products page.
-   *
-   * This keeps:
-   * - images
-   * - colors
-   * - variants
-   * - prices
-   * - product details
-   * - rating data
-   */
   const service = useMemo(
-    () =>
-      new ProductQueryService(
-        new ProductRepository(supabase),
-      ),
+    () => new ProductQueryService(new ProductRepository(supabase)),
     [],
   );
 
-  const fetchProducts = useCallback(async () => {
+  const fetchProducts = useCallback(async (isRefresh = false) => {
+    if (isRefresh) {
+      setRefreshing(true);
+    } else {
+      setLoading(true);
+    }
+
+    setLoadError(false);
+
     try {
       const data = await service.getAll();
-
       setProducts(data ?? []);
-    } catch (err) {
-      console.error("Error loading products:", err);
+    } catch (error) {
+      console.error("Error loading products:", error);
+      setLoadError(true);
     } finally {
       setLoading(false);
       setRefreshing(false);
@@ -82,67 +72,48 @@ export default function ProductsPage() {
   }, [service]);
 
   useEffect(() => {
-    fetchProducts();
+    void fetchProducts();
   }, [fetchProducts]);
 
-  const onRefresh = () => {
-    setRefreshing(true);
-    fetchProducts();
-  };
+  const onRefresh = useCallback(() => {
+    void fetchProducts(true);
+  }, [fetchProducts]);
 
-  /**
-   * Same color ordering logic as the web.
-   *
-   * Product A - Color 1
-   * Product B - Color 1
-   * Product C - Color 1
-   * Product A - Color 2
-   * Product B - Color 2
-   * Product C - Color 2
-   */
+  // Display each product color as its own card, interleaved by color.
   const colorProducts = useMemo<ColorProduct[]>(() => {
-    type ProductColor =
-      ProductWithDetails["colors"][number];
+    type ProductColor = ProductWithDetails["colors"][number];
 
     type GroupedColorProduct = {
       product: ProductWithDetails;
       color: ProductColor;
     };
 
-    const groupedProducts: GroupedColorProduct[][] =
-      (products ?? []).map((product) => {
+    const groupedProducts: GroupedColorProduct[][] = products.map(
+      (product) => {
         const colors = product.colors ?? [];
 
         return colors
           .filter(
             (color) =>
-              color.variants &&
-              color.variants.length > 0,
+              (color.variants?.length ?? 0) > 0,
           )
           .map((color) => ({
             product,
             color,
           }));
-      });
+      },
+    );
 
     const result: ColorProduct[] = [];
 
     const maxColors = Math.max(
       0,
-      ...groupedProducts.map(
-        (group) => group.length,
-      ),
+      ...groupedProducts.map((group) => group.length),
     );
 
-    // Interleave colors across products.
-    for (
-      let index = 0;
-      index < maxColors;
-      index++
-    ) {
+    for (let index = 0; index < maxColors; index++) {
       for (const group of groupedProducts) {
         const item = group[index];
-
         if (!item) continue;
 
         result.push({
@@ -150,13 +121,6 @@ export default function ProductsPage() {
           id: `${item.product.id}-${item.color.id}`,
           name: `${item.product.name} - ${item.color.name}`,
           selectedColorId: item.color.id,
-
-          /**
-           * Keep only the selected color.
-           *
-           * ProductCard will therefore use the
-           * correct color images and variants.
-           */
           colors: [item.color],
         });
       }
@@ -165,20 +129,48 @@ export default function ProductsPage() {
     return result;
   }, [products]);
 
-  if (loading && !refreshing) {
+  if (loading) {
     return (
-      <View style={styles.centerContainer}>
-        <ActivityIndicator
-          size="large"
-          color={BRAND_COLOR}
-        />
+      <View style={styles.loadingContainer}>
+        <ActivityIndicator size="large" color={BRAND_COLOR} />
+
+        <Text style={styles.loadingTitle}>
+          Loading products
+        </Text>
+
+        <Text style={styles.loadingSubtitle}>
+          Getting the latest products for you...
+        </Text>
+      </View>
+    );
+  }
+
+  if (loadError && products.length === 0) {
+    return (
+      <View style={styles.loadingContainer}>
+        <Text style={styles.errorTitle}>
+          Couldn&apos;t load products
+        </Text>
+
+        <Text style={styles.loadingSubtitle}>
+          Please check your connection and try again.
+        </Text>
+
+        <TouchableOpacity
+          style={styles.retryButton}
+          activeOpacity={0.85}
+          onPress={() => void fetchProducts()}
+        >
+          <Text style={styles.retryButtonText}>
+            Try again
+          </Text>
+        </TouchableOpacity>
       </View>
     );
   }
 
   return (
     <View style={styles.container}>
-      {/* Same header used on Home */}
       <HomeHeader scrollY={scrollY} />
 
       <Animated.FlatList
@@ -218,9 +210,7 @@ export default function ProductsPage() {
 
               <Text style={styles.itemCount}>
                 {colorProducts.length}{" "}
-                {colorProducts.length === 1
-                  ? "Item"
-                  : "Items"}
+                {colorProducts.length === 1 ? "Item" : "Items"}
               </Text>
             </View>
           </View>
@@ -231,15 +221,9 @@ export default function ProductsPage() {
               <TouchableOpacity
                 style={styles.requestBtn}
                 activeOpacity={0.85}
-                onPress={() =>
-                  router.push(
-                    "/requests" as never,
-                  )
-                }
+                onPress={() => router.push("/requests" as never)}
               >
-                <Text
-                  style={styles.requestBtnText}
-                >
+                <Text style={styles.requestBtnText}>
                   Can&apos;t Find a Product? Request It
                 </Text>
               </TouchableOpacity>
@@ -253,8 +237,7 @@ export default function ProductsPage() {
             </Text>
 
             <Text style={styles.emptySubtitle}>
-              Check back later for new inventory
-              additions.
+              Check back later for new inventory additions.
             </Text>
           </View>
         }
@@ -274,24 +257,53 @@ const styles = StyleSheet.create({
     backgroundColor: "#ffffff",
   },
 
-  centerContainer: {
+  loadingContainer: {
     flex: 1,
+    backgroundColor: "#ffffff",
     justifyContent: "center",
     alignItems: "center",
-    backgroundColor: "#ffffff",
+    paddingHorizontal: 24,
+  },
+
+  loadingTitle: {
+    marginTop: 16,
+    fontSize: 16,
+    fontWeight: "700",
+    color: BRAND_DARK,
+  },
+
+  loadingSubtitle: {
+    marginTop: 6,
+    fontSize: 13,
+    lineHeight: 19,
+    color: "#6b7280",
+    textAlign: "center",
+  },
+
+  errorTitle: {
+    fontSize: 17,
+    fontWeight: "700",
+    color: BRAND_DARK,
+    textAlign: "center",
+  },
+
+  retryButton: {
+    marginTop: 20,
+    paddingHorizontal: 24,
+    paddingVertical: 12,
+    borderRadius: 24,
+    backgroundColor: BRAND_COLOR,
+  },
+
+  retryButtonText: {
+    color: "#ffffff",
+    fontSize: 14,
+    fontWeight: "700",
   },
 
   listContent: {
     paddingHorizontal: 8,
-
-    /*
-     * Space for the HomeHeader.
-     *
-     * The header is absolute and sits above
-     * the list.
-     */
     paddingTop: 120,
-
     paddingBottom: 40,
   },
 
@@ -361,12 +373,8 @@ const styles = StyleSheet.create({
     borderColor: BRAND_COLOR,
     alignItems: "center",
     justifyContent: "center",
-
     shadowColor: BRAND_COLOR,
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
+    shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.08,
     shadowRadius: 4,
     elevation: 1,
@@ -381,6 +389,7 @@ const styles = StyleSheet.create({
 
   emptyContainer: {
     paddingVertical: 60,
+    paddingHorizontal: 16,
     alignItems: "center",
     justifyContent: "center",
     borderRadius: 16,
@@ -401,5 +410,6 @@ const styles = StyleSheet.create({
     fontSize: 13,
     color: "#9ca3af",
     marginTop: 4,
+    textAlign: "center",
   },
 });

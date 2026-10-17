@@ -24,7 +24,6 @@ import {
   ArrowLeft,
 } from "lucide-react-native";
 import { useRouter } from "expo-router";
-import { LinearGradient } from "expo-linear-gradient";
 import { StatusBar } from "expo-status-bar";
 
 interface Props {
@@ -170,18 +169,6 @@ return (
             );
           })}
         </ScrollView>
-
-          {/* Smooth fade from white into the gray image */}
-           <LinearGradient
-              colors={[
-                "rgba(0,0,0,0.45)",
-                "rgba(0,0,0,0.18)",
-                "rgba(0,0,0,0)",
-              ]}
-              locations={[0, 0.45, 1]}
-              style={styles.topFade}
-              pointerEvents="none"
-            />
 
         {/* Floating Top Indicators */}
         <View style={styles.topBarOverlay}>
@@ -348,7 +335,7 @@ return (
 const styles = StyleSheet.create({
   container: {
     width: "100%",
-    gap: 12,
+    gap: 8,
   },
 
   emptyContainer: {
@@ -368,14 +355,14 @@ const styles = StyleSheet.create({
     color: "#9ca3af",
   },
 
-  /* Full-width Hero */
-mainImageCard: {
-  position: "relative",
-  width: "100%",
-  height: 430,
-  backgroundColor: "#0b0b0b",
-  overflow: "hidden",
-},
+  mainImageCard: {
+    position: "relative",
+    width: "100%",
+    height: 430,
+    backgroundColor: "#f5f5f5",
+    overflow: "hidden",
+  },
+
   stageScrollView: {
     width: "100%",
     height: "100%",
@@ -391,11 +378,10 @@ mainImageCard: {
     height: "100%",
   },
 
-  /* Back Button */
   backButton: {
     position: "absolute",
     top: 52,
-    left: 16,
+    left: 8,
     width: 40,
     height: 40,
     borderRadius: 20,
@@ -405,20 +391,16 @@ mainImageCard: {
     zIndex: 20,
     elevation: 4,
     shadowColor: "#000000",
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
+    shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.12,
     shadowRadius: 5,
   },
 
-  /* Floating UI */
   topBarOverlay: {
     position: "absolute",
     top: 52,
-    left: 16,
-    right: 16,
+    left: 8,
+    right: 8,
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
@@ -426,18 +408,15 @@ mainImageCard: {
   },
 
   counterBadge: {
-    marginLeft: 48,
-    backgroundColor: "rgba(255, 255, 255, 0.9)",
+    marginLeft: 44,
+    backgroundColor: "rgba(255,255,255,0.9)",
     paddingHorizontal: 9,
     paddingVertical: 4,
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: "rgba(0, 0, 0, 0.06)",
-    shadowColor: "#000000",
-    shadowOffset: {
-      width: 0,
-      height: 1,
-    },
+    borderColor: "rgba(0,0,0,0.06)",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.08,
     shadowRadius: 3,
     elevation: 2,
@@ -454,16 +433,13 @@ mainImageCard: {
     width: 32,
     height: 32,
     borderRadius: 16,
-    backgroundColor: "rgba(255, 255, 255, 0.9)",
+    backgroundColor: "rgba(255,255,255,0.9)",
     alignItems: "center",
     justifyContent: "center",
     borderWidth: 1,
-    borderColor: "rgba(0, 0, 0, 0.06)",
-    shadowColor: "#000000",
-    shadowOffset: {
-      width: 0,
-      height: 1,
-    },
+    borderColor: "rgba(0,0,0,0.06)",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.08,
     shadowRadius: 3,
     elevation: 2,
@@ -472,7 +448,7 @@ mainImageCard: {
   navOverlay: {
     position: "absolute",
     bottom: 16,
-    right: 16,
+    right: 8,
     flexDirection: "row",
     alignItems: "center",
     gap: 8,
@@ -482,36 +458,32 @@ mainImageCard: {
     width: 34,
     height: 34,
     borderRadius: 17,
-    backgroundColor: "rgba(255, 255, 255, 0.92)",
+    backgroundColor: "rgba(255,255,255,0.92)",
     alignItems: "center",
     justifyContent: "center",
     borderWidth: 1,
-    borderColor: "rgba(0, 0, 0, 0.06)",
-    shadowColor: "#000000",
-    shadowOffset: {
-      width: 0,
-      height: 1,
-    },
+    borderColor: "rgba(0,0,0,0.06)",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.1,
     shadowRadius: 4,
     elevation: 2,
   },
 
-  /* Thumbnail Rail */
   thumbnailSection: {
     width: "100%",
-    paddingHorizontal: 16,
+    paddingHorizontal: 8,
   },
 
   thumbnailList: {
-    gap: 10,
+    gap: 8,
     paddingVertical: 2,
   },
 
   thumbnailItem: {
     width: 60,
     height: 60,
-    borderRadius: 14,
+    borderRadius: 12,
     backgroundColor: "#f5f5f5",
     overflow: "hidden",
     borderWidth: 1.5,
@@ -527,10 +499,9 @@ mainImageCard: {
     height: "100%",
   },
 
-  /* Full Screen Lightbox */
   lightboxOverlay: {
     flex: 1,
-    backgroundColor: "rgba(0, 0, 0, 0.96)",
+    backgroundColor: "rgba(0,0,0,0.96)",
   },
 
   lightboxHeader: {
@@ -543,7 +514,7 @@ mainImageCard: {
   },
 
   lightboxCounterBadge: {
-    backgroundColor: "rgba(255, 255, 255, 0.16)",
+    backgroundColor: "rgba(255,255,255,0.16)",
     paddingHorizontal: 12,
     paddingVertical: 5,
     borderRadius: 14,
@@ -559,7 +530,7 @@ mainImageCard: {
     width: 36,
     height: 36,
     borderRadius: 18,
-    backgroundColor: "rgba(255, 255, 255, 0.16)",
+    backgroundColor: "rgba(255,255,255,0.16)",
     alignItems: "center",
     justifyContent: "center",
   },
@@ -580,13 +551,4 @@ mainImageCard: {
     width: SCREEN_WIDTH - 24,
     height: "100%",
   },
-
-  topFade: {
-  position: "absolute",
-  top: 0,
-  left: 0,
-  right: 0,
-  height: 40,
-  zIndex: 2,
-},
 });

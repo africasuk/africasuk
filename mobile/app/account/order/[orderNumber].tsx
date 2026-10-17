@@ -231,6 +231,16 @@ export default function OrderDetailsScreen() {
 
   const paymentMethod =
     order.payment_method ?? order.paymentMethod ?? "Credit Card";
+    const fulfillmentMethod = (
+  order.fulfillment_method ??
+  order.fulfillmentMethod ??
+  "DELIVERY"
+).toUpperCase();
+
+const shippingFee = Number(order.shipping ?? 0);
+
+const isPickup = fulfillmentMethod === "PICKUP";
+const isDeliveryFeePending = !isPickup && shippingFee <= 0;
   const customerName =
     order.customer_name ?? order.customerName ?? order.shipping_name ?? "N/A";
   const customerPhone =
@@ -366,6 +376,44 @@ export default function OrderDetailsScreen() {
               </View>
             </View>
           </View>
+          {/* Fulfillment Method */}
+<View style={styles.card}>
+  <View style={styles.cardHeaderWithIcon}>
+    <View style={styles.iconTile}>
+      {isPickup ? (
+        <MapPin size={14} color="#18181b" strokeWidth={1.8} />
+      ) : (
+        <Truck size={14} color="#18181b" strokeWidth={1.8} />
+      )}
+    </View>
+
+    <Text style={styles.cardHeading}>Fulfillment Method</Text>
+  </View>
+
+  <Text style={styles.orderTitle}>
+    {isPickup ? "Meet at an Agreed Location" : "Home Delivery"}
+  </Text>
+  
+  <Text style={styles.deliverySubtext}>
+    {isPickup
+      ? "Your order will be available for collection at our pickup location."
+      : "Your delivery fee will be confirmed by our team based on your location."}
+  </Text>
+
+  <View style={styles.summaryRow}>
+    <Text style={styles.summaryLabel}>Delivery Fee</Text>
+
+    {isPickup ? (
+      <Text style={[styles.summaryValue, { color: "#15803d" }]}>
+        FREE
+      </Text>
+    ) : isDeliveryFeePending ? (
+      <Text style={styles.summaryValue}>Pending confirmation</Text>
+    ) : (
+      <Price price={shippingFee} style={styles.summaryValue} />
+    )}
+  </View>
+</View>
 
           {/* Delivery Estimation Card */}
           <View style={styles.card}>
@@ -428,7 +476,9 @@ export default function OrderDetailsScreen() {
                 <View style={styles.iconTile}>
                   <MapPin size={14} color="#18181b" strokeWidth={1.8} />
                 </View>
-                <Text style={styles.cardHeading}>Delivery Address</Text>
+                <Text style={styles.cardHeading}>
+                  {isPickup ? "Customer Details" : "Delivery Address"}
+                </Text>
               </View>
 
               <View style={styles.addressBody}>
@@ -452,77 +502,124 @@ export default function OrderDetailsScreen() {
               )}
             </View>
 
-          {/* Payment Summary */}
-          <View style={styles.card}>
-            <View style={styles.cardHeaderWithIcon}>
-              <View style={styles.iconTile}>
-                <CreditCard
-                  size={14}
-                  color="#18181b"
-                  strokeWidth={1.8}
-                />
-              </View>
+          
+{/* Payment Summary */}
+<View style={styles.card}>
+  <View style={styles.cardHeaderWithIcon}>
+    <View style={styles.iconTile}>
+      <CreditCard
+        size={14}
+        color="#18181b"
+        strokeWidth={1.8}
+      />
+    </View>
 
-              <Text style={styles.cardHeading}>
-                Payment Summary
-              </Text>
-            </View>
+    <Text style={styles.cardHeading}>Payment Summary</Text>
+  </View>
 
-            <View style={styles.summaryList}>
-              <View style={styles.summaryRow}>
-                <Text style={styles.summaryLabel}>
-                  Subtotal
-                </Text>
+  {(() => {
+    const subtotal = Number(order.subtotal ?? 0);
+    const shipping = isPickup ? 0 : Number(order.shipping ?? 0);
+    const discount = Number(order.discount ?? 0);
 
-                <Price
-                  price={order.subtotal}
-                  style={styles.summaryValue}
-                />
-              </View>
+    // Product prices already include tax.
+    // Do not add tax again.
+    const total = subtotal + shipping - discount;
 
-              <View style={styles.summaryRow}>
-                <Text style={styles.summaryLabel}>Shipping Fee</Text>
-                <Text style={styles.summaryValue}>
-                  INCLUDED
-                </Text>
-              </View>
+    return (
+      <View style={styles.summaryList}>
+        {/* Product subtotal */}
+        <View style={styles.summaryRow}>
+          <Text style={styles.summaryLabel}>Subtotal</Text>
+          <Price
+            price={subtotal}
+            style={styles.summaryValue}
+          />
+        </View>
 
-              <View style={styles.summaryRow}>
-                <Text style={styles.summaryLabel}>Estimated Tax</Text>
-                <Text style={styles.summaryValue}>
-                  INCLUDED
-                </Text>
-              </View>
+        {/* Shipping fee */}
+        <View style={styles.summaryRow}>
+          <Text style={styles.summaryLabel}>Shipping Fee</Text>
 
-              <View
-                style={[
-                  styles.summaryRow,
-                  styles.totalRow,
-                ]}
-              >
-                <Text style={styles.totalLabel}>
-                  Total Payable
-                </Text>
+          {isPickup ? (
+            <Text
+              style={[
+                styles.summaryValue,
+                { color: "#15803d" },
+              ]}
+            >
+              FREE
+            </Text>
+          ) : isDeliveryFeePending ? (
+            <Text style={styles.summaryValue}>
+              Pending
+            </Text>
+          ) : (
+            <Price
+              price={shipping}
+              style={styles.summaryValue}
+            />
+          )}
+        </View>
 
-                <Price
-                  price={order.total}
-                  style={styles.totalValue}
-                />
-              </View>
-
-              <View style={styles.methodRow}>
-                <Text style={styles.metaLabel}>
-                  Payment Method
-                </Text>
-
-                <View style={styles.methodChip}>
-                  <Text style={styles.methodChipText}>
-                    {paymentMethod}
-                  </Text>
-                </View>
-              </View>
-            </View>
+        {/* Discount, if applicable */}
+        {discount > 0 && (
+          <View style={styles.summaryRow}>
+            <Text style={styles.summaryLabel}>Discount</Text>
+            <Price
+              price={discount}
+              style={[
+                styles.summaryValue,
+                { color: "#15803d" },
+              ]}
+            />
           </View>
+        )}
+
+        {/* Total */}
+        <View
+          style={[
+            styles.summaryRow,
+            styles.totalRow,
+          ]}
+        >
+          <Text style={styles.totalLabel}>
+            {isDeliveryFeePending
+              ? "Current Total"
+              : "Total Payable"}
+          </Text>
+
+          <Price
+            price={total}
+            style={styles.totalValue}
+          />
+        </View>
+
+        {/* Pending delivery fee notice */}
+        {isDeliveryFeePending && (
+          <Text style={styles.deliverySubtext}>
+            Your final total will be updated after
+            the delivery fee is confirmed.
+          </Text>
+        )}
+
+        {/* Payment method */}
+        <View style={styles.methodRow}>
+          <Text style={styles.metaLabel}>
+            Payment Method
+          </Text>
+
+          <View style={styles.methodChip}>
+            <Text style={styles.methodChipText}>
+              {paymentMethod}
+            </Text>
+          </View>
+        </View>
+      </View>
+    );
+  })()}
+</View>
+
 
               {/* Download Receipt */}
               <View

@@ -63,13 +63,13 @@ export default function CheckoutSummary({
   const shipping = subtotal * SHIPPING_RATE;
   const total = subtotal;
 
-  async function handlePlaceOrder() {
-    if (!fulfillmentMethod) {
-      toast.error(
-        "Please select Office Pickup or Home Delivery before continuing.",
-      );
-      return;
-    }
+async function handlePlaceOrder() {
+  if (!fulfillmentMethod) {
+    toast.error(
+      "Please select Home Delivery or Meet at an Agreed Location before continuing.",
+    );
+    return;
+  }
 
     if (!selectedAddress) {
       toast.error("Please add or select a delivery address.");
@@ -208,23 +208,23 @@ export default function CheckoutSummary({
           </div>
         </div>
 
-        <div className="flex items-center justify-between pt-0.5">
-          <span>Delivery Method</span>
+<div className="flex items-center justify-between pt-0.5">
+  <span>Fulfillment Method</span>
 
-          <span
-            className={`text-right text-[11px] font-semibold ${
-              fulfillmentMethod
-                ? "text-neutral-700"
-                : "text-red-600"
-            }`}
-          >
-            {!fulfillmentMethod
-              ? "Selection required"
-              : fulfillmentMethod === "PICKUP"
-                ? "Office Pickup (FREE)"
-                : "Home Delivery (PAID)"}
-          </span>
-        </div>
+  <span
+    className={`text-right text-[11px] font-semibold ${
+      fulfillmentMethod
+        ? "text-neutral-700"
+        : "text-red-600"
+    }`}
+  >
+    {!fulfillmentMethod
+      ? "Selection required"
+      : fulfillmentMethod === "PICKUP"
+        ? "Meet at an Agreed Location"
+        : "Home Delivery (Fee Confirmed After Ordering)"}
+  </span>
+</div>
 
         <div className="flex items-center justify-between pt-0.5">
           <span>Payment Method</span>
@@ -269,18 +269,16 @@ export default function CheckoutSummary({
           </div>
         )}
 
-        {!fulfillmentMethod && (
-          <div
-            role="alert"
-            className="mt-4 rounded-lg border border-amber-200 bg-amber-50 p-3"
-          >
-            <p className="text-xs font-semibold leading-normal text-amber-800">
-              Please select your delivery method: Office Pickup (FREE)
-              or Home Delivery (PAID).
-            </p>
-          </div>
-        )}
-
+{!fulfillmentMethod && (
+  <div
+    role="alert"
+    className="mt-4 rounded-lg border border-amber-200 bg-amber-50 p-3"
+  >
+    <p className="text-xs font-semibold leading-normal text-amber-800">
+      Please select your fulfillment method: Home Delivery (fee confirmed after ordering) or Meet at an Agreed Location (when available).
+    </p>
+  </div>
+)}
         {!hasAddress ? (
           <div className="mt-4">
             <AddAddressDialog />

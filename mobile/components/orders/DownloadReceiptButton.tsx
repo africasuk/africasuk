@@ -39,7 +39,6 @@ function formatDate(value: string) {
 
   let hours = date.getHours();
   const minutes = String(date.getMinutes()).padStart(2, "0");
-
   const period = hours >= 12 ? "PM" : "AM";
 
   hours = hours % 12 || 12;
@@ -47,9 +46,7 @@ function formatDate(value: string) {
   return `${day}/${month}/${year}, ${hours}:${minutes} ${period}`;
 }
 
-function escapeHtml(
-  value: string | number | null | undefined,
-) {
+function escapeHtml(value: string | number | null | undefined) {
   return String(value ?? "")
     .replace(/&/g, "&amp;")
     .replace(/</g, "&lt;")
@@ -71,53 +68,62 @@ export function DownloadReceiptButton({
     try {
       setLoading(true);
 
-      const convertToSSP = (price: number) =>
-        price * exchangeRate;
+      const convertToSSP = (price: number) => price * exchangeRate;
 
       const formatSSP = (price: number) =>
-        `SSP ${convertToSSP(price).toLocaleString(
-          "en-US",
-          {
-            minimumFractionDigits: 2,
-            maximumFractionDigits: 2,
-          },
-        )}`;
+        `SSP ${convertToSSP(price).toLocaleString("en-US", {
+          minimumFractionDigits: 2,
+          maximumFractionDigits: 2,
+        })}`;
 
-      const trackingUrl =
-        `https://www.africasuk.com/track/${order.orderNumber}`;
+      // Support both database and application naming conventions.
+      const orderData = order as Order & {
+        fulfillment_method?: string | null;
+        fulfillmentMethod?: string | null;
+      };
+
+      const fulfillmentMethod = String(
+        orderData.fulfillment_method ??
+          orderData.fulfillmentMethod ??
+          "DELIVERY",
+      ).toUpperCase();
+
+      const isPickup = fulfillmentMethod === "PICKUP";
+      const shipping = isPickup ? 0 : Number(order.shipping ?? 0);
+      const subtotal = Number(order.subtotal ?? 0);
+      const discount = Number(order.discount ?? 0);
+
+      // Product prices already include tax. Do not add tax again.
+      const total = Math.max(0, subtotal + shipping - discount);
+
+      // A delivery fee of zero means it has not yet been confirmed.
+      const isDeliveryFeePending = !isPickup && shipping <= 0;
+
+      const trackingUrl = `https://www.africasuk.com/track/${order.orderNumber}`;
 
       const qrCodeUrl =
-        `https://api.qrserver.com/v1/create-qr-code/?size=200x200&margin=0&data=${encodeURIComponent(
-          trackingUrl,
-        )}`;
+        `https://api.qrserver.com/v1/create-qr-code/` +
+        `?size=200x200&margin=0&data=${encodeURIComponent(trackingUrl)}`;
 
       const itemsHtml = items
         .map((item) => {
-          const unitPrice = convertToSSP(
-            item.price,
-          );
-
+          const unitPrice = convertToSSP(Number(item.price ?? 0));
           const lineTotal = convertToSSP(
-            item.price * item.quantity,
+            Number(item.price ?? 0) * Number(item.quantity ?? 0),
           );
 
-          const variant =
-            item.variant?.optionValue
-              ? `
-                <div class="item-meta">
-                  ${
-                    item.variant.optionName
-                      ? `${escapeHtml(
-                          item.variant.optionName,
-                        )}: `
-                      : ""
-                  }
-                  ${escapeHtml(
-                    item.variant.optionValue,
-                  )}
-                </div>
-              `
-              : "";
+          const variant = item.variant?.optionValue
+            ? `
+              <div class="item-meta">
+                ${
+                  item.variant.optionName
+                    ? `${escapeHtml(item.variant.optionName)}: `
+                    : ""
+                }
+                ${escapeHtml(item.variant.optionValue)}
+              </div>
+            `
+            : "";
 
           return `
             <div class="item">
@@ -129,30 +135,38 @@ export function DownloadReceiptButton({
 
               <div class="row">
                 <span>
-                  ${item.quantity} ×
-                  ${unitPrice.toLocaleString(
-                    "en-US",
-                    {
-                      minimumFractionDigits: 2,
-                      maximumFractionDigits: 2,
-                    },
-                  )}
+                  ${Number(item.quantity)} ×
+                  ${unitPrice.toLocaleString("en-US", {
+                    minimumFractionDigits: 2,
+                    maximumFractionDigits: 2,
+                  })}
                 </span>
 
                 <strong>
-                  ${lineTotal.toLocaleString(
-                    "en-US",
-                    {
-                      minimumFractionDigits: 2,
-                      maximumFractionDigits: 2,
-                    },
-                  )}
+                  ${lineTotal.toLocaleString("en-US", {
+                    minimumFractionDigits: 2,
+                    maximumFractionDigits: 2,
+                  })}
                 </strong>
               </div>
             </div>
           `;
         })
         .join("");
+
+      const fulfillmentLabel = isPickup
+        ? "Meet at an Agreed Location"
+        : "Home Delivery";
+
+      const shippingLabel = isPickup
+        ? "FREE"
+        : isDeliveryFeePending
+          ? "Pending confirmation"
+          : formatSSP(shipping);
+
+      const totalLabel = isDeliveryFeePending
+        ? "CURRENT TOTAL"
+        : "TOTAL PAYABLE";
 
       const html = `
         <!DOCTYPE html>
@@ -180,10 +194,7 @@ export function DownloadReceiptButton({
                 width: 80mm;
                 background: #ffffff;
                 color: #000000;
-                font-family:
-                  Arial,
-                  Helvetica,
-                  sans-serif;
+                font-family: Arial, Helvetica, sans-serif;
                 font-size: 11px;
               }
 
@@ -221,6 +232,12 @@ export function DownloadReceiptButton({
                 line-height: 1.35;
               }
 
+              .row span:last-child,
+              .row strong {
+                text-align: right;
+                overflow-wrap: anywhere;
+              }
+
               .section-title {
                 font-size: 11px;
                 font-weight: 700;
@@ -241,13 +258,36 @@ export function DownloadReceiptButton({
                 margin-top: 0.5mm;
               }
 
+              .fulfillment {
+                border: 1px solid #d1d5db;
+                padding: 2.5mm;
+                margin: 2mm 0;
+              }
+
+              .fulfillment-title {
+                font-weight: 700;
+                margin-bottom: 1.5mm;
+              }
+
+              .note {
+                font-size: 9px;
+                line-height: 1.4;
+                margin-top: 2mm;
+              }
+
               .total {
                 display: flex;
                 justify-content: space-between;
+                align-items: flex-start;
                 gap: 4mm;
-                font-size: 14px;
+                font-size: 13px;
                 font-weight: 700;
                 margin: 2mm 0;
+              }
+
+              .total strong {
+                text-align: right;
+                overflow-wrap: anywhere;
               }
 
               .qr {
@@ -276,60 +316,69 @@ export function DownloadReceiptButton({
 
           <body>
             <div class="receipt">
-
               <img
                 src="https://www.africasuk.com/Newlogo.png"
                 class="logo"
-                alt="AfricaSuk"
+                alt="Africa Suk"
               />
 
-              <div class="title">
-                ORDER RECEIPT
-              </div>
+              <div class="title">ORDER RECEIPT</div>
 
               <div class="divider"></div>
 
               <div class="row">
                 <span>Order</span>
-                <strong>
-                  ${escapeHtml(order.orderNumber)}
-                </strong>
+                <strong>${escapeHtml(order.orderNumber)}</strong>
               </div>
 
               <div class="row">
                 <span>Date</span>
-                <span>
-                  ${formatDate(order.createdAt)}
-                </span>
+                <span>${escapeHtml(formatDate(String(order.createdAt)))}</span>
               </div>
 
               <div class="divider"></div>
 
-              <div class="section-title">
-                CUSTOMER
-              </div>
+              <div class="section-title">CUSTOMER</div>
 
-              <div>
-                ${escapeHtml(order.customerName)}
-              </div>
+              <div>${escapeHtml(order.customerName)}</div>
 
               ${
                 order.customerPhone
-                  ? `<div>${escapeHtml(
-                      order.customerPhone,
-                    )}</div>`
+                  ? `<div>${escapeHtml(order.customerPhone)}</div>`
                   : ""
               }
 
-              <div>
-                ${escapeHtml(order.customerEmail)}
+              <div>${escapeHtml(order.customerEmail)}</div>
+
+              <div class="divider"></div>
+
+              <div class="section-title">FULFILLMENT</div>
+
+              <div class="fulfillment">
+                <div class="fulfillment-title">
+                  ${escapeHtml(fulfillmentLabel)}
+                </div>
+
+                <div class="row">
+                  <span>Delivery fee</span>
+                  <strong>${escapeHtml(shippingLabel)}</strong>
+                </div>
+
+                ${
+                  isDeliveryFeePending
+                    ? `
+                      <div class="note">
+                        The home-delivery fee will be confirmed by Africa Suk.
+                        Your final total will be updated afterward.
+                      </div>
+                    `
+                    : ""
+                }
               </div>
 
               <div class="divider"></div>
 
-              <div class="section-title">
-                ITEMS
-              </div>
+              <div class="section-title">ITEMS</div>
 
               ${itemsHtml}
 
@@ -337,73 +386,56 @@ export function DownloadReceiptButton({
 
               <div class="row">
                 <span>Subtotal</span>
-                <span>
-                  ${formatSSP(order.subtotal)}
-                </span>
+                <span>${formatSSP(subtotal)}</span>
               </div>
 
               <div class="row">
                 <span>Shipping</span>
-                <span>
-                  ${formatSSP(order.shipping)}
-                </span>
+                <span>${escapeHtml(shippingLabel)}</span>
               </div>
 
               ${
-                order.tax > 0
+                discount > 0
                   ? `
                     <div class="row">
-                      <span>Tax</span>
-                      <span>
-                        ${formatSSP(order.tax)}
-                      </span>
+                      <span>Discount</span>
+                      <span>-${formatSSP(discount)}</span>
                     </div>
                   `
                   : ""
               }
 
-              ${
-                order.discount > 0
-                  ? `
-                    <div class="row">
-                      <span>Discount</span>
-                      <span>
-                        -${formatSSP(order.discount)}
-                      </span>
-                    </div>
-                  `
-                  : ""
-              }
+              <div class="note">
+                Product prices include applicable tax.
+              </div>
 
               <div class="divider"></div>
 
               <div class="total">
-                <span>TOTAL</span>
-
-                <strong>
-                  ${formatSSP(order.total)}
-                </strong>
+                <span>${escapeHtml(totalLabel)}</span>
+                <strong>${formatSSP(total)}</strong>
               </div>
+
+              ${
+                isDeliveryFeePending
+                  ? `
+                    <div class="note">
+                      This total excludes the unconfirmed home-delivery fee.
+                    </div>
+                  `
+                  : ""
+              }
 
               <div class="divider"></div>
 
               <div class="row">
                 <span>Payment</span>
-
-                <span>
-                  ${
-                    order.paymentMethod ??
-                    "N/A"
-                  }
-                </span>
+                <span>${escapeHtml(order.paymentMethod ?? "N/A")}</span>
               </div>
 
               <div class="row">
-                <span>Status</span>
-
-                <span>
-                  ${order.paymentStatus}
-                </span>
+                <span>Payment Status</span>
+                <span>${escapeHtml(order.paymentStatus ?? "N/A")}</span>
               </div>
 
               <div class="qr">
@@ -412,56 +444,39 @@ export function DownloadReceiptButton({
                   alt="Order tracking QR code"
                 />
 
-                <div>
-                  Scan to track your order
-                </div>
+                <div>Scan to track your order</div>
               </div>
 
               <div class="divider"></div>
 
               <div class="footer">
-                <strong>AfricaSuk</strong>
-
-                <span>
-                  Shop with Confidence
-                </span>
-
-                <span>
-                  Thank you for shopping with us.
-                </span>
+                <strong>Africa Suk</strong>
+                <span>Shop with Confidence</span>
+                <span>Thank you for shopping with us.</span>
               </div>
-
             </div>
           </body>
         </html>
       `;
 
-      const { uri } =
-        await Print.printToFileAsync({
-          html,
-          width: 302,
-          height: 1200,
-          base64: false,
-        });
+      const { uri } = await Print.printToFileAsync({
+        html,
+        width: 302,
+        height: 1200,
+        base64: false,
+      });
 
       if (await Sharing.isAvailableAsync()) {
         await Sharing.shareAsync(uri, {
           mimeType: "application/pdf",
-          dialogTitle:
-            "Download AfricaSuk Receipt",
+          dialogTitle: "Download Africa Suk Receipt",
           UTI: "com.adobe.pdf",
         });
       } else {
-        Alert.alert(
-          "Receipt Ready",
-          `Receipt saved at:\n${uri}`,
-        );
+        Alert.alert("Receipt Ready", `Receipt saved at:\n${uri}`);
       }
     } catch (error) {
-      console.error(
-        "Receipt download error:",
-        error,
-      );
+      console.error("Receipt download error:", error);
 
       Alert.alert(
         "Receipt Error",
@@ -490,15 +505,9 @@ export function DownloadReceiptButton({
       }}
     >
       {loading ? (
-        <ActivityIndicator
-          size="small"
-          color={BRAND}
-        />
+        <ActivityIndicator size="small" color={BRAND} />
       ) : (
-        <Download
-          size={17}
-          color={BRAND}
-        />
+        <Download size={17} color={BRAND} />
       )}
 
       <Text
@@ -508,9 +517,7 @@ export function DownloadReceiptButton({
           fontWeight: "600",
         }}
       >
-        {loading
-          ? "Preparing..."
-          : "Download Receipt"}
+        {loading ? "Preparing..." : "Download Receipt"}
       </Text>
     </Pressable>
   );

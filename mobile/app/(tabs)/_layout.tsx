@@ -1,3 +1,4 @@
+
 import { Tabs } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import {
@@ -13,161 +14,181 @@ import {
   View,
 } from "react-native";
 
-const BRAND = "#005c2e";
+const ACTIVE_COLOR = "#111111";
 const INACTIVE_COLOR = "#71717a";
-const BORDER = "#f0f0f0";
+const TAB_HEIGHT = 62;
 
-const TAB_HEIGHT = 58;
-
-function TextLabel({ text }: { text: string }) {
+function TabLabel({
+  text,
+  focused,
+}: {
+  text: string;
+  focused: boolean;
+}) {
   return (
-    <View style={styles.labelWrapper}>
-      <Text style={styles.label}>{text}</Text>
+    <Text
+      style={[
+        styles.label,
+        focused && styles.activeLabel,
+      ]}
+    >
+      {text}
+    </Text>
+  );
+}
+
+function TabIcon({
+  children,
+  focused,
+}: {
+  children: React.ReactNode;
+  focused: boolean;
+}) {
+  return (
+    <View
+      style={[
+        styles.iconWrapper,
+        focused && styles.activeIconWrapper,
+      ]}
+    >
+      {children}
     </View>
   );
 }
 
 export default function TabsLayout() {
   const insets = useSafeAreaInsets();
-
-  const bottomInset = Math.max(insets.bottom, 0);
-  const totalBarHeight = TAB_HEIGHT + bottomInset;
+  const bottomOffset = Math.max(insets.bottom, 10);
 
   return (
     <Tabs
       screenOptions={{
         headerShown: false,
-
-        tabBarActiveTintColor: BRAND,
+        tabBarActiveTintColor: ACTIVE_COLOR,
         tabBarInactiveTintColor: INACTIVE_COLOR,
-
         tabBarHideOnKeyboard: true,
 
         tabBarStyle: {
-          height: totalBarHeight,
-          paddingTop: 5,
-          paddingBottom: bottomInset,
+          position: "absolute",
+          left: 18,
+          right: 18,
+          bottom: bottomOffset + 2,
+          height: TAB_HEIGHT,
 
-          backgroundColor: "#ffffff",
+          backgroundColor: "rgba(255,255,255,0.96)",
+          borderRadius: 32,
 
-          borderTopWidth: 1,
-          borderTopColor: BORDER,
+          // Fine Africa Suk green outline
+         borderWidth: 0.8,
+        borderTopWidth: StyleSheet.hairlineWidth,
+        borderColor: "rgba(0,0,0,0.16)",
 
-          elevation: 0,
-          shadowOpacity: 0,
-          shadowColor: "transparent",
+          paddingTop: 7,
+          paddingBottom: 5,
 
-          ...(Platform.OS === "android" && {
-            elevation: 0,
-          }),
+          // Soft black shadow
+          elevation: Platform.OS === "android" ? 8 : 0,
+          shadowColor: "#000000",
+          shadowOffset: { width: 0, height: 4 },
+          shadowOpacity: 0.16,
+          shadowRadius: 10,
         },
 
         tabBarItemStyle: {
-          height: TAB_HEIGHT - 5,
-          alignItems: "center",
+          height: TAB_HEIGHT - 12,
+          marginHorizontal: 3,
+          borderRadius: 24,
           justifyContent: "center",
-          paddingVertical: 3,
+          alignItems: "center",
+          paddingVertical: 0,
+        },
+
+        tabBarIconStyle: {
+          marginTop: 0,
+          marginBottom: 2,
+        },
+
+        tabBarLabelStyle: {
+          fontSize: 10,
+          fontWeight: "600",
+          marginTop: 0,
         },
 
         tabBarAllowFontScaling: false,
       }}
     >
-      {/* HOME */}
       <Tabs.Screen
         name="index"
         options={{
           title: "Home",
-
-          tabBarLabel: ({ focused }) =>
-            focused ? (
-              <View style={styles.activeLine} />
-            ) : (
-              <TextLabel text="Home" />
-            ),
-
-          tabBarIcon: ({ color, focused }) => (
-            <View style={styles.iconWrapper}>
+          tabBarLabel: ({ focused }) => (
+            <TabLabel text="Home" focused={focused} />
+          ),
+          tabBarIcon: ({ focused }) => (
+            <TabIcon focused={focused}>
               <House
-                color={color}
+                color={focused ? ACTIVE_COLOR : INACTIVE_COLOR}
                 size={23}
-                strokeWidth={focused ? 2.5 : 1.8}
+                strokeWidth={focused ? 2.6 : 1.8}
               />
-            </View>
+            </TabIcon>
           ),
         }}
       />
 
-      {/* CATEGORIES */}
       <Tabs.Screen
         name="categories"
         options={{
           title: "Categories",
-
-          tabBarLabel: ({ focused }) =>
-            focused ? (
-              <View style={styles.activeLine} />
-            ) : (
-              <TextLabel text="Categories" />
-            ),
-
-          tabBarIcon: ({ color, focused }) => (
-            <View style={styles.iconWrapper}>
+          tabBarLabel: ({ focused }) => (
+            <TabLabel text="Categories" focused={focused} />
+          ),
+          tabBarIcon: ({ focused }) => (
+            <TabIcon focused={focused}>
               <Grid2x2
-                color={color}
+                color={focused ? ACTIVE_COLOR : INACTIVE_COLOR}
                 size={23}
-                strokeWidth={focused ? 2.5 : 1.8}
+                strokeWidth={focused ? 2.6 : 1.8}
               />
-            </View>
+            </TabIcon>
           ),
         }}
       />
 
-      {/* ORDERS */}
       <Tabs.Screen
         name="orders"
         options={{
           title: "Orders",
-
-          tabBarLabel: ({ focused }) =>
-            focused ? (
-              <View style={styles.activeLine} />
-            ) : (
-              <TextLabel text="Orders" />
-            ),
-
-          tabBarIcon: ({ color, focused }) => (
-            <View style={styles.iconWrapper}>
+          tabBarLabel: ({ focused }) => (
+            <TabLabel text="Orders" focused={focused} />
+          ),
+          tabBarIcon: ({ focused }) => (
+            <TabIcon focused={focused}>
               <Package
-                color={color}
+                color={focused ? ACTIVE_COLOR : INACTIVE_COLOR}
                 size={23}
-                strokeWidth={focused ? 2.5 : 1.8}
+                strokeWidth={focused ? 2.6 : 1.8}
               />
-            </View>
+            </TabIcon>
           ),
         }}
       />
 
-      {/* MENU */}
       <Tabs.Screen
         name="menu"
         options={{
           title: "Menu",
-
-          tabBarLabel: ({ focused }) =>
-            focused ? (
-              <View style={styles.activeLine} />
-            ) : (
-              <TextLabel text="Menu" />
-            ),
-
-          tabBarIcon: ({ color, focused }) => (
-            <View style={styles.iconWrapper}>
+          tabBarLabel: ({ focused }) => (
+            <TabLabel text="Menu" focused={focused} />
+          ),
+          tabBarIcon: ({ focused }) => (
+            <TabIcon focused={focused}>
               <Menu
-                color={color}
+                color={focused ? ACTIVE_COLOR : INACTIVE_COLOR}
                 size={23}
-                strokeWidth={focused ? 2.5 : 1.8}
+                strokeWidth={focused ? 2.6 : 1.8}
               />
-            </View>
+            </TabIcon>
           ),
         }}
       />
@@ -177,16 +198,18 @@ export default function TabsLayout() {
 
 const styles = StyleSheet.create({
   iconWrapper: {
-    width: 42,
-    height: 30,
+    width: 48,
+    height: 29,
     alignItems: "center",
     justifyContent: "center",
+    borderRadius: 18,
   },
 
-  labelWrapper: {
-    height: 16,
-    alignItems: "center",
-    justifyContent: "center",
+  // Soft, rounded black glass-like highlight
+  activeIconWrapper: {
+    backgroundColor: "rgba(0,0,0,0.07)",
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: "rgba(0,0,0,0.05)",
   },
 
   label: {
@@ -194,13 +217,11 @@ const styles = StyleSheet.create({
     fontSize: 10,
     fontWeight: "600",
     letterSpacing: -0.1,
+    textAlign: "center",
   },
 
-  activeLine: {
-    width: 28,
-    height: 3,
-    marginTop: 3,
-    borderRadius: 3,
-    backgroundColor: BRAND,
+  activeLabel: {
+    color: ACTIVE_COLOR,
+    fontWeight: "800",
   },
 });

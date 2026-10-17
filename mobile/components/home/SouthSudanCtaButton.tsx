@@ -40,7 +40,7 @@ export default function SouthSudanCtaButton() {
     <View style={styles.container}>
       <Pressable
         accessibilityRole="button"
-        accessibilityLabel="Shop Now — Shop with Confidence"
+        accessibilityLabel="Shop Now All Products — Shop with Confidence"
         style={({ pressed }) => [
           styles.buttonWrapper,
           pressed && styles.pressedState,
@@ -175,7 +175,7 @@ export default function SouthSudanCtaButton() {
         <View style={styles.contentLayout}>
           <View style={styles.titleRow}>
             <Text style={styles.title}>
-              Shop Now
+              Click To View All Products
             </Text>
 
             <View style={styles.inlineArrow}>

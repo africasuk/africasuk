@@ -11,19 +11,19 @@ const options: {
 }[] = [
   {
     value: "PICKUP",
-    title: "Office Pickup",
-    description: "Collect your order from our pickup point.",
+    title: "Meet at an Agreed Location",
+    description:
+      "Meet our team at a mutually agreed location when available. No delivery fee.",
     feeLabel: "FREE",
   },
   {
     value: "DELIVERY",
     title: "Home Delivery",
     description:
-      "Delivery fee will be added by our team based on the delivery distance.",
-    feeLabel: "PAID",
+      "Home delivery is paid. Our team will confirm the delivery fee after your order is placed, based on the delivery distance.",
+    feeLabel: "PAID — FEE CONFIRMED AFTER ORDER",
   },
 ];
-
 export default function CheckoutFulfillment() {
   const { fulfillmentMethod, setFulfillmentMethod } = useCheckout();
 

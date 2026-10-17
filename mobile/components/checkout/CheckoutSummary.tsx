@@ -1,3 +1,4 @@
+
 import React, { useState } from "react";
 import {
   View,
@@ -14,11 +15,13 @@ import {
   ArrowRight,
   AlertCircle,
 } from "lucide-react-native";
+
 import { placeOrder } from "@/lib/orders/placeOrder";
 import { Price } from "@/components/currency/Price";
 import { useCart } from "@/store/cart";
 import { useCheckout } from "./CheckoutContext";
 import type { Profile } from "@africasuk/types";
+
 import AddAddressDialog from "./AddAddressDialog";
 import CheckoutContactDialog from "./CheckoutContactDialog";
 
@@ -26,11 +29,17 @@ interface CheckoutSummaryProps {
   profile: Profile | null;
 }
 
-export default function CheckoutSummary({ profile }: CheckoutSummaryProps) {
+export default function CheckoutSummary({
+  profile,
+}: CheckoutSummaryProps) {
   const [placingOrder, setPlacingOrder] = useState(false);
   const [contactDialogOpen, setContactDialogOpen] = useState(false);
 
-  const { paymentMethod, selectedAddress } = useCheckout();
+  const {
+    paymentMethod,
+    selectedAddress,
+    fulfillmentMethod,
+  } = useCheckout();
 
   const items = useCart((state) => state.items);
   const clear = useCart((state) => state.clear);
@@ -39,200 +48,333 @@ export default function CheckoutSummary({ profile }: CheckoutSummaryProps) {
 
   const totalItems = items.reduce(
     (sum, item) => sum + Number(item.quantity),
-    0
+    0,
   );
 
   const subtotal = items.reduce(
-    (sum, item) => sum + Number(item.price) * Number(item.quantity),
-    0
+    (sum, item) =>
+      sum + Number(item.price) * Number(item.quantity),
+    0,
   );
 
-const shipping = 0;
-const tax = 0;
-const total = subtotal;
+  // The admin determines the home delivery fee after the order.
+  // Pickup is always free.
+  const shipping = fulfillmentMethod === "PICKUP" ? 0 : 0;
+  const tax = 0;
+  const total = subtotal + shipping + tax;
 
-async function handlePlaceOrder() {
-  if (!selectedAddress) {
-    Alert.alert(
-      "Delivery Address",
-      "Please add or select a delivery address."
-    );
-    return;
+    async function handlePlaceOrder() {
+      if (!fulfillmentMethod) {
+        Alert.alert(
+          "Delivery Method Required",
+          "Please select Home Delivery or Meet at an Agreed Location before placing your order.",
+        );
+        return;
+      }
+    if (!selectedAddress) {
+      Alert.alert(
+        "Delivery Address",
+        "Please add or select a delivery address.",
+      );
+      return;
+    }
+
+    if (!profile || !profile.fullName?.trim()) {
+      setContactDialogOpen(true);
+      return;
+    }
+
+    const phone = profile.phone?.trim() ?? "";
+
+    if (!phone) {
+      setContactDialogOpen(true);
+      return;
+    }
+
+    const phoneRegex = /^\+?[0-9]{6,15}$/;
+
+    if (!phoneRegex.test(phone)) {
+      setContactDialogOpen(true);
+      return;
+    }
+
+    if (!selectedAddress.street?.trim()) {
+      Alert.alert(
+        "Street Address",
+        "Please enter your street address.",
+      );
+      return;
+    }
+
+    if (!selectedAddress.city?.trim()) {
+      Alert.alert("City", "Please enter your city.");
+      return;
+    }
+
+    if (!selectedAddress.country?.trim()) {
+      Alert.alert("Country", "Please enter your country.");
+      return;
+    }
+
+    try {
+      setPlacingOrder(true);
+
+      const order = await placeOrder({
+        profile,
+        selectedAddress,
+        items,
+        paymentMethod,
+        fulfillmentMethod,
+        subtotal,
+        shipping,
+        tax,
+        total,
+      });
+
+      clear();
+
+      router.replace(
+        `/order-success?orderNumber=${encodeURIComponent(
+          order.orderNumber,
+        )}` as Href,
+      );
+    } catch (error) {
+      console.error("Place Order Error:", error);
+
+      Alert.alert(
+        "Order Failed",
+        error instanceof Error
+          ? error.message
+          : "Failed to place order.",
+      );
+    } finally {
+      setPlacingOrder(false);
+    }
   }
-
-  if (!profile || !profile.fullName?.trim()) {
-    setContactDialogOpen(true);
-    return;
-  }
-
-  const phone = profile.phone?.trim() ?? "";
-
-  if (!phone) {
-    setContactDialogOpen(true);
-    return;
-  }
-
-  const phoneRegex = /^\+?[0-9]{6,15}$/;
-
-  if (!phoneRegex.test(phone)) {
-    setContactDialogOpen(true);
-    return;
-  }
-
-  if (!selectedAddress.street?.trim()) {
-    Alert.alert(
-      "Street Address",
-      "Please enter your street address."
-    );
-    return;
-  }
-
-  if (!selectedAddress.city?.trim()) {
-    Alert.alert(
-      "City",
-      "Please enter your city."
-    );
-    return;
-  }
-
-  if (!selectedAddress.country?.trim()) {
-    Alert.alert(
-      "Country",
-      "Please enter your country."
-    );
-    return;
-  }
-
-  try {
-    setPlacingOrder(true);
-
-    const order = await placeOrder({
-      profile,
-      selectedAddress,
-      items,
-      paymentMethod,
-      subtotal,
-      shipping,
-      tax,
-      total,
-    });
-
-    clear();
-
-    // Go directly to the animated success page.
-    router.replace(
-  `/order-success?orderNumber=${encodeURIComponent(order.orderNumber)}` as Href
-);
-  } catch (error) {
-    console.error("Place Order Error:", error);
-
-    Alert.alert(
-      "Order Failed",
-      error instanceof Error
-        ? error.message
-        : "Failed to place order."
-    );
-  } finally {
-    setPlacingOrder(false);
-  }
-}
 
   return (
     <View style={styles.container}>
-      {/* 1. TOTAL PRICE HERO (Up Always) */}
+      {/* Total Price */}
       <View style={styles.priceHeroCard}>
         <View style={styles.priceHeroLeft}>
-          <Text style={styles.priceHeroLabel}>Total Payable</Text>
-          <Text style={styles.taxInclusiveText}>All taxes & fees included</Text>
+          <Text style={styles.priceHeroLabel}>
+            Total Payable
+          </Text>
+
+          <Text style={styles.taxInclusiveText}>
+            Product total before delivery fee
+          </Text>
         </View>
-        <Price price={total} style={styles.priceHeroValue} />
+
+        <Price
+          price={total}
+          style={styles.priceHeroValue}
+        />
       </View>
 
-      {/* 2. COST BREAKDOWN */}
+      {/* Order Summary */}
       <View style={styles.card}>
         <View style={styles.header}>
-          <Text style={styles.sectionTitle}>Order Summary</Text>
+          <Text style={styles.sectionTitle}>
+            Order Summary
+          </Text>
+
           <Text style={styles.headerCount}>
             {totalItems} {totalItems === 1 ? "item" : "items"}
           </Text>
         </View>
 
         <View style={styles.body}>
+          {/* Subtotal */}
           <View style={styles.row}>
             <Text style={styles.rowLabel}>Subtotal</Text>
-            <Price price={subtotal} style={styles.rowValue} />
+
+            <Price
+              price={subtotal}
+              style={styles.rowValue}
+            />
           </View>
 
-         <View style={styles.row}>
-              <Text style={styles.rowLabel}>
-                Delivery
-              </Text>
-
-              <View style={styles.neutralPill}>
-                <Text style={styles.neutralPillText}>
-                  CALCULATED AT CHECKOUT
-                </Text>
-              </View>
-            </View>
-
-            <View style={styles.row}>
-              <Text style={styles.rowLabel}>
-                Estimated Tax
-              </Text>
-
-              <View style={styles.neutralPill}>
-                <Text style={styles.neutralPillText}>
-                  CALCULATED AT CHECKOUT
-                </Text>
-              </View>
-            </View>
-
+          {/* Fulfillment Method */}
           <View style={styles.row}>
-            <Text style={styles.rowLabel}>Payment Method</Text>
+            <Text style={styles.rowLabel}>
+              Delivery Method
+            </Text>
+
+            <View
+              style={[
+                styles.fulfillmentTag,
+                fulfillmentMethod === "PICKUP"
+                  ? styles.pickupTag
+                  : fulfillmentMethod === "DELIVERY"
+                    ? styles.deliveryTag
+                    : styles.unselectedTag,
+              ]}
+            >
+              <Text style={styles.fulfillmentTagText}>
+                {fulfillmentMethod === "PICKUP"
+                  ? "OFFICE PICKUP"
+                  : fulfillmentMethod === "DELIVERY"
+                    ? "HOME DELIVERY"
+                    : "SELECT METHOD"}
+              </Text>
+            </View>
+          </View>
+
+          {/* Delivery Fee */}
+          <View style={styles.row}>
+            <Text style={styles.rowLabel}>
+              {fulfillmentMethod === "PICKUP"
+                ? "Pickup Fee"
+                : "Delivery Fee"}
+            </Text>
+
+            <Text
+              style={[
+                styles.rowValue,
+                fulfillmentMethod === "PICKUP" &&
+                  styles.freeText,
+              ]}
+            >
+              {fulfillmentMethod === "PICKUP"
+                ? "FREE"
+                : fulfillmentMethod === "DELIVERY"
+                  ? "To be confirmed"
+                  : "Not selected"}
+            </Text>
+          </View>
+
+          {fulfillmentMethod === "DELIVERY" && (
+            <View style={styles.deliveryNote}>
+              <AlertCircle
+                size={15}
+                color="#92400e"
+                strokeWidth={2}
+              />
+
+              <Text style={styles.deliveryNoteText}>
+                Our team will confirm your delivery fee based
+                on the distance. The fee is not included in
+                the total yet.
+              </Text>
+            </View>
+          )}
+
+          {/* Tax */}
+          <View style={styles.row}>
+            <Text style={styles.rowLabel}>
+              Estimated Tax
+            </Text>
+
+            <View style={styles.neutralPill}>
+              <Text style={styles.neutralPillText}>
+                CALCULATED AT CHECKOUT
+              </Text>
+            </View>
+          </View>
+
+          {/* Payment Method */}
+          <View style={styles.row}>
+            <Text style={styles.rowLabel}>
+              Payment Method
+            </Text>
+
             <View style={styles.paymentMethodTag}>
               {paymentMethod === "COD" ? (
                 <>
-                  <Wallet size={13} color="#27272a" strokeWidth={2} />
-                  <Text style={styles.paymentMethodText}>Order with Cash</Text>
+                  <Wallet
+                    size={13}
+                    color="#27272a"
+                    strokeWidth={2}
+                  />
+
+                  <Text style={styles.paymentMethodText}>
+                    Order with Cash
+                  </Text>
                 </>
               ) : (
                 <>
-                  <CreditCard size={13} color="#27272a" strokeWidth={2} />
-                  <Text style={styles.paymentMethodText}>Online Payment</Text>
+                  <CreditCard
+                    size={13}
+                    color="#27272a"
+                    strokeWidth={2}
+                  />
+
+                  <Text style={styles.paymentMethodText}>
+                    Online Payment
+                  </Text>
                 </>
               )}
             </View>
           </View>
 
-          {/* Warning Banner if No Address */}
-          {!hasAddress && (
+          {/* Missing Fulfillment Warning */}
+          {!fulfillmentMethod && (
             <View style={styles.warningBox}>
-              <AlertCircle size={15} color="#b45309" strokeWidth={2} />
+              <AlertCircle
+                size={15}
+                color="#b45309"
+                strokeWidth={2}
+              />
+
               <Text style={styles.warningText}>
-                Select a delivery destination to place your order.
+                Select Home Delivery or Meet at an Agreed Location before
+                placing your order.
               </Text>
             </View>
           )}
 
-          {/* Action Button */}
+          {/* Missing Address Warning */}
+          {!hasAddress && (
+            <View style={styles.warningBox}>
+              <AlertCircle
+                size={15}
+                color="#b45309"
+                strokeWidth={2}
+              />
+
+              <Text style={styles.warningText}>
+                Select a delivery destination to place your
+                order.
+              </Text>
+            </View>
+          )}
+
+          {/* Place Order */}
           {!hasAddress ? (
             <View style={styles.actionWrapper}>
               <AddAddressDialog />
             </View>
           ) : (
             <Pressable
-              disabled={items.length === 0 || placingOrder}
+              disabled={
+                items.length === 0 ||
+                placingOrder ||
+                !fulfillmentMethod
+              }
               onPress={handlePlaceOrder}
               style={({ pressed }) => [
                 styles.submitButton,
-                (items.length === 0 || placingOrder) && styles.buttonDisabled,
-                pressed && !placingOrder && styles.pressedState,
+                (items.length === 0 ||
+                  placingOrder ||
+                  !fulfillmentMethod) &&
+                  styles.buttonDisabled,
+                pressed &&
+                  !placingOrder &&
+                  fulfillmentMethod &&
+                  styles.pressedState,
               ]}
             >
               {placingOrder ? (
                 <View style={styles.loadingContainer}>
-                  <ActivityIndicator color="#ffffff" size="small" />
-                  <Text style={styles.submitButtonText}>Processing Order...</Text>
+                  <ActivityIndicator
+                    color="#ffffff"
+                    size="small"
+                  />
+
+                  <Text style={styles.submitButtonText}>
+                    Processing Order...
+                  </Text>
                 </View>
               ) : (
                 <View style={styles.buttonContent}>
@@ -241,7 +383,12 @@ async function handlePlaceOrder() {
                       ? "Place Order"
                       : "Continue to Payment"}
                   </Text>
-                  <ArrowRight size={15} color="#ffffff" strokeWidth={2} />
+
+                  <ArrowRight
+                    size={15}
+                    color="#ffffff"
+                    strokeWidth={2}
+                  />
                 </View>
               )}
             </Pressable>
@@ -267,7 +414,6 @@ const styles = StyleSheet.create({
     gap: 10,
   },
 
-  /* Price Up Always */
   priceHeroCard: {
     backgroundColor: "#f4f4f5",
     borderRadius: 14,
@@ -282,6 +428,8 @@ const styles = StyleSheet.create({
 
   priceHeroLeft: {
     gap: 2,
+    flex: 1,
+    marginRight: 8,
   },
 
   priceHeroLabel: {
@@ -305,7 +453,6 @@ const styles = StyleSheet.create({
     letterSpacing: -0.4,
   },
 
-  /* Breakdown Card */
   card: {
     backgroundColor: "#ffffff",
     borderRadius: 14,
@@ -339,16 +486,18 @@ const styles = StyleSheet.create({
   },
 
   body: {
-    gap: 10,
+    gap: 12,
   },
 
   row: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
+    gap: 8,
   },
 
   rowLabel: {
+    flexShrink: 1,
     fontSize: 13,
     color: "#71717a",
     fontWeight: "500",
@@ -360,20 +509,72 @@ const styles = StyleSheet.create({
     color: "#18181b",
   },
 
-  neutralPill: {
-    backgroundColor: "#f4f4f5",
+  fulfillmentTag: {
     paddingHorizontal: 8,
-    paddingVertical: 2,
+    paddingVertical: 5,
     borderRadius: 6,
     borderWidth: 1,
+    flexShrink: 0,
+  },
+
+  pickupTag: {
+    backgroundColor: "#ecfdf5",
+    borderColor: "#a7f3d0",
+  },
+
+  deliveryTag: {
+    backgroundColor: "#fffbeb",
+    borderColor: "#fde68a",
+  },
+
+  unselectedTag: {
+    backgroundColor: "#f4f4f5",
     borderColor: "#e4e4e7",
   },
 
-  neutralPillText: {
+  fulfillmentTagText: {
     fontSize: 10,
     fontWeight: "700",
     color: "#27272a",
-    letterSpacing: 0.4,
+    letterSpacing: 0.3,
+  },
+
+  freeText: {
+    color: "#047857",
+    fontWeight: "700",
+  },
+
+  deliveryNote: {
+    flexDirection: "row",
+    alignItems: "flex-start",
+    gap: 8,
+    backgroundColor: "#fffbeb",
+    padding: 10,
+    borderRadius: 8,
+  },
+
+  deliveryNoteText: {
+    flex: 1,
+    fontSize: 12,
+    lineHeight: 18,
+    color: "#92400e",
+  },
+
+  neutralPill: {
+    backgroundColor: "#f4f4f5",
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 6,
+    borderWidth: 1,
+    borderColor: "#e4e4e7",
+    flexShrink: 0,
+  },
+
+  neutralPillText: {
+    fontSize: 9,
+    fontWeight: "700",
+    color: "#27272a",
+    letterSpacing: 0.3,
   },
 
   paymentMethodTag: {
@@ -382,10 +583,11 @@ const styles = StyleSheet.create({
     gap: 6,
     backgroundColor: "#f4f4f5",
     paddingHorizontal: 8,
-    paddingVertical: 3,
+    paddingVertical: 5,
     borderRadius: 6,
     borderWidth: 1,
     borderColor: "#e4e4e7",
+    flexShrink: 0,
   },
 
   paymentMethodText: {
@@ -401,7 +603,7 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     padding: 10,
     flexDirection: "row",
-    alignItems: "center",
+    alignItems: "flex-start",
     gap: 8,
   },
 
@@ -410,6 +612,7 @@ const styles = StyleSheet.create({
     fontWeight: "500",
     color: "#92400e",
     flex: 1,
+    lineHeight: 18,
   },
 
   actionWrapper: {
@@ -417,7 +620,7 @@ const styles = StyleSheet.create({
   },
 
   submitButton: {
-    height: 46,
+    minHeight: 46,
     backgroundColor: "#18181b",
     borderRadius: 10,
     alignItems: "center",

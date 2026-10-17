@@ -1,24 +1,30 @@
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import {
   View,
   Text,
   StyleSheet,
-  ScrollView,
+  RefreshControl,
 } from "react-native";
-import { Stack, useLocalSearchParams } from "expo-router";
+import { useLocalSearchParams } from "expo-router";
 import type { ProductWithDetails } from "@africasuk/types";
+import Animated, {
+  useAnimatedScrollHandler,
+  useSharedValue,
+} from "react-native-reanimated";
 
 import { ProductRepository } from "@/repositories/ProductRepository";
 import { ProductQueryService } from "@/services/ProductQueryService";
 import { supabase } from "@/lib/supabase/client";
 
 import { ProductDetails } from "@/components/products/ProductDetails";
-
 import LoadingScreen from "@/components/shared/LoadingScreen";
+import HomeHeader from "@/components/home/HomeHeader";
 
 type ExtendedProduct = ProductWithDetails & {
   relatedProducts: ProductWithDetails[];
 };
+
+const BRAND = "#005c2e";
 
 export default function MobileProductDetailsPage() {
   const { slug, color } = useLocalSearchParams<{
@@ -26,24 +32,32 @@ export default function MobileProductDetailsPage() {
     color?: string;
   }>();
 
+  const scrollY = useSharedValue(0);
+
   const [product, setProduct] = useState<ExtendedProduct | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [refreshing, setRefreshing] = useState(false);
 
   const service = useMemo(
     () => new ProductQueryService(new ProductRepository(supabase)),
-    []
+    [],
   );
 
-  useEffect(() => {
-    async function loadProduct() {
+  const loadProduct = useCallback(
+    async (isRefresh = false) => {
       if (!slug) {
         setLoading(false);
         return;
       }
 
       try {
-        setLoading(true);
+        if (isRefresh) {
+          setRefreshing(true);
+        } else {
+          setLoading(true);
+        }
+
         setError(null);
 
         const baseSlug =
@@ -61,7 +75,8 @@ export default function MobileProductDetailsPage() {
 
         const relatedProducts = allProducts.filter(
           (item) =>
-            item.id !== data.id && item.categoryId === data.categoryId
+            item.id !== data.id &&
+            item.categoryId === data.categoryId,
         );
 
         setProduct({
@@ -72,25 +87,50 @@ export default function MobileProductDetailsPage() {
         console.error("Error fetching product:", err);
 
         setError(
-          err instanceof Error ? err.message : "Failed to load product"
+          err instanceof Error
+            ? err.message
+            : "Failed to load product",
         );
       } finally {
         setLoading(false);
+        setRefreshing(false);
       }
-    }
+    },
+    [slug, color, service],
+  );
 
+  useEffect(() => {
     loadProduct();
-  }, [slug, color, service]);
-if (loading) {
-  return <LoadingScreen />;
-}
+  }, [loadProduct]);
+
+  const scrollHandler = useAnimatedScrollHandler({
+    onScroll: (event) => {
+      scrollY.value = event.contentOffset.y;
+    },
+  });
+
+  if (loading) {
+    return <LoadingScreen />;
+  }
+
   if (error || !product) {
     return (
       <View style={styles.centerContainer}>
         <View style={styles.notFoundCard}>
-          <Text style={styles.notFoundTitle}>Product Not Found</Text>
+          <Text style={styles.notFoundTitle}>
+            Product Not Found
+          </Text>
+
           <Text style={styles.notFoundSubtitle}>
-            The product you are looking for does not exist or has been removed.
+            The product you are looking for does not exist or has
+            been removed.
+          </Text>
+
+          <Text
+            onPress={() => loadProduct()}
+            style={styles.retryText}
+          >
+            Try again
           </Text>
         </View>
       </View>
@@ -98,28 +138,31 @@ if (loading) {
   }
 
   return (
-    <ScrollView
-      style={styles.container}
-      contentContainerStyle={styles.contentContainer}
-      showsVerticalScrollIndicator={false}
-    >
-      <Stack.Screen
-        options={{
-          title: product.name,
-          headerBackTitle: "Back",
-          headerTintColor: "#111827",
-          headerTitleStyle: {
-            fontWeight: "500", // Non-bold clean weight
-            fontSize: 16,
-          },
-        }}
-      />
-      <ProductDetails
-        product={product}
-        selectedColorId={color}
-        relatedProducts={product.relatedProducts}
-      />
-    </ScrollView>
+    <View style={styles.container}>
+      {/* Same animated header used on the Categories screen */}
+      <HomeHeader scrollY={scrollY} />
+
+      <Animated.ScrollView
+        onScroll={scrollHandler}
+        scrollEventThrottle={16}
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={styles.contentContainer}
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={() => loadProduct(true)}
+            tintColor={BRAND}
+            colors={[BRAND]}
+          />
+        }
+      >
+        <ProductDetails
+          product={product}
+          selectedColorId={color}
+          relatedProducts={product.relatedProducts}
+        />
+      </Animated.ScrollView>
+    </View>
   );
 }
 
@@ -127,18 +170,20 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: "#ffffff",
+    paddingTop: 100,
   },
 
   contentContainer: {
-    paddingBottom: 40,
-    paddingTop: 12,
+    paddingHorizontal: 0,
+    paddingTop: 8,
+    paddingBottom: 24,
   },
 
   centerContainer: {
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
-    padding: 24,
+    padding: 16,
     backgroundColor: "#ffffff",
   },
 
@@ -150,14 +195,14 @@ const styles = StyleSheet.create({
     alignItems: "center",
     width: "100%",
     maxWidth: 320,
+    borderRadius: 16,
   },
 
   notFoundTitle: {
     fontSize: 18,
-    fontWeight: "500", // Non-bold clean header weight
+    fontWeight: "600",
     color: "#111827",
     marginBottom: 6,
-    letterSpacing: 0.2,
   },
 
   notFoundSubtitle: {
@@ -166,5 +211,13 @@ const styles = StyleSheet.create({
     color: "#6b7280",
     textAlign: "center",
     lineHeight: 18,
+  },
+
+  retryText: {
+    marginTop: 18,
+    color: BRAND,
+    fontSize: 14,
+    fontWeight: "700",
+    paddingVertical: 8,
   },
 });

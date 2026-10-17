@@ -48,11 +48,11 @@ export function PrintableReceipt({
   const isDelivery = order.fulfillmentMethod === "DELIVERY";
   const shippingFee = Number(order.shipping ?? 0);
 
-  const fulfillmentLabel = isPickup
-    ? "Office Pickup"
-    : isDelivery
-      ? "Home Delivery"
-      : "Not specified";
+const fulfillmentLabel = isPickup
+  ? "Meet at an Agreed Location"
+  : isDelivery
+    ? "Home Delivery"
+    : "Not specified";
 
   const fulfillmentFeeLabel = isPickup
     ? "FREE"

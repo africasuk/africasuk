@@ -190,7 +190,7 @@ export default function FeaturedProducts({
       }
     }
 
-    return result.slice(0, 12);
+    return result.slice(0, 60);
   }, [featured, ratings]);
 
   if (featuredColorProducts.length === 0) {

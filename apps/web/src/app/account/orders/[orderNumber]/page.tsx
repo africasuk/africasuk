@@ -183,19 +183,19 @@ const exchangeRate = currentRate.rate;
         Fulfillment Method
       </span>
 
-      <span
-        className={`inline-flex rounded-full px-2.5 py-1 text-xs font-semibold ${
-          order.fulfillmentMethod === "PICKUP"
-            ? "bg-emerald-100 text-emerald-800"
-            : "bg-amber-100 text-amber-800"
-        }`}
-      >
-        {order.fulfillmentMethod === "PICKUP"
-          ? "Office Pickup"
-          : order.fulfillmentMethod === "DELIVERY"
-            ? "Home Delivery"
-            : "Not specified"}
-      </span>
+<span
+  className={`inline-flex rounded-full px-2.5 py-1 text-xs font-semibold ${
+    order.fulfillmentMethod === "PICKUP"
+      ? "bg-emerald-100 text-emerald-800"
+      : "bg-amber-100 text-amber-800"
+  }`}
+>
+  {order.fulfillmentMethod === "PICKUP"
+    ? "Meet at an Agreed Location"
+    : order.fulfillmentMethod === "DELIVERY"
+      ? "Home Delivery"
+      : "Not specified"}
+</span>
 
       <span className="mt-2 block font-semibold text-black">
         {order.fulfillmentMethod === "PICKUP"

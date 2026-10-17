@@ -1,10 +1,11 @@
+
 import React, { useEffect, useState, useCallback } from "react";
 import {
   ActivityIndicator,
   ScrollView,
   StyleSheet,
   View,
-  ViewStyle,
+  type ViewStyle,
 } from "react-native";
 import { Redirect, Href } from "expo-router";
 import {
@@ -18,12 +19,14 @@ import { createClient } from "@/lib/auth/client";
 import CheckoutHeader from "@/components/checkout/CheckoutHeader";
 import CheckoutItems from "@/components/checkout/CheckoutItems";
 import CheckoutAddresses from "@/components/checkout/CheckoutAddresses";
+import CheckoutFulfillment from "@/components/checkout/CheckoutFulfillment";
 import CheckoutPaymentWrapper from "@/components/checkout/CheckoutPaymentWrapper";
 import CheckoutSummary from "@/components/checkout/CheckoutSummary";
 import { CheckoutProvider } from "@/components/checkout/CheckoutContext";
 
 export default function CheckoutScreen() {
   const insets = useSafeAreaInsets();
+
   const [loading, setLoading] = useState<boolean>(true);
   const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
   const [profile, setProfile] = useState<Profile | null>(null);
@@ -48,15 +51,22 @@ export default function CheckoutScreen() {
         { data: fetchedAddresses, error: addressError },
         { data: fetchedProfile, error: profileError },
       ] = await Promise.all([
-        supabase.from("addresses").select("*").eq("user_id", user.id),
+        supabase
+          .from("addresses")
+          .select("*")
+          .eq("user_id", user.id),
+
         supabase
           .from("profiles")
           .select("*")
           .eq("user_id", user.id)
-          .maybeSingle(), // Use maybeSingle to prevent fatal 406/PGRST116 throw if profile is empty
+          .maybeSingle(),
       ]);
 
-      if (addressError) throw addressError;
+      if (addressError) {
+        throw addressError;
+      }
+
       if (profileError) {
         console.warn("Profile fetch note:", profileError.message);
       }
@@ -82,7 +92,7 @@ export default function CheckoutScreen() {
           isDefault: address.is_default,
           createdAt: address.created_at,
           updatedAt: address.updated_at,
-        }))
+        })),
       );
 
       const profileData = fetchedProfile as any;
@@ -91,13 +101,18 @@ export default function CheckoutScreen() {
         profileData
           ? ({
               ...profileData,
-              fullName: profileData.fullName ?? profileData.full_name,
-              avatarUrl: profileData.avatarUrl ?? profileData.avatar_url,
-              isActive: profileData.isActive ?? profileData.is_active,
-              createdAt: profileData.createdAt ?? profileData.created_at,
-              updatedAt: profileData.updatedAt ?? profileData.updated_at,
+              fullName:
+                profileData.fullName ?? profileData.full_name,
+              avatarUrl:
+                profileData.avatarUrl ?? profileData.avatar_url,
+              isActive:
+                profileData.isActive ?? profileData.is_active,
+              createdAt:
+                profileData.createdAt ?? profileData.created_at,
+              updatedAt:
+                profileData.updatedAt ?? profileData.updated_at,
             } as unknown as Profile)
-          : null
+          : null,
       );
     } catch (error) {
       console.error("Failed to load checkout data:", error);
@@ -107,7 +122,7 @@ export default function CheckoutScreen() {
   }, []);
 
   useEffect(() => {
-    loadCheckoutData();
+    void loadCheckoutData();
   }, [loadCheckoutData]);
 
   if (loading) {
@@ -118,16 +133,19 @@ export default function CheckoutScreen() {
     );
   }
 
-if (!isAuthenticated) {
-  return <Redirect href={"/auth?redirect=/checkout" as Href} />;
-}
+  if (!isAuthenticated) {
+    return <Redirect href={"/auth?redirect=/checkout" as Href} />;
+  }
 
-  // Exact bottom system bar clearance
+  // Exact bottom system bar clearance.
   const bottomInset = insets.bottom > 0 ? insets.bottom : 16;
 
   return (
     <CheckoutProvider>
-      <SafeAreaView style={styles.container} edges={["top", "left", "right"]}>
+      <SafeAreaView
+        style={styles.container}
+        edges={["top", "left", "right"]}
+      >
         {/* Fixed Top Security Bar */}
         <CheckoutHeader />
 
@@ -152,7 +170,12 @@ if (!isAuthenticated) {
             />
           </View>
 
-          {/* Payment Method Selector */}
+          {/* Fulfillment Method: Pickup or Home Delivery */}
+          <View style={styles.section}>
+            <CheckoutFulfillment />
+          </View>
+
+          {/* Payment Method: COD or Online */}
           <View style={styles.section}>
             <CheckoutPaymentWrapper />
           </View>
@@ -180,20 +203,24 @@ const styles = StyleSheet.create<Styles>({
     flex: 1,
     backgroundColor: "#ffffff",
   },
+
   loading: {
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
     backgroundColor: "#ffffff",
   },
+
   scrollContent: {
     paddingHorizontal: 16,
     paddingTop: 16,
     gap: 14,
   },
+
   section: {
     width: "100%",
   },
+
   sectionLast: {
     width: "100%",
     marginTop: 4,
