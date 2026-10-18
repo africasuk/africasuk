@@ -7,7 +7,11 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint .",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "dev:vinext": "vite dev --port 3001",
+    "build:vinext": "vite build",
+    "start:vinext": "vite preview",
+    "deploy:vinext": "vinext-cloudflare deploy"
   },
   "dependencies": {
     "@africasuk/api": "*",
@@ -44,11 +48,12 @@
     "lucide-react": "^0.554.0",
     "next": "16.2.9",
     "next-themes": "^0.4.6",
-    "react": "19.2.8",
+    "react": "^19.3.1",
     "react-day-picker": "^10.0.1",
-    "react-dom": "19.2.8",
+    "react-dom": "^19.3.1",
     "react-hook-form": "^7.80.0",
     "react-resizable-panels": "^4.12.2",
+    "react-server-dom-webpack": "^19.3.1",
     "recharts": "^3.8.0",
     "shadcn": "^4.16.1",
     "sonner": "^2.0.7",
@@ -59,13 +64,21 @@
     "zod": "^4.4.3"
   },
   "devDependencies": {
+    "@cloudflare/vite-plugin": "^2.0.0-beta.v.1",
     "@tailwindcss/postcss": "4.3.2",
     "@types/node": "^20",
     "@types/react": "19.2.18",
     "@types/react-dom": "19.2.4",
+    "@vinext/cloudflare": "^1.1.1",
+    "@vitejs/plugin-react": "^6.1.2",
+    "@vitejs/plugin-rsc": "^0.5.38",
+    "cf": "^1.0.0-beta.18",
     "eslint": "^9",
     "eslint-config-next": "16.2.9",
     "tailwindcss": "4.3.2",
-    "typescript": "^5"
-  }
+    "typescript": "^5",
+    "vinext": "^1.2.1",
+    "vite": "^8.3.0"
+  },
+  "type": "module"
 }
