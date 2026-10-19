@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState } from "react";
@@ -31,8 +32,8 @@ function RatingStars({ rating }: { rating: number }) {
           key={index}
           className={`h-3.5 w-3.5 ${
             index < roundedRating
-              ? "text-amber-400 fill-amber-400"
-              : "text-gray-200 fill-gray-200"
+              ? "fill-amber-400 text-amber-400"
+              : "fill-gray-200 text-gray-200"
           }`}
           viewBox="0 0 20 20"
           fill="currentColor"
@@ -57,47 +58,34 @@ export function ProductDetails({
 }: Props) {
   const [selectedColor, setSelectedColor] =
     useState<ColorWithDetails>(
-      product.colors.find(
-        (color) => color.id === selectedColorId
-      ) ?? product.colors[0]
+      product.colors.find((color) => color.id === selectedColorId) ??
+        product.colors[0]
     );
 
-  const formattedRating = Number(
-    rating.averageRating || 0
-  ).toFixed(1);
+  const formattedRating = Number(rating.averageRating || 0).toFixed(1);
+
+  const selectedImages =
+    selectedColor?.images && selectedColor.images.length > 0
+      ? selectedColor.images
+      : product.colors.flatMap((color) => color.images ?? []);
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8 space-y-12 sm:space-y-16 select-none antialiased">
-
-      {/* Main Section */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-start">
-
-        {/* Left Column: Gallery */}
-        <div className="lg:col-span-7">
-          <ProductGallery
-            images={
-              selectedColor?.images &&
-              selectedColor.images.length > 0
-                ? selectedColor.images
-                : product.colors.flatMap(
-                    (color) => color.images ?? []
-                  )
-            }
-          />
+    <div className="mx-auto max-w-7xl select-none space-y-8 pb-24 pt-16 antialiased sm:space-y-12 sm:px-6 sm:py-8 lg:space-y-16 lg:px-8">
+      {/* Main product section */}
+      <div className="grid grid-cols-1 items-start gap-6 lg:grid-cols-12 lg:gap-12">
+        {/* Full-width mobile gallery */}
+        <div className="min-w-0 lg:col-span-7">
+          <ProductGallery images={selectedImages} />
         </div>
 
-        {/* Right Column */}
-        <div className="lg:col-span-5 space-y-6">
-
-          {/* Product Information */}
+        {/* Product information */}
+        <div className="min-w-0 space-y-5 px-4 sm:px-0 lg:col-span-5 lg:space-y-6">
           <ProductInfo product={product} />
 
-          {/* Rating Summary */}
+          {/* Rating summary */}
           <div className="pt-1">
-            <div className="flex items-center gap-2.5">
-              <RatingStars
-                rating={rating.averageRating}
-              />
+            <div className="flex flex-wrap items-center gap-2.5">
+              <RatingStars rating={rating.averageRating} />
 
               <span className="text-sm font-semibold text-gray-900">
                 {formattedRating}
@@ -105,16 +93,13 @@ export function ProductDetails({
 
               <span className="text-xs text-gray-400">
                 ({rating.reviewCount}{" "}
-                {rating.reviewCount === 1
-                  ? "review"
-                  : "reviews"}
-                )
+                {rating.reviewCount === 1 ? "review" : "reviews"})
               </span>
             </div>
           </div>
 
-          {/* Variant Selector */}
-          <div className="pt-2">
+          {/* Product variants */}
+          <div className="pt-1 sm:pt-2">
             <VariantSelector
               product={product}
               onColorChange={setSelectedColor}
@@ -123,23 +108,21 @@ export function ProductDetails({
         </div>
       </div>
 
-      {/* Related Products */}
+      {/* Related products */}
       {relatedProducts.length > 0 && (
-        <div className="pt-8 sm:pt-10 border-t border-gray-100 space-y-6">
-          <h3 className="text-sm sm:text-base font-semibold tracking-tight text-gray-900">
+        <section className="space-y-4 border-t border-gray-100 px-4 pt-6 sm:space-y-6 sm:px-0 sm:pt-10">
+          <h2 className="text-base font-semibold tracking-tight text-gray-900 sm:text-lg">
             Recommended for You
-          </h3>
+          </h2>
 
           <RelatedProducts products={relatedProducts} />
-        </div>
+        </section>
       )}
 
-      {/* Customer Reviews - Under Related Products */}
-      <Reviews
-        reviews={reviews}
-        rating={rating}
-      />
-
+      {/* Customer reviews */}
+      <section className="border-t border-gray-100 px-4 pt-6 sm:px-0 sm:pt-8">
+        <Reviews reviews={reviews} rating={rating} />
+      </section>
     </div>
   );
 }

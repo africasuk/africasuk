@@ -117,7 +117,7 @@ export function ProductGallery({ images }: Props) {
         {/* Main Sliding Viewport - Fixed 1:1 Aspect Ratio */}
         <div
           ref={containerRef}
-          className="group relative aspect-square w-full cursor-grab overflow-hidden rounded-2xl border border-zinc-200 bg-zinc-100/70 active:cursor-grabbing"
+          className="group relative aspect-square w-full cursor-grab overflow-hidden rounded-b-3xl rounded-t-none border-0 bg-gray-100 active:cursor-grabbing sm:rounded-2xl sm:border sm:border-zinc-200"
           onMouseDown={(e) => handleDragStart(e.clientX)}
           onMouseMove={(e) => handleDragMove(e.clientX)}
           onMouseUp={handleDragEnd}

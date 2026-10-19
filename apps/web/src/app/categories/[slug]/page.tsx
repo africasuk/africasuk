@@ -249,7 +249,7 @@ export default async function CategoryPage({
                 alt={category.name}
                 fill
                 priority
-                sizes="100vw"
+                sizes="(max-width: 639px) 50vw, (max-width: 1023px) 33vw, 16vw"
                 className="object-cover object-center"
               />
 

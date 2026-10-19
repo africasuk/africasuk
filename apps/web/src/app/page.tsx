@@ -15,9 +15,11 @@ import FeaturedProducts from "@/components/home/FeaturedProducts";
 import Hero from "@/components/home/Hero";
 import Layout from "@/components/layout/Layout";
 import { RequestProductSection } from "@/components/home/RequestProductSection";
-import GenderSection from "@/components/home/GenderSection";
+import GreenSectionDivider from "@/components/home/GreenSectionDivider";
 import { ButtonSection } from "@/components/home/ButtonSection";
 import AppDownloadSection from "@/components/home/AppDownloadSection";
+import MobileHero from "@/components/home/MobileHero";
+import MobileCategories from "@/components/home/MobileCategories";
 // import GiftSomethingSection from "@/components/home/GiftSomethingSection";
 // import GreenSectionDivider from "@/components/home/GreenSectionDivider";
 
@@ -57,28 +59,32 @@ const [
   );
 
 
-  return (
-    <Layout>
+ return (
+  <Layout>
+    {/* Mobile and tablet hero */}
+    <div className="lg:hidden">
+      <MobileHero categories={categories} />
+      <MobileCategories categories={categories} />
+    </div>
+
+    {/* Desktop hero — keep the existing design */}
+    <div className="hidden lg:block">
       <Hero categories={categories} />
+    </div>
 
-      <FeaturedProducts products={products} />
+    <FeaturedProducts products={products} />
 
-      <GenderSection />
+    <GreenSectionDivider categories={categories} />
 
-      <Categories categories={categories} />
+    <Categories categories={categories} />
 
-      <ButtonSection />
-      
-      <RequestProductSection />
-      
-      <ContinueShopping />
+    <ButtonSection />
 
-      {/* <GiftSomethingSection /> */}
+    <RequestProductSection />
 
-      {/* <GreenSectionDivider /> */}
+    <ContinueShopping />
 
-      <AppDownloadSection />
-      
-    </Layout>
-  );
+    <AppDownloadSection />
+  </Layout>
+);
 }

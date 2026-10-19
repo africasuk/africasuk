@@ -1,50 +1,73 @@
-export default function GreenSectionDivider() {
+"use client";
+
+import Image from "next/image";
+import Link from "next/link";
+import { ArrowUpRight } from "lucide-react";
+import type { Category } from "@africasuk/types";
+
+interface GreenSectionDividerProps {
+  categories: Category[];
+}
+
+export default function GreenSectionDivider({
+  categories,
+}: GreenSectionDividerProps) {
+  const items = [
+    {
+      title: "Shoes",
+      slug: "shoes",
+    },
+    {
+      title: "Hand Bags",
+      slug: "womens-luxury-bags",
+    },
+  ]
+    .map((item) => ({
+      ...item,
+      category: categories.find(
+        (category) => category.slug === item.slug
+      ),
+    }))
+    .filter((item) => item.category);
+
+  if (items.length === 0) return null;
+
   return (
-    <section
-      className="
-        relative
-        h-20
-        w-full
-        overflow-hidden
-        bg-[#015c3b]
-      "
-    >
-      <div
-        className="
-          absolute
-          inset-0
-          bg-linear-to-b
-          from-[#01442f]
-          via-[#01502f]
-          to-[#015c3b]
-        "
-      />
+    <section className="bg-white py-8 sm:py-12">
+      <div className="mx-auto grid max-w-7xl grid-cols-1 gap-4 px-4 sm:grid-cols-2 sm:gap-6 lg:px-8">
+        {items.map(({ title, category }) => (
+          <Link
+            key={category!.id}
+            href={`/categories/${category!.slug}`}
+            aria-label={`Shop ${title}`}
+            className="group relative flex aspect-4/3 w-full flex-col justify-between overflow-hidden rounded-2xl bg-gray-100 p-4 transition-all duration-300 hover:shadow-xl sm:p-5 lg:p-6"
+          >
+            {category!.imageUrl ? (
+              <Image
+                src={category!.imageUrl}
+                alt={title}
+                fill
+                sizes="(max-width: 1024px) 100vw, 50vw"
+                className="object-cover object-center transition-transform duration-700 group-hover:scale-[1.02]"
+              />
+            ) : (
+              <div className="absolute inset-0 bg-linear-to-br from-[#004d26] to-[#008744]" />
+            )}
 
-      <div
-        className="
-          absolute
-          inset-x-0
-          top-0
-          h-10
-          bg-linear-to-b
-          from-[#01442f]
-          to-transparent
-          blur-[2px]
-        "
-      />
+            <div className="relative z-10 flex justify-end">
+              <span className="flex h-10 w-10 items-center justify-center rounded-full bg-white/90 shadow-md transition-colors group-hover:bg-[#004d26] sm:h-11 sm:w-11">
+                <ArrowUpRight className="h-5 w-5 text-neutral-800 group-hover:text-white" />
+              </span>
+            </div>
 
-      <div
-        className="
-          absolute
-          inset-x-0
-          bottom-0
-          h-10
-          bg-linear-to-b
-          from-transparent
-          to-[#015c3b]
-          blur-[2px]
-        "
-      />
+            <div className="relative z-10">
+              <span className="inline-block rounded-lg bg-white/90 px-3 py-1.5 text-sm font-bold text-[#004d26] shadow-sm">
+                {title}
+              </span>
+            </div>
+          </Link>
+        ))}
+      </div>
     </section>
   );
 }

@@ -127,13 +127,14 @@
     @apply border-border outline-ring/50;
   }
 
-  html {
-    @apply font-sans scroll-smooth;
+html {
+  @apply font-sans;
 
-    width: 100%;
-    min-height: 100%;
-    overflow-x: hidden;
-  }
+  width: 100%;
+  min-height: 100%;
+  overflow-x: hidden;
+  scroll-behavior: auto;
+}
 
   body {
     @apply bg-background text-foreground antialiased selection:bg-[#004d26]/10 selection:text-[#004d26];
