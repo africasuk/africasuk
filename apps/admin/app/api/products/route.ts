@@ -1,5 +1,6 @@
+
 import { NextResponse } from "next/server";
-import { Readable } from "stream";
+import { S3Client, PutObjectCommand } from "@aws-sdk/client-s3";
 
 import {
   ProductRepository,
@@ -14,7 +15,29 @@ import {
 } from "@africasuk/api";
 
 import { createAdminSupabaseClient } from "@/lib/supabase/admin";
-import cloudinary from "@/lib/cloudinary";
+
+export const runtime = "nodejs";
+
+const R2_PUBLIC_URL = "https://r2-media.africasuk.com";
+
+function createR2Client() {
+  const accountId = process.env.CLOUDFLARE_ACCOUNT_ID;
+  const accessKeyId = process.env.R2_ACCESS_KEY_ID;
+  const secretAccessKey = process.env.R2_SECRET_ACCESS_KEY;
+
+  if (!accountId || !accessKeyId || !secretAccessKey) {
+    throw new Error("Cloudflare R2 credentials are missing.");
+  }
+
+  return new S3Client({
+    region: "auto",
+    endpoint: `https://${accountId}.r2.cloudflarestorage.com`,
+    credentials: {
+      accessKeyId,
+      secretAccessKey,
+    },
+  });
+}
 
 async function createProductService() {
   const db = createAdminSupabaseClient();
@@ -23,96 +46,77 @@ async function createProductService() {
     new ProductRepository(db),
     new ProductColorRepository(db),
     new ProductImageRepository(db),
-    new ProductVariantRepository(db)
+    new ProductVariantRepository(db),
   );
 }
 
-async function uploadToCloudinary(
-  file: File,
-  folder: string
-): Promise<string> {
-  const buffer = Buffer.from(await file.arrayBuffer());
+async function uploadToR2(file: File): Promise<string> {
+  const bucket = process.env.R2_BUCKET_NAME;
 
-  return new Promise((resolve, reject) => {
-    const upload = cloudinary.uploader.upload_stream(
-      {
-        folder,
-      },
-      (error, result) => {
-        if (error || !result) {
-          reject(error);
-          return;
-        }
+  if (!bucket) {
+    throw new Error("R2_BUCKET_NAME is missing.");
+  }
 
-        resolve(result.secure_url);
-      }
-    );
+  const r2 = createR2Client();
+  const extension =
+    file.name.split(".").pop()?.toLowerCase() || "jpg";
+  const key = `africasuk/products/${crypto.randomUUID()}.${extension}`;
 
-    Readable.from(buffer).pipe(upload);
-  });
+  await r2.send(
+    new PutObjectCommand({
+      Bucket: bucket,
+      Key: key,
+      Body: Buffer.from(await file.arrayBuffer()),
+      ContentType: file.type || "application/octet-stream",
+    }),
+  );
+
+  return `${R2_PUBLIC_URL}/${key}`;
 }
 
 export async function POST(request: Request) {
   try {
     const formData = await request.formData();
-
     const service = await createProductService();
 
     const colors = JSON.parse(
-      String(formData.get("colors"))
+      String(formData.get("colors") ?? "[]"),
     );
 
-    for (const color of colors) {
-      const uploadPromises = color.images.map(
-        async (imageKey: string) => {
-          const file = formData.get(imageKey) as File;
+    if (!Array.isArray(colors)) {
+      throw new Error("Invalid product colors.");
+    }
 
-          if (!file || !(file instanceof File)) {
+    for (const color of colors) {
+      if (!Array.isArray(color.images)) {
+        throw new Error("Invalid product image list.");
+      }
+
+      color.images = await Promise.all(
+        color.images.map(async (imageKey: string) => {
+          const file = formData.get(imageKey);
+
+          if (!(file instanceof File) || file.size === 0) {
             throw new Error(`Image not found: ${imageKey}`);
           }
 
-          return uploadToCloudinary(
-            file,
-            "africasuk/products"
-          );
-        }
+          return uploadToR2(file);
+        }),
       );
-
-      const uploadedImages = await Promise.all(
-        uploadPromises
-      );
-
-      color.images = uploadedImages;
     }
 
     const product = await service.create({
-      categoryId: String(
-        formData.get("categoryId")
-      ),
-
-      brandId: String(
-        formData.get("brandId")
-      ),
-
-      name: String(
-        formData.get("name")
-      ),
-
-      description: String(
-        formData.get("description") ?? ""
-      ),
-
-      isActive:
-        formData.get("isActive") === "on",
-
+      categoryId: String(formData.get("categoryId") ?? ""),
+      brandId: String(formData.get("brandId") ?? ""),
+      name: String(formData.get("name") ?? ""),
+      description: String(formData.get("description") ?? ""),
+      isActive: formData.get("isActive") === "on",
       colors,
     });
 
-    return NextResponse.json(product, {
-      status: 201,
-    });
+    return NextResponse.json(product, { status: 201 });
   } catch (error) {
-    console.error(error);
+    console.error("Product creation failed:", error);
 
     return NextResponse.json(
       {
@@ -121,9 +125,7 @@ export async function POST(request: Request) {
             ? error.message
             : "Failed to create product.",
       },
-      {
-        status: 400,
-      }
+      { status: 400 },
     );
   }
 }
@@ -133,22 +135,18 @@ export async function GET() {
     const db = createAdminSupabaseClient();
 
     const service = new ProductQueryService(
-      new ProductRepository(db)
+      new ProductRepository(db),
     );
 
     const products = await service.getAll();
 
     return NextResponse.json(products);
   } catch (error) {
-    console.error(error);
+    console.error("Failed to load products:", error);
 
     return NextResponse.json(
-      {
-        message: "Failed to load products.",
-      },
-      {
-        status: 500,
-      }
+      { message: "Failed to load products." },
+      { status: 500 },
     );
   }
 }

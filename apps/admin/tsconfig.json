@@ -1,31 +1,24 @@
+
 {
   "extends": "../../tsconfig.base.json",
   "compilerOptions": {
     "target": "ES2022",
     "lib": ["DOM", "DOM.Iterable", "ES2022"],
-
     "allowJs": true,
     "strict": true,
     "noEmit": true,
-
     "module": "ESNext",
     "moduleResolution": "Bundler",
-
     "resolveJsonModule": true,
     "isolatedModules": true,
-
     "jsx": "preserve",
-
     "incremental": true,
-
     "plugins": [
       {
         "name": "next"
       }
     ],
-
     "baseUrl": ".",
-
     "paths": {
       "@/*": ["./*"]
     }
@@ -34,7 +27,8 @@
     "next-env.d.ts",
     "**/*.ts",
     "**/*.tsx",
-    ".next/types/**/*.ts"
+    ".next/types/**/*.ts",
+    ".cloudflare/types/**/*.ts"
   ],
   "exclude": ["node_modules"]
 }
