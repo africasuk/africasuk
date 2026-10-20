@@ -51,7 +51,7 @@ export function ReviewTable({ reviews: initialReviews }: Props) {
         }),
       });
 
-      const data = await response.json();
+      const data: { error?: string } = await response.json();
 
       if (!response.ok) {
         throw new Error(data.error || "Failed to update review.");
@@ -95,7 +95,7 @@ export function ReviewTable({ reviews: initialReviews }: Props) {
         }),
       });
 
-      const data = await response.json();
+      const data: { error?: string } = await response.json();
 
       if (!response.ok) {
         throw new Error(data.error || "Failed to delete review.");

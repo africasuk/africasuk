@@ -1,3 +1,4 @@
+
 import { NextResponse } from "next/server";
 import {
   S3Client,
@@ -24,7 +25,7 @@ export const runtime = "nodejs";
 export const maxDuration = 60;
 
 const R2_PUBLIC_URL = "https://r2-media.africasuk.com";
-const MAX_IMAGES_PER_PRODUCT = 20;
+const MAX_IMAGES_PER_PRODUCT = 50;
 const MAX_IMAGE_SIZE = 10 * 1024 * 1024;
 const UPLOAD_BATCH_SIZE = 4;
 
@@ -141,8 +142,6 @@ async function uploadInBatches(
   for (let i = 0; i < files.length; i += UPLOAD_BATCH_SIZE) {
     const batch = files.slice(i, i + UPLOAD_BATCH_SIZE);
 
-    // Record each successful upload immediately so failed batches
-    // can still clean up files already uploaded to R2.
     const results = await Promise.allSettled(
       batch.map(({ imageKey, file }) =>
         uploadToR2(file, r2, bucket).then((image) => ({
@@ -154,9 +153,7 @@ async function uploadInBatches(
 
     const failures: string[] = [];
 
-    for (let j = 0; j < results.length; j++) {
-      const result = results[j];
-
+    for (const result of results) {
       if (result.status === "fulfilled") {
         uploadedImages.push(result.value.image);
         uploadedUrls.set(result.value.imageKey, result.value.image.url);
@@ -177,18 +174,186 @@ async function uploadInBatches(
   return uploadedUrls;
 }
 
+function validateColors(value: unknown): value is CreateProductColorDto[] {
+  if (!Array.isArray(value)) return false;
+
+  return value.every((color) => {
+    if (
+      !color ||
+      typeof color.name !== "string" ||
+      typeof color.optionName !== "string" ||
+      !Array.isArray(color.images) ||
+      !Array.isArray(color.variants)
+    ) {
+      return false;
+    }
+
+    const validImages = color.images.every(
+      (image: unknown) => typeof image === "string" && image.trim().length > 0,
+    );
+
+    const validVariants = color.variants.every(
+      (variant: unknown) =>
+        !!variant &&
+        typeof variant === "object" &&
+        typeof (variant as { optionValue?: unknown }).optionValue ===
+          "string" &&
+        typeof (variant as { price?: unknown }).price === "number" &&
+        Number.isFinite((variant as { price: number }).price) &&
+        typeof (variant as { stock?: unknown }).stock === "number" &&
+        Number.isFinite((variant as { stock: number }).stock) &&
+        (variant as { stock: number }).stock >= 0,
+    );
+
+    return validImages && validVariants;
+  });
+}
+
 export async function POST(request: Request) {
   const uploadedImages: UploadedImage[] = [];
   let r2: S3Client | null = null;
   let bucket: string | null = null;
 
   try {
-    const formData = await request.formData();
+    const contentType = request.headers.get("content-type") ?? "";
+    const isJson = contentType.includes("application/json");
 
-    const name = String(formData.get("name") ?? "").trim();
-    const categoryId = String(formData.get("categoryId") ?? "").trim();
-    const brandId = String(formData.get("brandId") ?? "").trim();
-    const descriptionValue = formData.get("description");
+    let name = "";
+    let categoryId = "";
+    let brandId = "";
+    let description: string | null = null;
+    let isActive = false;
+    let colors: CreateProductColorDto[] = [];
+    const filesToUpload: { imageKey: string; file: File }[] = [];
+
+    if (isJson) {
+      // New flow: images have already been uploaded individually to R2.
+      const body: unknown = await request.json();
+
+      if (!body || typeof body !== "object") {
+        return NextResponse.json(
+          { message: "Invalid product data." },
+          { status: 400 },
+        );
+      }
+
+      const data = body as Record<string, unknown>;
+
+      name = typeof data.name === "string" ? data.name.trim() : "";
+      categoryId =
+        typeof data.categoryId === "string" ? data.categoryId.trim() : "";
+      brandId =
+        typeof data.brandId === "string" ? data.brandId.trim() : "";
+
+      description =
+        typeof data.description === "string" && data.description.trim()
+          ? data.description.trim()
+          : null;
+
+      isActive = data.isActive === true;
+
+      if (!validateColors(data.colors)) {
+        return NextResponse.json(
+          { message: "Invalid color, image, or variant data." },
+          { status: 400 },
+        );
+      }
+
+      colors = data.colors;
+    } else {
+      // Backward-compatible flow: product data and image files arrive together.
+      const formData = await request.formData();
+
+      name = String(formData.get("name") ?? "").trim();
+      categoryId = String(formData.get("categoryId") ?? "").trim();
+      brandId = String(formData.get("brandId") ?? "").trim();
+
+      const descriptionValue = formData.get("description");
+      description =
+        typeof descriptionValue === "string" && descriptionValue.trim()
+          ? descriptionValue.trim()
+          : null;
+
+      isActive = formData.get("isActive") === "on";
+
+      try {
+        colors = JSON.parse(
+          String(formData.get("colors") ?? "[]"),
+        ) as CreateProductColorDto[];
+      } catch {
+        return NextResponse.json(
+          { message: "Invalid product colors JSON." },
+          { status: 400 },
+        );
+      }
+
+      if (!validateColors(colors)) {
+        return NextResponse.json(
+          { message: "Invalid color, image, or variant data." },
+          { status: 400 },
+        );
+      }
+
+      const imageKeys = new Set<string>();
+
+      for (const color of colors) {
+        for (const imageKey of color.images) {
+          imageKeys.add(imageKey);
+        }
+      }
+
+      if (imageKeys.size > MAX_IMAGES_PER_PRODUCT) {
+        return NextResponse.json(
+          {
+            message: `A product can have up to ${MAX_IMAGES_PER_PRODUCT} images.`,
+          },
+          { status: 400 },
+        );
+      }
+
+      for (const imageKey of imageKeys) {
+        const file = formData.get(imageKey);
+
+        if (!(file instanceof File) || file.size === 0) {
+          return NextResponse.json(
+            { message: `Image not found: ${imageKey}` },
+            { status: 400 },
+          );
+        }
+
+        filesToUpload.push({ imageKey, file });
+      }
+
+      if (filesToUpload.length > 0) {
+        bucket = process.env.R2_BUCKET_NAME ?? null;
+
+        if (!bucket) {
+          throw new Error("R2_BUCKET_NAME is missing.");
+        }
+
+        r2 = createR2Client();
+
+        const uploadedUrls = await uploadInBatches(
+          filesToUpload,
+          r2,
+          bucket,
+          uploadedImages,
+        );
+
+        colors = colors.map((color) => ({
+          ...color,
+          images: color.images.map((imageKey) => {
+            const url = uploadedUrls.get(imageKey);
+
+            if (!url) {
+              throw new Error(`Uploaded image URL not found: ${imageKey}`);
+            }
+
+            return url;
+          }),
+        }));
+      }
+    }
 
     if (!name || !categoryId || !brandId) {
       return NextResponse.json(
@@ -197,55 +362,12 @@ export async function POST(request: Request) {
       );
     }
 
-    const colorsValue = String(formData.get("colors") ?? "[]");
+    const totalImages = colors.reduce(
+      (total, color) => total + color.images.length,
+      0,
+    );
 
-    let colors: CreateProductColorDto[];
-
-    try {
-      colors = JSON.parse(colorsValue) as CreateProductColorDto[];
-    } catch {
-      return NextResponse.json(
-        { message: "Invalid product colors JSON." },
-        { status: 400 },
-      );
-    }
-
-    if (!Array.isArray(colors)) {
-      return NextResponse.json(
-        { message: "Invalid product colors." },
-        { status: 400 },
-      );
-    }
-
-    const imageKeys = new Set<string>();
-
-    for (const color of colors) {
-      if (
-        !color ||
-        typeof color.name !== "string" ||
-        typeof color.optionName !== "string" ||
-        !Array.isArray(color.images) ||
-        !Array.isArray(color.variants)
-      ) {
-        return NextResponse.json(
-          { message: "Invalid color, image, or variant data." },
-          { status: 400 },
-        );
-      }
-
-      for (const imageKey of color.images) {
-        if (typeof imageKey !== "string" || !imageKey.trim()) {
-          return NextResponse.json(
-            { message: "Invalid image reference." },
-            { status: 400 },
-          );
-        }
-
-        imageKeys.add(imageKey);
-      }
-    }
-
-    if (imageKeys.size > MAX_IMAGES_PER_PRODUCT) {
+    if (totalImages > MAX_IMAGES_PER_PRODUCT) {
       return NextResponse.json(
         {
           message: `A product can have up to ${MAX_IMAGES_PER_PRODUCT} images.`,
@@ -254,62 +376,14 @@ export async function POST(request: Request) {
       );
     }
 
-    const filesToUpload: { imageKey: string; file: File }[] = [];
-
-    for (const imageKey of imageKeys) {
-      const file = formData.get(imageKey);
-
-      if (!(file instanceof File) || file.size === 0) {
-        return NextResponse.json(
-          { message: `Image not found: ${imageKey}` },
-          { status: 400 },
-        );
-      }
-
-      filesToUpload.push({ imageKey, file });
-    }
-
-    if (filesToUpload.length > 0) {
-      bucket = process.env.R2_BUCKET_NAME ?? null;
-
-      if (!bucket) {
-        throw new Error("R2_BUCKET_NAME is missing.");
-      }
-
-      r2 = createR2Client();
-
-      const uploadedUrls = await uploadInBatches(
-        filesToUpload,
-        r2,
-        bucket,
-        uploadedImages,
-      );
-
-      colors = colors.map((color) => ({
-        ...color,
-        images: color.images.map((imageKey) => {
-          const url = uploadedUrls.get(imageKey);
-
-          if (!url) {
-            throw new Error(`Uploaded image URL not found: ${imageKey}`);
-          }
-
-          return url;
-        }),
-      }));
-    }
-
     const service = await createProductService();
 
     const product = await service.create({
       categoryId,
       brandId,
       name,
-      description:
-        typeof descriptionValue === "string" && descriptionValue.trim()
-          ? descriptionValue.trim()
-          : null,
-      isActive: formData.get("isActive") === "on",
+      description,
+      isActive,
       colors,
     });
 
@@ -337,10 +411,7 @@ export async function GET() {
   try {
     const db = createAdminSupabaseClient();
 
-    const service = new ProductQueryService(
-      new ProductRepository(db),
-    );
-
+    const service = new ProductQueryService(new ProductRepository(db));
     const products = await service.getAll();
 
     return NextResponse.json(products);

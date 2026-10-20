@@ -7,18 +7,14 @@ import { createServerSupabaseClient } from "@/lib/supabase/server";
 
 export async function PATCH(request: Request) {
   try {
-    const items = await request.json();
+const items: { id: string; sortOrder: number }[] =
+  await request.json();
 
-    const supabase =
-      await createServerSupabaseClient();
+const supabase = await createServerSupabaseClient();
+const repository = new CategoryRepository(supabase);
+const service = new CategoryService(repository);
 
-    const repository =
-      new CategoryRepository(supabase);
-
-    const service =
-      new CategoryService(repository);
-
-    await service.reorder(items);
+await service.reorder(items);
 
     return NextResponse.json({
       success: true,

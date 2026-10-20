@@ -1,47 +1,71 @@
 import { NextResponse } from "next/server";
-
 import { requirePermission } from "@/lib/auth/guards";
 import { Permissions } from "@/lib/auth/permissions";
 import { createAdminSupabaseClient } from "@/lib/supabase/admin";
 
 const DEFAULT_PASSWORD = "Pass@123";
 
+type CreateUserBody = {
+  fullName?: unknown;
+  email?: unknown;
+  role?: unknown;
+};
+
+const VALID_ROLES = [
+  "SUPER_ADMIN",
+  "ADMIN",
+  "MANAGER",
+  "STAFF",
+  "CUSTOMER",
+] as const;
+
 export async function POST(request: Request) {
   try {
-    await requirePermission(
-      Permissions.USERS_CREATE
-    );
+    await requirePermission(Permissions.USERS_CREATE);
 
-    const body = await request.json();
+    const rawBody: unknown = await request.json();
 
-    const {
-      fullName,
-      email,
-      role,
-    } = body;
-
-    if (!fullName || !email || !role) {
+    if (
+      typeof rawBody !== "object" ||
+      rawBody === null ||
+      Array.isArray(rawBody)
+    ) {
       return NextResponse.json(
-        {
-          message:
-            "Full name, email and role are required.",
-        },
-        {
-          status: 400,
-        }
+        { message: "Invalid request body." },
+        { status: 400 }
       );
     }
 
+    const body = rawBody as CreateUserBody;
+    const { fullName, email, role } = body;
+
+    if (
+      typeof fullName !== "string" ||
+      !fullName.trim() ||
+      typeof email !== "string" ||
+      !email.trim() ||
+      typeof role !== "string" ||
+      !VALID_ROLES.includes(role as (typeof VALID_ROLES)[number])
+    ) {
+      return NextResponse.json(
+        { message: "Full name, valid email and role are required." },
+        { status: 400 }
+      );
+    }
+
+    const normalizedEmail = email.trim().toLowerCase();
+    const normalizedName = fullName.trim();
+
     const admin = createAdminSupabaseClient();
 
-    // Check if profile already exists
+    // Check if the profile already exists.
     const {
       data: existingProfile,
       error: profileError,
     } = await admin
       .from("profiles")
       .select("id")
-      .eq("email", email)
+      .eq("email", normalizedEmail)
       .maybeSingle();
 
     if (profileError) {
@@ -50,17 +74,12 @@ export async function POST(request: Request) {
 
     if (existingProfile) {
       return NextResponse.json(
-        {
-          message:
-            "A user with this email already exists.",
-        },
-        {
-          status: 409,
-        }
+        { message: "A user with this email already exists." },
+        { status: 409 }
       );
     }
 
-    // Check if auth user already exists
+    // Check whether the authentication user already exists.
     const {
       data: authUsers,
       error: listError,
@@ -70,35 +89,28 @@ export async function POST(request: Request) {
       throw listError;
     }
 
-    const existingAuthUser =
-      authUsers.users.find(
-        (user) =>
-          user.email?.toLowerCase() ===
-          email.toLowerCase()
-      );
+    const existingAuthUser = authUsers.users.find(
+      (user) => user.email?.toLowerCase() === normalizedEmail
+    );
 
     if (existingAuthUser) {
       return NextResponse.json(
-        {
-          message:
-            "Authentication user already exists.",
-        },
-        {
-          status: 409,
-        }
+        { message: "Authentication user already exists." },
+        { status: 409 }
       );
     }
 
-    // Create auth user (trigger creates profile)
+    // Create the authentication user. The database trigger
+    // is expected to create the associated profile.
     const {
       data: authData,
       error: authError,
     } = await admin.auth.admin.createUser({
-      email,
+      email: normalizedEmail,
       password: DEFAULT_PASSWORD,
       email_confirm: true,
       user_metadata: {
-        full_name: fullName,
+        full_name: normalizedName,
         role,
       },
     });
@@ -108,24 +120,19 @@ export async function POST(request: Request) {
     }
 
     if (!authData.user) {
-      throw new Error(
-        "Failed to create authentication user."
-      );
+      throw new Error("Failed to create authentication user.");
     }
 
     return NextResponse.json(
       {
         success: true,
         user: authData.user,
-        temporaryPassword:
-          DEFAULT_PASSWORD,
+        temporaryPassword: DEFAULT_PASSWORD,
       },
-      {
-        status: 201,
-      }
+      { status: 201 }
     );
   } catch (error: unknown) {
-  
+    console.error("Admin Create User Error:", error);
 
     return NextResponse.json(
       {
@@ -134,9 +141,7 @@ export async function POST(request: Request) {
             ? error.message
             : "Failed to create user.",
       },
-      {
-        status: 400,
-      }
+      { status: 500 }
     );
   }
 }

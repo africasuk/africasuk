@@ -26,13 +26,13 @@ export default function GenderSection() {
           <GenderCard
             title="Women's Collection"
             image="/images/home/women.jpg"
-            query="women"
+            href="/products?gender=women"
           />
 
           <GenderCard
             title="Men's Collection"
             image="/images/home/men.jpg"
-            query="men"
+            href="/products?gender=men"
           />
         </div>
       </div>

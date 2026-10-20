@@ -52,6 +52,20 @@ interface Variant {
   cost: Cost | null;
 }
 
+interface CostApiResponse {
+  success?: boolean;
+  error?: string;
+  data?: Cost | null;
+}
+
+interface PriceApiResponse {
+  success?: boolean;
+  error?: string;
+  data?: {
+    price?: number;
+  } | null;
+}
+
 type CostField =
   | "wholesaleCost"
   | "nairobiHandling"
@@ -212,7 +226,7 @@ export default function ProductProfitability({
         }),
       });
 
-      const costResult = await costResponse.json();
+      const costResult: CostApiResponse = await costResponse.json();
       if (!costResponse.ok || !costResult.success) {
         throw new Error(costResult.error || "Failed to save costs.");
       }
@@ -226,7 +240,7 @@ export default function ProductProfitability({
         }),
       });
 
-      const priceResult = await priceResponse.json();
+      const priceResult: PriceApiResponse = await priceResponse.json();
       if (!priceResponse.ok || !priceResult.success) {
         throw new Error(priceResult.error || "Failed to update selling price.");
       }
@@ -236,7 +250,7 @@ export default function ProductProfitability({
           item.id === variant.id
             ? {
                 ...item,
-                cost: costResult.data,
+                cost: costResult.data ?? null,
                 price: priceResult.data?.price ?? variant.price,
               }
             : item

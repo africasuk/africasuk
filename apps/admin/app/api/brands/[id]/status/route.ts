@@ -18,7 +18,8 @@ export async function PATCH(
   try {
     const { id } = await params;
 
-    const { isActive } = await request.json();
+    const body: { isActive: boolean } = await request.json();
+    const { isActive } = body;
 
     const supabase = await createServerSupabaseClient();
 

@@ -43,7 +43,7 @@ export default function DeleteDialog({
         method: "DELETE",
       });
 
-      const result = await response.json();
+      const result: { message?: string } = await response.json();
 
       if (!response.ok) {
         throw new Error(

@@ -1,61 +1,102 @@
 import { NextResponse } from "next/server";
-
 import { requirePermission } from "@/lib/auth/guards";
 import { Permissions } from "@/lib/auth/permissions";
 import { createAdminSupabaseClient } from "@/lib/supabase/admin";
 
 interface RouteContext {
-  params: Promise<{
-    id: string;
-  }>;
+  params: Promise<{ id: string }>;
 }
+
+interface UpdateUserBody {
+  fullName?: unknown;
+  phone?: unknown;
+  role?: unknown;
+  isActive?: unknown;
+}
+
+const VALID_ROLES = [
+  "SUPER_ADMIN",
+  "ADMIN",
+  "MANAGER",
+  "STAFF",
+  "CUSTOMER",
+] as const;
 
 export async function PATCH(
   request: Request,
   { params }: RouteContext
 ) {
   try {
-    const { profile } =
-      await requirePermission(
-        Permissions.USERS_UPDATE
-      );
+    const { profile } = await requirePermission(
+      Permissions.USERS_UPDATE
+    );
 
     if (profile.role !== "SUPER_ADMIN") {
       return NextResponse.json(
-        {
-          message:
-            "Only Super Admin can update users.",
-        },
-        {
-          status: 403,
-        }
+        { message: "Only Super Admin can update users." },
+        { status: 403 }
       );
     }
 
     const { id } = await params;
 
-    const {
-      fullName,
-      phone,
-      role,
-      isActive,
-    } = await request.json();
+    if (!id?.trim()) {
+      return NextResponse.json(
+        { message: "User ID is required." },
+        { status: 400 }
+      );
+    }
 
-    const admin =
-      createAdminSupabaseClient();
+    const rawBody: unknown = await request.json();
 
-    const { data, error } =
-      await admin
-        .from("profiles")
-        .update({
-          full_name: fullName,
-          phone,
-          role,
-          is_active: isActive,
-        })
-        .eq("id", id)
-        .select()
-        .single();
+    if (
+      typeof rawBody !== "object" ||
+      rawBody === null ||
+      Array.isArray(rawBody)
+    ) {
+      return NextResponse.json(
+        { message: "Invalid request body." },
+        { status: 400 }
+      );
+    }
+
+    const body = rawBody as UpdateUserBody;
+
+    const { fullName, phone, role, isActive } = body;
+
+    if (
+      typeof fullName !== "string" ||
+      (phone !== null && typeof phone !== "string") ||
+      typeof role !== "string" ||
+      !VALID_ROLES.includes(role as (typeof VALID_ROLES)[number]) ||
+      typeof isActive !== "boolean"
+    ) {
+      return NextResponse.json(
+        { message: "Invalid user details." },
+        { status: 400 }
+      );
+    }
+
+    if (role === "SUPER_ADMIN" && profile.role !== "SUPER_ADMIN") {
+      return NextResponse.json(
+        { message: "Only Super Admin can assign this role." },
+        { status: 403 }
+      );
+    }
+
+    const admin = createAdminSupabaseClient();
+
+    const { data, error } = await admin
+      .from("profiles")
+      .update({
+        full_name: fullName.trim(),
+        phone,
+        role,
+        is_active: isActive,
+      })
+      .eq("id", id)
+      .select()
+      .single();
 
     if (error) {
       throw error;
@@ -66,7 +107,7 @@ export async function PATCH(
       user: data,
     });
   } catch (error) {
-  
+    console.error("Failed to update user:", error);
 
     return NextResponse.json(
       {
@@ -75,9 +116,7 @@ export async function PATCH(
             ? error.message
             : "Failed to update user.",
       },
-      {
-        status: 400,
-      }
+      { status: 500 }
     );
   }
 }
@@ -87,32 +126,29 @@ export async function DELETE(
   { params }: RouteContext
 ) {
   try {
-    const { profile } =
-      await requirePermission(
-        Permissions.USERS_DELETE
-      );
+    const { profile } = await requirePermission(
+      Permissions.USERS_DELETE
+    );
 
     if (profile.role !== "SUPER_ADMIN") {
       return NextResponse.json(
-        {
-          message:
-            "Only Super Admin can delete users.",
-        },
-        {
-          status: 403,
-        }
+        { message: "Only Super Admin can delete users." },
+        { status: 403 }
       );
     }
 
     const { id } = await params;
 
-    const admin =
-      createAdminSupabaseClient();
+    if (!id?.trim()) {
+      return NextResponse.json(
+        { message: "User ID is required." },
+        { status: 400 }
+      );
+    }
 
-    const {
-      data: target,
-      error,
-    } = await admin
+    const admin = createAdminSupabaseClient();
+
+    const { data: target, error } = await admin
       .from("profiles")
       .select("user_id, role")
       .eq("id", id)
@@ -122,36 +158,23 @@ export async function DELETE(
       throw error;
     }
 
-    if (
-      target.role ===
-      "SUPER_ADMIN"
-    ) {
+    if (target.role === "SUPER_ADMIN") {
       return NextResponse.json(
-        {
-          message:
-            "Super Admin cannot be deleted.",
-        },
-        {
-          status: 400,
-        }
+        { message: "Super Admin cannot be deleted." },
+        { status: 400 }
       );
     }
 
-    const {
-      error: authError,
-    } =
-      await admin.auth.admin.deleteUser(
-        target.user_id
-      );
+    const { error: authError } =
+      await admin.auth.admin.deleteUser(target.user_id);
 
     if (authError) {
       throw authError;
     }
 
-    return NextResponse.json({
-      success: true,
-    });
+    return NextResponse.json({ success: true });
   } catch (error) {
+    console.error("Failed to delete user:", error);
 
     return NextResponse.json(
       {
@@ -160,9 +183,7 @@ export async function DELETE(
             ? error.message
             : "Failed to delete user.",
       },
-      {
-        status: 400,
-      }
+      { status: 500 }
     );
   }
 }

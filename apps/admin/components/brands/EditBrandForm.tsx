@@ -5,7 +5,6 @@ import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 
 import type { Brand } from "@africasuk/types";
-
 import BrandForm from "@/components/brands/BrandForm";
 
 interface EditBrandFormProps {
@@ -13,54 +12,60 @@ interface EditBrandFormProps {
   redirectPath?: string;
 }
 
+interface ApiResponse {
+  message?: string;
+}
+
 export default function EditBrandForm({
   brand,
   redirectPath = "/brands",
 }: EditBrandFormProps) {
   const router = useRouter();
-
   const [loading, setLoading] = useState(false);
 
   async function handleSubmit(
     e: React.FormEvent<HTMLFormElement>
   ) {
     e.preventDefault();
-
     setLoading(true);
 
     try {
       const form = new FormData(e.currentTarget);
 
       const payload = {
-        name: form.get("name"),
-        description: form.get("description"),
-        website: form.get("website"),
+        name: String(form.get("name") ?? "").trim(),
+        description: String(form.get("description") ?? ""),
+        website: String(form.get("website") ?? ""),
       };
 
-      const response = await fetch(
-        `/api/brands/${brand.id}`,
-        {
-          method: "PATCH",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify(payload),
-        }
-      );
-
-      const result = await response.json();
+      const response = await fetch(`/api/brands/${brand.id}`, {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(payload),
+      });
 
       if (!response.ok) {
-        throw new Error(
-          result.message ??
-            "Failed to update brand."
-        );
+        let message = "Failed to update brand.";
+
+        try {
+          const result: ApiResponse = await response.json();
+
+          if (
+            typeof result.message === "string" &&
+            result.message.trim()
+          ) {
+            message = result.message;
+          }
+        } catch {
+          // Use the fallback message if the response isn't valid JSON.
+        }
+
+        throw new Error(message);
       }
 
-      toast.success(
-        "Brand updated successfully."
-      );
-
+      toast.success("Brand updated successfully.");
       router.push(redirectPath);
       router.refresh();
     } catch (error) {

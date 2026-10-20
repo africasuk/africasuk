@@ -5,7 +5,6 @@ import { useState } from "react";
 import { toast } from "sonner";
 
 import type { Category } from "@africasuk/types";
-
 import CategoryForm from "@/components/categories/CategoryForm";
 
 interface EditCategoryFormProps {
@@ -13,37 +12,33 @@ interface EditCategoryFormProps {
   redirectPath?: string;
 }
 
+interface ApiResponse {
+  message?: string;
+}
+
 export default function EditCategoryForm({
   category,
   redirectPath = "/categories",
 }: EditCategoryFormProps) {
   const router = useRouter();
-
   const [loading, setLoading] = useState(false);
 
   async function handleSubmit(
     e: React.FormEvent<HTMLFormElement>
   ) {
     e.preventDefault();
-
     setLoading(true);
 
     try {
       const form = new FormData(e.currentTarget);
 
       const payload = {
-        name: form.get("name"),
-        description: form.get("description"),
-
+        name: String(form.get("name") ?? "").trim(),
+        description: String(form.get("description") ?? ""),
         slug: category.slug,
         imageUrl: category.imageUrl,
-
-        sortOrder: Number(
-          form.get("sortOrder") ?? 0
-        ),
-
-        isActive:
-          form.get("isActive") === "on",
+        sortOrder: Number(form.get("sortOrder") ?? 0),
+        isActive: form.get("isActive") === "on",
       };
 
       const response = await fetch(
@@ -57,19 +52,26 @@ export default function EditCategoryForm({
         }
       );
 
-      const result = await response.json();
-
       if (!response.ok) {
-        throw new Error(
-          result.message ??
-            "Failed to update category."
-        );
+        let message = "Failed to update category.";
+
+        try {
+          const result: ApiResponse = await response.json();
+
+          if (
+            typeof result.message === "string" &&
+            result.message.trim()
+          ) {
+            message = result.message;
+          }
+        } catch {
+          // Keep the fallback error message.
+        }
+
+        throw new Error(message);
       }
 
-      toast.success(
-        "Category updated successfully."
-      );
-
+      toast.success("Category updated successfully.");
       router.push(redirectPath);
       router.refresh();
     } catch (error) {

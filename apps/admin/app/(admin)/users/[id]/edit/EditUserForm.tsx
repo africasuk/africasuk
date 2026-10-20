@@ -34,8 +34,7 @@ async function handleSubmit(values: {
       }
     );
 
-    const result =
-      await response.json();
+    const result: { message?: string } = await response.json();
 
     if (!response.ok) {
       toast.error(

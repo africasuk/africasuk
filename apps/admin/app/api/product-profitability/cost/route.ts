@@ -10,16 +10,57 @@ import {
 
 import { createAdminSupabaseClient } from "@/lib/supabase/admin";
 
-export async function PUT(
-  request: NextRequest
-) {
+type ProductCostBody = {
+  colorId?: unknown;
+  variantId?: unknown;
+  wholesaleCost?: unknown;
+  nairobiHandling?: unknown;
+  transportShare?: unknown;
+  borderOfficialCost?: unknown;
+  jubaHandling?: unknown;
+  packagingCost?: unknown;
+  deliveryAllowance?: unknown;
+  notes?: unknown;
+  updatedBy?: unknown;
+};
+
+function parseOptionalCost(
+  value: unknown,
+  fieldName: string,
+): number | null {
+  if (value === undefined || value === null || value === "") {
+    return null;
+  }
+
+  const parsed = Number(value);
+
+  if (!Number.isFinite(parsed) || parsed < 0) {
+    throw new Error(`${fieldName} must be a valid non-negative number.`);
+  }
+
+  return parsed;
+}
+
+export async function PUT(request: NextRequest) {
   try {
-    const body = await request.json();
+    const rawBody: unknown = await request.json();
+
+    if (
+      typeof rawBody !== "object" ||
+      rawBody === null ||
+      Array.isArray(rawBody)
+    ) {
+      return NextResponse.json(
+        { success: false, error: "Invalid request body." },
+        { status: 400 },
+      );
+    }
+
+    const body = rawBody as ProductCostBody;
 
     const {
       colorId,
       variantId,
-
       wholesaleCost,
       nairobiHandling,
       transportShare,
@@ -27,90 +68,91 @@ export async function PUT(
       jubaHandling,
       packagingCost,
       deliveryAllowance,
-
       notes,
       updatedBy,
     } = body;
 
-    const hasColor = Boolean(colorId);
-    const hasVariant = Boolean(variantId);
+    const hasColor =
+      typeof colorId === "string" && colorId.trim().length > 0;
+
+    const hasVariant =
+      typeof variantId === "string" && variantId.trim().length > 0;
 
     if (hasColor === hasVariant) {
       return NextResponse.json(
         {
           success: false,
-          error:
-            "Exactly one of colorId or variantId is required.",
+          error: "Exactly one of colorId or variantId is required.",
         },
-        { status: 400 }
+        { status: 400 },
+      );
+    }
+
+    if (notes !== undefined && notes !== null && typeof notes !== "string") {
+      return NextResponse.json(
+        { success: false, error: "Notes must be a string." },
+        { status: 400 },
+      );
+    }
+
+    if (
+      updatedBy !== undefined &&
+      updatedBy !== null &&
+      typeof updatedBy !== "string"
+    ) {
+      return NextResponse.json(
+        { success: false, error: "updatedBy must be a string." },
+        { status: 400 },
       );
     }
 
     const db = createAdminSupabaseClient();
 
-    const repository =
-      new ProductProfitabilityRepository(db);
+    const repository = new ProductProfitabilityRepository(db);
 
-    const service =
-      new ProductProfitabilityCommandService(
-        repository
-      );
+    const service = new ProductProfitabilityCommandService(repository);
 
     const cost = await service.upsertCost({
-      colorId: colorId ?? null,
-      variantId: variantId ?? null,
+      colorId: hasColor ? colorId as string : null,
+      variantId: hasVariant ? variantId as string : null,
 
-      wholesaleCost:
-        wholesaleCost === null ||
-        wholesaleCost === undefined ||
-        wholesaleCost === ""
-          ? null
-          : Number(wholesaleCost),
+      wholesaleCost: parseOptionalCost(
+        wholesaleCost,
+        "Wholesale cost",
+      ),
 
-      nairobiHandling:
-        nairobiHandling === null ||
-        nairobiHandling === undefined ||
-        nairobiHandling === ""
-          ? null
-          : Number(nairobiHandling),
+      nairobiHandling: parseOptionalCost(
+        nairobiHandling,
+        "Nairobi handling",
+      ),
 
-      transportShare:
-        transportShare === null ||
-        transportShare === undefined ||
-        transportShare === ""
-          ? null
-          : Number(transportShare),
+      transportShare: parseOptionalCost(
+        transportShare,
+        "Transport share",
+      ),
 
-      borderOfficialCost:
-        borderOfficialCost === null ||
-        borderOfficialCost === undefined ||
-        borderOfficialCost === ""
-          ? null
-          : Number(borderOfficialCost),
+      borderOfficialCost: parseOptionalCost(
+        borderOfficialCost,
+        "Border official cost",
+      ),
 
-      jubaHandling:
-        jubaHandling === null ||
-        jubaHandling === undefined ||
-        jubaHandling === ""
-          ? null
-          : Number(jubaHandling),
+      jubaHandling: parseOptionalCost(
+        jubaHandling,
+        "Juba handling",
+      ),
 
-      packagingCost:
-        packagingCost === null ||
-        packagingCost === undefined ||
-        packagingCost === ""
-          ? null
-          : Number(packagingCost),
+      packagingCost: parseOptionalCost(
+        packagingCost,
+        "Packaging cost",
+      ),
 
-      deliveryAllowance:
-        deliveryAllowance === null ||
-        deliveryAllowance === undefined ||
-        deliveryAllowance === ""
-          ? null
-          : Number(deliveryAllowance),
+      deliveryAllowance: parseOptionalCost(
+        deliveryAllowance,
+        "Delivery allowance",
+      ),
 
-      notes: notes ?? null,
-      updatedBy: updatedBy ?? null,
+      notes: typeof notes === "string" ? notes : null,
+      updatedBy: typeof updatedBy === "string" ? updatedBy : null,
     });
 
     return NextResponse.json({
@@ -118,17 +160,17 @@ export async function PUT(
       data: cost,
     });
   } catch (error) {
-    console.error(
-      "Product profitability cost PUT error:",
-      error
-    );
+    console.error("Product profitability cost PUT error:", error);
 
     return NextResponse.json(
       {
         success: false,
-        error: "Failed to save product cost.",
+        error:
+          error instanceof Error
+            ? error.message
+            : "Failed to save product cost.",
       },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

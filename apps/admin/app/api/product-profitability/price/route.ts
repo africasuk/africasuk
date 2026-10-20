@@ -10,16 +10,42 @@ import {
 
 import { createAdminSupabaseClient } from "@/lib/supabase/admin";
 
+type UpdatePriceBody = {
+  variantId?: unknown;
+  price?: unknown;
+};
+
 export async function PUT(request: NextRequest) {
   try {
-    const body = await request.json();
+    const rawBody: unknown = await request.json();
+
+    if (
+      typeof rawBody !== "object" ||
+      rawBody === null ||
+      Array.isArray(rawBody)
+    ) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: "Invalid request body.",
+        },
+        { status: 400 },
+      );
+    }
+
+    const body = rawBody as UpdatePriceBody;
 
     const variantId =
       typeof body.variantId === "string"
         ? body.variantId.trim()
         : "";
 
-    const price = Number(body.price);
+    const price =
+      body.price === null ||
+      body.price === undefined ||
+      body.price === ""
+        ? Number.NaN
+        : Number(body.price);
 
     if (!variantId) {
       return NextResponse.json(
@@ -27,7 +53,7 @@ export async function PUT(request: NextRequest) {
           success: false,
           error: "variantId is required.",
         },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -35,27 +61,19 @@ export async function PUT(request: NextRequest) {
       return NextResponse.json(
         {
           success: false,
-          error:
-            "Selling price must be a valid non-negative number.",
+          error: "Selling price must be a valid non-negative number.",
         },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
     const db = createAdminSupabaseClient();
 
-    const repository =
-      new ProductProfitabilityRepository(db);
+    const repository = new ProductProfitabilityRepository(db);
 
-    const service =
-      new ProductProfitabilityCommandService(
-        repository
-      );
+    const service = new ProductProfitabilityCommandService(repository);
 
-    await service.updateSellingPrice(
-      variantId,
-      price
-    );
+    await service.updateSellingPrice(variantId, price);
 
     return NextResponse.json({
       success: true,
@@ -65,17 +83,17 @@ export async function PUT(request: NextRequest) {
       },
     });
   } catch (error) {
-    console.error(
-      "Product profitability price PUT error:",
-      error
-    );
+    console.error("Product profitability price PUT error:", error);
 
     return NextResponse.json(
       {
         success: false,
-        error: "Failed to update selling price.",
+        error:
+          error instanceof Error
+            ? error.message
+            : "Failed to update selling price.",
       },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

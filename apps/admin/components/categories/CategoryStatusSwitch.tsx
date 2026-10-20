@@ -11,6 +11,10 @@ interface CategoryStatusSwitchProps {
   checked: boolean;
 }
 
+interface ApiResponse {
+  message?: string;
+}
+
 export default function CategoryStatusSwitch({
   id,
   checked,
@@ -21,37 +25,45 @@ export default function CategoryStatusSwitch({
   const [enabled, setEnabled] = useState(checked);
 
   async function handleChange(value: boolean) {
+    const previousValue = enabled;
+
     setEnabled(value);
     setLoading(true);
 
     try {
-      const response = await fetch(
-        `/api/categories/${id}/status`,
-        {
-          method: "PATCH",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            isActive: value,
-          }),
-        }
-      );
-
-      const result = await response.json();
+      const response = await fetch(`/api/categories/${id}/status`, {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          isActive: value,
+        }),
+      });
 
       if (!response.ok) {
-        throw new Error(
-          result.message ??
-            "Failed to update category status."
-        );
+        let message = "Failed to update category status.";
+
+        try {
+          const result: ApiResponse = await response.json();
+
+          if (
+            typeof result.message === "string" &&
+            result.message.trim()
+          ) {
+            message = result.message;
+          }
+        } catch {
+          // Keep the fallback error message.
+        }
+
+        throw new Error(message);
       }
 
       toast.success("Category status updated.");
-
       router.refresh();
     } catch (error) {
-      setEnabled(!value);
+      setEnabled(previousValue);
 
       toast.error(
         error instanceof Error
