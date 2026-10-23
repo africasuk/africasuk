@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState } from "react";
@@ -14,14 +15,26 @@ import type {
 } from "./types";
 import { validateProduct } from "./validation";
 
+type CopyField = "price" | "optionValue" | "stock";
+
 export function ProductForm({
   product,
   categories,
   brands,
 }: ProductFormProps) {
   const router = useRouter();
+
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  // Global copy settings shared by every color group.
+  const [copySettings, setCopySettings] = useState<
+    Record<CopyField, boolean>
+  >({
+    price: false,
+    optionValue: false,
+    stock: false,
+  });
 
   const [info, setInfo] = useState<ProductInfo>({
     name: product?.name ?? "",
@@ -31,55 +44,55 @@ export function ProductForm({
     isActive: product?.isActive ?? true,
   });
 
-  const initialColors: Color[] =
-    product?.colors
-      ?.filter(
-        (color) =>
-          color.images.length > 0 ||
-          color.variants.length > 0
-      )
-      .map((color) => ({
-        name: color.name,
-        optionName: color.variants[0]?.optionName ?? "",
-        images: color.images.map((image) => ({
-          id: image.id,
-          url: image.imageUrl,
-        })),
-        variants: color.variants.map((variant) => ({
-          optionValue: variant.optionValue,
-          price: Number(variant.price),
-          stock: variant.stock,
-          sku: variant.sku ?? "",
-        })),
-      })) ?? [
-      {
-        name: "",
-        optionName: "",
-        images: [],
-        variants: [
-          {
-            optionValue: "",
-            price: 0,
-            stock: 0,
-            sku: "",
-          },
-        ],
-      },
-    ];
+  const initialColors: Color[] = product?.colors
+    ?.filter(
+      (color) =>
+        color.images.length > 0 || color.variants.length > 0,
+    )
+    .map((color) => ({
+      name: color.name,
+      optionName: color.variants[0]?.optionName ?? "",
+      images: color.images.map((image) => ({
+        id: image.id,
+        url: image.imageUrl,
+      })),
+      variants: color.variants.map((variant) => ({
+        optionValue: variant.optionValue,
+        price: Number(variant.price),
+        stock: variant.stock,
+        sku: variant.sku ?? "",
+      })),
+    })) ?? [
+    {
+      name: "",
+      optionName: "",
+      images: [],
+      variants: [
+        {
+          optionValue: "",
+          price: 0,
+          stock: 10,
+          sku: "",
+        },
+      ],
+    },
+  ];
 
   const [colors, setColors] = useState<Color[]>(initialColors);
 
-  // Form Field Handlers
   const updateInfoField = <K extends keyof ProductInfo>(
     field: K,
-    value: ProductInfo[K]
+    value: ProductInfo[K],
   ) => {
-    setInfo((prev) => ({ ...prev, [field]: value }));
+    setInfo((previous) => ({
+      ...previous,
+      [field]: value,
+    }));
   };
 
   const addColor = () => {
-    setColors((prev) => [
-      ...prev,
+    setColors((previous) => [
+      ...previous,
       {
         name: "",
         optionName: "",
@@ -88,7 +101,7 @@ export function ProductForm({
           {
             optionValue: "",
             price: 0,
-            stock: 0,
+            stock: 10,
             sku: "",
           },
         ],
@@ -97,76 +110,198 @@ export function ProductForm({
   };
 
   const removeColor = (colorIndex: number) => {
-    setColors((prev) => prev.filter((_, i) => i !== colorIndex));
+    setColors((previous) =>
+      previous.filter((_, index) => index !== colorIndex),
+    );
   };
 
   const updateColorField = <K extends keyof Color>(
     colorIndex: number,
     field: K,
-    value: Color[K]
+    value: Color[K],
   ) => {
-    setColors((prev) =>
-      prev.map((color, i) =>
-        i === colorIndex ? { ...color, [field]: value } : color
-      )
+    setColors((previous) =>
+      previous.map((color, index) =>
+        index === colorIndex
+          ? { ...color, [field]: value }
+          : color,
+      ),
     );
   };
 
   const addVariant = (colorIndex: number) => {
-    setColors((prev) =>
-      prev.map((color, i) => {
-        if (i !== colorIndex) return color;
+    setColors((previous) =>
+      previous.map((color, index) => {
+        if (index !== colorIndex) return color;
+
+        const firstVariant = color.variants[0];
+
+        const newVariant: Variant = {
+          optionValue: copySettings.optionValue
+            ? firstVariant?.optionValue ?? ""
+            : "",
+          price: copySettings.price
+            ? firstVariant?.price ?? 0
+            : 0,
+          stock: copySettings.stock
+            ? firstVariant?.stock ?? 10
+            : 10,
+          sku: "",
+        };
+
         return {
           ...color,
-          variants: [
-            ...color.variants,
-            { optionValue: "", price: 0, stock: 0, sku: "" },
-          ],
+          variants: [...color.variants, newVariant],
         };
-      })
+      }),
     );
   };
 
-  const removeVariant = (colorIndex: number, variantIndex: number) => {
-    setColors((prev) =>
-      prev.map((color, i) => {
-        if (i !== colorIndex) return color;
+  const removeVariant = (
+    colorIndex: number,
+    variantIndex: number,
+  ) => {
+    setColors((previous) =>
+      previous.map((color, index) => {
+        if (index !== colorIndex) return color;
+
         return {
           ...color,
-          variants: color.variants.filter((_, vI) => vI !== variantIndex),
+          variants: color.variants.filter(
+            (_, variantPosition) =>
+              variantPosition !== variantIndex,
+          ),
         };
-      })
+      }),
     );
+  };
+
+  const generateSku = (
+    productName: string,
+    colorName: string,
+    optionValue: string,
+  ) => {
+    const productPart = (productName || "PRD")
+      .slice(0, 3)
+      .toUpperCase();
+
+    const colorPart = (colorName || "CLR")
+      .slice(0, 3)
+      .toUpperCase();
+
+    const optionPart = (optionValue || "OPT")
+      .replace(/\s/g, "")
+      .toUpperCase();
+
+    return `${productPart}-${colorPart}-${optionPart}`;
+  };
+
+  const applyCopyField = (
+    field: CopyField,
+    enabled: boolean,
+  ) => {
+    setCopySettings((previous) => ({
+      ...previous,
+      [field]: enabled,
+    }));
+
+    if (!enabled) return;
+
+    setColors((previous) => {
+      const source = previous[0]?.variants[0];
+
+      if (!source) return previous;
+
+      const sourceValue = source[field];
+
+      return previous.map((color) => ({
+        ...color,
+        variants: color.variants.map((variant) => {
+          const updated = {
+            ...variant,
+            [field]: sourceValue,
+          };
+
+          if (field === "optionValue") {
+            updated.sku = generateSku(
+              info.name,
+              color.name,
+              String(sourceValue ?? ""),
+            );
+          }
+
+          return updated;
+        }),
+      }));
+    });
   };
 
   const updateVariantField = <K extends keyof Variant>(
     colorIndex: number,
     variantIndex: number,
     field: K,
-    value: Variant[K]
+    value: Variant[K],
   ) => {
-    setColors((prev) =>
-      prev.map((color, cI) => {
-        if (cI !== colorIndex) return color;
-        return {
-          ...color,
-          variants: color.variants.map((variant, vI) =>
-            vI === variantIndex ? { ...variant, [field]: value } : variant
-          ),
-        };
-      })
-    );
+    setColors((previous) => {
+      const isMasterVariant =
+        colorIndex === 0 && variantIndex === 0;
+
+      const shouldCopy =
+        isMasterVariant &&
+        (field === "price" ||
+          field === "optionValue" ||
+          field === "stock") &&
+        copySettings[field as CopyField];
+
+      return previous.map((color, currentColorIndex) => ({
+        ...color,
+        variants: color.variants.map(
+          (variant, currentVariantIndex) => {
+            const isEdited =
+              currentColorIndex === colorIndex &&
+              currentVariantIndex === variantIndex;
+
+            if (isEdited) {
+              return {
+                ...variant,
+                [field]: value,
+              };
+            }
+
+            if (shouldCopy) {
+              const updated = {
+                ...variant,
+                [field]: value,
+              };
+
+              if (field === "optionValue") {
+                updated.sku = generateSku(
+                  info.name,
+                  color.name,
+                  String(value ?? ""),
+                );
+              }
+
+              return updated;
+            }
+
+            return variant;
+          },
+        ),
+      }));
+    });
   };
 
-  // Submit Handler using standalone helper
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleSubmit = async (
+    event: React.FormEvent<HTMLFormElement>,
+  ) => {
+    event.preventDefault();
 
     setSubmitting(true);
     setError(null);
 
-    // Validate form state before submitting
     const validation = validateProduct(info, colors);
+
     if (!validation.valid) {
       setError(validation.message ?? "Invalid product.");
       setSubmitting(false);
@@ -183,25 +318,27 @@ export function ProductForm({
       router.push("/products");
       router.refresh();
     } catch (err) {
-      if (err instanceof Error) {
-        setError(err.message);
-      } else {
-        setError("An unexpected error occurred.");
-      }
+      setError(
+        err instanceof Error
+          ? err.message
+          : "An unexpected error occurred.",
+      );
     } finally {
       setSubmitting(false);
     }
   };
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-8 max-w-5xl mx-auto pb-12">
+    <form
+      onSubmit={handleSubmit}
+      className="mx-auto max-w-5xl space-y-8 pb-12"
+    >
       {error && (
-        <div className="rounded-md bg-destructive/15 p-4 text-sm text-destructive font-medium">
+        <div className="rounded-md bg-destructive/15 p-4 text-sm font-medium text-destructive">
           {error}
         </div>
       )}
 
-      {/* Basic Product Info */}
       <ProductInfoCard
         info={info}
         categories={categories}
@@ -209,11 +346,17 @@ export function ProductForm({
         updateInfoField={updateInfoField}
       />
 
-      {/* Color Groups & Variants */}
       <div className="space-y-6">
-        <div className="flex items-center justify-between">
-          <h2 className="text-xl font-bold tracking-tight">Product Variants & Media</h2>
-          <Button type="button" onClick={addColor} variant="outline">
+        <div className="flex items-center justify-between gap-3">
+          <h2 className="text-xl font-bold tracking-tight">
+            Product Variants &amp; Media
+          </h2>
+
+          <Button
+            type="button"
+            variant="outline"
+            onClick={addColor}
+          >
             Add Color Group
           </Button>
         </div>
@@ -229,11 +372,13 @@ export function ProductForm({
             addVariant={addVariant}
             removeVariant={removeVariant}
             updateVariantField={updateVariantField}
+            showCopyControls={colorIndex === 0}
+            copySettings={copySettings}
+            onCopySettingChange={applyCopyField}
           />
         ))}
       </div>
 
-      {/* Form Actions */}
       <div className="flex items-center justify-end gap-4">
         <Button
           type="button"
@@ -243,12 +388,13 @@ export function ProductForm({
         >
           Cancel
         </Button>
+
         <Button type="submit" disabled={submitting}>
           {submitting
             ? "Saving..."
             : product?.id
-            ? "Update Product"
-            : "Create Product"}
+              ? "Update Product"
+              : "Create Product"}
         </Button>
       </div>
     </form>

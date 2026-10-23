@@ -17,6 +17,15 @@ import type {
   Variant,
   ProductImageState,
 } from "./types";
+import { ColorNamePicker } from "../ColorNamePicker";
+
+type CopySettings = {
+  price: boolean;
+  optionValue: boolean;
+  stock: boolean;
+};
+
+type CopyField = keyof CopySettings;
 
 interface ColorGroupCardProps {
   color: Color;
@@ -39,7 +48,16 @@ interface ColorGroupCardProps {
     field: K,
     value: Variant[K]
   ) => void;
+
+  showCopyControls: boolean;
+  copySettings: CopySettings;
+  onCopySettingChange: (
+  field: CopyField,
+  enabled: boolean,
+) => void;
 }
+
+
 
 const MAX_IMAGES = 10;
 const MAX_FILE_SIZE = 8 * 1024 * 1024;
@@ -64,6 +82,9 @@ export function ColorGroupCard({
   addVariant,
   removeVariant,
   updateVariantField,
+  showCopyControls,
+  copySettings,
+  onCopySettingChange,
 }: ColorGroupCardProps) {
   const inputRef = useRef<HTMLInputElement>(null);
   const [dragging, setDragging] = useState(false);
@@ -171,7 +192,10 @@ export function ColorGroupCard({
 
       <CardContent className="space-y-6">
         <div className="space-y-2">
-          <Label>Color Name</Label>
+          <ColorNamePicker
+              value={color.name}
+              onChange={(name) => updateColorField(colorIndex, "name", name)}
+            />
 
           <Input
             value={color.name}
@@ -335,15 +359,18 @@ export function ColorGroupCard({
           )}
         </div>
 
-        <ProductVariantList
-          productName={productName}
-          color={color}
-          colorIndex={colorIndex}
-          updateColorField={updateColorField}
-          addVariant={addVariant}
-          removeVariant={removeVariant}
-          updateVariantField={updateVariantField}
-        />
+       <ProductVariantList
+        productName={productName}
+        color={color}
+        colorIndex={colorIndex}
+        updateColorField={updateColorField}
+        addVariant={addVariant}
+        removeVariant={removeVariant}
+        updateVariantField={updateVariantField}
+        showCopyControls={showCopyControls}
+        copySettings={copySettings}
+        onCopySettingChange={onCopySettingChange}
+      />
       </CardContent>
     </Card>
   );

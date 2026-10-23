@@ -6,109 +6,125 @@ interface SubmitProductParams {
   product?: ProductWithDetails;
   info: ProductInfo;
   colors: Color[];
+  onProgress?: (completed: number, total: number, fileName: string) => void;
 }
 
-const MAX_IMAGE_DIMENSION = 1920;
-const JPEG_QUALITY = 0.82;
-const MAX_COMPRESSED_IMAGE_SIZE = 2 * 1024 * 1024;
+const MAX_IMAGE_DIMENSION = 1600;
+const MAX_COMPRESSED_IMAGE_SIZE = 700 * 1024;
 const MAX_SOURCE_IMAGE_SIZE = 50 * 1024 * 1024;
-const MAX_CONCURRENT_UPLOADS = 3;
+const MAX_CONCURRENT_UPLOADS = 2;
+const MAX_UPLOAD_ATTEMPTS = 4;
+
+const UUID_REGEX =
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+function assertValidProductId(id: string): void {
+  if (!UUID_REGEX.test(id)) {
+    throw new Error(`Invalid product ID received by form: ${id}`);
+  }
+}
+
+function wait(ms: number): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+function canvasToWebP(
+  canvas: HTMLCanvasElement,
+  quality: number,
+): Promise<Blob> {
+  return new Promise((resolve, reject) => {
+    canvas.toBlob(
+      (blob) => {
+        if (blob && blob.type === "image/webp") {
+          resolve(blob);
+        } else {
+          reject(new Error("WebP encoding is not supported by this browser."));
+        }
+      },
+      "image/webp",
+      quality,
+    );
+  });
+}
 
 async function compressImage(file: File): Promise<File> {
   if (!file.type.startsWith("image/")) {
-    throw new Error(`"${file.name}" is not a supported image.`);
+    throw new Error(`"${file.name}" is not an image.`);
+  }
+
+  if (file.size === 0) {
+    throw new Error(`"${file.name}" is empty.`);
   }
 
   if (file.size > MAX_SOURCE_IMAGE_SIZE) {
     throw new Error(`"${file.name}" exceeds the 50 MB source-image limit.`);
   }
 
-  // Preserve formats that should not be converted to JPEG.
-  // The upload endpoint currently accepts only raster formats.
-  if (file.type === "image/svg+xml" || file.type === "image/gif") {
+  if (
+    !["image/jpeg", "image/png", "image/webp", "image/avif"].includes(
+      file.type,
+    )
+  ) {
     throw new Error(
-      `"${file.name}" uses SVG or GIF. Please export it as JPG, PNG, or WebP first.`,
+      `"${file.name}" must be JPG, PNG, WebP, or AVIF. Animated GIF and SVG are not supported.`,
     );
   }
 
-  if (!["image/jpeg", "image/png", "image/webp", "image/avif"].includes(file.type)) {
-    throw new Error(`"${file.name}" must be JPG, PNG, WebP, or AVIF.`);
-  }
+  let bitmap: ImageBitmap;
 
-  if (file.size <= 350 * 1024 && file.type !== "image/avif") {
-    return file;
-  }
-
-  const bitmap = await createImageBitmap(file).catch(() => null);
-
-  if (!bitmap) {
-    throw new Error(`Could not read "${file.name}". Please choose another image.`);
+  try {
+    bitmap = await createImageBitmap(file);
+  } catch {
+    throw new Error(`Could not read "${file.name}". Try another image.`);
   }
 
   try {
-    const scale = Math.min(
+    let scale = Math.min(
       1,
       MAX_IMAGE_DIMENSION / Math.max(bitmap.width, bitmap.height),
     );
 
-    const width = Math.max(1, Math.round(bitmap.width * scale));
-    const height = Math.max(1, Math.round(bitmap.height * scale));
+    // Re-encode even small images to normalize the upload format and size.
+    for (let attempt = 0; attempt < 18; attempt++) {
+      const width = Math.max(1, Math.round(bitmap.width * scale));
+      const height = Math.max(1, Math.round(bitmap.height * scale));
 
-    const canvas = document.createElement("canvas");
-    canvas.width = width;
-    canvas.height = height;
+      const canvas = document.createElement("canvas");
+      canvas.width = width;
+      canvas.height = height;
 
-    const context = canvas.getContext("2d");
+      const context = canvas.getContext("2d");
 
-    if (!context) {
-      throw new Error("Image compression is unavailable in this browser.");
-    }
-
-    // Try WebP first so transparent images retain their transparency.
-    const webpBlob = await new Promise<Blob | null>((resolve) => {
-      canvas.toBlob(resolve, "image/webp", JPEG_QUALITY);
-    });
-
-    if (webpBlob?.type === "image/webp") {
-      if (webpBlob.size > MAX_COMPRESSED_IMAGE_SIZE) {
-        throw new Error(
-          `"${file.name}" remains larger than 2 MB after compression. Please use a smaller image.`,
-        );
+      if (!context) {
+        throw new Error("Image compression is unavailable in this browser.");
       }
 
-      return new File(
-        [webpBlob],
-        `${file.name.replace(/\.[^.]+$/, "")}.webp`,
-        { type: "image/webp", lastModified: Date.now() },
-      );
+      context.drawImage(bitmap, 0, 0, width, height);
+
+      // Lower quality progressively, then reduce dimensions if necessary.
+      const quality = Math.max(0.35, 0.84 - (attempt % 7) * 0.08);
+      const blob = await canvasToWebP(canvas, quality);
+
+      if (blob.size <= MAX_COMPRESSED_IMAGE_SIZE) {
+        const baseName = file.name.replace(/\.[^.]+$/, "") || "image";
+
+        return new File([blob], `${baseName}.webp`, {
+          type: "image/webp",
+          lastModified: Date.now(),
+        });
+      }
+
+      if (attempt % 3 === 2 || blob.size > MAX_COMPRESSED_IMAGE_SIZE * 2) {
+        scale *= 0.8;
+      }
+
+      if (width <= 320 && height <= 320) {
+        break;
+      }
     }
 
-    // JPEG fallback: transparency is flattened onto white.
-    context.fillStyle = "#ffffff";
-    context.fillRect(0, 0, width, height);
-    context.drawImage(bitmap, 0, 0, width, height);
-
-    const jpegBlob = await new Promise<Blob>((resolve, reject) => {
-      canvas.toBlob(
-        (result) => {
-          if (result) resolve(result);
-          else reject(new Error(`Could not compress "${file.name}".`));
-        },
-        "image/jpeg",
-        JPEG_QUALITY,
-      );
-    });
-
-    if (jpegBlob.size > MAX_COMPRESSED_IMAGE_SIZE) {
-      throw new Error(
-        `"${file.name}" remains larger than 2 MB after compression. Please use a smaller image.`,
-      );
-    }
-
-    return new File(
-      [jpegBlob],
-      `${file.name.replace(/\.[^.]+$/, "")}.jpg`,
-      { type: "image/jpeg", lastModified: Date.now() },
+    throw new Error(
+      `"${file.name}" could not be compressed below 700 KB. Please choose a different or smaller image.`,
     );
   } finally {
     bitmap.close();
@@ -117,32 +133,81 @@ async function compressImage(file: File): Promise<File> {
 
 async function uploadImage(file: File): Promise<string> {
   const compressedFile = await compressImage(file);
-  const formData = new FormData();
 
-  formData.append("file", compressedFile, compressedFile.name);
+  let lastError: Error | null = null;
 
-  const response = await fetch("/api/products/images", {
-    method: "POST",
-    body: formData,
-  });
+  for (let attempt = 1; attempt <= MAX_UPLOAD_ATTEMPTS; attempt++) {
+    try {
+      const formData = new FormData();
+      formData.append("file", compressedFile, compressedFile.name);
 
-  const result = (await response.json().catch(() => ({}))) as {
-    url?: string;
-    message?: string;
-  };
+      const response = await fetch("/api/products/images", {
+        method: "POST",
+        body: formData,
+      });
 
-  if (!response.ok || typeof result.url !== "string") {
-    throw new Error(
-      result.message || `Failed to upload "${file.name}" (HTTP ${response.status}).`,
-    );
+      const result = (await response.json().catch(() => ({}))) as {
+        url?: string;
+        message?: string;
+      };
+
+      if (response.ok && typeof result.url === "string") {
+        return result.url;
+      }
+
+      const error = new Error(
+        result.message ||
+          `Failed to upload "${file.name}" (HTTP ${response.status}).`,
+      );
+
+      // Retry temporary server/network errors, not permanent validation errors.
+      const retryable =
+        response.status === 408 ||
+        response.status === 425 ||
+        response.status === 429 ||
+        response.status >= 500;
+
+      if (!retryable || attempt === MAX_UPLOAD_ATTEMPTS) {
+        throw error;
+      }
+
+      lastError = error;
+    } catch (error) {
+      if (
+        error instanceof Error &&
+        /HTTP \d+/.test(error.message) &&
+        !/(HTTP (408|425|429|5\d\d))/.test(error.message)
+      ) {
+        throw error;
+      }
+
+      lastError =
+        error instanceof Error
+          ? error
+          : new Error(`Failed to upload "${file.name}".`);
+
+      if (attempt === MAX_UPLOAD_ATTEMPTS) {
+        break;
+      }
+    }
+
+    await wait(Math.min(1000 * 2 ** (attempt - 1), 8000));
   }
 
-  return result.url;
+  throw new Error(
+    `"${file.name}" failed after ${MAX_UPLOAD_ATTEMPTS} attempts. ${
+      lastError?.message ?? "Check your connection and retry."
+    }`,
+  );
 }
 
-async function uploadInBatches(files: File[]): Promise<string[]> {
+async function uploadInBatches(
+  files: File[],
+  onProgress?: SubmitProductParams["onProgress"],
+): Promise<string[]> {
   const urls = new Array<string>(files.length);
   let nextIndex = 0;
+  let completed = 0;
 
   async function worker(): Promise<void> {
     while (true) {
@@ -150,16 +215,52 @@ async function uploadInBatches(files: File[]): Promise<string[]> {
 
       if (index >= files.length) return;
 
-      urls[index] = await uploadImage(files[index]);
+      const file = files[index];
+
+      try {
+        urls[index] = await uploadImage(file);
+        completed++;
+        onProgress?.(completed, files.length, file.name);
+      } catch (error) {
+        throw new Error(
+          `Image ${index + 1} of ${files.length} failed ("${file.name}"): ${
+            error instanceof Error ? error.message : "Unknown upload error."
+          }`,
+        );
+      }
     }
   }
 
-  await Promise.all(
-    Array.from(
-      { length: Math.min(MAX_CONCURRENT_UPLOADS, files.length) },
-      () => worker(),
-    ),
+  // Stop scheduling more uploads after a failure. Already-running uploads
+  // may finish, but product creation will not proceed.
+  let failed = false;
+
+  async function safeWorker(): Promise<void> {
+    try {
+      await worker();
+    } catch (error) {
+      failed = true;
+      throw error;
+    }
+  }
+
+  const workers = Array.from(
+    { length: Math.min(MAX_CONCURRENT_UPLOADS, files.length) },
+    () => safeWorker(),
   );
+
+  const results = await Promise.allSettled(workers);
+  const failure = results.find(
+    (result): result is PromiseRejectedResult => result.status === "rejected",
+  );
+
+  if (failure) {
+    throw failure.reason;
+  }
+
+  if (failed || urls.some((url) => !url)) {
+    throw new Error("Not all product images uploaded successfully.");
+  }
 
   return urls;
 }
@@ -168,8 +269,13 @@ export async function submitProduct({
   product,
   info,
   colors,
+  onProgress,
 }: SubmitProductParams) {
-  // Collect each unique new file once.
+  if (product?.id) {
+    assertValidProductId(product.id);
+  }
+
+  // Deduplicate new files shared by multiple color entries.
   const files: File[] = [];
   const seenFiles = new Set<File>();
 
@@ -182,8 +288,8 @@ export async function submitProduct({
     }
   }
 
-  // Upload three images at a time to avoid one oversized request.
-  const uploadedUrls = await uploadInBatches(files);
+  // Do not save the product unless every new image upload succeeds.
+  const uploadedUrls = await uploadInBatches(files, onProgress);
   const urlByFile = new Map<File, string>();
 
   files.forEach((file, index) => {
@@ -194,11 +300,10 @@ export async function submitProduct({
     name: color.name,
     optionName: color.optionName,
     images: color.images
-      .map((image) => {
-        if (image.file) return urlByFile.get(image.file) ?? "";
-        return image.url ?? "";
-      })
-      .filter(Boolean),
+      .map((image) =>
+        image.file ? urlByFile.get(image.file) : image.url,
+      )
+      .filter((url): url is string => typeof url === "string" && !!url),
     variants: color.variants.map((variant) => ({
       optionValue: variant.optionValue,
       price: variant.price,
@@ -226,9 +331,10 @@ export async function submitProduct({
     body: JSON.stringify(body),
   });
 
-    const result = (await response.json().catch(() => ({}))) as {
+  const result = (await response.json().catch(() => ({}))) as {
     message?: string;
   };
+
   if (!response.ok) {
     throw new Error(
       result.message || `Failed to save product (HTTP ${response.status}).`,
