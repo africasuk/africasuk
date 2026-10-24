@@ -1,19 +1,6 @@
-import axios, { type AxiosInstance } from "axios";
-
 export class MTNMomoService {
-  private readonly client: AxiosInstance;
-
-  constructor() {
-    this.client = axios.create({
-      baseURL: process.env.MTN_API_BASE_URL,
-      headers: {
-        "Content-Type": "application/json",
-      },
-    });
-  }
-
   public async getAccessToken(): Promise<string> {
-    throw new Error("MTNMomoService is disabled.");
+    throw new Error("MTN MoMo is disabled.");
   }
 
   public async requestToPay(_params: {
@@ -24,7 +11,7 @@ export class MTNMomoService {
     payerMessage: string;
     payeeNote: string;
   }): Promise<string> {
-    throw new Error("MTNMomoService is disabled.");
+    throw new Error("MTN MoMo is disabled.");
   }
 
   public async getRequestToPayStatus(
@@ -32,6 +19,6 @@ export class MTNMomoService {
   ): Promise<{
     status: "PENDING" | "SUCCESSFUL" | "FAILED";
   }> {
-    throw new Error("MTNMomoService is disabled.");
+    throw new Error("MTN MoMo is disabled.");
   }
 }

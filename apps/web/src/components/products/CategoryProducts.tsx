@@ -1,8 +1,11 @@
+
 "use client";
 
 import { useMemo, useState } from "react";
 import type { ProductWithDetails } from "@africasuk/types";
+import { Price } from "@/components/currency/Price";
 import { ProductCard } from "./ProductCard";
+import CategoryFilterPanel from "./CategoryFilterPanel";
 
 interface Props {
   products: ProductWithDetails[];
@@ -12,9 +15,7 @@ export default function CategoryProducts({ products }: Props) {
   const [selectedColors, setSelectedColors] = useState<string[]>([]);
   const [maxPrice, setMaxPrice] = useState<number | null>(null);
 
-  /*
-   * Create one product card for every product color.
-   */
+  // Create one product card for every product color.
   const colorProducts = useMemo(() => {
     return products.flatMap((product) =>
       product.colors.map((color) => ({
@@ -22,50 +23,40 @@ export default function CategoryProducts({ products }: Props) {
         id: `${product.id}-${color.id}`,
         name: `${product.name} - ${color.name}`,
         colors: [color],
-      }))
+      })),
     );
   }, [products]);
 
-  /*
-   * Available colors
-   */
+  // Available colors.
   const availableColors = useMemo(() => {
     return Array.from(
       new Set(
         colorProducts
           .map((product) => product.colors[0]?.name)
-          .filter(Boolean)
-      )
+          .filter((color): color is string => Boolean(color)),
+      ),
     ).sort();
   }, [colorProducts]);
 
-  /*
-   * Highest price in the category.
-   */
+  // Highest variant price.
   const highestPrice = useMemo(() => {
     const prices = colorProducts.flatMap((product) =>
-      product.colors.flatMap((color) =>
-        color.variants?.map((variant) => Number(variant.price)) ?? []
-      )
+      product.colors.flatMap(
+        (color) =>
+          color.variants?.map((variant) => Number(variant.price)) ?? [],
+      ),
     );
 
-    if (prices.length === 0) return 0;
-
-    return Math.max(...prices);
+    return prices.length > 0 ? Math.max(...prices) : 0;
   }, [colorProducts]);
 
-  /*
-   * Filter products
-   */
+  // Apply filters.
   const filteredProducts = useMemo(() => {
     return colorProducts.filter((product) => {
       const color = product.colors[0];
 
       if (!color) return false;
 
-      /*
-       * COLOR FILTER
-       */
       if (
         selectedColors.length > 0 &&
         !selectedColors.includes(color.name)
@@ -73,41 +64,33 @@ export default function CategoryProducts({ products }: Props) {
         return false;
       }
 
-      /*
-       * PRICE FILTER
-       */
       if (maxPrice !== null) {
         const hasPriceInRange = color.variants?.some(
-          (variant) => Number(variant.price) <= maxPrice
+          (variant) => Number(variant.price) <= maxPrice,
         );
 
-        if (!hasPriceInRange) {
-          return false;
-        }
+        if (!hasPriceInRange) return false;
       }
 
       return true;
     });
   }, [colorProducts, selectedColors, maxPrice]);
 
-  /*
-   * Toggle color
-   */
   const toggleColor = (color: string) => {
     setSelectedColors((current) =>
       current.includes(color)
         ? current.filter((item) => item !== color)
-        : [...current, color]
+        : [...current, color],
     );
   };
 
-  /*
-   * Clear all filters
-   */
   const clearFilters = () => {
     setSelectedColors([]);
     setMaxPrice(null);
   };
+
+  const activeFilterCount =
+    selectedColors.length + (maxPrice !== null ? 1 : 0);
 
   if (colorProducts.length === 0) {
     return (
@@ -119,110 +102,156 @@ export default function CategoryProducts({ products }: Props) {
 
   return (
     <div className="w-full">
-      {/* FILTER BAR */}
-      <div className="mb-8 rounded-2xl border border-neutral-200 bg-white p-4 sm:p-5">
-        <div className="flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
-          {/* COLORS */}
-          {availableColors.length > 0 && (
-            <div className="flex-1">
-              <div className="mb-3 flex items-center justify-between">
-                <h3 className="text-sm font-semibold text-neutral-900">
-                  Color
-                </h3>
+      {/* Compact toolbar */}
+      <div className="mb-6 flex flex-wrap items-center justify-between gap-4 border-b border-neutral-200 pb-5">
+        <div>
+          <p className="text-sm font-semibold text-neutral-900">
+            Explore collection
+          </p>
+          <p className="mt-1 text-xs text-neutral-500">
+            {filteredProducts.length}{" "}
+            {filteredProducts.length === 1 ? "item" : "items"} available
+          </p>
+        </div>
 
-                {selectedColors.length > 0 && (
+        <CategoryFilterPanel
+          activeFilterCount={activeFilterCount}
+          onClear={clearFilters}
+        >
+          <div className="space-y-7">
+            {/* Color filter */}
+            {availableColors.length > 0 && (
+              <section>
+                <div className="mb-3 flex items-center justify-between">
+                  <h3 className="text-sm font-bold text-neutral-900">
+                    Color
+                  </h3>
+
+                  {selectedColors.length > 0 && (
+                    <button
+                      type="button"
+                      onClick={() => setSelectedColors([])}
+                      className="text-xs font-semibold text-[#005c2e] hover:underline"
+                    >
+                      Reset
+                    </button>
+                  )}
+                </div>
+
+                <div className="flex flex-wrap gap-2">
+                  {availableColors.map((color) => {
+                    const active = selectedColors.includes(color);
+
+                    return (
+                      <button
+                        key={color}
+                        type="button"
+                        aria-pressed={active}
+                        onClick={() => toggleColor(color)}
+                        className={`rounded-full border px-4 py-2.5 text-xs font-semibold transition-all ${
+                          active
+                            ? "border-[#005c2e] bg-[#005c2e] text-white"
+                            : "border-neutral-200 bg-white text-neutral-700 hover:border-neutral-400"
+                        }`}
+                      >
+                        {color}
+                      </button>
+                    );
+                  })}
+                </div>
+              </section>
+            )}
+
+            {/* Maximum price filter */}
+            {highestPrice > 0 && (
+              <section>
+                <div className="mb-4 flex items-center justify-between gap-4">
+                  <h3 className="text-sm font-bold text-neutral-900">
+                    Maximum price
+                  </h3>
+
+                  <span className="rounded-lg bg-neutral-100 px-3 py-1.5 text-xs font-bold tabular-nums text-neutral-800">
+                    <Price price={maxPrice ?? highestPrice} />
+                  </span>
+                </div>
+
+                <input
+                  type="range"
+                  min={0}
+                  max={highestPrice}
+                  value={maxPrice ?? highestPrice}
+                  onChange={(event) =>
+                    setMaxPrice(Number(event.target.value))
+                  }
+                  aria-label="Maximum price"
+                  className="w-full cursor-pointer accent-[#005c2e]"
+                />
+
+                <div className="mt-2 flex justify-between text-[11px] text-neutral-400">
+                  <span>
+                    <Price price={0} />
+                  </span>
+                  <span>
+                    <Price price={highestPrice} />
+                  </span>
+                </div>
+
+                {maxPrice !== null && (
                   <button
                     type="button"
-                    onClick={() => setSelectedColors([])}
-                    className="text-xs font-medium text-[#005c2e] hover:underline"
+                    onClick={() => setMaxPrice(null)}
+                    className="mt-3 text-xs font-semibold text-[#005c2e] hover:underline"
                   >
-                    Clear
+                    Remove price limit
                   </button>
                 )}
-              </div>
+              </section>
+            )}
+          </div>
+        </CategoryFilterPanel>
+      </div>
 
-              <div className="flex flex-wrap gap-2">
-                {availableColors.map((color) => {
-                  const active = selectedColors.includes(color);
+      {/* Active filter chips */}
+      {activeFilterCount > 0 && (
+        <div className="mb-5 flex flex-wrap items-center gap-2">
+          <span className="mr-1 text-xs text-neutral-500">
+            Applied:
+          </span>
 
-                  return (
-                    <button
-                      key={color}
-                      type="button"
-                      onClick={() => toggleColor(color)}
-                      className={[
-                        "rounded-full border px-4 py-2 text-xs font-medium transition",
-                        active
-                          ? "border-[#005c2e] bg-[#005c2e] text-white"
-                          : "border-neutral-200 bg-white text-neutral-700 hover:border-neutral-400",
-                      ].join(" ")}
-                    >
-                      {color}
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
-          )}
+          {selectedColors.map((color) => (
+            <button
+              key={color}
+              type="button"
+              onClick={() => toggleColor(color)}
+              className="inline-flex items-center gap-2 rounded-full border border-neutral-200 bg-white px-3 py-1.5 text-xs font-medium text-neutral-700 hover:border-neutral-400"
+            >
+              {color}
+              <span aria-hidden="true">×</span>
+            </button>
+          ))}
 
-          {/* PRICE */}
-          {highestPrice > 0 && (
-            <div className="w-full lg:max-w-sm">
-              <div className="mb-3 flex items-center justify-between">
-                <h3 className="text-sm font-semibold text-neutral-900">
-                  Price
-                </h3>
-
-                <span className="text-xs font-medium text-neutral-600">
-                  {maxPrice !== null
-                    ? `Up to ${maxPrice.toLocaleString()}`
-                    : `Up to ${highestPrice.toLocaleString()}`}
-                </span>
-              </div>
-
-              <input
-                type="range"
-                min={0}
-                max={highestPrice}
-                value={maxPrice ?? highestPrice}
-                onChange={(event) =>
-                  setMaxPrice(Number(event.target.value))
-                }
-                className="w-full accent-[#005c2e]"
-              />
-
-              <div className="mt-1 flex justify-between text-[11px] text-neutral-400">
-                <span>0</span>
-                <span>{highestPrice.toLocaleString()}</span>
-              </div>
-            </div>
-          )}
-
-          {/* CLEAR ALL */}
-          {(selectedColors.length > 0 || maxPrice !== null) && (
+          {maxPrice !== null && (
             <button
               type="button"
-              onClick={clearFilters}
-              className="h-10 shrink-0 rounded-lg border border-neutral-200 px-4 text-xs font-semibold text-neutral-700 transition hover:border-neutral-400 hover:bg-neutral-50"
+              onClick={() => setMaxPrice(null)}
+              className="inline-flex items-center gap-2 rounded-full border border-neutral-200 bg-white px-3 py-1.5 text-xs font-medium text-neutral-700 hover:border-neutral-400"
             >
-              Clear filters
+              Max price: <Price price={maxPrice} />
+              <span aria-hidden="true">×</span>
             </button>
           )}
+
+          <button
+            type="button"
+            onClick={clearFilters}
+            className="px-2 py-1 text-xs font-semibold text-[#005c2e] hover:underline"
+          >
+            Clear all
+          </button>
         </div>
-      </div>
+      )}
 
-      {/* RESULT COUNT */}
-      <div className="mb-5 flex items-center justify-between">
-        <p className="text-sm text-neutral-500">
-          Showing{" "}
-          <span className="font-semibold text-neutral-900">
-            {filteredProducts.length}
-          </span>{" "}
-          {filteredProducts.length === 1 ? "product" : "products"}
-        </p>
-      </div>
-
-      {/* PRODUCTS */}
+      {/* Products */}
       {filteredProducts.length === 0 ? (
         <div className="rounded-2xl border border-dashed border-neutral-300 py-16 text-center">
           <h3 className="text-base font-semibold text-neutral-900">
@@ -230,7 +259,7 @@ export default function CategoryProducts({ products }: Props) {
           </h3>
 
           <p className="mt-2 text-sm text-neutral-500">
-            Try changing your color or price filters.
+            Try adjusting your color or price selection.
           </p>
 
           <button
@@ -242,24 +271,9 @@ export default function CategoryProducts({ products }: Props) {
           </button>
         </div>
       ) : (
-        <div
-          className="
-            grid
-            grid-cols-2
-            gap-x-3
-            gap-y-8
-            sm:grid-cols-3
-            sm:gap-x-4
-            lg:grid-cols-4
-            xl:grid-cols-5
-            2xl:grid-cols-6
-          "
-        >
+        <div className="grid grid-cols-2 gap-x-3 gap-y-8 sm:grid-cols-3 sm:gap-x-4 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6">
           {filteredProducts.map((product) => (
-            <ProductCard
-              key={product.id}
-              product={product}
-            />
+            <ProductCard key={product.id} product={product} />
           ))}
         </div>
       )}

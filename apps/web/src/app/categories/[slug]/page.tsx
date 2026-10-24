@@ -316,17 +316,15 @@ export default async function CategoryPage({
             PRODUCTS + FILTERS
         ================================================= */}
 
-        <div className="relative z-10">
+          {/* =================================================
+              PRODUCTS + FILTERS
+          ================================================= */}
 
-          <Container className="w-full max-w-[1800px] mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-12">
-
-            <CategoryProducts
-              products={mixedProducts}
-            />
-
-          </Container>
-
-        </div>
+          <div className="relative z-10">
+            <Container className="mx-auto w-full max-w-[1800px] px-4 py-8 sm:px-6 sm:py-12 lg:px-8">
+              <CategoryProducts products={mixedProducts} />
+            </Container>
+          </div>
 
       </section>
     </Layout>
