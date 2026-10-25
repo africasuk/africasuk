@@ -50,7 +50,7 @@ export default defineConfig({
         "https://gzfhrrnvstoeoaxdsbxc.supabase.co"
       ),
       NEXT_PUBLIC_SUPABASE_ANON_KEY: bindings.text(
-        "YOUR_EXISTING_SUPABASE_ANON_KEY"
+        "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imd6Zmhycm52c3RvZW9heGRzYnhjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODI4MDM5NjgsImV4cCI6MjA5ODM3OTk2OH0._9WnYdL7gWlRiLeP0G_snTg-W7boCYjty3lvnTEMwHc"
       ),
 
       UPSTASH_REDIS_REST_URL: bindings.text(
