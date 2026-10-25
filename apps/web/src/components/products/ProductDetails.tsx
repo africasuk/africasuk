@@ -1,8 +1,10 @@
-
 "use client";
 
 import { useState } from "react";
+import { Copy, Check } from "lucide-react";
 import type { ProductWithDetails, Review } from "@africasuk/types";
+
+import { useCurrencyPrice } from "hooks/useCurrencyPrice";
 import { ProductGallery } from "./ProductGallery";
 import { ProductInfo } from "./ProductInfo";
 import { VariantSelector } from "./VariantSelector";
@@ -46,6 +48,70 @@ function RatingStars({ rating }: { rating: number }) {
   );
 }
 
+function QuickProductShare({
+  productName,
+  price,
+}: {
+  productName: string;
+  price: number | null;
+}) {
+  const [copied, setCopied] = useState(false);
+  const [error, setError] = useState(false);
+  const { formatted } = useCurrencyPrice(price ?? 0);
+
+  async function copyOrderMessage() {
+    if (price === null) {
+      setError(true);
+      return;
+    }
+
+    const shortName = productName.trim().split(/\s+/).slice(0, 2).join(" ");
+
+    const productUrl = new URL(window.location.href);
+    productUrl.protocol = "https:";
+    productUrl.hostname = "africasuk.com";
+    productUrl.port = "";
+
+    const message = `${shortName} - ${formatted}\nClick To Order 👇\n${productUrl.toString()}`;
+
+    try {
+      await navigator.clipboard.writeText(message);
+      setCopied(true);
+      setError(false);
+      window.setTimeout(() => setCopied(false), 2000);
+    } catch {
+      setError(true);
+    }
+  }
+
+  return (
+    <div className="space-y-2">
+      <button
+        type="button"
+        onClick={copyOrderMessage}
+        className="inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-xl bg-emerald-900 px-4 py-3 text-sm font-semibold text-white transition hover:bg-emerald-800 sm:w-auto"
+      >
+        {copied ? <Check size={17} /> : <Copy size={17} />}
+        {copied ? "Copied!" : "Copy to Post"}
+      </button>
+
+      {error && (
+        <p role="alert" className="text-sm text-red-600">
+          {price === null
+            ? "Price is still loading. Please try again."
+            : "Copy failed. Please try again."}
+        </p>
+      )}
+
+      {copied && (
+        <p role="status" className="text-sm text-emerald-700">
+          Ready to paste into WhatsApp!
+        </p>
+      )}
+    </div>
+  );
+}
+
 export function ProductDetails({
   product,
   selectedColorId,
@@ -56,11 +122,12 @@ export function ProductDetails({
     reviewCount: 0,
   },
 }: Props) {
-  const [selectedColor, setSelectedColor] =
-    useState<ColorWithDetails>(
-      product.colors.find((color) => color.id === selectedColorId) ??
-        product.colors[0]
-    );
+  const [selectedColor, setSelectedColor] = useState<ColorWithDetails>(
+    product.colors.find((color) => color.id === selectedColorId) ??
+      product.colors[0]
+  );
+
+  const [priceUsd, setPriceUsd] = useState<number | null>(null);
 
   const formattedRating = Number(rating.averageRating || 0).toFixed(1);
 
@@ -73,7 +140,7 @@ export function ProductDetails({
     <div className="mx-auto max-w-7xl select-none space-y-8 pb-24 pt-16 antialiased sm:space-y-12 sm:px-6 sm:py-8 lg:space-y-16 lg:px-8">
       {/* Main product section */}
       <div className="grid grid-cols-1 items-start gap-6 lg:grid-cols-12 lg:gap-12">
-        {/* Full-width mobile gallery */}
+        {/* Product gallery */}
         <div className="min-w-0 lg:col-span-7">
           <ProductGallery images={selectedImages} />
         </div>
@@ -81,6 +148,12 @@ export function ProductDetails({
         {/* Product information */}
         <div className="min-w-0 space-y-5 px-4 sm:px-0 lg:col-span-5 lg:space-y-6">
           <ProductInfo product={product} />
+
+          {/* Copy product name, current price, and production URL */}
+          <QuickProductShare
+            productName={product.name}
+            price={priceUsd}
+          />
 
           {/* Rating summary */}
           <div className="pt-1">
@@ -101,8 +174,10 @@ export function ProductDetails({
           {/* Product variants */}
           <div className="pt-1 sm:pt-2">
             <VariantSelector
+              key={product.id}
               product={product}
               onColorChange={setSelectedColor}
+              onPriceChange={setPriceUsd}
             />
           </div>
         </div>
