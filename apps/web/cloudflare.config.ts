@@ -50,9 +50,7 @@ export default defineConfig({
         "https://gzfhrrnvstoeoaxdsbxc.supabase.co"
       ),
       NEXT_PUBLIC_SUPABASE_ANON_KEY: bindings.text(
-        process.env.SUPABASE_ANON_KEY_BUILD ??
-          process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ??
-          ""
+        "YOUR_EXISTING_SUPABASE_ANON_KEY"
       ),
 
       UPSTASH_REDIS_REST_URL: bindings.text(
