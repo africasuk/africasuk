@@ -9,7 +9,7 @@ import {
   ProductVariantRepository,
 } from "@africasuk/database";
 import { generateOrderNumber } from "./generateOrderNumber";
-
+import { generateTrackingNumber } from "./generateTrackingNumber";
 export class OrderCommandService {
   constructor(
     private readonly orderRepository: OrderRepository,
@@ -222,7 +222,7 @@ export class OrderCommandService {
         estimatedDeliveryUpdatedAt:
           new Date().toISOString(),
 
-        trackingNumber: null,
+        trackingNumber: generateTrackingNumber(),
         adminNotes: null,
         
         fulfillmentMethod: request.fulfillmentMethod ?? "DELIVERY",
@@ -266,19 +266,54 @@ export class OrderCommandService {
     );
   }
 
-  async updateOrder(
-    orderId: string,
-    input: {
-      status?: Order["status"];
-      paymentStatus?: Order["paymentStatus"];
-      estimatedDeliveryStart?: string | null;
-      estimatedDeliveryEnd?: string | null;
-      trackingNumber?: string | null;
-      adminNotes?: string | null;
-      shipping?: number;
-      total?: number;
-    },
-  ): Promise<void> {
-    await this.orderRepository.update(orderId, input);
+async updateOrder(
+  orderId: string,
+  input: {
+    status?: Order["status"];
+    paymentStatus?: Order["paymentStatus"];
+    estimatedDeliveryStart?: string | null;
+    estimatedDeliveryEnd?: string | null;
+    trackingNumber?: string | null;
+    adminNotes?: string | null;
+    shipping?: number;
+    total?: number;
+  },
+): Promise<void> {
+  const updates = { ...input };
+
+  if (input.status === "IN_TRANSIT") {
+    // Only set the delivery window when shipping starts
+    // and no delivery window has already been set.
+    const currentOrder = await this.orderRepository.findById(orderId);
+
+    if (!currentOrder) {
+      throw new Error("Order not found.");
+    }
+
+    if (
+      currentOrder.status !== "IN_TRANSIT" &&
+      !currentOrder.estimatedDeliveryStart &&
+      !currentOrder.estimatedDeliveryEnd
+    ) {
+      const start = new Date();
+      const end = new Date(start);
+
+      end.setDate(end.getDate() + 7);
+
+      updates.estimatedDeliveryStart = [
+        start.getFullYear(),
+        String(start.getMonth() + 1).padStart(2, "0"),
+        String(start.getDate()).padStart(2, "0"),
+      ].join("-");
+
+      updates.estimatedDeliveryEnd = [
+        end.getFullYear(),
+        String(end.getMonth() + 1).padStart(2, "0"),
+        String(end.getDate()).padStart(2, "0"),
+      ].join("-");
+    }
   }
+
+  await this.orderRepository.update(orderId, updates);
+}
 }

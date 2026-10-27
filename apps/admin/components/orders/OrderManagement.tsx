@@ -8,6 +8,7 @@ import { updateOrder } from "@/app/actions/orders";
 
 import { Button } from "@/components/ui/button";
 
+
 import {
   Card,
   CardContent,
@@ -27,7 +28,6 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 
-import { Textarea } from "@/components/ui/textarea";
 import {
   ORDER_STATUS_LABELS,
   ORDER_STATUS_COLORS,
@@ -41,6 +41,14 @@ export function OrderManagement({
   order,
 }: Props) {
   const [editing, setEditing] = useState(false);
+
+    const ADMIN_NOTE_OPTIONS = [
+    "Your order has been received and is being processed.",
+    "Your order has been confirmed and is being prepared.",
+    "Your order is on its way to South Sudan.",
+    "Your order has arrived and is being prepared for delivery.",
+    "Your order has been delivered successfully.",
+  ] as const;
 
   const [status, setStatus] =
     useState(order.status);
@@ -304,17 +312,28 @@ export function OrderManagement({
               </div>
 
               {/* Admin Notes */}
-              <div className="space-y-2 sm:col-span-2">
-                <Label className="text-sm font-medium">
-                  Admin Notes
-                </Label>
-                <Textarea
-                  rows={5}
-                  className="w-full resize-y text-sm"
-                  value={adminNotes}
-                  onChange={(e) => setAdminNotes(e.target.value)}
-                />
-              </div>
+                <div className="space-y-2 sm:col-span-2">
+                  <Label className="text-sm font-medium">
+                    Admin Notes
+                  </Label>
+
+                  <Select
+                    value={adminNotes}
+                    onValueChange={(value) => setAdminNotes(value ?? "")}
+                  >
+                    <SelectTrigger className="w-full">
+                      <SelectValue placeholder="Select an admin note" />
+                    </SelectTrigger>
+
+                    <SelectContent>
+                      {ADMIN_NOTE_OPTIONS.map((note) => (
+                        <SelectItem key={note} value={note}>
+                          {note}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
             </div>
 
             <div className="flex flex-col-reverse sm:flex-row justify-end gap-2 sm:gap-3 pt-2">

@@ -28,8 +28,13 @@ export const viewport: Viewport = {
   viewportFit: "cover",
 };
 
+
 export const metadata: Metadata = {
   metadataBase: new URL("https://africasuk.com"),
+
+  other: {
+    "facebook-domain-verification": "liypt5833jq1kpgf6r3rqob5rbzz1a",
+  },
 
   applicationName: "Africa Suk",
 

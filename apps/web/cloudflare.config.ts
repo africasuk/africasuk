@@ -2,6 +2,9 @@
 import { bindings, defineConfig, defineWorker } from "cf/config";
 import { createWorkersResponseStoreServiceBindingConfig } from "@vinext/cloudflare/cache/config";
 
+const supabaseAnonKey =
+  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imd6Zmhycm52c3RvZW9heGRzYnhjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODI4MDM5NjgsImV4cCI6MjA5ODM3OTk2OH0._9WnYdL7gWlRiLeP0G_snTg-W7boCYjty3lvnTEMwHc";
+
 const responseStore = await createWorkersResponseStoreServiceBindingConfig({
   worker: {
     name: "web-response-store",
@@ -21,7 +24,6 @@ export default defineConfig({
     entrypoint: "vinext/server/fetch-handler",
     compatibilityDate: "2026-10-18",
     compatibilityFlags: ["nodejs_compat"],
-
     domains: ["africasuk.com"],
     workersDev: false,
 
@@ -43,18 +45,17 @@ export default defineConfig({
       GEOCODING_PROVIDER: bindings.text("google"),
       MTN_API_BASE_URL: bindings.text(""),
       MTN_CALLBACK_URL: bindings.text(
-        "http://localhost:3000/api/payments/mtn/callback"
+        "http://localhost:3000/api/payments/mtn/callback",
       ),
 
       NEXT_PUBLIC_SUPABASE_URL: bindings.text(
-        "https://gzfhrrnvstoeoaxdsbxc.supabase.co"
+        "https://gzfhrrnvstoeoaxdsbxc.supabase.co",
       ),
-      NEXT_PUBLIC_SUPABASE_ANON_KEY: bindings.text(
-        "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imd6Zmhycm52c3RvZW9heGRzYnhjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODI4MDM5NjgsImV4cCI6MjA5ODM3OTk2OH0._9WnYdL7gWlRiLeP0G_snTg-W7boCYjty3lvnTEMwHc"
-      ),
+      NEXT_PUBLIC_SUPABASE_ANON_KEY: bindings.text(supabaseAnonKey),
+      SUPABASE_ANON_KEY_BUILD: bindings.text(supabaseAnonKey),
 
       UPSTASH_REDIS_REST_URL: bindings.text(
-        "https://curious-gopher-167023.upstash.io"
+        "https://curious-gopher-167023.upstash.io",
       ),
       ZEPTOMAIL_FROM_EMAIL: bindings.text("no-reply@africasuk.com"),
       ZEPTOMAIL_FROM_NAME: bindings.text("AfricaSuk"),
@@ -69,3 +70,4 @@ export default defineConfig({
     },
   }),
 });
+

@@ -12,17 +12,25 @@ export const adminNavigation: NavigationGroup[] = [
       },
     ],
   },
-  {
-    title: "Sales",
-    items: [
-      {
-        title: "Orders",
-        href: "/orders",
-        icon: "orders",
-        permission: "orders.view",
-      },
-    ],
-  },
+
+{
+  title: "Sales",
+  items: [
+    {
+      title: "Orders",
+      href: "/orders",
+      icon: "orders",
+      permission: "orders.view",
+    },
+    {
+      title: "Customers",
+      href: "/customers",
+      icon: "users",
+      permission: "orders.view",
+    },
+  ],
+},
+
   {
     title: "Catalog",
     items: [
