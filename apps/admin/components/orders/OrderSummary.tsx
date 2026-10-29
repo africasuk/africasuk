@@ -15,15 +15,18 @@ interface Props {
   order: Order;
 }
 
-function formatMoney(amount: number, currency = "USD") {
+function formatMoney(amount: number) {
   const safeAmount = Number.isFinite(amount) ? amount : 0;
-  return `${currency} ${safeAmount.toFixed(2)}`;
+
+  return `$${safeAmount.toLocaleString("en-US", {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  })}`;
 }
 
 export function OrderSummary({ order }: Props) {
   const isPickup = order.fulfillmentMethod === "PICKUP";
   const shipping = Number(order.shipping ?? 0);
-  const currency = order.currency || "USD";
 
   return (
     <Card className="w-full overflow-hidden">
@@ -54,16 +57,16 @@ export function OrderSummary({ order }: Props) {
             )}
           </div>
 
-<div className="min-w-0 flex-1">
-  <p className="font-semibold">
-    {isPickup ? "Meet at an Agreed Location" : "Home Delivery"}
-  </p>
-  <p className="text-sm text-muted-foreground">
-    {isPickup
-      ? "Meet our team at a mutually agreed location when available"
-      : "Delivery to your address. The delivery fee will be confirmed by our team based on the delivery distance."}
-  </p>
-</div>
+          <div className="min-w-0 flex-1">
+            <p className="font-semibold">
+              {isPickup ? "Meet at an Agreed Location" : "Home Delivery"}
+            </p>
+            <p className="text-sm text-muted-foreground">
+              {isPickup
+                ? "Meet our team at a mutually agreed location when available"
+                : "Delivery to your address. The delivery fee will be confirmed by our team based on the delivery distance."}
+            </p>
+          </div>
 
           <Badge
             variant={isPickup ? "secondary" : "default"}
@@ -83,7 +86,7 @@ export function OrderSummary({ order }: Props) {
           <span className="text-right font-semibold">
             {isPickup
               ? "Meet at an Agreed Location — FREE"
-              : formatMoney(shipping, currency)}
+              : formatMoney(shipping)}
           </span>
         </div>
       </CardHeader>
@@ -92,55 +95,50 @@ export function OrderSummary({ order }: Props) {
         {/* Order details */}
         <div className="flex flex-col justify-between gap-1 pb-2 sm:flex-row sm:items-center sm:gap-4">
           <span className="text-muted-foreground">Order Number</span>
-          <span className="break-all font-medium">
-            {order.orderNumber}
-          </span>
+          <span className="break-all font-medium">{order.orderNumber}</span>
         </div>
 
         <div className="flex flex-col justify-between gap-1 pb-2 sm:flex-row sm:items-center sm:gap-4">
           <span className="text-muted-foreground">Created</span>
           <span>
-            {format(
-              new Date(order.createdAt),
-              "dd MMM yyyy, hh:mm a",
-            )}
+            {format(new Date(order.createdAt), "dd MMM yyyy, hh:mm a")}
           </span>
         </div>
 
-        {/* Financial breakdown */}
+        {/* Financial breakdown — USD */}
         <div className="space-y-3 border-t pt-4">
           <div className="flex items-center justify-between gap-4">
-            <span className="text-muted-foreground">Subtotal</span>
+            <span className="text-muted-foreground">Subtotal (USD)</span>
             <span className="break-all font-medium">
-              {formatMoney(Number(order.subtotal), currency)}
+              {formatMoney(Number(order.subtotal))}
             </span>
           </div>
 
           <div className="flex items-center justify-between gap-4">
-            <span className="text-muted-foreground">Shipping</span>
+            <span className="text-muted-foreground">Shipping (USD)</span>
             <span className="break-all font-medium">
-              {formatMoney(isPickup ? 0 : shipping, currency)}
+              {formatMoney(isPickup ? 0 : shipping)}
             </span>
           </div>
 
           <div className="flex items-center justify-between gap-4">
-            <span className="text-muted-foreground">Tax</span>
+            <span className="text-muted-foreground">Tax (USD)</span>
             <span className="break-all font-medium">
-              {formatMoney(Number(order.tax), currency)}
+              {formatMoney(Number(order.tax))}
             </span>
           </div>
 
           <div className="flex items-center justify-between gap-4">
-            <span className="text-muted-foreground">Discount</span>
+            <span className="text-muted-foreground">Discount (USD)</span>
             <span className="break-all font-medium text-emerald-600 dark:text-emerald-500">
-              -{formatMoney(Number(order.discount), currency)}
+              -{formatMoney(Number(order.discount))}
             </span>
           </div>
 
           <div className="flex items-center justify-between gap-4 border-t pt-4 text-base font-semibold sm:text-lg">
-            <span>Total</span>
+            <span>Total (USD)</span>
             <span className="break-all">
-              {formatMoney(Number(order.total), currency)}
+              {formatMoney(Number(order.total))}
             </span>
           </div>
         </div>
