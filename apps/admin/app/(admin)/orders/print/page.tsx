@@ -1,9 +1,11 @@
 
 import { redirect } from "next/navigation";
 import Image from "next/image";
+
 import { getOrders, getOrder } from "@/app/actions/orders";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 import PrintOrdersButton from "@/components/orders/PrintOrdersButton";
+import { Price } from "@/components/currency/Price";
 
 type OrderStatus =
   | "PENDING"
@@ -16,7 +18,6 @@ type OrderStatus =
   | "OUT_FOR_DELIVERY"
   | "DELIVERED"
   | "CANCELLED";
-
 
 interface Props {
   searchParams: Promise<{ status?: string }>;
@@ -50,16 +51,6 @@ const DEFAULT_STATUSES: readonly OrderStatus[] = [
   "OUT_FOR_DELIVERY",
 ];
 
-function formatMoney(amount: number | string | null | undefined) {
-  const value = Number(amount);
-  const safeAmount = Number.isFinite(value) ? value : 0;
-
-  return `$${safeAmount.toLocaleString("en-US", {
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
-  })}`;
-}
-
 function getColour(variant: unknown): string {
   if (!variant || typeof variant !== "object") return "";
 
@@ -74,10 +65,13 @@ function getColour(variant: unknown): string {
   return typeof value === "string" ? value : "";
 }
 
-export default async function PrintOrdersPage({ searchParams }: Props) {
+export default async function PrintOrdersPage({
+  searchParams,
+}: Props) {
   const { status: requestedStatus } = await searchParams;
 
   const supabase = await createServerSupabaseClient();
+
   const {
     data: { user },
   } = await supabase.auth.getUser();
@@ -105,16 +99,22 @@ export default async function PrintOrdersPage({ searchParams }: Props) {
       return order.status === validStatus;
     }
 
-    return DEFAULT_STATUSES.includes(order.status as OrderStatus);
+    return DEFAULT_STATUSES.includes(
+      order.status as OrderStatus,
+    );
   });
 
   // Fetch order details concurrently.
   const details = await Promise.all(
-    filteredOrders.map((order) => getOrder(order.orderNumber)),
+    filteredOrders.map((order) =>
+      getOrder(order.orderNumber),
+    ),
   );
 
   const printableOrders = details.filter(
-    (detail): detail is NonNullable<typeof detail> => detail !== null,
+    (
+      detail,
+    ): detail is NonNullable<typeof detail> => detail !== null,
   );
 
   const title = isFulfillment
@@ -127,7 +127,10 @@ export default async function PrintOrdersPage({ searchParams }: Props) {
     <main className="print-page mx-auto w-full max-w-5xl p-4 sm:p-6">
       <div className="mb-5 flex flex-wrap items-center justify-between gap-4 print:hidden">
         <div>
-          <h1 className="text-2xl font-bold">Print Order Checklist</h1>
+          <h1 className="text-2xl font-bold">
+            Print Order Checklist
+          </h1>
+
           <p className="text-sm text-muted-foreground">
             {printableOrders.length} orders
           </p>
@@ -144,7 +147,8 @@ export default async function PrintOrdersPage({ searchParams }: Props) {
           </div>
 
           <p className="print-date">
-            Date: {new Date().toLocaleDateString("en-GB", {
+            Date:{" "}
+            {new Date().toLocaleDateString("en-GB", {
               day: "2-digit",
               month: "short",
               year: "numeric",
@@ -170,24 +174,33 @@ export default async function PrintOrdersPage({ searchParams }: Props) {
           const address = [...new Set(addressParts)].join(", ");
 
           return (
-            <section key={order.id} className="print-order">
+            <section
+              key={order.id}
+              className="print-order"
+            >
               <div className="order-content">
                 <div className="customer-details">
                   <p className="customer-name">
                     {order.customerName}
                   </p>
+
                   <p>
                     Phone: {order.customerPhone || "Not provided"}
                   </p>
+
                   <p>Order: {order.orderNumber}</p>
+
                   <p>
                     Status: {order.status.replaceAll("_", " ")}
                   </p>
+
                   <p className="customer-address">
                     Address: {address || "Not provided"}
                   </p>
+
                   <p>
-                    Tracking: {order.trackingNumber || "________________"}
+                    Tracking:{" "}
+                    {order.trackingNumber || "________________"}
                   </p>
                 </div>
 
@@ -198,7 +211,10 @@ export default async function PrintOrdersPage({ searchParams }: Props) {
                     const quantity = Number(item.quantity) || 0;
 
                     return (
-                      <div key={item.id} className="product-row">
+                      <div
+                        key={item.id}
+                        className="product-row"
+                      >
                         {item.image ? (
                           <Image
                             src={item.image}
@@ -216,14 +232,23 @@ export default async function PrintOrdersPage({ searchParams }: Props) {
                         )}
 
                         <div className="product-info">
-                          <p className="product-name">{item.name}</p>
-                          <p>Unit price: {formatMoney(unitPrice)}</p>
+                          <p className="product-name">
+                            {item.name}
+                          </p>
+
+                          <p>
+                            Unit price:{" "}
+                            <Price price={unitPrice} />
+                          </p>
+
                           <p>
                             Qty: {quantity}
                             {colour ? ` · Colour: ${colour}` : ""}
                           </p>
+
                           <p>
-                            Subtotal: {formatMoney(unitPrice * quantity)}
+                            Subtotal:{" "}
+                            <Price price={unitPrice * quantity} />
                           </p>
                         </div>
                       </div>
@@ -234,36 +259,55 @@ export default async function PrintOrdersPage({ searchParams }: Props) {
                 <div className="order-totals">
                   <div>
                     <span>Items subtotal</span>
-                    <span>{formatMoney(order.subtotal)}</span>
+                    <span>
+                      <Price
+                        price={Number(order.subtotal) || 0}
+                      />
+                    </span>
                   </div>
+
                   <div>
                     <span>Shipping</span>
                     <span>
-                      {formatMoney(
-                        order.fulfillmentMethod === "PICKUP"
-                          ? 0
-                          : order.shipping,
-                      )}
+                      <Price
+                        price={
+                          order.fulfillmentMethod === "PICKUP"
+                            ? 0
+                            : Number(order.shipping) || 0
+                        }
+                      />
                     </span>
                   </div>
+
                   <div>
                     <span>Tax</span>
-                    <span>{formatMoney(order.tax)}</span>
+                    <span>
+                      <Price price={Number(order.tax) || 0} />
+                    </span>
                   </div>
+
                   <div>
                     <span>Discount</span>
-                    <span>-{formatMoney(order.discount)}</span>
+                    <span>
+                      -<Price price={Number(order.discount) || 0} />
+                    </span>
                   </div>
+
                   <div className="grand-total">
-                    <span>Total (USD)</span>
-                    <span>{formatMoney(order.total)}</span>
+                    <span>Total</span>
+                    <span>
+                      <Price price={Number(order.total) || 0} />
+                    </span>
                   </div>
                 </div>
               </div>
 
               <div className="check-column">
                 <span>Done</span>
-                <div className="check-box" aria-label="Order completed checkbox" />
+                <div
+                  className="check-box"
+                  aria-label="Order completed checkbox"
+                />
               </div>
             </section>
           );

@@ -1,0 +1,50 @@
+"use client";
+
+import {
+  createContext,
+  useContext,
+  useMemo,
+  useState,
+} from "react";
+
+interface ExchangeRateContextValue {
+  rate: number;
+  setRate: (rate: number) => void;
+}
+
+const ExchangeRateContext = createContext<
+  ExchangeRateContextValue | undefined
+>(undefined);
+
+export function ExchangeRateProvider({
+  children,
+  initialRate,
+}: {
+  children: React.ReactNode;
+  initialRate: number;
+}) {
+  const [rate, setRate] = useState(initialRate);
+
+  const value = useMemo(
+    () => ({ rate, setRate }),
+    [rate]
+  );
+
+  return (
+    <ExchangeRateContext.Provider value={value}>
+      {children}
+    </ExchangeRateContext.Provider>
+  );
+}
+
+export function useExchangeRate() {
+  const context = useContext(ExchangeRateContext);
+
+  if (!context) {
+    throw new Error(
+      "useExchangeRate must be used inside ExchangeRateProvider."
+    );
+  }
+
+  return context;
+}

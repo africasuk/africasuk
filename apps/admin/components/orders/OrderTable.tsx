@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useMemo, useState, useTransition } from "react";
@@ -23,6 +24,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import { Price } from "@/components/currency/Price";
 
 interface OrderTableProps {
   orders: Order[];
@@ -30,12 +32,15 @@ interface OrderTableProps {
 
 export function OrderTable({ orders }: OrderTableProps) {
   const router = useRouter();
+
   const [search, setSearch] = useState("");
   const [isPending, startTransition] = useTransition();
-  const [loadingOrderNumber, setLoadingOrderNumber] = useState<string | null>(null);
+  const [loadingOrderNumber, setLoadingOrderNumber] =
+    useState<string | null>(null);
 
   const handleManageClick = (orderNumber: string) => {
     setLoadingOrderNumber(orderNumber);
+
     startTransition(() => {
       router.push(`/orders/${orderNumber}`);
     });
@@ -56,20 +61,13 @@ export function OrderTable({ orders }: OrderTableProps) {
       ]
         .join(" ")
         .toLowerCase()
-        .includes(query),
+        .includes(query)
     );
   }, [orders, search]);
 
-  const formatUSD = (amount: number) =>
-    new Intl.NumberFormat("en-US", {
-      style: "currency",
-      currency: "USD",
-      minimumFractionDigits: 2,
-    }).format(amount);
-
   return (
     <div className="w-full space-y-4">
-      {/* Search Input Bar */}
+      {/* Search Input */}
       <div className="w-full">
         <Input
           placeholder="Search by order number, customer, status..."
@@ -87,7 +85,7 @@ export function OrderTable({ orders }: OrderTableProps) {
         </Card>
       ) : (
         <>
-          {/* Desktop & Tablet Table Layout */}
+          {/* Desktop & Tablet Table */}
           <Card className="hidden md:block w-full overflow-hidden">
             <CardContent className="p-0">
               <div className="w-full overflow-x-auto">
@@ -101,13 +99,17 @@ export function OrderTable({ orders }: OrderTableProps) {
                       <TableHead>Payment</TableHead>
                       <TableHead>Estimated Arrival</TableHead>
                       <TableHead>Created</TableHead>
-                      <TableHead className="text-right">Action</TableHead>
+                      <TableHead className="text-right">
+                        Action
+                      </TableHead>
                     </TableRow>
                   </TableHeader>
+
                   <TableBody>
                     {filteredOrders.map((order) => {
                       const isLoadingThis =
-                        isPending && loadingOrderNumber === order.orderNumber;
+                        isPending &&
+                        loadingOrderNumber === order.orderNumber;
 
                       return (
                         <TableRow
@@ -117,36 +119,54 @@ export function OrderTable({ orders }: OrderTableProps) {
                           <TableCell className="font-medium whitespace-nowrap">
                             {order.orderNumber}
                           </TableCell>
+
                           <TableCell className="max-w-40 truncate">
                             {order.customerName}
                           </TableCell>
+
                           <TableCell className="whitespace-nowrap font-medium">
-                            {formatUSD(order.total)}
+                            <Price price={order.total} />
                           </TableCell>
+
                           <TableCell>
-                            <Badge variant="outline" className="capitalize">
+                            <Badge
+                              variant="outline"
+                              className="capitalize"
+                            >
                               {order.status.toLowerCase()}
                             </Badge>
                           </TableCell>
+
                           <TableCell>
-                            <Badge variant="secondary" className="capitalize">
+                            <Badge
+                              variant="secondary"
+                              className="capitalize"
+                            >
                               {order.paymentStatus.toLowerCase()}
                             </Badge>
                           </TableCell>
+
                           <TableCell className="whitespace-nowrap text-muted-foreground">
-                            {order.estimatedDeliveryStart && order.estimatedDeliveryEnd
+                            {order.estimatedDeliveryStart &&
+                            order.estimatedDeliveryEnd
                               ? `${order.estimatedDeliveryStart} - ${order.estimatedDeliveryEnd}`
                               : "-"}
                           </TableCell>
+
                           <TableCell className="whitespace-nowrap text-muted-foreground">
-                            {new Date(order.createdAt).toLocaleDateString("en-GB")}
+                            {new Date(
+                              order.createdAt
+                            ).toLocaleDateString("en-GB")}
                           </TableCell>
+
                           <TableCell className="text-right whitespace-nowrap">
                             <Button
                               variant="ghost"
                               size="sm"
                               disabled={isPending}
-                              onClick={() => handleManageClick(order.orderNumber)}
+                              onClick={() =>
+                                handleManageClick(order.orderNumber)
+                              }
                               className="text-primary hover:text-primary hover:bg-primary/10"
                             >
                               {isLoadingThis ? (
@@ -169,7 +189,8 @@ export function OrderTable({ orders }: OrderTableProps) {
           <div className="block md:hidden space-y-3 w-full">
             {filteredOrders.map((order) => {
               const isLoadingThis =
-                isPending && loadingOrderNumber === order.orderNumber;
+                isPending &&
+                loadingOrderNumber === order.orderNumber;
 
               return (
                 <Card
@@ -179,12 +200,13 @@ export function OrderTable({ orders }: OrderTableProps) {
                   }`}
                 >
                   <CardContent className="p-4 space-y-3.5">
-                    {/* Top Row: Order ID + Manage Button */}
+                    {/* Order Number + Manage */}
                     <div className="flex items-center justify-between gap-3">
                       <div className="min-w-0 flex-1">
                         <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider block">
                           Order Number
                         </span>
+
                         <p className="text-sm font-semibold text-foreground truncate">
                           {order.orderNumber}
                         </p>
@@ -194,7 +216,9 @@ export function OrderTable({ orders }: OrderTableProps) {
                         variant="outline"
                         size="sm"
                         disabled={isPending}
-                        onClick={() => handleManageClick(order.orderNumber)}
+                        onClick={() =>
+                          handleManageClick(order.orderNumber)
+                        }
                         className="h-8 px-3 text-xs font-medium text-primary shrink-0"
                       >
                         {isLoadingThis ? (
@@ -214,49 +238,64 @@ export function OrderTable({ orders }: OrderTableProps) {
                         <span className="text-muted-foreground block text-[11px] mb-0.5">
                           Customer
                         </span>
+
                         <span className="font-medium text-foreground truncate block">
                           {order.customerName}
                         </span>
                       </div>
+
                       <div className="text-right">
                         <span className="text-muted-foreground block text-[11px] mb-0.5">
                           Total
                         </span>
+
                         <span className="font-bold text-foreground block">
-                          {formatUSD(order.total)}
+                          <Price price={order.total} />
                         </span>
                       </div>
                     </div>
 
-                    {/* Status Badges & Created Date */}
+                    {/* Status + Created Date */}
                     <div className="flex items-center justify-between gap-2 pt-0.5">
                       <div className="flex flex-wrap items-center gap-1.5">
-                        <Badge variant="outline" className="capitalize text-[11px] px-2 py-0.5">
+                        <Badge
+                          variant="outline"
+                          className="capitalize text-[11px] px-2 py-0.5"
+                        >
                           {order.status.toLowerCase()}
                         </Badge>
-                        <Badge variant="secondary" className="capitalize text-[11px] px-2 py-0.5">
+
+                        <Badge
+                          variant="secondary"
+                          className="capitalize text-[11px] px-2 py-0.5"
+                        >
                           {order.paymentStatus.toLowerCase()}
                         </Badge>
                       </div>
 
                       <div className="text-right shrink-0">
                         <span className="text-[11px] text-muted-foreground">
-                          {new Date(order.createdAt).toLocaleDateString("en-GB")}
+                          {new Date(
+                            order.createdAt
+                          ).toLocaleDateString("en-GB")}
                         </span>
                       </div>
                     </div>
 
                     {/* Estimated Delivery */}
-                    {order.estimatedDeliveryStart && order.estimatedDeliveryEnd && (
-                      <div className="bg-muted/40 p-2 rounded-md border text-xs text-muted-foreground flex items-center justify-between">
-                        <span className="font-semibold text-foreground text-[11px]">
-                          Est. Arrival:
-                        </span>
-                        <span>
-                          {order.estimatedDeliveryStart} – {order.estimatedDeliveryEnd}
-                        </span>
-                      </div>
-                    )}
+                    {order.estimatedDeliveryStart &&
+                      order.estimatedDeliveryEnd && (
+                        <div className="bg-muted/40 p-2 rounded-md border text-xs text-muted-foreground flex items-center justify-between">
+                          <span className="font-semibold text-foreground text-[11px]">
+                            Est. Arrival:
+                          </span>
+
+                          <span>
+                            {order.estimatedDeliveryStart} –{" "}
+                            {order.estimatedDeliveryEnd}
+                          </span>
+                        </div>
+                      )}
                   </CardContent>
                 </Card>
               );

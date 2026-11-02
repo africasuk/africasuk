@@ -10,6 +10,7 @@ import { Button } from "@/components/ui/button";
 import ThemeToggle from "@/components/shared/ThemeToggle";
 import UserMenu from "./UserMenu";
 import Breadcrumbs from "./Breadcrumbs";
+import CurrencySwitcher from "../currency/CurrencySwitcher";
 
 interface AppHeaderProps {
   notificationsHref?: string;
@@ -48,6 +49,8 @@ export default function AppHeader({
 
       {/* Right side: Actions */}
       <div className="flex shrink-0 items-center gap-1 sm:gap-2">
+
+        <CurrencySwitcher />
         <ThemeToggle />
 
         {/* Notifications Button with active loading state */}

@@ -1,3 +1,4 @@
+
 import type { Order } from "@africasuk/types";
 import type { OrderItemDetails } from "@africasuk/api";
 import Image from "next/image";
@@ -18,6 +19,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 
+import { Price } from "@/components/currency/Price";
 import { OrderItemDialog } from "./OrderItemDialog";
 
 interface Props {
@@ -25,32 +27,18 @@ interface Props {
   items: OrderItemDetails[];
 }
 
-const formatUSD = (amount: number) =>
-  new Intl.NumberFormat("en-US", {
-    style: "currency",
-    currency: "USD",
-    minimumFractionDigits: 2,
-  }).format(amount);
-
-export function OrderItems({
-  order,
-  items,
-}: Props) {
+export function OrderItems({ order, items }: Props) {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>
-          Order Items
-        </CardTitle>
+        <CardTitle>Order Items</CardTitle>
       </CardHeader>
 
       <CardContent className="p-0">
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>
-                Product
-              </TableHead>
+              <TableHead>Product</TableHead>
 
               <TableHead className="w-24">
                 Qty
@@ -115,14 +103,16 @@ export function OrderItems({
                 </TableCell>
 
                 <TableCell>
-                  {formatUSD(itemDetails.item.price)}
+                  <Price price={itemDetails.item.price} />
                 </TableCell>
 
                 <TableCell className="font-medium">
-                  {formatUSD(
-                    itemDetails.item.price *
-                      itemDetails.item.quantity,
-                  )}
+                  <Price
+                    price={
+                      itemDetails.item.price *
+                      itemDetails.item.quantity
+                    }
+                  />
                 </TableCell>
 
                 <TableCell className="text-right">

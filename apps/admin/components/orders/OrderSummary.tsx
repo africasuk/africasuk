@@ -1,3 +1,4 @@
+
 "use client";
 
 import type { Order } from "@africasuk/types";
@@ -10,23 +11,20 @@ import {
 } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { MapPin, Truck, PackageCheck } from "lucide-react";
+import { Price } from "@/components/currency/Price";
 
 interface Props {
   order: Order;
 }
 
-function formatMoney(amount: number) {
-  const safeAmount = Number.isFinite(amount) ? amount : 0;
-
-  return `$${safeAmount.toLocaleString("en-US", {
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
-  })}`;
-}
-
 export function OrderSummary({ order }: Props) {
   const isPickup = order.fulfillmentMethod === "PICKUP";
   const shipping = Number(order.shipping ?? 0);
+
+  const subtotal = Number(order.subtotal ?? 0);
+  const tax = Number(order.tax ?? 0);
+  const discount = Number(order.discount ?? 0);
+  const total = Number(order.total ?? 0);
 
   return (
     <Card className="w-full overflow-hidden">
@@ -59,8 +57,11 @@ export function OrderSummary({ order }: Props) {
 
           <div className="min-w-0 flex-1">
             <p className="font-semibold">
-              {isPickup ? "Meet at an Agreed Location" : "Home Delivery"}
+              {isPickup
+                ? "Meet at an Agreed Location"
+                : "Home Delivery"}
             </p>
+
             <p className="text-sm text-muted-foreground">
               {isPickup
                 ? "Meet our team at a mutually agreed location when available"
@@ -84,9 +85,11 @@ export function OrderSummary({ order }: Props) {
           </span>
 
           <span className="text-right font-semibold">
-            {isPickup
-              ? "Meet at an Agreed Location — FREE"
-              : formatMoney(shipping)}
+            {isPickup ? (
+              "Meet at an Agreed Location — FREE"
+            ) : (
+              <Price price={shipping} />
+            )}
           </span>
         </div>
       </CardHeader>
@@ -94,51 +97,75 @@ export function OrderSummary({ order }: Props) {
       <CardContent className="space-y-4 p-4 text-sm sm:p-6 sm:text-base">
         {/* Order details */}
         <div className="flex flex-col justify-between gap-1 pb-2 sm:flex-row sm:items-center sm:gap-4">
-          <span className="text-muted-foreground">Order Number</span>
-          <span className="break-all font-medium">{order.orderNumber}</span>
-        </div>
+          <span className="text-muted-foreground">
+            Order Number
+          </span>
 
-        <div className="flex flex-col justify-between gap-1 pb-2 sm:flex-row sm:items-center sm:gap-4">
-          <span className="text-muted-foreground">Created</span>
-          <span>
-            {format(new Date(order.createdAt), "dd MMM yyyy, hh:mm a")}
+          <span className="break-all font-medium">
+            {order.orderNumber}
           </span>
         </div>
 
-        {/* Financial breakdown — USD */}
+        <div className="flex flex-col justify-between gap-1 pb-2 sm:flex-row sm:items-center sm:gap-4">
+          <span className="text-muted-foreground">
+            Created
+          </span>
+
+          <span>
+            {format(
+              new Date(order.createdAt),
+              "dd MMM yyyy, hh:mm a"
+            )}
+          </span>
+        </div>
+
+        {/* Financial breakdown */}
         <div className="space-y-3 border-t pt-4">
           <div className="flex items-center justify-between gap-4">
-            <span className="text-muted-foreground">Subtotal (USD)</span>
+            <span className="text-muted-foreground">
+              Subtotal
+            </span>
+
             <span className="break-all font-medium">
-              {formatMoney(Number(order.subtotal))}
+              <Price price={subtotal} />
             </span>
           </div>
 
           <div className="flex items-center justify-between gap-4">
-            <span className="text-muted-foreground">Shipping (USD)</span>
+            <span className="text-muted-foreground">
+              Shipping
+            </span>
+
             <span className="break-all font-medium">
-              {formatMoney(isPickup ? 0 : shipping)}
+              <Price price={isPickup ? 0 : shipping} />
             </span>
           </div>
 
           <div className="flex items-center justify-between gap-4">
-            <span className="text-muted-foreground">Tax (USD)</span>
+            <span className="text-muted-foreground">
+              Tax
+            </span>
+
             <span className="break-all font-medium">
-              {formatMoney(Number(order.tax))}
+              <Price price={tax} />
             </span>
           </div>
 
           <div className="flex items-center justify-between gap-4">
-            <span className="text-muted-foreground">Discount (USD)</span>
+            <span className="text-muted-foreground">
+              Discount
+            </span>
+
             <span className="break-all font-medium text-emerald-600 dark:text-emerald-500">
-              -{formatMoney(Number(order.discount))}
+              -<Price price={discount} />
             </span>
           </div>
 
           <div className="flex items-center justify-between gap-4 border-t pt-4 text-base font-semibold sm:text-lg">
-            <span>Total (USD)</span>
+            <span>Total</span>
+
             <span className="break-all">
-              {formatMoney(Number(order.total))}
+              <Price price={total} />
             </span>
           </div>
         </div>

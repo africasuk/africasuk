@@ -1,3 +1,4 @@
+
 "use client";
 
 import type { Order, Product } from "@africasuk/types";
@@ -12,6 +13,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
+import { Price } from "@/components/currency/Price";
 
 interface Props {
   order: Order;
@@ -21,26 +23,15 @@ interface Props {
 export function OrderItemDialog({ item }: Props) {
   const { item: orderItem, product, variant } = item;
 
-  const subtotal =
-    orderItem.price * orderItem.quantity;
+  const subtotal = orderItem.price * orderItem.quantity;
 
   const images: string[] = [];
-
-  const formatUSD = (amount: number) =>
-    new Intl.NumberFormat("en-US", {
-      style: "currency",
-      currency: "USD",
-      minimumFractionDigits: 2,
-    }).format(amount);
 
   return (
     <Dialog>
       <DialogTrigger
         render={
-          <Button
-            size="sm"
-            variant="outline"
-          >
+          <Button size="sm" variant="outline">
             View Details
           </Button>
         }
@@ -79,34 +70,28 @@ export function OrderItemDialog({ item }: Props) {
 
               {/* Thumbnails */}
               <div className="grid grid-cols-4 gap-2">
-                {images.slice(0, 4).map(
-                  (imgUrl, index) => (
-                    <div
-                      key={index}
-                      className="relative aspect-square rounded-lg border bg-muted overflow-hidden"
-                    >
-                      <Image
-                        src={imgUrl}
-                        alt={`${orderItem.name} thumbnail ${
-                          index + 1
-                        }`}
-                        fill
-                        sizes="80px"
-                        className="object-cover"
-                      />
-                    </div>
-                  ),
-                )}
+                {images.slice(0, 4).map((imgUrl, index) => (
+                  <div
+                    key={index}
+                    className="relative aspect-square rounded-lg border bg-muted overflow-hidden"
+                  >
+                    <Image
+                      src={imgUrl}
+                      alt={`${orderItem.name} thumbnail ${index + 1}`}
+                      fill
+                      sizes="80px"
+                      className="object-cover"
+                    />
+                  </div>
+                ))}
 
                 {images.length === 0 &&
-                  Array.from({ length: 4 }).map(
-                    (_, index) => (
-                      <div
-                        key={index}
-                        className="aspect-square rounded-lg border bg-muted"
-                      />
-                    ),
-                  )}
+                  Array.from({ length: 4 }).map((_, index) => (
+                    <div
+                      key={index}
+                      className="aspect-square rounded-lg border bg-muted"
+                    />
+                  ))}
               </div>
             </div>
 
@@ -130,12 +115,12 @@ export function OrderItemDialog({ item }: Props) {
 
                 <Info
                   label="Unit Price"
-                  value={formatUSD(orderItem.price)}
+                  value={<Price price={orderItem.price} />}
                 />
 
                 <Info
                   label="Subtotal"
-                  value={formatUSD(subtotal)}
+                  value={<Price price={subtotal} />}
                 />
               </div>
             </div>
@@ -191,9 +176,7 @@ export function OrderItemDialog({ item }: Props) {
                 value={
                   (
                     product as Product & {
-                      brand?: {
-                        name: string;
-                      };
+                      brand?: { name: string };
                     }
                   ).brand?.name ?? "-"
                 }
@@ -204,9 +187,7 @@ export function OrderItemDialog({ item }: Props) {
                 value={
                   (
                     product as Product & {
-                      category?: {
-                        name: string;
-                      };
+                      category?: { name: string };
                     }
                   ).category?.name ?? "-"
                 }
@@ -221,13 +202,10 @@ export function OrderItemDialog({ item }: Props) {
 
 interface InfoProps {
   label: string;
-  value: string;
+  value: React.ReactNode;
 }
 
-function Info({
-  label,
-  value,
-}: InfoProps) {
+function Info({ label, value }: InfoProps) {
   return (
     <div className="flex items-center justify-between border-b px-4 sm:px-5 py-3 sm:py-4 last:border-b-0 text-sm">
       <span className="text-muted-foreground mr-2">
@@ -246,10 +224,7 @@ interface SpecRowProps {
   value: string;
 }
 
-function SpecRow({
-  label,
-  value,
-}: SpecRowProps) {
+function SpecRow({ label, value }: SpecRowProps) {
   return (
     <div className="grid grid-cols-1 sm:grid-cols-[160px_1fr] md:grid-cols-[180px_1fr] gap-1 sm:gap-4 px-4 sm:px-5 py-3 text-sm">
       <span className="text-muted-foreground font-medium sm:font-normal">
