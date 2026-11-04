@@ -16,7 +16,7 @@ import Hero from "@/components/home/Hero";
 import Layout from "@/components/layout/Layout";
 import { RequestProductSection } from "@/components/home/RequestProductSection";
 import GreenSectionDivider from "@/components/home/GreenSectionDivider";
-import { ButtonSection } from "@/components/home/ButtonSection";
+// import { ButtonSection } from "@/components/home/ButtonSection";
 import AppDownloadSection from "@/components/home/AppDownloadSection";
 import MobileHero from "@/components/home/MobileHero";
 import MobileCategories from "@/components/home/MobileCategories";
@@ -78,7 +78,7 @@ const [
 
     <Categories categories={categories} />
 
-    <ButtonSection />
+    {/* <ButtonSection /> */}
 
     <RequestProductSection />
 
