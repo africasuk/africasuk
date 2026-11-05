@@ -1,3 +1,4 @@
+
 "use client";
 
 import Link from "next/link";
@@ -11,76 +12,68 @@ interface Props {
   products: ProductWithDetails[];
 }
 
+type FeaturedColorProduct = {
+  product: ProductWithDetails;
+  color: ProductWithDetails["colors"][number];
+};
+
 export default function FeaturedProducts({
   products = [],
 }: Props) {
   const featured = products.filter(
     (product) =>
       product.isActive &&
-      product.colors?.length > 0
+      product.colors?.some((color) =>
+        color.variants?.some(
+          (variant) => variant.isActive && variant.stock > 0
+        )
+      )
   );
 
-  if (featured.length === 0) {
-    return null;
-  }
+  if (featured.length === 0) return null;
 
-  type FeaturedColorProduct = {
-    product: ProductWithDetails;
-    color: ProductWithDetails["colors"][number];
-  };
-
-  // Group valid colors by product
-  const groupedProducts: FeaturedColorProduct[][] =
-    featured.map((product) =>
+  // Prepare valid colors for every product.
+  const groupedProducts: FeaturedColorProduct[][] = featured.map(
+    (product) =>
       product.colors
-        .filter(
-          (color) =>
-            color.variants &&
-            color.variants.length > 0
+        .filter((color) =>
+          color.variants?.some(
+            (variant) => variant.isActive && variant.stock > 0
+          )
         )
         .map((color) => ({
           product,
           color,
         }))
-    );
+  );
 
-  // Mix products by taking one color from each
-  // product before taking the next color.
-  const featuredColorProducts = [];
+  // Mix colors while keeping products distributed.
+  const featuredColorProducts: FeaturedColorProduct[] = [];
 
   const maxColors = Math.max(
     0,
-    ...groupedProducts.map(
-      (group) => group.length
-    )
+    ...groupedProducts.map((group) => group.length)
   );
 
-  for (
-    let index = 0;
-    index < maxColors;
-    index++
-  ) {
+  for (let index = 0; index < maxColors; index++) {
     for (const group of groupedProducts) {
       const item = group[index];
 
       if (!item) continue;
 
-      featuredColorProducts.push({
-        ...item.product,
-
-        id: `${item.product.id}-${item.color.id}`,
-
-        name: `${item.product.name} - ${item.color.name}`,
-
-        selectedColorId: item.color.id,
-
-        colors: [item.color],
-      });
+      featuredColorProducts.push(item);
     }
   }
 
-  const displayedProducts =
-    featuredColorProducts.slice(0, 50);
+  const displayedProducts = featuredColorProducts
+    .slice(0, 50)
+    .map(({ product, color }) => ({
+      ...product,
+      id: `${product.id}-${color.id}`,
+      name: `${product.name} - ${color.name}`,
+      selectedColorId: color.id,
+      colors: [color],
+    }));
 
   return (
     <section className="bg-white py-10 sm:py-16 antialiased border-y border-gray-100 select-none">
@@ -94,7 +87,10 @@ export default function FeaturedProducts({
               className="group inline-flex items-center gap-1 text-[11px] font-semibold whitespace-nowrap text-[#005c2e] transition-colors hover:text-[#002b15] shrink-0 sm:gap-1.5 sm:text-sm"
             >
               <span className="sm:hidden">View All</span>
-              <span className="hidden sm:inline">View All Collection</span>
+
+              <span className="hidden sm:inline">
+                View All Collection
+              </span>
 
               <ArrowUpRight className="size-3.5 shrink-0 transition-transform duration-200 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 sm:size-4" />
             </Link>
@@ -123,6 +119,6 @@ export default function FeaturedProducts({
           </Link>
         </div>
       </Container>
-    </section> 
+    </section>
   );
 }
