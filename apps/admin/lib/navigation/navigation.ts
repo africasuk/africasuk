@@ -12,7 +12,8 @@ export type IconName =
   | "reports"
   | "shield"
   | "settings"
-  | "reviews";
+  | "reviews"
+  | "notifications";
 
 export interface NavigationItem {
   title: string;

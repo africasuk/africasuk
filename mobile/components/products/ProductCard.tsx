@@ -6,10 +6,10 @@ import {
   StyleSheet,
   ActivityIndicator,
 } from "react-native";
-import { Image } from "expo-image";
 import { useRouter, useFocusEffect } from "expo-router";
 import type { ProductWithDetails } from "@africasuk/types";
 import { Price } from "../currency/Price";
+import { ProductImage } from "./ProductImage";
 
 interface Props {
   product: ProductWithDetails & {
@@ -82,12 +82,10 @@ export const ProductCard = memo(function ProductCard({ product }: Props) {
     >
       {/* 1:1 Media Frame */}
       <View style={styles.imageContainer}>
-        <Image
-          source={{ uri: imageUrl }}
+        <ProductImage
+          uri={imageUrl}
           style={styles.image}
           contentFit="cover"
-          transition={200}
-          cachePolicy="memory-disk"
         />
 
         {/* Loading Overlay */}

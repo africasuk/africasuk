@@ -1,20 +1,13 @@
-import {
-  useEffect,
-  useMemo,
-  useState,
-} from "react";
 
+import { useEffect, useMemo, useState } from "react";
 import {
   View,
   Text,
   StyleSheet,
   TouchableOpacity,
 } from "react-native";
-
 import { router } from "expo-router";
-
 import type { ProductWithDetails } from "@africasuk/types";
-
 import { ProductCard } from "../products/ProductCard";
 import SouthSudanCtaButton from "../home/SouthSudanCtaButton";
 import { supabase } from "@/lib/supabase/client";
@@ -24,6 +17,7 @@ interface Props {
 }
 
 const BRAND_COLOR = "#005c2e";
+const MAX_FEATURED_PRODUCTS = 12;
 
 type ProductRating = {
   averageRating: number;
@@ -45,39 +39,30 @@ export default function FeaturedProducts({
     Record<string, ProductRating>
   >({});
 
-  /*
-   * Load approved ratings for the products.
-   */
+  // Load approved product ratings.
   useEffect(() => {
+    let cancelled = false;
+
     async function loadRatings() {
-      if (products.length === 0) {
+      const productIds = [
+        ...new Set(products.map((product) => product.id)),
+      ];
+
+      if (productIds.length === 0) {
         setRatings({});
         return;
       }
 
       try {
-        const productIds = products.map(
-          (product) => product.id
-        );
-
         const { data, error } = await supabase
           .from("reviews")
           .select("product_id, rating")
           .in("product_id", productIds)
           .eq("status", "APPROVED");
 
-        if (error) {
-          console.error(
-            "Failed to load product ratings:",
-            error
-          );
-          return;
-        }
+        if (error) throw error;
 
-        const ratingMap: Record<
-          string,
-          ProductRating
-        > = {};
+        const ratingMap: Record<string, ProductRating> = {};
 
         for (const review of data ?? []) {
           const productId = review.product_id;
@@ -96,31 +81,30 @@ export default function FeaturedProducts({
           ratingMap[productId].reviewCount += 1;
         }
 
-        for (const productId of Object.keys(
-          ratingMap
-        )) {
-          const rating = ratingMap[productId];
-
+        for (const rating of Object.values(ratingMap)) {
           rating.averageRating = Number(
             (
-              rating.averageRating /
-              rating.reviewCount
+              rating.averageRating / rating.reviewCount
             ).toFixed(1)
           );
         }
 
-        setRatings(ratingMap);
+        if (!cancelled) {
+          setRatings(ratingMap);
+        }
       } catch (error) {
-        console.error(
-          "Failed to load product ratings:",
-          error
-        );
+        console.error("Failed to load product ratings:", error);
       }
     }
 
     loadRatings();
+
+    return () => {
+      cancelled = true;
+    };
   }, [products]);
 
+  // Only active products with colors.
   const featured = useMemo(() => {
     return products.filter(
       (product) =>
@@ -129,68 +113,46 @@ export default function FeaturedProducts({
     );
   }, [products]);
 
-  const featuredColorProducts = useMemo(() => {
-    const groupedProducts = featured.map(
-      (product) => {
-        return (product.colors ?? [])
-          .filter(
-            (color) =>
-              color.variants &&
-              color.variants.length > 0
+  // Create one card for each product color.
+  const featuredColorProducts = useMemo<ColorProduct[]>(() => {
+    const colorProducts: ColorProduct[] = [];
+
+    for (const product of featured) {
+      const availableColors = (product.colors ?? []).filter(
+        (color) =>
+          (color.variants ?? []).some(
+            (variant) => variant.isActive
           )
-          .map((color) => ({
-            product,
-            color,
-          }));
-      }
-    );
+      );
 
-    const result: ColorProduct[] = [];
+      for (const color of availableColors) {
+        const rating = ratings[product.id] ?? {
+          averageRating: 0,
+          reviewCount: 0,
+        };
 
-    const maxColors = Math.max(
-      0,
-      ...groupedProducts.map(
-        (group) => group.length
-      )
-    );
-
-    /*
-     * Same ordering:
-     * Product A - Color 1
-     * Product B - Color 1
-     * Product C - Color 1
-     * Product A - Color 2
-     * Product B - Color 2
-     * Product C - Color 2
-     */
-    for (
-      let index = 0;
-      index < maxColors;
-      index++
-    ) {
-      for (const group of groupedProducts) {
-        const item = group[index];
-
-        if (!item) continue;
-
-        const productRating =
-          ratings[item.product.id] ?? {
-            averageRating: 0,
-            reviewCount: 0,
-          };
-
-        result.push({
-          ...item.product,
-          id: `${item.product.id}-${item.color.id}`,
-          name: `${item.product.name} ${item.color.name}`,
-          selectedColorId: item.color.id,
-          colors: [item.color],
-          rating: productRating,
+        colorProducts.push({
+          ...product,
+          id: `${product.id}-${color.id}`,
+          name: `${product.name} ${color.name}`,
+          selectedColorId: color.id,
+          colors: [color],
+          rating,
         });
       }
     }
 
-    return result.slice(0, 60);
+    // Randomize product-color cards.
+    for (let i = colorProducts.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+
+      [colorProducts[i], colorProducts[j]] = [
+        colorProducts[j],
+        colorProducts[i],
+      ];
+    }
+
+    return colorProducts.slice(0, MAX_FEATURED_PRODUCTS);
   }, [featured, ratings]);
 
   if (featuredColorProducts.length === 0) {
@@ -202,9 +164,7 @@ export default function FeaturedProducts({
       {/* Header */}
       <View style={styles.header}>
         <View style={styles.textGroup}>
-          <Text style={styles.badge}>
-            Curated Drops
-          </Text>
+          <Text style={styles.badge}>Curated Drops</Text>
 
           <Text style={styles.title}>
             Featured Products
@@ -217,18 +177,14 @@ export default function FeaturedProducts({
 
         <TouchableOpacity
           style={styles.viewAllBtn}
-          onPress={() =>
-            router.push("/products" as never)
-          }
+          onPress={() => router.push("/products" as never)}
           activeOpacity={0.7}
         >
-          <Text style={styles.viewAllText}>
-            View All
-          </Text>
+          <Text style={styles.viewAllText}>View All</Text>
         </TouchableOpacity>
       </View>
 
-      {/* Products Grid */}
+      {/* Three Products Per Row */}
       <View style={styles.grid}>
         {featuredColorProducts.map((item) => (
           <View
@@ -240,7 +196,7 @@ export default function FeaturedProducts({
         ))}
       </View>
 
-      {/* Premium South Sudan Banner Button replacing Explore All Products */}
+      {/* South Sudan CTA */}
       <View style={styles.bottomCtaWrapper}>
         <SouthSudanCtaButton />
       </View>
@@ -310,15 +266,15 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     flexWrap: "wrap",
     justifyContent: "space-between",
-    rowGap: 8,
+    rowGap: 12,
   },
 
   cardWrapper: {
-    width: "49%",
+    width: "32%",
   },
 
   bottomCtaWrapper: {
-    marginTop: 10,
+    marginTop: 14,
     marginHorizontal: -4,
   },
 });

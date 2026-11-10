@@ -18,7 +18,7 @@ import { supabase } from "@/lib/supabase/client";
 
 import { ProductDetails } from "@/components/products/ProductDetails";
 import LoadingScreen from "@/components/shared/LoadingScreen";
-import HomeHeader from "@/components/home/HomeHeader";
+import ChristmasHeader from "@/components/layout/ChristmasHeader";
 
 type ExtendedProduct = ProductWithDetails & {
   relatedProducts: ProductWithDetails[];
@@ -140,7 +140,7 @@ export default function MobileProductDetailsPage() {
   return (
     <View style={styles.container}>
       {/* Same animated header used on the Categories screen */}
-      <HomeHeader scrollY={scrollY} />
+      <ChristmasHeader scrollY={scrollY} />
 
       <Animated.ScrollView
         onScroll={scrollHandler}

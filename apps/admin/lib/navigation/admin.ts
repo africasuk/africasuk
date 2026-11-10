@@ -1,3 +1,4 @@
+
 import type { NavigationGroup } from "./navigation";
 
 export const adminNavigation: NavigationGroup[] = [
@@ -12,25 +13,23 @@ export const adminNavigation: NavigationGroup[] = [
       },
     ],
   },
-
-{
-  title: "Sales",
-  items: [
-    {
-      title: "Orders",
-      href: "/orders",
-      icon: "orders",
-      permission: "orders.view",
-    },
-    {
-      title: "Customers",
-      href: "/customers",
-      icon: "users",
-      permission: "orders.view",
-    },
-  ],
-},
-
+  {
+    title: "Sales",
+    items: [
+      {
+        title: "Orders",
+        href: "/orders",
+        icon: "orders",
+        permission: "orders.view",
+      },
+      {
+        title: "Customers",
+        href: "/customers",
+        icon: "users",
+        permission: "orders.view",
+      },
+    ],
+  },
   {
     title: "Catalog",
     items: [
@@ -69,6 +68,17 @@ export const adminNavigation: NavigationGroup[] = [
         href: "/reviews",
         icon: "reviews",
         permission: "reviews.view",
+      },
+    ],
+  },
+  {
+    title: "Marketing",
+    items: [
+      {
+        title: "Notifications",
+        href: "/notifications",
+        icon: "notifications",
+        permission: "settings.view",
       },
     ],
   },

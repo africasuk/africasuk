@@ -3,7 +3,7 @@
   "expo": {
     "name": "Africa Suk",
     "slug": "africa-suk",
-    "version": "1.1.0",
+    "version": "1.2.2",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
     "scheme": "africasuk",
@@ -12,8 +12,12 @@
 
     "ios": {
       "bundleIdentifier": "com.africasuk.app",
+      "buildNumber": "12",
       "supportsTablet": true,
       "icon": "./assets/images/icon.png",
+      "associatedDomains": [
+        "applinks:africasuk.com"
+      ],
       "infoPlist": {
         "ITSAppUsesNonExemptEncryption": false
       }
@@ -21,12 +25,29 @@
 
     "android": {
       "package": "com.africasuk.app",
-      "versionCode": 11,
+      "versionCode": 12,
       "adaptiveIcon": {
         "foregroundImage": "./assets/images/android-icon-foreground.png",
         "backgroundColor": "#FFFFFF",
         "monochromeImage": "./assets/images/android-icon-monochrome.png"
-      }
+      },
+      "intentFilters": [
+        {
+          "action": "VIEW",
+          "autoVerify": true,
+          "data": [
+            {
+              "scheme": "https",
+              "host": "africasuk.com",
+              "pathPrefix": "/"
+            }
+          ],
+          "category": [
+            "BROWSABLE",
+            "DEFAULT"
+          ]
+        }
+      ]
     },
 
     "web": {
@@ -53,7 +74,13 @@
           }
         }
       ],
-      "@react-native-google-signin/google-signin"
+      [
+        "expo-notifications",
+        {
+          "defaultChannel": "default",
+          "color": "#16833B"
+        }
+      ]
     ],
 
     "experiments": {

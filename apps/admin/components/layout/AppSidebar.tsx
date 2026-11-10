@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState } from "react";
@@ -21,6 +22,7 @@ import {
   Shield,
   Settings,
   MessageSquare,
+  Bell,
   Loader2,
 } from "lucide-react";
 
@@ -59,6 +61,7 @@ const icons = {
   shield: Shield,
   settings: Settings,
   reviews: MessageSquare,
+  notifications: Bell,
 } as const;
 
 export default function AppSidebar({
@@ -71,23 +74,18 @@ export default function AppSidebar({
   const { state } = useSidebar();
   const collapsed = state === "collapsed";
 
-  // Track the route the user is actively navigating towards
+  // Track the route the user is actively navigating towards.
   const [targetHref, setTargetHref] = useState<string | null>(null);
   const [prevPathname, setPrevPathname] = useState(pathname);
 
-  // Official React pattern: reset state during render when props/path change.
-  // This satisfies ESLint (no useEffect setState) while guaranteeing the spinner clears once arrived.
+  // Reset loading state when the route changes.
   if (prevPathname !== pathname) {
     setPrevPathname(pathname);
     setTargetHref(null);
   }
 
   return (
-    <Sidebar
-      collapsible="icon"
-      variant="inset"
-      className="border-r"
-    >
+    <Sidebar collapsible="icon" variant="inset" className="border-r">
       <SidebarHeader className="border-b px-3 py-4">
         {collapsed ? (
           <div className="flex justify-center">
@@ -137,7 +135,7 @@ export default function AppSidebar({
                     <SidebarMenuItem key={item.href}>
                       <Link
                         href={item.href}
-                        className="flex items-center gap-3 w-full"
+                        className="flex w-full items-center gap-3"
                         onClick={() => {
                           if (pathname !== item.href) {
                             setTargetHref(item.href);
@@ -147,7 +145,7 @@ export default function AppSidebar({
                         <SidebarMenuButton
                           isActive={active}
                           tooltip={item.title}
-                          className="h-10 rounded-lg w-full"
+                          className="h-10 w-full rounded-lg"
                         >
                           {isLoading ? (
                             <Loader2 className="h-4 w-4 shrink-0 animate-spin text-emerald-600" />

@@ -1,3 +1,4 @@
+
 import React, { createContext, useContext, useState } from "react";
 
 export type Locale = "en";
@@ -12,7 +13,6 @@ export interface Dictionary {
     welcomeToAfricaSuk: string;
     signupTitle: string;
     signupSubtitle: string;
-    continueWithGoogle: string;
     or: string;
     fullName: string;
     emailAddress: string;
@@ -46,6 +46,7 @@ export function LanguageProvider({
   children,
 }: Props) {
   const [locale, setLocaleState] = useState<Locale>(initialLocale);
+
   const [dictionary, setDictionary] =
     useState<Dictionary>(initialDictionary);
 

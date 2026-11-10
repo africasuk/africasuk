@@ -1,3 +1,4 @@
+
 import { ProductRepository } from "@/repositories/ProductRepository";
 
 export class ProductQueryService {
@@ -5,8 +6,8 @@ export class ProductQueryService {
     private readonly repository: ProductRepository
   ) {}
 
-  async getAll() {
-    return this.repository.getAll();
+  async getAll(options: { random?: boolean } = {}) {
+    return this.repository.getAll(options);
   }
 
   async getById(id: string) {

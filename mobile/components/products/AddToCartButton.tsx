@@ -1,5 +1,4 @@
-
-import React, { useState } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import {
   View,
   Text,
@@ -9,17 +8,16 @@ import {
   ActivityIndicator,
 } from "react-native";
 import { useRouter, Href } from "expo-router";
-import { ShoppingBag, ArrowRight, Check } from "lucide-react-native";
-import { LinearGradient } from "expo-linear-gradient";
+import { ShoppingBag, Check } from "lucide-react-native";
 import * as Haptics from "expo-haptics";
 
 import { createClient } from "@/lib/auth/client";
 import { useCart } from "../../store/cart";
 import type { CartItem } from "../../types/cart";
 
-const GREEN = "#005c2e";
-const DARK_GREEN = "#00401f";
-const GOLD = "#F4C542";
+const PRIMARY_GREEN = "#004d32";
+const ACCENT_MINT = "#E8F5E9";
+const MUTED_BORDER = "#E5E5E5";
 
 interface Props {
   item: CartItem;
@@ -29,8 +27,8 @@ export function AddToCartButton({ item }: Props) {
   const router = useRouter();
 
   const [buying, setBuying] = useState(false);
-  const [adding, setAdding] = useState(false);
   const [added, setAdded] = useState(false);
+  const resetTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const addItem = useCart((state) => state.addItem);
   const buyNow = useCart((state) => state.buyNow);
@@ -38,11 +36,15 @@ export function AddToCartButton({ item }: Props) {
 
   const isOutOfStock = item.stock <= 0;
 
+  useEffect(() => {
+    return () => {
+      if (resetTimer.current) clearTimeout(resetTimer.current);
+    };
+  }, []);
+
   const triggerHaptic = () => {
     if (Platform.OS !== "web") {
-      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(
-        () => {}
-      );
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => {});
     }
   };
 
@@ -74,95 +76,67 @@ export function AddToCartButton({ item }: Props) {
   };
 
   const handleAddToCart = () => {
-    if (isOutOfStock || adding) return;
+    if (isOutOfStock) return;
 
-    setAdding(true);
     triggerHaptic();
+    addItem(item);
+    setAdded(true);
 
-    try {
-      addItem(item);
-      setAdded(true);
-
-      setTimeout(() => {
-        setAdded(false);
-      }, 1200);
-    } finally {
-      setAdding(false);
-    }
+    if (resetTimer.current) clearTimeout(resetTimer.current);
+    resetTimer.current = setTimeout(() => {
+      setAdded(false);
+      resetTimer.current = null;
+    }, 1200);
   };
 
   return (
     <View style={styles.container}>
-      {/* Buy Now */}
+      {/* Mini Cart Action */}
+      <Pressable
+        onPress={handleAddToCart}
+        disabled={isOutOfStock}
+        accessibilityRole="button"
+        accessibilityLabel="Add to cart"
+        style={({ pressed }) => [
+          styles.cartButton,
+          added && styles.cartButtonSuccess,
+          pressed && styles.pressedScale,
+          isOutOfStock && styles.disabled,
+        ]}
+      >
+        {added ? (
+          <Check size={16} color={PRIMARY_GREEN} strokeWidth={2.5} />
+        ) : (
+          <ShoppingBag size={16} color="#1a1a1a" strokeWidth={2} />
+        )}
+
+        {quantity > 0 && !added && (
+          <View style={styles.quantityDot}>
+            <Text style={styles.quantityText}>
+              {quantity > 9 ? "9+" : quantity}
+            </Text>
+          </View>
+        )}
+      </Pressable>
+
+      {/* Mini Buy Now Action */}
       <Pressable
         onPress={handleBuyNow}
         disabled={isOutOfStock || buying}
         accessibilityRole="button"
-        accessibilityLabel={
-          isOutOfStock ? "Out of stock" : "Buy now"
-        }
+        accessibilityLabel={isOutOfStock ? "Out of stock" : "Buy now"}
         style={({ pressed }) => [
           styles.buyNowButton,
-          pressed && styles.pressed,
-          isOutOfStock && styles.disabled,
+          pressed && styles.pressedOpacity,
+          isOutOfStock && styles.buyNowDisabled,
         ]}
       >
-        <LinearGradient
-          colors={[GREEN, DARK_GREEN]}
-          start={{ x: 0, y: 0 }}
-          end={{ x: 1, y: 1 }}
-          style={styles.buyNowGradient}
-        >
-          {buying ? (
-            <ActivityIndicator size="small" color="#FFFFFF" />
-          ) : (
-            <>
-              <Text style={styles.buyNowText}>
-                {isOutOfStock ? "Out of Stock" : "Buy Now"}
-              </Text>
-
-              {!isOutOfStock && (
-                <ArrowRight
-                  size={16}
-                  color={GOLD}
-                  strokeWidth={2.5}
-                />
-              )}
-            </>
-          )}
-        </LinearGradient>
-      </Pressable>
-
-      {/* Add to Cart */}
-      <Pressable
-        onPress={handleAddToCart}
-        disabled={isOutOfStock || adding}
-        accessibilityRole="button"
-        accessibilityLabel="Add to cart"
-        style={({ pressed }) => [
-          styles.addToCartButton,
-          pressed && styles.pressed,
-          isOutOfStock && styles.disabled,
-        ]}
-      >
-        {adding ? (
-          <ActivityIndicator size="small" color={GREEN} />
-        ) : added ? (
-          <Check size={17} color={GREEN} strokeWidth={2.5} />
+        {buying ? (
+          <ActivityIndicator size="small" color="#FFFFFF" />
         ) : (
-          <ShoppingBag size={17} color={GREEN} strokeWidth={2} />
-        )}
-
-        <Text style={styles.addToCartText}>
-          {added ? "Added" : "Add to Cart"}
-        </Text>
-
-        {quantity > 0 && (
-          <View style={styles.quantityBadge}>
-            <Text style={styles.quantityText}>
-              {quantity > 99 ? "99+" : quantity}
-            </Text>
-          </View>
+          <Text style={styles.buyNowText}>
+            {isOutOfStock ? "Sold Out" : "Buy Now"}
+          </Text>
         )}
       </Pressable>
     </View>
@@ -173,76 +147,77 @@ const styles = StyleSheet.create({
   container: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 8,
+    gap: 6,
     width: "100%",
   },
 
-  buyNowButton: {
-    flex: 1,
-    minWidth: 0,
-    minHeight: 44,
-    borderRadius: 10,
-    overflow: "hidden",
-  },
-
-  buyNowGradient: {
-    flex: 1,
-    minHeight: 44,
-    paddingHorizontal: 10,
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    gap: 7,
-  },
-
-  buyNowText: {
-    color: "#FFFFFF",
-    fontSize: 14,
-    fontWeight: "700",
-  },
-
-  addToCartButton: {
-    flex: 1,
-    minWidth: 0,
-    minHeight: 44,
+  cartButton: {
+    width: 36,
+    height: 36,
+    borderRadius: 8,
     borderWidth: 1,
-    borderColor: GREEN,
-    borderRadius: 10,
-    paddingHorizontal: 8,
-    flexDirection: "row",
+    borderColor: MUTED_BORDER,
+    backgroundColor: "#F8F8F8",
     alignItems: "center",
     justifyContent: "center",
-    gap: 6,
-    backgroundColor: "#FFFFFF",
+    position: "relative",
   },
 
-  addToCartText: {
-    color: GREEN,
-    fontSize: 13,
-    fontWeight: "600",
+  cartButtonSuccess: {
+    backgroundColor: ACCENT_MINT,
+    borderColor: PRIMARY_GREEN,
   },
 
-  quantityBadge: {
-    minWidth: 19,
-    height: 19,
-    paddingHorizontal: 4,
-    borderRadius: 10,
-    backgroundColor: GOLD,
+  quantityDot: {
+    position: "absolute",
+    top: -3,
+    right: -3,
+    minWidth: 14,
+    height: 14,
+    borderRadius: 7,
+    backgroundColor: PRIMARY_GREEN,
+    paddingHorizontal: 2,
     alignItems: "center",
     justifyContent: "center",
   },
 
   quantityText: {
-    color: DARK_GREEN,
-    fontSize: 10,
+    color: "#FFFFFF",
+    fontSize: 8.5,
     fontWeight: "700",
+    lineHeight: 10,
   },
 
-  pressed: {
-    opacity: 0.82,
+  buyNowButton: {
+    flex: 1,
+    height: 36,
+    borderRadius: 8,
+    backgroundColor: PRIMARY_GREEN,
+    alignItems: "center",
+    justifyContent: "center",
+    paddingHorizontal: 10,
+  },
+
+  buyNowDisabled: {
+    backgroundColor: "#EBEBEB",
+  },
+
+  buyNowText: {
+    color: "#FFFFFF",
+    fontSize: 12.5,
+    fontWeight: "600",
+    letterSpacing: 0.1,
+  },
+
+  pressedScale: {
+    transform: [{ scale: 0.94 }],
+  },
+
+  pressedOpacity: {
+    opacity: 0.85,
   },
 
   disabled: {
-    opacity: 0.5,
+    opacity: 0.45,
   },
 });

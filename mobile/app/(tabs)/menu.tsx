@@ -1,4 +1,6 @@
+
 import React, { useEffect, useState } from "react";
+
 import {
   View,
   Text,
@@ -8,8 +10,11 @@ import {
   Alert,
   Share,
   Linking,
+  Switch,
 } from "react-native";
+
 import { SafeAreaView } from "react-native-safe-area-context";
+
 import {
   User,
   Package,
@@ -24,12 +29,15 @@ import {
   ChevronRight,
   Camera,
   Globe2,
+  Bell,
 } from "lucide-react-native";
+
 import * as WebBrowser from "expo-web-browser";
 import { useRouter } from "expo-router";
 
 import { CurrencySwitcher } from "@/components/CurrencySwitcher";
 import { createClient } from "@/lib/auth/client";
+
 import Constants from "expo-constants";
 
 const PLAY_STORE_URL =
@@ -89,9 +97,15 @@ function MenuRow({
 
 export default function MenuScreen() {
   const router = useRouter();
+
   const [user, setUser] = useState<any>(null);
   const [authLoading, setAuthLoading] = useState(true);
 
+  const [marketingEnabled, setMarketingEnabled] = useState(false);
+  const [marketingLoading, setMarketingLoading] = useState(false);
+  const [marketingSaving, setMarketingSaving] = useState(false);
+
+  // Authentication
   useEffect(() => {
     let mounted = true;
     const supabase = createClient();
@@ -108,6 +122,7 @@ export default function MenuScreen() {
         }
       } catch (error) {
         console.error("Failed to load user:", error);
+
         if (mounted) {
           setUser(null);
           setAuthLoading(false);
@@ -115,7 +130,7 @@ export default function MenuScreen() {
       }
     };
 
-    loadUser();
+    void loadUser();
 
     const {
       data: { subscription },
@@ -132,6 +147,93 @@ export default function MenuScreen() {
     };
   }, []);
 
+  // Load customer's marketing preference
+  useEffect(() => {
+    let mounted = true;
+
+    async function loadMarketingPreference() {
+      if (!user?.id) {
+        setMarketingEnabled(false);
+        setMarketingLoading(false);
+        return;
+      }
+
+      setMarketingLoading(true);
+
+      try {
+        const supabase = createClient();
+
+        const { data, error } = await (supabase as any)
+          .from("notification_preferences")
+          .select("marketing_enabled")
+          .eq("user_id", user.id)
+          .maybeSingle();
+
+        if (error) throw error;
+
+        if (mounted) {
+          setMarketingEnabled(data?.marketing_enabled ?? false);
+        }
+      } catch (error) {
+        console.error(
+          "Failed to load notification preference:",
+          error
+        );
+      } finally {
+        if (mounted) {
+          setMarketingLoading(false);
+        }
+      }
+    }
+
+    void loadMarketingPreference();
+
+    return () => {
+      mounted = false;
+    };
+  }, [user?.id]);
+
+  // Save marketing preference
+  const handleMarketingToggle = async (enabled: boolean) => {
+    if (!user?.id || marketingSaving) return;
+
+    const previousValue = marketingEnabled;
+
+    setMarketingEnabled(enabled);
+    setMarketingSaving(true);
+
+    try {
+      const supabase = createClient();
+
+      const { error } = await (supabase as any)
+        .from("notification_preferences")
+        .upsert(
+          {
+            user_id: user.id,
+            marketing_enabled: enabled,
+            updated_at: new Date().toISOString(),
+          },
+          { onConflict: "user_id" }
+        );
+
+      if (error) throw error;
+    } catch (error) {
+      console.error(
+        "Failed to update marketing preference:",
+        error
+      );
+
+      setMarketingEnabled(previousValue);
+
+      Alert.alert(
+        "Unable to Update",
+        "Your notification preference could not be saved. Please try again."
+      );
+    } finally {
+      setMarketingSaving(false);
+    }
+  };
+
   const handleSignIn = () => {
     router.push("/auth/login");
   };
@@ -141,13 +243,17 @@ export default function MenuScreen() {
       "Log Out",
       "Are you sure you want to log out?",
       [
-        { text: "Cancel", style: "cancel" },
+        {
+          text: "Cancel",
+          style: "cancel",
+        },
         {
           text: "Log Out",
           style: "destructive",
           onPress: async () => {
             try {
               const supabase = createClient();
+
               const { error } = await supabase.auth.signOut();
 
               if (error) {
@@ -162,6 +268,7 @@ export default function MenuScreen() {
               router.replace("/");
             } catch (error) {
               console.error("Logout error:", error);
+
               Alert.alert(
                 "Unable to Log Out",
                 "Something went wrong. Please try again."
@@ -204,6 +311,7 @@ export default function MenuScreen() {
         {/* Header */}
         <View style={styles.header}>
           <Text style={styles.headerTitle}>Account & Settings</Text>
+
           <Text style={styles.headerSubtitle}>
             Manage preferences, orders, and application details
           </Text>
@@ -224,11 +332,16 @@ export default function MenuScreen() {
               <>
                 <View style={styles.signInCard}>
                   <View style={styles.signInIcon}>
-                    <User size={20} color="#171717" strokeWidth={1.8} />
+                    <User
+                      size={20}
+                      color="#171717"
+                      strokeWidth={1.8}
+                    />
                   </View>
 
                   <View style={styles.signInContent}>
                     <Text style={styles.signInTitle}>Sign In</Text>
+
                     <Text style={styles.signInSubtitle}>
                       Access order histories, your saved items, and settings
                     </Text>
@@ -250,28 +363,74 @@ export default function MenuScreen() {
                   label="My Profile"
                   onPress={() => router.push("/profile")}
                 />
+
                 <MenuRow
                   icon={Package}
                   label="My Orders"
                   onPress={() => router.push("/orders")}
                 />
+
                 <MenuRow
                   icon={Heart}
                   label="Wishlist"
                   onPress={() => router.push("/wishlist")}
                 />
+                <MenuRow
+                    icon={Bell}
+                    label="Notifications"
+                    onPress={() => router.push("/notifications")}
+                  />
+
+                {/* Marketing Notifications */}
+                <View style={styles.notificationRow}>
+                  <View style={styles.menuIcon}>
+                    <Bell
+                      size={18}
+                      color="#171717"
+                      strokeWidth={1.8}
+                    />
+                  </View>
+
+                  <View style={styles.notificationContent}>
+                    <Text style={styles.currencyTitle}>
+                      Marketing Notifications
+                    </Text>
+
+                    <Text style={styles.currencyDescription}>
+                      Receive product updates, promotions and special offers.
+                    </Text>
+                  </View>
+
+                  <Switch
+                    value={marketingEnabled}
+                    onValueChange={handleMarketingToggle}
+                    disabled={marketingLoading || marketingSaving}
+                    trackColor={{
+                      false: "#D4D4D4",
+                      true: "#16833B",
+                    }}
+                    thumbColor="#FFFFFF"
+                    ios_backgroundColor="#D4D4D4"
+                  />
+                </View>
               </>
             )}
 
             {/* Currency Row */}
             <View style={styles.currencyDivider} />
+
             <View style={styles.currencyRow}>
               <View style={styles.currencyIcon}>
-                <Globe2 size={18} color="#171717" strokeWidth={1.8} />
+                <Globe2
+                  size={18}
+                  color="#171717"
+                  strokeWidth={1.8}
+                />
               </View>
 
               <View style={styles.currencyContent}>
                 <Text style={styles.currencyTitle}>Currency</Text>
+
                 <Text style={styles.currencyDescription}>
                   Preferred display currency
                 </Text>
@@ -292,21 +451,25 @@ export default function MenuScreen() {
               label="Help Center"
               onPress={() => openWebsite("https://africasuk.com/help")}
             />
+
             <MenuRow
               icon={Shield}
               label="Privacy Policy"
               onPress={() => openWebsite("https://africasuk.com/privacy")}
             />
+
             <MenuRow
               icon={FileText}
               label="Terms & Conditions"
               onPress={() => openWebsite("https://africasuk.com/terms")}
             />
+
             <MenuRow
               icon={Info}
               label="About Africa Suk"
               onPress={() => openWebsite("https://africasuk.com/about")}
             />
+
             <MenuRow
               icon={Camera}
               label="Request a Product"
@@ -328,6 +491,7 @@ export default function MenuScreen() {
               label="Rate the App"
               onPress={handleRateApp}
             />
+
             <MenuRow
               icon={Share2}
               label="Share Africa Suk"
@@ -355,6 +519,7 @@ export default function MenuScreen() {
         {/* Footer */}
         <View style={styles.footer}>
           <Text style={styles.version}>v{APP_VERSION}</Text>
+
           <Text style={styles.copyright}>
             © {new Date().getFullYear()} Africa Suk. All rights reserved.
           </Text>
@@ -369,9 +534,11 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: "#FAFAFA",
   },
+
   container: {
     flex: 1,
   },
+
   content: {
     paddingHorizontal: 16,
     paddingTop: 16,
@@ -383,12 +550,14 @@ const styles = StyleSheet.create({
     marginBottom: 24,
     paddingHorizontal: 4,
   },
+
   headerTitle: {
     fontSize: 26,
     fontWeight: "700",
     color: "#0A0A0A",
     letterSpacing: -0.6,
   },
+
   headerSubtitle: {
     marginTop: 4,
     fontSize: 13,
@@ -400,6 +569,7 @@ const styles = StyleSheet.create({
   section: {
     marginBottom: 20,
   },
+
   sectionTitle: {
     marginBottom: 8,
     marginLeft: 4,
@@ -409,6 +579,7 @@ const styles = StyleSheet.create({
     textTransform: "uppercase",
     letterSpacing: 0.8,
   },
+
   sectionCard: {
     overflow: "hidden",
     borderRadius: 16,
@@ -426,9 +597,11 @@ const styles = StyleSheet.create({
     borderBottomWidth: StyleSheet.hairlineWidth,
     borderBottomColor: "#E5E5E5",
   },
+
   menuRowLast: {
     borderBottomWidth: 0,
   },
+
   menuIcon: {
     width: 32,
     height: 32,
@@ -438,18 +611,37 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     backgroundColor: "#F5F5F5",
   },
+
   menuIconDanger: {
     backgroundColor: "#FEF2F2",
   },
+
   menuLabel: {
     flex: 1,
     fontSize: 14,
     fontWeight: "500",
     color: "#171717",
   },
+
   menuLabelDanger: {
     color: "#DC2626",
     fontWeight: "600",
+  },
+
+  /* Notification Preference */
+  notificationRow: {
+    minHeight: 72,
+    flexDirection: "row",
+    alignItems: "center",
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: "#E5E5E5",
+  },
+
+  notificationContent: {
+    flex: 1,
+    paddingRight: 12,
   },
 
   /* Sign in banner */
@@ -461,6 +653,7 @@ const styles = StyleSheet.create({
     borderBottomWidth: StyleSheet.hairlineWidth,
     borderBottomColor: "#E5E5E5",
   },
+
   signInIcon: {
     width: 38,
     height: 38,
@@ -470,27 +663,32 @@ const styles = StyleSheet.create({
     backgroundColor: "#F5F5F5",
     marginRight: 12,
   },
+
   signInContent: {
     flex: 1,
     paddingRight: 8,
   },
+
   signInTitle: {
     fontSize: 14,
     fontWeight: "600",
     color: "#0A0A0A",
   },
+
   signInSubtitle: {
     marginTop: 2,
     fontSize: 12,
     lineHeight: 16,
     color: "#737373",
   },
+
   signInButton: {
     paddingHorizontal: 14,
     paddingVertical: 7,
     borderRadius: 8,
     backgroundColor: "#0A0A0A",
   },
+
   signInButtonText: {
     fontSize: 12,
     fontWeight: "600",
@@ -503,12 +701,14 @@ const styles = StyleSheet.create({
     backgroundColor: "#E5E5E5",
     marginHorizontal: 16,
   },
+
   currencyRow: {
     minHeight: 64,
     flexDirection: "row",
     alignItems: "center",
     paddingHorizontal: 16,
   },
+
   currencyIcon: {
     width: 32,
     height: 32,
@@ -518,15 +718,18 @@ const styles = StyleSheet.create({
     backgroundColor: "#F5F5F5",
     marginRight: 12,
   },
+
   currencyContent: {
     flex: 1,
     paddingRight: 8,
   },
+
   currencyTitle: {
     fontSize: 14,
     fontWeight: "500",
     color: "#171717",
   },
+
   currencyDescription: {
     marginTop: 2,
     fontSize: 11,
@@ -539,6 +742,7 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     paddingHorizontal: 16,
   },
+
   authLoadingText: {
     fontSize: 13,
     color: "#737373",
@@ -550,11 +754,13 @@ const styles = StyleSheet.create({
     paddingTop: 16,
     gap: 4,
   },
+
   version: {
     fontSize: 12,
     fontWeight: "500",
     color: "#737373",
   },
+
   copyright: {
     fontSize: 11,
     color: "#A3A3A3",

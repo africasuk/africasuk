@@ -1,5 +1,6 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
+
 import {
   ActivityIndicator,
   RefreshControl,
@@ -8,10 +9,12 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
+
 import Animated, {
   useAnimatedScrollHandler,
   useSharedValue,
 } from "react-native-reanimated";
+
 import { useRouter } from "expo-router";
 
 import type { ProductWithDetails } from "@africasuk/types";
@@ -25,8 +28,15 @@ import HomeHeader from "@/components/home/HomeHeader";
 const BRAND_COLOR = "#005c2e";
 const BRAND_DARK = "#002b15";
 
+type ProductColor = ProductWithDetails["colors"][number];
+
 type ColorProduct = ProductWithDetails & {
   selectedColorId?: string;
+};
+
+type GroupedColorProduct = {
+  product: ProductWithDetails;
+  color: ProductColor;
 };
 
 export default function ProductsPage() {
@@ -50,26 +60,31 @@ export default function ProductsPage() {
     [],
   );
 
-  const fetchProducts = useCallback(async (isRefresh = false) => {
-    if (isRefresh) {
-      setRefreshing(true);
-    } else {
-      setLoading(true);
-    }
+  // Fetch a fresh random product selection.
+  const fetchProducts = useCallback(
+    async (isRefresh = false) => {
+      if (isRefresh) {
+        setRefreshing(true);
+      } else {
+        setLoading(true);
+      }
 
-    setLoadError(false);
+      setLoadError(false);
 
-    try {
-      const data = await service.getAll();
-      setProducts(data ?? []);
-    } catch (error) {
-      console.error("Error loading products:", error);
-      setLoadError(true);
-    } finally {
-      setLoading(false);
-      setRefreshing(false);
-    }
-  }, [service]);
+      try {
+        const data = await service.getAll({ random: true });
+
+        setProducts(data ?? []);
+      } catch (error) {
+        console.error("Error loading products:", error);
+        setLoadError(true);
+      } finally {
+        setLoading(false);
+        setRefreshing(false);
+      }
+    },
+    [service],
+  );
 
   useEffect(() => {
     void fetchProducts();
@@ -79,23 +94,16 @@ export default function ProductsPage() {
     void fetchProducts(true);
   }, [fetchProducts]);
 
-  // Display each product color as its own card, interleaved by color.
+  // Display each product color as its own card,
+  // interleaved to distribute products across the grid.
   const colorProducts = useMemo<ColorProduct[]>(() => {
-    type ProductColor = ProductWithDetails["colors"][number];
-
-    type GroupedColorProduct = {
-      product: ProductWithDetails;
-      color: ProductColor;
-    };
-
     const groupedProducts: GroupedColorProduct[][] = products.map(
       (product) => {
         const colors = product.colors ?? [];
 
         return colors
           .filter(
-            (color) =>
-              (color.variants?.length ?? 0) > 0,
+            (color) => (color.variants?.length ?? 0) > 0,
           )
           .map((color) => ({
             product,
@@ -114,6 +122,7 @@ export default function ProductsPage() {
     for (let index = 0; index < maxColors; index++) {
       for (const group of groupedProducts) {
         const item = group[index];
+
         if (!item) continue;
 
         result.push({

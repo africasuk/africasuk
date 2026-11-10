@@ -68,6 +68,10 @@ export const Permissions = {
   // Settings
   SETTINGS_VIEW: "settings.view",
   SETTINGS_UPDATE: "settings.update",
+
+  // Notifications
+  NOTIFICATIONS_VIEW: "notifications.view",
+  NOTIFICATIONS_SEND: "notifications.send",
 } as const;
 
 export type Permission =
@@ -84,6 +88,11 @@ export const RolePermissions: Record<Role, Permission[]> = {
   // =====================================================
   [Roles.ADMIN]: [
     Permissions.DASHBOARD_VIEW,
+
+    // Notifications
+    Permissions.NOTIFICATIONS_VIEW,
+    Permissions.NOTIFICATIONS_SEND,
+    
 
     // Products
     Permissions.PRODUCTS_VIEW,
@@ -145,11 +154,17 @@ export const RolePermissions: Record<Role, Permission[]> = {
     Permissions.SETTINGS_UPDATE,
   ],
 
+  
+
   // =====================================================
   // MANAGER
   // =====================================================
   [Roles.MANAGER]: [
     Permissions.DASHBOARD_VIEW,
+
+
+    // Notifications
+    Permissions.NOTIFICATIONS_VIEW,
 
     // Products
     Permissions.PRODUCTS_VIEW,
@@ -205,6 +220,7 @@ export const RolePermissions: Record<Role, Permission[]> = {
     Permissions.SETTINGS_UPDATE,
   ],
 
+  
   // =====================================================
   // STAFF
   // =====================================================
