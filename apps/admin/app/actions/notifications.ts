@@ -1,7 +1,6 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-
 import { ProductRepository } from "@africasuk/database";
 import { ProductQueryService } from "@africasuk/api";
 import type { ProductWithDetails } from "@africasuk/types";
@@ -32,6 +31,7 @@ interface CampaignInput {
 interface PushToken {
   user_id: string;
   expo_push_token: string;
+  platform: "android" | "ios";
 }
 
 interface ExpoTicket {
@@ -115,11 +115,14 @@ export async function getNotificationOverview() {
     preferences,
   ] = await Promise.all([
     db.from("notifications").select("id", { count: "exact", head: true }),
+
     db.from("push_tokens").select("id", { count: "exact", head: true }),
+
     db
       .from("notification_campaigns")
       .select("id", { count: "exact", head: true })
       .eq("status", "SENT"),
+
     db
       .from("notification_preferences")
       .select("user_id", { count: "exact", head: true })
@@ -375,10 +378,10 @@ export async function sendNotificationCampaign(campaignId: string) {
       throw new Error(deliveryError.message);
     }
 
-    // 4. Find available push tokens.
+    // 4. Find available push tokens, including device platforms.
     const { data: tokens, error: tokenError } = await db
       .from("push_tokens")
-      .select("user_id, expo_push_token")
+      .select("user_id, expo_push_token, platform")
       .in("user_id", optedInUsers);
 
     if (tokenError) {
@@ -394,9 +397,18 @@ export async function sendNotificationCampaign(campaignId: string) {
     if (validTokens.length > 0) {
       const messages = validTokens.map((token) => ({
         to: token.expo_push_token,
-        sound: "default",
+        sound: "default" as const,
+        priority: "high" as const,
+
+        // Android uses the channel created in register.ts.
+        // iOS uses its native notification sound settings.
+        ...(token.platform === "android"
+          ? { channelId: "africasuk-alerts-v2" }
+          : {}),
+
         title: campaign.title,
         body: campaign.body,
+
         data: {
           campaignId,
           type: campaign.campaign_type,

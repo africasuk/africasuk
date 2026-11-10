@@ -1,4 +1,3 @@
-
 "use server";
 
 import { revalidatePath } from "next/cache";
@@ -38,6 +37,11 @@ const ORDER_STATUS_MESSAGES: Record<OrderStatus, string> = {
   CANCELLED: "Your order has been cancelled.",
 };
 
+interface PushDevice {
+  expo_push_token: string;
+  platform: string;
+}
+
 async function sendOrderStatusNotification({
   userId,
   orderId,
@@ -73,18 +77,24 @@ async function sendOrderStatusNotification({
     });
 
   if (notificationError) {
-    console.error("Failed to save order notification:", notificationError);
+    console.error(
+      "Failed to save order notification:",
+      notificationError
+    );
     return;
   }
 
   // Retrieve all devices registered by this customer.
   const { data: devices, error: devicesError } = await supabase
     .from("push_tokens")
-    .select("expo_push_token")
+    .select("expo_push_token, platform")
     .eq("user_id", userId);
 
   if (devicesError) {
-    console.error("Failed to retrieve push tokens:", devicesError);
+    console.error(
+      "Failed to retrieve push tokens:",
+      devicesError
+    );
     return;
   }
 
@@ -93,13 +103,21 @@ async function sendOrderStatusNotification({
     return;
   }
 
-  const messages = devices.map((device) => ({
+  // Create platform-aware notification messages.
+  const messages = (devices as PushDevice[]).map((device) => ({
     to: device.expo_push_token,
-    sound: "default",
-    channelId: "default",
-    priority: "high",
+    sound: "default" as const,
+    priority: "high" as const,
+
+    // Android uses the channel registered in the mobile app.
+    // iOS uses its native notification sound settings.
+    ...(device.platform === "android"
+      ? { channelId: "africasuk-alerts-v2" }
+      : {}),
+
     title,
     body,
+
     data: {
       ...notificationData,
       notificationType: "ORDER_STATUS",
@@ -120,26 +138,29 @@ async function sendOrderStatusNotification({
             "Content-Type": "application/json",
           },
           body: JSON.stringify(batch),
-        },
+        }
       );
 
       if (!response.ok) {
         console.error(
           "Expo push delivery failed:",
-          await response.text(),
+          await response.text()
         );
         continue;
       }
 
       const result: {
-      data?: Array<{
-        status: string;
-        id?: string;
-        message?: string;
-      }>;
-    } = await response.json();
+        data?: Array<{
+          status: string;
+          id?: string;
+          message?: string;
+          details?: {
+            error?: string;
+          };
+        }>;
+      } = await response.json();
 
-    console.log("Order notification delivery:", result.data);
+      console.log("Order notification delivery:", result.data);
     } catch (error) {
       console.error("Push notification error:", error);
     }
@@ -155,7 +176,7 @@ export async function getOrders() {
     new ProductRepository(supabase),
     new ProductVariantRepository(supabase),
     new BrandRepository(supabase),
-    new CategoryRepository(supabase),
+    new CategoryRepository(supabase)
   );
 
   return service.getAllOrders();
@@ -170,7 +191,7 @@ export async function getOrder(orderNumber: string) {
     new ProductRepository(supabase),
     new ProductVariantRepository(supabase),
     new BrandRepository(supabase),
-    new CategoryRepository(supabase),
+    new CategoryRepository(supabase)
   );
 
   return service.getOrder(orderNumber);
@@ -187,7 +208,7 @@ export async function updateOrder(
     adminNotes?: string | null;
     fulfillmentMethod?: FulfillmentMethod;
     shipping?: number;
-  },
+  }
 ) {
   const supabase = createAdminSupabaseClient();
 
@@ -207,7 +228,7 @@ export async function updateOrder(
     new OrderRepository(supabase),
     new OrderItemRepository(supabase),
     new ProductRepository(supabase),
-    new ProductVariantRepository(supabase),
+    new ProductVariantRepository(supabase)
   );
 
   const updates: typeof input & { total?: number } = {
@@ -221,7 +242,7 @@ export async function updateOrder(
     const { data: currentOrder, error } = await supabase
       .from("orders")
       .select(
-        "subtotal, shipping, tax, discount, fulfillment_method",
+        "subtotal, shipping, tax, discount, fulfillment_method"
       )
       .eq("id", id)
       .single();
@@ -241,7 +262,7 @@ export async function updateOrder(
 
     if (!Number.isFinite(shipping) || shipping < 0) {
       throw new Error(
-        "Delivery fee must be a valid non-negative amount.",
+        "Delivery fee must be a valid non-negative amount."
       );
     }
 
@@ -262,7 +283,7 @@ export async function updateOrder(
 
     updates.total =
       Math.round(
-        (subtotal + shipping + tax - discount) * 100,
+        (subtotal + shipping + tax - discount) * 100
       ) / 100;
   }
 
