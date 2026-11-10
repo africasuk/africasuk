@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useEffect, useState } from "react";
@@ -15,6 +16,9 @@ import {
   ChevronRight,
   Globe,
   ArrowLeft,
+  Truck,
+  Wallet,
+  Building2,
 } from "lucide-react";
 import type { User } from "@supabase/supabase-js";
 import { useRouter } from "next/navigation";
@@ -24,8 +28,12 @@ import Logo from "@/components/layout/header/Logo";
 import LogoutButton from "@/components/layout/topbar/LogoutButton";
 
 const APP_VERSION = "1.0.0";
+
 const PLAY_STORE_URL =
   "https://play.google.com/store/apps/details?id=com.africasuk.app";
+
+const APP_STORE_URL =
+  "https://apps.apple.com/in/app/africa-suk/id6830582715";
 
 interface MenuRowProps {
   icon: React.ElementType;
@@ -75,7 +83,11 @@ function MenuRow({
   }
 
   return (
-    <button type="button" onClick={onClick} className={className}>
+    <button
+      type="button"
+      onClick={onClick}
+      className={className}
+    >
       {content}
     </button>
   );
@@ -83,6 +95,7 @@ function MenuRow({
 
 export default function MenuPage() {
   const router = useRouter();
+
   const [user, setUser] = useState<User | null>(null);
   const [authLoading, setAuthLoading] = useState(true);
 
@@ -99,6 +112,7 @@ export default function MenuPage() {
         if (mounted) setUser(currentUser);
       } catch (error) {
         console.error("Failed to load user:", error);
+
         if (mounted) setUser(null);
       } finally {
         if (mounted) setAuthLoading(false);
@@ -136,6 +150,7 @@ export default function MenuPage() {
         await navigator.clipboard.writeText(
           `${shareData.text}\n${shareData.url}`
         );
+
         alert("Africa Suk link copied!");
       }
     } catch (error) {
@@ -149,8 +164,13 @@ export default function MenuPage() {
     window.open(PLAY_STORE_URL, "_blank", "noopener,noreferrer");
   };
 
+  const openAppStore = () => {
+    window.open(APP_STORE_URL, "_blank", "noopener,noreferrer");
+  };
+
   return (
     <main className="min-h-screen bg-[#FAFAFA] pb-10 antialiased">
+      {/* Header */}
       <header className="border-b border-gray-100 bg-white px-4 py-4">
         <div className="mx-auto flex max-w-2xl items-center gap-3">
           <button
@@ -166,6 +186,7 @@ export default function MenuPage() {
             <h1 className="text-xl font-bold tracking-tight text-gray-950">
               Account & Settings
             </h1>
+
             <p className="mt-0.5 text-xs text-gray-500">
               Manage your account and preferences
             </p>
@@ -198,6 +219,7 @@ export default function MenuPage() {
                     <p className="text-sm font-semibold text-gray-900">
                       My Account
                     </p>
+
                     <p className="truncate text-xs text-gray-500">
                       {user.email}
                     </p>
@@ -209,6 +231,7 @@ export default function MenuPage() {
                   label="My Profile"
                   href="/profile"
                 />
+
                 <div className="border-t border-gray-100">
                   <MenuRow
                     icon={Package}
@@ -216,6 +239,7 @@ export default function MenuPage() {
                     href="/account/orders"
                   />
                 </div>
+
                 <div className="border-t border-gray-100">
                   <MenuRow
                     icon={Heart}
@@ -223,6 +247,7 @@ export default function MenuPage() {
                     href="/wishlist"
                   />
                 </div>
+
                 <div className="border-t border-gray-100 px-4 py-3">
                   <LogoutButton />
                 </div>
@@ -233,9 +258,11 @@ export default function MenuPage() {
                   <p className="text-sm font-semibold text-gray-900">
                     Welcome to Africa Suk
                   </p>
+
                   <p className="mt-1 text-xs leading-relaxed text-gray-500">
                     Sign in to manage your orders, profile, and saved items.
                   </p>
+
                   <Link
                     href="/auth/login"
                     className="mt-4 inline-flex min-h-10 items-center justify-center rounded-xl bg-[#005c2e] px-5 text-sm font-semibold text-white hover:bg-[#004620]"
@@ -243,6 +270,7 @@ export default function MenuPage() {
                     Sign In
                   </Link>
                 </div>
+
                 <div className="border-t border-gray-100">
                   <MenuRow
                     icon={Package}
@@ -250,6 +278,7 @@ export default function MenuPage() {
                     href="/account/orders"
                   />
                 </div>
+
                 <div className="border-t border-gray-100">
                   <MenuRow
                     icon={Heart}
@@ -271,11 +300,13 @@ export default function MenuPage() {
           <div className="overflow-hidden rounded-2xl border border-gray-200 bg-white">
             <div className="flex min-h-14 items-center gap-3 px-4">
               <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-gray-100">
-                <Globe className="h-4.5 w-4.5 text-gray-700" />
+                <Globe className="h-4.5[18px] text-gray-700" />
               </span>
+
               <span className="flex-1 text-sm font-medium text-gray-800">
                 Language
               </span>
+
               <span className="text-xs text-gray-400">Default</span>
             </div>
 
@@ -283,12 +314,13 @@ export default function MenuPage() {
               <span className="text-sm font-medium text-gray-800">
                 Currency
               </span>
+
               <CurrencySwitcher />
             </div>
           </div>
         </section>
 
-        {/* Support and legal */}
+        {/* Support and Legal */}
         <section>
           <h2 className="mb-2 px-1 text-xs font-semibold uppercase tracking-wider text-gray-500">
             Support & Legal
@@ -300,6 +332,39 @@ export default function MenuPage() {
               label="Help Center"
               href="/help"
             />
+
+            <div className="border-t border-gray-100">
+              <MenuRow
+                icon={Truck}
+                label="Shipping & Delivery"
+                href="/shipping"
+              />
+            </div>
+
+            <div className="border-t border-gray-100">
+              <MenuRow
+                icon={Wallet}
+                label="Payment Information"
+                href="/payment-information"
+              />
+            </div>
+
+            <div className="border-t border-gray-100">
+              <MenuRow
+                icon={Package}
+                label="Returns & Refunds"
+                href="/returns"
+              />
+            </div>
+
+            <div className="border-t border-gray-100">
+              <MenuRow
+                icon={Building2}
+                label="Business Information"
+                href="/business-information"
+              />
+            </div>
+
             <div className="border-t border-gray-100">
               <MenuRow
                 icon={ShieldCheck}
@@ -307,6 +372,7 @@ export default function MenuPage() {
                 href="/privacy"
               />
             </div>
+
             <div className="border-t border-gray-100">
               <MenuRow
                 icon={FileText}
@@ -314,6 +380,7 @@ export default function MenuPage() {
                 href="/terms"
               />
             </div>
+
             <div className="border-t border-gray-100">
               <MenuRow
                 icon={Info}
@@ -321,6 +388,7 @@ export default function MenuPage() {
                 href="/about"
               />
             </div>
+
             <div className="border-t border-gray-100">
               <MenuRow
                 icon={Heart}
@@ -340,9 +408,18 @@ export default function MenuPage() {
           <div className="overflow-hidden rounded-2xl border border-gray-200 bg-white">
             <MenuRow
               icon={Star}
-              label="Rate Africa Suk"
+              label="Rate on Google Play"
               onClick={openPlayStore}
             />
+
+            <div className="border-t border-gray-100">
+              <MenuRow
+                icon={Star}
+                label="Rate on Apple App Store"
+                onClick={openAppStore}
+              />
+            </div>
+
             <div className="border-t border-gray-100">
               <MenuRow
                 icon={Share2}
@@ -356,15 +433,18 @@ export default function MenuPage() {
         {/* Trust */}
         <div className="flex items-center justify-center gap-2 rounded-2xl border border-green-100 bg-green-50 px-4 py-4">
           <ShieldCheck className="h-5 w-5 shrink-0 text-[#005c2e]" />
+
           <span className="text-xs font-semibold text-[#005c2e]">
             Africa Suk — Shop with Confidence
           </span>
         </div>
 
+        {/* Footer */}
         <footer className="pb-4 text-center">
           <p className="text-xs font-medium text-gray-500">
             Africa Suk · v{APP_VERSION}
           </p>
+
           <p className="mt-1 text-[11px] text-gray-400">
             © {new Date().getFullYear()} Africa Suk. All rights reserved.
           </p>

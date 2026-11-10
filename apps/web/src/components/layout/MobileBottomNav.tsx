@@ -1,8 +1,15 @@
+
 "use client";
 
 import { useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
-import { Grid2X2, House, Menu, Package, LoaderCircle } from "lucide-react";
+import {
+  Grid2X2,
+  House,
+  Menu,
+  Package,
+  LoaderCircle,
+} from "lucide-react";
 
 const tabs = [
   { label: "Home", href: "/", Icon: House },
@@ -13,18 +20,31 @@ const tabs = [
 export default function MobileBottomNav() {
   const pathname = usePathname();
   const router = useRouter();
+
   const [requestedHref, setRequestedHref] = useState<string | null>(null);
 
+  // Loading automatically ends when navigation reaches the requested page.
   const loadingHref =
-    requestedHref && requestedHref !== pathname ? requestedHref : null;
+    requestedHref &&
+    pathname !== requestedHref &&
+    !pathname.startsWith(`${requestedHref}/`)
+      ? requestedHref
+      : null;
 
   function navigate(href: string) {
-    if (href === pathname || pathname.startsWith(`${href}/`)) return;
-    if (requestedHref) return;
+    const alreadyOnPage =
+      href === "/"
+        ? pathname === "/"
+        : pathname === href || pathname.startsWith(`${href}/`);
+
+    if (alreadyOnPage || loadingHref) return;
 
     setRequestedHref(href);
     router.push(href);
   }
+
+  const menuActive =
+    pathname === "/menu" || pathname.startsWith("/menu/");
 
   return (
     <nav
@@ -82,17 +102,18 @@ export default function MobileBottomNav() {
           );
         })}
 
+        {/* Menu */}
         <button
           type="button"
           onClick={() => navigate("/menu")}
           aria-label="Open menu"
-          aria-current={pathname === "/menu" ? "page" : undefined}
+          aria-current={menuActive ? "page" : undefined}
           disabled={loadingHref !== null}
           className="flex min-w-0 flex-1 flex-col items-center justify-center gap-1 rounded-2xl py-1.5 disabled:opacity-80"
         >
           <span
             className={`flex h-8 w-12 items-center justify-center rounded-full transition-colors ${
-              pathname === "/menu" ? "bg-black/[0.07]" : ""
+              menuActive ? "bg-black/[0.07]" : ""
             }`}
           >
             {loadingHref === "/menu" ? (
@@ -103,17 +124,15 @@ export default function MobileBottomNav() {
             ) : (
               <Menu
                 size={23}
-                strokeWidth={pathname === "/menu" ? 2.5 : 1.8}
-                className={
-                  pathname === "/menu" ? "text-[#111111]" : "text-zinc-500"
-                }
+                strokeWidth={menuActive ? 2.5 : 1.8}
+                className={menuActive ? "text-[#111111]" : "text-zinc-500"}
               />
             )}
           </span>
 
           <span
             className={`text-[10px] ${
-              pathname === "/menu"
+              menuActive
                 ? "font-extrabold text-[#111111]"
                 : "font-semibold text-zinc-500"
             }`}

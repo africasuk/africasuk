@@ -1,48 +1,12 @@
 
 "use client";
 
-import { useEffect, useState, useSyncExternalStore } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { ArrowUpRight } from "lucide-react";
 
-interface TimeLeft {
-  days: number;
-  hours: number;
-  minutes: number;
-  seconds: number;
-}
-
-const emptySubscribe = () => () => {};
-
-const getTimeLeft = (): TimeLeft => {
-  const targetDate = new Date("2027-04-01T00:00:00").getTime();
-  const difference = Math.max(0, targetDate - Date.now());
-
-  return {
-    days: Math.floor(difference / (1000 * 60 * 60 * 24)),
-    hours: Math.floor((difference / (1000 * 60 * 60)) % 24),
-    minutes: Math.floor((difference / (1000 * 60)) % 60),
-    seconds: Math.floor((difference / 1000) % 60),
-  };
-};
-
 export default function AppDownloadSection() {
-  const isClient = useSyncExternalStore(
-    emptySubscribe,
-    () => true,
-    () => false,
-  );
 
-  const [timeLeft, setTimeLeft] = useState<TimeLeft>(getTimeLeft);
-
-  useEffect(() => {
-    const interval = window.setInterval(() => {
-      setTimeLeft(getTimeLeft());
-    }, 1000);
-
-    return () => window.clearInterval(interval);
-  }, []);
 
   return (
     <section className="relative isolate overflow-hidden bg-[#002d21] text-white">
@@ -145,52 +109,34 @@ export default function AppDownloadSection() {
                 <ArrowUpRight className="h-3.5 w-3.5 shrink-0 text-zinc-400 transition-transform group-hover:-translate-y-0.5 group-hover:translate-x-0.5 group-hover:text-zinc-900 sm:h-4 sm:w-4" />
               </Link>
 
-              {/* App Store */}
-              <div
-                title="iOS release scheduled for April 2027"
-                className="flex h-12 min-w-0 cursor-not-allowed items-center justify-between rounded-xl border border-white/15 bg-white/5 px-3 text-white/45 backdrop-blur-sm sm:h-16 sm:rounded-2xl sm:px-4"
-              >
-                <div className="flex min-w-0 items-center gap-2 sm:gap-3">
-                  <svg
-                    className="h-5 w-5 shrink-0 fill-white/35 sm:h-6 sm:w-6"
-                    viewBox="0 0 24 24"
-                  >
-                    <path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.81-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M15.97 6.37c.63-.77 1.06-1.85.94-2.93-1 .04-2.16.65-2.79 1.4-.56.64-1.04 1.74-.91 2.8 1.11.09 2.19-.55 2.76-1.27z" />
-                  </svg>
+            {/* App Store */}
+            <Link
+              href="https://apps.apple.com/in/app/africa-suk/id6830582715"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="group flex h-12 min-w-0 items-center justify-between rounded-xl bg-white px-3 text-zinc-950 shadow-xl shadow-black/15 transition-all duration-200 hover:-translate-y-1 hover:shadow-2xl active:translate-y-0 sm:h-16 sm:rounded-2xl sm:px-5"
+            >
+              <div className="flex min-w-0 items-center gap-2 sm:gap-3.5">
+                <svg
+                  className="h-6 w-6 shrink-0 fill-black sm:h-7 sm:w-7"
+                  viewBox="0 0 24 24"
+                >
+                  <path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.81-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M15.97 6.37c.63-.77 1.06-1.85.94-2.93-1 .04-2.16.65-2.79 1.4-.56.64-1.04 1.74-.91 2.8 1.11.09 2.19-.55 2.76-1.27z" />
+                </svg>
 
-                  <div className="min-w-0 text-left">
-                    <span className="block text-[7px] font-medium uppercase tracking-wider text-white/35 sm:text-[9px]">
-                      Download on
-                    </span>
-                    <span className="block truncate text-[11px] font-bold leading-tight text-white/55 sm:text-sm">
-                      App Store
-                    </span>
-                  </div>
-                </div>
-
-                <div className="ml-1 shrink-0 text-right">
-                  <span className="block text-[7px] font-bold uppercase tracking-wider text-emerald-300/70 sm:text-[8px]">
-                    Coming April
+                <div className="min-w-0 text-left">
+                  <span className="block text-[7px] font-medium uppercase tracking-wider text-zinc-400 sm:text-[9px]">
+                    Download on
                   </span>
-                  <span className="block font-mono text-[7px] text-white/40 sm:text-[9px]">
-                    {isClient
-                      ? `${timeLeft.days}d ${timeLeft.hours}h ${timeLeft.minutes}m`
-                      : "--d --h --m"}
+                  <span className="block truncate text-[11px] font-bold leading-tight sm:text-sm">
+                    App Store
                   </span>
                 </div>
               </div>
-            </div>
 
-            {/* Web App */}
-            <Link
-              href="https://app.africasuk.com/"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="group mt-4 inline-flex items-center gap-2 text-[11px] font-semibold text-emerald-200 transition-colors hover:text-white sm:mt-5 sm:text-xs"
-            >
-              Or shop from the web app
-              <ArrowUpRight className="h-3.5 w-3.5 transition-transform group-hover:-translate-y-0.5 group-hover:translate-x-0.5" />
+              <ArrowUpRight className="h-3.5 w-3.5 shrink-0 text-zinc-400 transition-transform group-hover:-translate-y-0.5 group-hover:translate-x-0.5 group-hover:text-zinc-900 sm:h-4 sm:w-4" />
             </Link>
+            </div>
           </div>
         </div>
       </div>

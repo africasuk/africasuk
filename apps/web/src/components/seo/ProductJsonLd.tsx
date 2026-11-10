@@ -1,3 +1,4 @@
+
 import type {
   ProductWithDetails,
   Review,
@@ -12,6 +13,8 @@ interface Props {
   };
 }
 
+const SITE_URL = "https://africasuk.com";
+
 export function ProductJsonLd({
   product,
   reviews = [],
@@ -23,28 +26,62 @@ export function ProductJsonLd({
   const firstColor = product.colors[0];
   const firstVariant = firstColor?.variants[0];
 
-  const images = product.colors.flatMap((color) =>
-    color.images.map((image) => image.imageUrl)
-  );
+  const images = product.colors
+    .flatMap((color) =>
+      color.images.map((image) => image.imageUrl)
+    )
+    .filter(Boolean);
 
-  const productUrl = `https://www.africasuk.com/products/${product.slug}`;
+  const productUrl = `${SITE_URL}/products/${product.slug}`;
+
+  const description =
+    product.description?.replace(/<[^>]*>/g, " ").replace(/\s+/g, " ").trim() ||
+    `Discover ${product.name} on Africa Suk, South Sudan's online shopping marketplace.`;
+
+  const validRating =
+    rating.reviewCount > 0 &&
+    Number.isFinite(rating.averageRating) &&
+    rating.averageRating > 0 &&
+    rating.averageRating <= 5;
+
+  const validReviews = reviews.filter(
+    (review) =>
+      Number.isFinite(review.rating) &&
+      review.rating >= 1 &&
+      review.rating <= 5
+  );
 
   const jsonLd = {
     "@context": "https://schema.org",
     "@type": "Product",
 
-    "@id": productUrl,
+    "@id": `${productUrl}#product`,
     url: productUrl,
 
     name: product.name,
-
-    description:
-      product.description ??
-      `Buy ${product.name} online on AfricaSuk.`,
-
+    description,
     image: images,
 
-    ...(rating.reviewCount > 0 && {
+    ...(firstVariant?.sku && {
+      sku: firstVariant.sku,
+    }),
+
+    ...(product.brand?.name && {
+      brand: {
+        "@type": "Brand",
+        name: product.brand.name,
+      },
+    }),
+
+    ...(product.category?.name && {
+      category: product.category.name,
+    }),
+
+    ...(firstColor?.name && {
+      color: firstColor.name,
+    }),
+
+    ...(validRating && {
       aggregateRating: {
         "@type": "AggregateRating",
         ratingValue: rating.averageRating,
@@ -54,8 +91,8 @@ export function ProductJsonLd({
       },
     }),
 
-    ...(reviews.length > 0 && {
-      review: reviews.map((review) => ({
+    ...(validReviews.length > 0 && {
+      review: validReviews.map((review) => ({
         "@type": "Review",
 
         reviewRating: {
@@ -75,30 +112,11 @@ export function ProductJsonLd({
 
         author: {
           "@type": "Person",
-          name: review.reviewerName ?? "Verified Buyer",
+          name: review.reviewerName || "Verified Buyer",
         },
 
         datePublished: review.createdAt,
       })),
-    }),
-
-    ...(firstVariant?.sku && {
-      sku: firstVariant.sku,
-    }),
-
-    ...(product.brand && {
-      brand: {
-        "@type": "Brand",
-        name: product.brand.name,
-      },
-    }),
-
-    ...(product.category?.name && {
-      category: product.category.name,
-    }),
-
-    ...(firstColor?.name && {
-      color: firstColor.name,
     }),
 
     offers: product.colors.flatMap((color) =>
@@ -122,77 +140,29 @@ export function ProductJsonLd({
         itemCondition:
           "https://schema.org/NewCondition",
 
-        color: color.name,
+        ...(color.name && {
+          color: color.name,
+        }),
 
         seller: {
           "@type": "Organization",
-          name: "AfricaSuk",
-          url: "https://www.africasuk.com",
+          name: "Africa Suk",
+          url: SITE_URL,
         },
-
-        hasMerchantReturnPolicy: {
-          "@type": "MerchantReturnPolicy",
-          applicableCountry: "SS",
-          returnPolicyCategory:
-            "https://schema.org/MerchantReturnFiniteReturnWindow",
-          merchantReturnDays: 7,
-          returnMethod:
-            "https://schema.org/ReturnByMail",
-          returnFees:
-            "https://schema.org/FreeReturn",
-        },
-
-        shippingDetails: {
-          "@type": "OfferShippingDetails",
-
-          shippingDestination: {
-            "@type": "DefinedRegion",
-            addressCountry: "SS",
-          },
-
-          shippingRate: {
-            "@type": "MonetaryAmount",
-            value: 0,
-            currency: "USD",
-          },
-
-          deliveryTime: {
-            "@type": "ShippingDeliveryTime",
-
-            handlingTime: {
-              "@type": "QuantitativeValue",
-              minValue: 1,
-              maxValue: 2,
-              unitCode: "DAY",
-            },
-
-            transitTime: {
-              "@type": "QuantitativeValue",
-              minValue: 3,
-              maxValue: 14,
-              unitCode: "DAY",
-            },
-          },
-        },
-
-        acceptedPaymentMethod: [
-          ...(product.allowCod
-            ? ["https://schema.org/Cash"]
-            : []),
-
-          ...(product.allowOnlinePayment
-            ? ["https://schema.org/PaymentCard"]
-            : []),
-        ],
       }))
     ),
   };
+
+  const safeJsonLd = JSON.stringify(jsonLd).replace(
+    /</g,
+    "\\u003c"
+  );
 
   return (
     <script
       type="application/ld+json"
       dangerouslySetInnerHTML={{
-        __html: JSON.stringify(jsonLd),
+        __html: safeJsonLd,
       }}
     />
   );

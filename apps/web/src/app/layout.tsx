@@ -19,6 +19,7 @@ import "./globals.css";
 
 import { CurrencyProvider } from "providers/CurrencyProvider";
 import { ExchangeRateProvider } from "providers/ExchangeRateProvider";
+import MobileAppPrompt from "@/components/layout/MobileAppPrompt";
 
 export const viewport: Viewport = {
   width: "device-width",
@@ -230,6 +231,8 @@ return (
           >
 
             {children}
+            
+            <MobileAppPrompt />
 
             <Toaster
               richColors

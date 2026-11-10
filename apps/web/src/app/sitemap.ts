@@ -7,8 +7,9 @@ import {
 } from "@africasuk/database";
 
 import { ProductQueryService } from "@africasuk/api";
-
 import { createServerSupabaseClient } from "@/lib/supabase/server";
+
+const SITE_URL = "https://africasuk.com";
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const db = await createServerSupabaseClient();
@@ -24,41 +25,50 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     categoryRepository.getAll(),
   ]);
 
-  const baseUrl = "https://africasuk.com";
   const now = new Date();
 
-  return [
+  const staticPages: MetadataRoute.Sitemap = [
     {
-      url: baseUrl,
+      url: SITE_URL,
       lastModified: now,
       changeFrequency: "daily",
       priority: 1,
     },
     {
-      url: `${baseUrl}/products`,
+      url: `${SITE_URL}/products`,
       lastModified: now,
       changeFrequency: "daily",
       priority: 0.9,
     },
     {
-      url: `${baseUrl}/categories`,
+      url: `${SITE_URL}/categories`,
       lastModified: now,
       changeFrequency: "weekly",
       priority: 0.8,
     },
-
-    ...products.map((product) => ({
-      url: `${baseUrl}/products/${product.slug}`,
-      lastModified: new Date(product.updatedAt),
-      changeFrequency: "daily" as const,
-      priority: 0.8,
-    })),
-
-    ...categories.map((category) => ({
-      url: `${baseUrl}/categories/${category.slug}`,
-      lastModified: new Date(category.updatedAt),
-      changeFrequency: "weekly" as const,
-      priority: 0.7,
-    })),
   ];
+
+  const productPages: MetadataRoute.Sitemap = products
+    .filter((product) => product.slug)
+    .map((product) => ({
+      url: `${SITE_URL}/products/${product.slug}`,
+      lastModified: product.updatedAt
+        ? new Date(product.updatedAt)
+        : now,
+      changeFrequency: "daily",
+      priority: 0.8,
+    }));
+
+  const categoryPages: MetadataRoute.Sitemap = categories
+    .filter((category) => category.slug)
+    .map((category) => ({
+      url: `${SITE_URL}/categories/${category.slug}`,
+      lastModified: category.updatedAt
+        ? new Date(category.updatedAt)
+        : now,
+      changeFrequency: "weekly",
+      priority: 0.7,
+    }));
+
+  return [...staticPages, ...productPages, ...categoryPages];
 }

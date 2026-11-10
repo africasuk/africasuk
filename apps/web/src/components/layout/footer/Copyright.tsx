@@ -7,7 +7,7 @@ export default function Copyright() {
 
   return (
     <div className="border-t py-6 text-center text-sm text-muted-foreground">
-      © {new Date().getFullYear()} AfricaSuk.{" "}
+      © {new Date().getFullYear()} Africa Suk.{" "}
       {dictionary.common.copyright}
     </div>
   );

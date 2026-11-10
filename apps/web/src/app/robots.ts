@@ -1,6 +1,7 @@
+
 import type { MetadataRoute } from "next";
 
-const sitemap = "https://africasuk.com/sitemap.xml";
+const SITE_URL = "https://africasuk.com";
 
 const privatePaths = [
   "/admin/",
@@ -27,7 +28,7 @@ export default function robots(): MetadataRoute.Robots {
         disallow: privatePaths,
       },
     ],
-    sitemap,
-    host: "https://africasuk.com",
+    sitemap: `${SITE_URL}/sitemap.xml`,
+    host: SITE_URL,
   };
 }

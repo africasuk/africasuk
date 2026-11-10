@@ -2,6 +2,7 @@
 import Header from "./header/Header";
 import Footer from "./footer/Footer";
 import MobileBottomNav from "./MobileBottomNav";
+import MobileAppPrompt from "./MobileAppPrompt";
 
 interface Props {
   children: React.ReactNode;
@@ -19,6 +20,8 @@ export default function Layout({ children }: Props) {
       <Footer />
 
       <MobileBottomNav />
+
+      <MobileAppPrompt />
     </>
   );
 }

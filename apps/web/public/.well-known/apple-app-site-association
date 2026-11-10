@@ -1,0 +1,15 @@
+
+{
+  "applinks": {
+    "apps": [],
+    "details": [
+      {
+        "appID": "P75T9PSQDM.com.africasuk.app",
+        "paths": [
+          "/products/*",
+          "/categories/*"
+        ]
+      }
+    ]
+  }
+}
